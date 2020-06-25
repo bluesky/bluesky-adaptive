@@ -29,4 +29,4 @@ script:
   - set -e
   - make -C docs html  # Build the documentation.
   - pip install doctr
-  - doctr deploy --built-docs <pat
+  - doctr deploy --built-docs docs/build/html
