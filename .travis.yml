@@ -3,6 +3,13 @@ python:
   - 3.7
   - 3.8
 
+
+env:
+  global:
+    # Doctr deploy key for bluesky/bluesky-adaptive
+    - secure: "ZoKgsEY48eYK1fIUBJz1/UpPr7bv/vjiaGAIe41x2tzoIsGd07Kka1eF4QEQ9U1H73Q7hZaPevLfXSIo74GRenWq2PgHWBId/Cdtb8+vThRfyEgTyytuz+cflvX6NwSDfOQA9lJ+oyMtnuXL5irdfzpRAsCQsfbj8xUGMXuBSkacBLXUGnVIFzXP0t2ZsgDRjksQPR+dq0nmFFDXxVUlaSSvoSziVOmwzZbZZj1//N8AHQnr4TONDo4LLR2XOJQV5k7Orm4XLAd2guXSrxLas9icXqMQmw8QR7NbneaBxLkK23y0/y+vhOoFg4IDnsDSPhYcnYVZvv0HA3MlgqSI/zSK2d0eJsXmic58SJfmPAjX0UudrHdHRQMFk3ZHwYKR9Lo3zK8m+3U+uP8tJIWyvi2PygDwAqo0/OTapy1ZOm2QAlOcj8OqNpIT8bxUiLBaNiYvEYervYF2+ltQ0O67cQzXSLLkGNOYVTJb7fNQgOmyE+dbmbvGiF2aJq80xif4CVrQElV4C5Yi88HaGJQIFxSVyaGJAngAJIY8YV9dHNppIivLuWU//UJVTWfy88CAeAiaid1SEg+RxdN6iR8GfGAgOV00RHe3zdiWZk3O4RJHhDUs3OEo8rXWxzmGepfStU4SLhI5+xS6Egn+EqzVqsClYPg+FJMbTbzLT0XC8/w="
+
+
 cache:
   directories:
     - $HOME/.cache/pip
@@ -19,4 +26,7 @@ script:
   - coverage report -m  # Generate test coverage report.
   - codecov  # Upload the report to codecov.
   - flake8  # Enforce code style ('relaxed' line length limit is set in .flake8 config file).
+  - set -e
   - make -C docs html  # Build the documentation.
+  - pip install doctr
+  - doctr deploy --built-docs <pat
