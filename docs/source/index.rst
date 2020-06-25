@@ -46,7 +46,7 @@ Adaptive-ness can be inserted into the data collection process at several levels
 2. in ``bluesky`` plans, but without generating `~event_model.DocumentNames.event`
 3. providing feedback on a per-`~event_model.DocumentNames.event` basis
 4. providing feedback on a per-run / `~event_model.DocumentNames.start` basis
-5. passive feed back
+5. asynchronous and decoupled feedback
 6. providing feedback across many runs
 
 Each of these level of fidelity and interaction has a use and which
@@ -133,33 +133,47 @@ only expect a recommendation once per-run.
 An example of this could be a 2D map where at each point we take a
 XANES scan and then focus on points of interest with in the map.
 
-Passive feedback
-~~~~~~~~~~~~~~~~
+Asynchronous and decoupled feedback
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-In some cases we may not want to have a tightly coupled loop between
-data collection and the computation.  A version of passive feedback is
-already in ``bluesky`` as `Suspenders
-<https://blueskyproject.io/bluesky/state-machine.html#automated-suspension>`__.
+In some cases we do want or need a tightly coupled synchronous
+coordination between data collection and the computation.  In both the
+per-event and per-run levels, the plan is expecting a 1:1 response
+from the recommendation engine for each piece of data collected.  In
+general, the plan has to wait for the response from algorithm before
+continuing and the communication channel between the plan.  Further, the
+communication between the algorithm and the plan necessarily very rich so
+the plan and the brains need to be fairly well coordinated.
 
+If instead we wanted to have an agent watching the data and assessing
+the quality.  If we detect we have collected enough data on the sample
+and further exposure would waste beamtime and put excess dose on the
+sample we want to complete the plan early.  Conversely, if we detect
+that the data is junk (like the sample is no longer in the beam) we
+want to abort the plan.  While this watch dog process can save us
+time, we do not want to slow down data collection to wait for
+permission to continue at every point.  In this case we only need to
+convey 3 possible states to the RunEngine and plan ``{'keep going',
+'you have enough data', 'this data is garbage please stop'}``.  In an
+analogy to `Suspenders
+<https://blueskyproject.io/bluesky/state-machine.html#automated-suspension>`__,
+this can be done at the RunEnigne level (as has been done at APS) so
+the plan does not need to even be aware of the watch dog to benefit
+from it.
 
-For a data-driven example, consider if we have a data quality check to
-abort collection if something goes catastrophically wrong or cut of
-collection early if we have enough statistics.  We do not want to slow
-down data collection to wait for the computation to finish before
-continuing with the rest of the plan (the worst case scenario is the
-status quo if the feed back did not exist).  In this case we would
-subscribe the agent to the document stream and use some other
-side-band to communicate happy/sad to the RunEngine.
+A slightly more coupled example of asynchronous feedback is a 1D scan
+that looks at a PV (or other shared state) for what its step size is.
+If the step size is set by a user to a fixed value an the plan run it behaves
+as a normal `~bluesky.plans.scan` with a fixed step size.  However,
+there could be an agent (or a human!) watching the data and adjusting
+the step size based on the how "interesting" the data currently looks.
 
-Another case where this passive feedback could be use is in tuning the
-step size of a temperature ramp.  If the plan looks at some shared
-state (ex, a PV) for the next step size we could have an external
-agent that is watching the document stream write the recommended step
-size to state.  This way if the computation falls behind and needs to
-drop data points to catch up or falls over entirely the failure mode
-is a fixed step size ramp (which is the status quo).
+In both of these cases the feedback is adding value without imposing
+a cost to the plans and the failure mode of the computation failing is
+the current status quo.
 
-These passive feedback systems are out of scope for this package.
+There are many ways that asynchronous feedback can be configured and
+implemented and is out of scope for this package.
 
 
 
