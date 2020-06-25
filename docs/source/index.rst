@@ -14,7 +14,7 @@
    usage
    release-history
    min_versions
-
+   examples
 
 .. warning::
 
