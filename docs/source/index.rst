@@ -123,6 +123,13 @@ at phase boundaries.  In these cases there is a 1:1 mapping between an
 event collected and a recommendation for the next point to collect.
 
 
+.. autosummary::
+   :nosignatures:
+   :toctree: api_gen
+
+   bluesky_adaptive.per_event.recommender_factory
+   bluesky_adaptive.per_event.adaptive_plan
+
 Per-Run
 ~~~~~~~
 
@@ -132,6 +139,15 @@ only expect a recommendation once per-run.
 
 An example of this could be a 2D map where at each point we take a
 XANES scan and then focus on points of interest with in the map.
+
+
+.. autosummary::
+   :toctree: api_gen
+   :nosignatures:
+
+   bluesky_adaptive.per_start.recommender_factory
+   bluesky_adaptive.per_start.adaptive_plan
+
 
 Asynchronous and decoupled feedback
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
