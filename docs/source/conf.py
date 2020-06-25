@@ -204,4 +204,4 @@ intersphinx_mapping = {
     'event-model': ('https://blueskyproject.io/event-model/', None),
 }
 
-nitpicky = sphinx.version_info >= (3,)
+# nitpicky = sphinx.version_info >= (3,)
