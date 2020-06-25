@@ -212,8 +212,8 @@ def per_event_recommender_factory(
 
     # TODO handle multi-stream runs!
     def callback(name, doc):
-        if name == "event":
-            if doc["seq_num"] > max_count:
+        if name == "event_page":
+            if doc["seq_num"][-1] > max_count:
                 # if at max number of points poison the queue and return early
                 queue.put(None)
                 return
@@ -231,7 +231,8 @@ def per_event_recommender_factory(
             else:
                 queue.put({k: v for k, v in zip(independent_keys, next_point)})
 
-    return callback, queue
+    rr = RunRouter([lambda name, doc: ([callback], [])])
+    return rr, queue
 
 
 def per_event_adaptive_plan(
