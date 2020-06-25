@@ -1,1 +1,1 @@
-from bluesky.tests.conftest import RE
+from bluesky.tests.conftest import RE  # noqa
