@@ -1,8 +1,8 @@
 from bluesky.tests.utils import DocCollector
 
 from bluesky_adaptive.per_event import (
-    per_event_recommender_factory,
-    per_event_adaptive_plan,
+    recommender_factory,
+    adaptive_plan,
 )
 from bluesky_adaptive.recommendations import SequenceRecommender
 
@@ -11,13 +11,11 @@ def test_seq_recommender(RE, hw):
 
     recommender = SequenceRecommender([[1,], [2,], [3,]])  # noqa
 
-    cb, queue = per_event_recommender_factory(recommender, ["motor"], ["det"])
+    cb, queue = recommender_factory(recommender, ["motor"], ["det"])
     dc = DocCollector()
 
     RE(
-        per_event_adaptive_plan(
-            [hw.det], {hw.motor: 0}, to_brains=cb, from_brains=queue
-        ),
+        adaptive_plan([hw.det], {hw.motor: 0}, to_brains=cb, from_brains=queue),
         dc.insert,
     )
 

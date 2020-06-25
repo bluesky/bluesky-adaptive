@@ -20,10 +20,10 @@ import bluesky.plan_stubs as bps
 from event_model import RunRouter
 
 from .recommendations import NoRecommendation
-from .utils import extract_arrays
+from .utils import extract_event_page
 
 
-def per_event_recommender_factory(
+def recommender_factory(
     recommender, independent_keys, dependent_keys, *, max_count=10, queue=None
 ):
     """
@@ -77,11 +77,10 @@ def per_event_recommender_factory(
                 queue.put(None)
                 return
 
-            independent, measurement = extract_arrays(
+            independent, measurement = extract_event_page(
                 independent_keys, dependent_keys, doc["data"]
             )
-
-            recommender.tell(independent, measurement)
+            recommender.tell_many(independent, measurement)
             try:
                 next_point = recommender.ask(1)
             except NoRecommendation:
@@ -94,7 +93,7 @@ def per_event_recommender_factory(
     return rr, queue
 
 
-def per_event_adaptive_plan(
+def adaptive_plan(
     dets,
     first_point,
     *,
@@ -146,7 +145,7 @@ def per_event_adaptive_plan(
 
         Callable[List[OphydObj], Optional[str]] -> Generator[Msg], optional
 
-        Defaults to `trigger_and_read`
+        Defaults to `bluesky.plan_stubs.trigger_and_read`
     """
     # TODO inject args / kwargs here.
     _md = {"hints": {}}
