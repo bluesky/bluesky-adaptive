@@ -8,12 +8,18 @@
 ================================
 
 .. toctree::
-   :maxdepth: 2
+   :titlesonly:
 
    installation
    usage
    release-history
    min_versions
+
+
+.. warning::
+
+   This is currently under rapid development, the API may change at
+   any time.
 
 
 Adaptive-ness in plans
