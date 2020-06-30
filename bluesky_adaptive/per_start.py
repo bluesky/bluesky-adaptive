@@ -16,8 +16,6 @@ import uuid
 import itertools
 from queue import Queue
 
-import numpy as np
-
 import bluesky.preprocessors as bpp
 import bluesky.plan_stubs as bps
 import bluesky.plans as bp
