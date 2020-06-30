@@ -2,7 +2,8 @@
 
 
 class NoRecommendation(Exception):
-    "Exception to signal we have no recommended action."
+    """Exception to signal we have no recommended action."""
+
     ...
 
 

@@ -2,7 +2,6 @@
 
 import itertools
 import numpy as np
-import pandas as pd
 
 
 def chain_zip(motors, next_point):

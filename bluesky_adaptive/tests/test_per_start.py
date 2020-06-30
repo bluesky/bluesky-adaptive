@@ -15,9 +15,7 @@ def test_seq_recommender(RE, hw):
     dc = DocCollector()
 
     RE(
-        adaptive_plan(
-            [hw.det], {hw.motor: 0}, to_brains=cb, from_brains=queue
-        ),
+        adaptive_plan([hw.det], {hw.motor: 0}, to_brains=cb, from_brains=queue),
         dc.insert,
     )
 
