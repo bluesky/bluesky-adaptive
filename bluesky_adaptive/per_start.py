@@ -90,7 +90,7 @@ def recommender_factory(
         if name == "event_page":
 
             independent, measurement = extract_event_page(
-                independent_keys, dependent_keys, doc["data"]
+                independent_keys, dependent_keys, payload=doc["data"]
             )
             adaptive_obj.tell_many(independent, measurement)
             # pull the next point out of the adaptive API

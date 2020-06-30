@@ -68,19 +68,16 @@ def extract_event(independent_keys, dependent_keys, payload):
     return independent, measurement
 
 
-def extract_event_page(independent_keys, dependent_keys, payload):
+def extract_event_page(*key_lists, payload):
     """
-    Extract the independent and dependent data from EventPage['data'].
+    Extract sets of  data from EventPage['data'].
 
     This assumes that all values can be safely cast to the same type.
 
     Parameters
     ----------
-    independent_keys : List[str]
-        The names of the independent keys in the events
-
-    dependent_keys : List[str]
-        The names of the dependent keys in the events
+    key_list : varargs
+        The names of the keys in the events to extract
 
     payload : dict[str, List[Any]]
         The ev['data'] dict from an Event Model Event document.
@@ -94,10 +91,9 @@ def extract_event_page(independent_keys, dependent_keys, payload):
         A numpy array where the first axis maps to the dependent variables
 
     """
-    # This is your "motor positions"
-    independent = np.atleast_2d(np.asarray([payload[k] for k in independent_keys]))
-    # This is the extracted measurements
-    measurement = np.atleast_2d(np.asarray([payload[k] for k in dependent_keys]))
     # the data comes out of the EventPag "column major"
     # we transpose to get "row major"
-    return independent.T, measurement.T
+    return tuple(
+        np.atleast_2d(np.asarray([payload[k] for k in key_list])).T
+        for key_list in key_lists
+    )

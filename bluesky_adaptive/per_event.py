@@ -78,7 +78,7 @@ def recommender_factory(
                 return
 
             independent, measurement = extract_event_page(
-                independent_keys, dependent_keys, doc["data"]
+                independent_keys, dependent_keys, payload=doc["data"]
             )
             recommender.tell_many(independent, measurement)
             try:
