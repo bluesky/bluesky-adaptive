@@ -14,7 +14,7 @@ data collection.
 """
 import uuid
 import itertools
-from queue import Queue
+from queue import Queue, Empty
 
 import bluesky.preprocessors as bpp
 import bluesky.plan_stubs as bps
@@ -78,15 +78,22 @@ def recommender_factory(
     if queue is None:
         queue = Queue()
 
+    poisoned = None
+
     def callback(name, doc):
+        nonlocal poisoned
         # TODO handle multi-stream runs with more than 1 event!
         if name == "start":
             if doc["batch_count"] > max_count:
                 queue.put(None)
+                poisoned = True
                 return
+            else:
+                poisoned = False
 
         if name == "event_page":
-
+            if poisoned:
+                return
             independent, measurement = extract_event_page(
                 independent_keys, dependent_keys, payload=doc["data"]
             )
@@ -163,6 +170,13 @@ def adaptive_plan(
 
     @bpp.subs_decorator(to_brains)
     def gp_inner_plan():
+        # drain the queue in case there is anything left over from a previous
+        # run
+        while True:
+            try:
+                from_brains.get(block=False)
+            except Empty:
+                break
         uids = []
         next_point = first_point
         for j in itertools.count():
