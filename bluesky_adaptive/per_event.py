@@ -97,8 +97,8 @@ def adaptive_plan(
     dets,
     first_point,
     *,
-    to_brains,
-    from_brains,
+    to_recommender,
+    from_recommender,
     md=None,
     take_reading=bps.trigger_and_read
 ):
@@ -121,7 +121,7 @@ def adaptive_plan(
        recommendation engine is looking for / returning must be provided
        by these devices.
 
-    to_brains : Callable[str, dict]
+    to_recommender : Callable[document_name: str, document: dict]
        This is the callback that will be registered to the RunEngine.
 
        The expected contract is for each event it will place either a
@@ -130,7 +130,7 @@ def adaptive_plan(
        This plan will either move to the new position and take data
        if the value is a dict or end the run if `None`
 
-    from_brains : Queue
+    from_recommender : Queue
        The consumer side of the Queue that the recommendation engine is
        putting the recommendations onto.
 
@@ -163,7 +163,7 @@ def adaptive_plan(
     # from queue
     first_point = {m.name: v for m, v in first_point.items()}
 
-    @bpp.subs_decorator(to_brains)
+    @bpp.subs_decorator(to_recommender)
     @bpp.run_decorator(md=_md)
     def gp_inner_plan():
         next_point = first_point
@@ -173,7 +173,7 @@ def adaptive_plan(
             motor_position_pairs = itertools.chain(*target.items())
             yield from bps.mov(*motor_position_pairs)
             yield from take_reading(dets + motors, name="primary")
-            next_point = from_brains.get(timeout=1)
+            next_point = from_recommender.get(timeout=1)
             if next_point is None:
                 return
 

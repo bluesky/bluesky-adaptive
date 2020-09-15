@@ -23,7 +23,7 @@ def test_seq_recommender(RE, hw):
     queue.put({})
 
     RE(
-        adaptive_plan([hw.det], {hw.motor: 0}, to_brains=cb, from_brains=queue),
+        adaptive_plan([hw.det], {hw.motor: 0}, to_recommender=cb, from_recommender=queue),
         dc.insert,
     )
 
