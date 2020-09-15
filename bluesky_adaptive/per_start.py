@@ -111,7 +111,7 @@ def recommender_factory(
 
 
 def adaptive_plan(
-    dets, first_point, *, to_brains, from_brains, md=None, take_reading=bp.count
+    dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count
 ):
     """
     Execute an adaptive scan using an inter-run recommendation engine.
@@ -129,7 +129,7 @@ def adaptive_plan(
        recommendation engine is looking for / returning must be provided
        by these devices.
 
-    to_brains : Callable[str, dict]
+    to_recommender : Callable[document_name: str, document: dict]
        This is the callback that will be registered to the RunEngine.
 
        The expected contract is for each event it will place either a
@@ -138,7 +138,7 @@ def adaptive_plan(
        This plan will either move to the new position and take data
        if the value is a dict or end the run if `None`
 
-    from_brains : Queue
+    from_recommender : Queue
        The consumer side of the Queue that the recommendation engine is
        putting the recommendations onto.
 
@@ -168,13 +168,13 @@ def adaptive_plan(
 
     _md.update(md or {})
 
-    @bpp.subs_decorator(to_brains)
+    @bpp.subs_decorator(to_recommender)
     def gp_inner_plan():
         # drain the queue in case there is anything left over from a previous
         # run
         while True:
             try:
-                from_brains.get(block=False)
+                from_recommender.get(block=False)
             except Empty:
                 break
         uids = []
@@ -188,7 +188,7 @@ def adaptive_plan(
             uid = yield from take_reading(dets + motors, md={**_md, "batch_count": j})
             uids.append(uid)
 
-            next_point = from_brains.get(timeout=1)
+            next_point = from_recommender.get(timeout=1)
             if next_point is None:
                 return
 
