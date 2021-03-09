@@ -154,8 +154,8 @@ def recommender_factory(
         (independent_key,) = independent_keys
         (dependent_key,) = dependent_keys
         independent = ds[independent_key]
-        measurement = ds[dependent_key]
-        adaptive_obj.tell_many(independent, measurement)
+        measurement = ds[dependent_key].median()
+        adaptive_obj.tell_many(independent, (measurement, ))
         # pull the next point out of the adaptive API
         try:
             next_point = adaptive_obj.ask(1)
