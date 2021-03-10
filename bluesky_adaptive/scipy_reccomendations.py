@@ -48,7 +48,7 @@ class MinimizerReccomender:
                 # straight away
                 gen.send(None)
 
-                self.result = minimize(lambda x: gen.send(x), init)
+                self.result = minimize(gen.send, init)
                 self._minimizer_done.set()
                 gen.close()
 
