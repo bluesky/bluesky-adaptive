@@ -13,5 +13,6 @@ sphinx-copybutton
 sphinx_rtd_theme
 
 bluesky
-ophyd
 databroker
+ophyd
+scipy
