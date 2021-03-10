@@ -24,23 +24,33 @@ class MinimizerReccomender:
         self._thread = None
 
     def tell(self, x, y):
-        print(f"tell {x=}, {y=}")
         self._internal_from_exp.put(y * self._scale)
         if self._thread is None:
 
             def minimize_worker(init):
-                first_time = True
-
-                def inner_worker(x):
-                    nonlocal first_time
-                    if first_time:
-                        first_time = False
-                    else:
+                def inner_gen():
+                    # this is the yield to absorb the pump
+                    yield None
+                    # the initial point is where the first measurement
+                    # already is.  The x will be the next value
+                    x = yield self._internal_from_exp.get()
+                    while True:
+                        # which we that put on the out queue which will be
+                        # picked up by "ask"
                         self._internal_to_exp.put(x)
-                    return self._internal_from_exp.get()
+                        # we then block (the background thread) on getting the
+                        # next measurement which will be put in place by the
+                        # next call to tell
+                        x = yield self._internal_from_exp.get()
 
-                self.result = minimize(inner_worker, init)
+                gen = inner_gen()
+                # prime the generator so we can get start with real values
+                # straight away
+                gen.send(None)
+
+                self.result = minimize(lambda x: gen.send(x), init)
                 self._minimizer_done.set()
+                gen.close()
 
             self._thread = Thread(target=minimize_worker, args=(x,))
             self._thread.start()
@@ -50,7 +60,6 @@ class MinimizerReccomender:
             self.tell(x, y)
 
     def ask(self, n, tell_pending=True):
-        print(f"top of ask, {self._minimizer_done.is_set()=}")
         if self._minimizer_done.is_set():
             raise NoRecommendation
         try:
@@ -58,5 +67,4 @@ class MinimizerReccomender:
         except Empty:
             raise NoRecommendation
         else:
-            print(f"ask {ret=}")
             return ret
