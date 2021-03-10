@@ -6,7 +6,7 @@ from bluesky_adaptive.per_start import adaptive_plan
 from bluesky_adaptive.on_stop import recommender_factory
 
 
-def test_seq_recommender(RE, hw):
+def test_scipy_minimize_recommender(RE, hw):
     pytest.importorskip("scipy")
     from bluesky_adaptive.scipy_reccomendations import MinimizerReccomender
 
