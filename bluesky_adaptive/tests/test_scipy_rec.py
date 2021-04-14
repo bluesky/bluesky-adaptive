@@ -1,6 +1,6 @@
 import pytest
 import bluesky.plan_stubs as bps
-
+import numpy as np
 
 from bluesky_adaptive.per_start import adaptive_plan
 from bluesky_adaptive.on_stop import recommender_factory
@@ -15,7 +15,11 @@ def test_scipy_minimize_recommender(RE, hw):
     def do_the_thing(det, det_key):
         recommender = MinimizerReccomender(scale=-1)
         cb, queue = recommender_factory(
-            recommender, ["motor"], [det_key], max_count=100
+            recommender,
+            ["np.mean(motor)"],
+            [det_key],
+            ["motor"],
+            max_count=100,
         )
         yield from adaptive_plan(
             [det], {hw.motor: 1}, to_recommender=cb, from_recommender=queue
@@ -24,7 +28,7 @@ def test_scipy_minimize_recommender(RE, hw):
         print(recommender.result)
         results_list.append(recommender.result)
 
-    RE(do_the_thing(hw.det, "det"), print)
-    RE(do_the_thing(hw.img, "img"), print)
+    RE(do_the_thing(hw.det, "np.asarray(det)"))
+    RE(do_the_thing(hw.img, "np.median(img)"))
     assert len(results_list) == 2
     assert all(_ is not None for _ in results_list)

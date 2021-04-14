@@ -17,6 +17,7 @@ from queue import Queue
 from .recommendations import NoRecommendation
 
 from bluesky_live.bluesky_run import BlueskyRun, DocumentCache
+from bluesky_widgets.models.utils import call_or_eval
 import event_model
 
 from ophyd.sim import NumpySeqHandler
@@ -84,8 +85,9 @@ def recommender_factory(
     adaptive_obj,
     independent_keys,
     dependent_keys,
+    target_keys,
     *,
-    stream_name="primary",
+    stream_names=("primary",),
     max_count=10,
     queue=None
 ):
@@ -108,16 +110,23 @@ def recommender_factory(
     Parameters
     ----------
     adaptive_object : adaptive.BaseLearner
-        The recommendation engine
+        The recommendation engine.  Must implement
 
-    stream_name: str
-        Name of event stream to grab keys from
+    independent_keys : List[String | Callable]
+        Each value must be a stream name, field name, a valid Python
+        expression, or a callable. The signature of the callable may include
+        any valid Python identifiers provideed by :func:`construct_namespace`
+        or the user-provided namespace parmeter below. See examples.
 
-    independent_keys : List[str]
-        The names of the independent keys in the events
+    dependent_keys : List[String | Callable]
+        Each value must be a stream name, field name, a valid Python
+        expression, or a callable. The signature of the callable may include
+        any valid Python identifiers provideed by :func:`construct_namespace`
+        or the user-provided namespace parmeter below. See examples.
 
-    dependent_keys : List[str]
-        The names of the dependent keys in the events
+    target_keys : List[String]
+        Keys passed back to the plan, must be the same length as
+        the return of `adaptive_obj.ask(1)`
 
     max_count : int, optional
         The maximum number of measurements to take before poisoning the queue.
@@ -136,6 +145,9 @@ def recommender_factory(
         The communication channel between the callback and the plan.  This
         is always returned (even if the user passed it in).
 
+    stream_names : Tuple[Strting], default ("primary",)
+        The streams to be offered to the
+
     """
 
     if queue is None:
@@ -146,19 +158,26 @@ def recommender_factory(
         run = event.run
         print(run)
 
-        ds = run[stream_name].read()
-        (independent_key,) = independent_keys
-        (dependent_key,) = dependent_keys
-        independent = ds[independent_key]
-        measurement = ds[dependent_key].median()
-        adaptive_obj.tell_many(independent, (measurement,))
+        independent_map = call_or_eval(
+            {j: val for j, val in enumerate(independent_keys)}, run, stream_names
+        )
+        dependent_map = call_or_eval(
+            {j: val for j, val in enumerate(dependent_keys)}, run, stream_names
+        )
+
+        independent = tuple(independent_map[j] for j in range(len(independent_keys)))
+        measurement = tuple(dependent_map[j] for j in range(len(dependent_keys)))
+        adaptive_obj.tell_many(independent, measurement)
         # pull the next point out of the adaptive API
         try:
             next_point = adaptive_obj.ask(1)
         except NoRecommendation:
             queue.put(None)
         else:
-            queue.put({k: v for k, v in zip(independent_keys, next_point)})
+            if run.metadata["start"].get("batch_count") >= max_count:
+                queue.put(None)
+            else:
+                queue.put({k: v for k, v in zip(target_keys, next_point)})
 
     def tell_recommender_on_completion(run):
         run.events.completed.connect(tell_recommender)
