@@ -15,10 +15,10 @@ def test_scipy_minimize_recommender(RE, hw):
     def do_the_thing(det, det_key):
         recommender = MinimizerReccomender(scale=-1)
         cb, queue = recommender_factory(
-            recommender,
-            ["np.mean(motor)"],
-            [det_key],
-            ["motor"],
+            adaptive_obj=recommender,
+            independent_keys=["np.mean(motor)"],
+            dependent_keys=[det_key],
+            target_keys=["motor"],
             max_count=100,
         )
         yield from adaptive_plan(

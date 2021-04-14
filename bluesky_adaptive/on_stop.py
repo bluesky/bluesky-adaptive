@@ -82,11 +82,11 @@ def stream_documents_into_runs(add_run):
 
 
 def recommender_factory(
+    *,
     adaptive_obj,
     independent_keys,
     dependent_keys,
     target_keys,
-    *,
     stream_names=("primary",),
     max_count=10,
     queue=None,
