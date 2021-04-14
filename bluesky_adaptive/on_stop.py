@@ -19,6 +19,8 @@ from .recommendations import NoRecommendation
 from bluesky_live.bluesky_run import BlueskyRun, DocumentCache
 import event_model
 
+from ophyd.sim import NumpySeqHandler
+
 
 def stream_documents_into_runs(add_run):
     """
@@ -74,7 +76,7 @@ def stream_documents_into_runs(add_run):
         dc.events.started.connect(build_and_add_run)
         return [dc], []
 
-    rr = event_model.RunRouter([factory])
+    rr = event_model.RunRouter([factory], handler_registry={"NPY_SEQ": NumpySeqHandler})
     return rr
 
 
@@ -149,7 +151,7 @@ def recommender_factory(
         (dependent_key,) = dependent_keys
         independent = ds[independent_key]
         measurement = ds[dependent_key].median()
-        adaptive_obj.tell_many(independent, (measurement, ))
+        adaptive_obj.tell_many(independent, (measurement,))
         # pull the next point out of the adaptive API
         try:
             next_point = adaptive_obj.ask(1)
