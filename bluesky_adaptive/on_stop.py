@@ -89,7 +89,8 @@ def recommender_factory(
     *,
     stream_names=("primary",),
     max_count=10,
-    queue=None
+    queue=None,
+    target_transforms=None
 ):
     """
     Generate the callback and queue for an Adaptive API backed reccomender.
@@ -148,15 +149,24 @@ def recommender_factory(
     stream_names : Tuple[Strting], default ("primary",)
         The streams to be offered to the
 
+
+    target_transforms : Dict[String, Callable], optional
+        Transforms to be applied to the values from ask before returning
+        to the run engine.  This can be useful handling trivial coordinate
+        transformations.
+
+
     """
 
     if queue is None:
         queue = Queue()
 
+    if target_transforms is None:
+        target_transforms = {}
+
     def tell_recommender(event):
 
         run = event.run
-        print(run)
 
         independent_map = call_or_eval(
             {j: val for j, val in enumerate(independent_keys)}, run, stream_names
@@ -177,7 +187,12 @@ def recommender_factory(
             if run.metadata["start"].get("batch_count") >= max_count:
                 queue.put(None)
             else:
-                queue.put({k: v for k, v in zip(target_keys, next_point)})
+                queue.put(
+                    {
+                        k: target_transforms.get(k, lambda x: x)(v)
+                        for k, v in zip(target_keys, next_point)
+                    }
+                )
 
     def tell_recommender_on_completion(run):
         run.events.completed.connect(tell_recommender)
