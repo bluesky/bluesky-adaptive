@@ -1,4 +1,6 @@
 # List required packages in this file, one per line.
 
 bluesky
+bluesky-live
+bluesky-widgets
 numpy
