@@ -38,56 +38,110 @@ and the plan can be at many levels of fidelity:
 - beamline alignment / tuning / sample centering
 - auto-exposure
 - selecting points in phase space to measure next
+- controlling the speed of a temperature ramp
 - selecting what sample to measure next
+- driving synthesis and simulation workloads
 
-Adaptive-ness can be inserted into the data collection process at several levels
+This package provides a set of reference tools for implementing in-the-loop
+feedback on scientific signals on the seconds-to-minutes time scale in the
+context of the `bluesky project <https://blueskyproject.io/>`__.
+
+
+Dimensions of Adaptive-ness
+---------------------------
+
+Given the breadth of what can be considered "adaptive", we propose breaking
+these down along three axis: the coordination motif, the source of the signal
+we are using for the feedback and the timescale of the feedback loop.
+
+The communication between the plan and the recommendation engine can either be
+synchronous, "in-the-loop", or asynchronous.  In the synchronous case we block
+progress on the scan while we wait for the next recommendation (based on the
+freshest data!).  This is best for cases where the cost of generating the
+recommendation is low and the cost of taking the wrong measurement is high.
+For example, this motif is very natural when using AI to drive the scanning
+of a 2D sample.  However, synchronous communication implies a very tight coupling
+between the plan and the recommendation engine which is not always desirable.  We
+can achieve looser coupling by using asynchronous communication where the
+plan is able to continue running and periodically checks for input from the
+recommendation engines.   Examples of this include the suspenders concept
+built in the RunEnigne which can be used to pause and resume the experiment if
+the beam dumps.  Another example is a temperature ramp where the ramp rate is
+dynamically controlled by machine (or human) intervention.
+
+The information that we want to feedback on can be roughly classified into two
+categories: engineering values and scientific values.  Engineering values are
+things like the current ring current, the flux of x-rays in an ion chamber, or
+if the shutters are open.  These are things that the control systems provide
+and if they are in bad states will result is useless data, however interpreting
+them does not require knowing anything about the sample or science being done.
+On the other hand science signal are very tightly coupled to the current
+experiment and their interpretation is context dependent.  In the case of
+studying a phase change a sudden drop in intensity may indicate that you are
+near the transition point or grain boundary and should slow down to collect
+more data about this region of phase space.  On the other hand, if you are
+trying to map a sample with fluorescence a drop in intensity may indicate you
+have scanned off the sample and need to scan back as this part of the phase
+space has no scientific value!
+
+The final dimension of adaptive experiments is timescale on which the feedback
+needs to happen.  This is controlled by both how long the computations take and
+how quickly the system can respond to the feedback.  For example, a PID loop
+that maintains the alignment of a mirror is an adaptive experiment, the control
+system is changing the hardware based of measurements, but the need to respond
+on the sub-ms timescale leaves very little time budget for computation!  On the
+other hand, if you want to use experimental results to guide what chemical
+synthesis to run, and the synthesis takes a day to complete, you have a
+significantly bigger computation budget.  There are natural scales at sub-ms,
+best handled in the control system, sub-second for per-step adaptive and
+suspender logic, second-to-minute for inter-run, and minutes-to-longer.
+
+Each combination of communication motif, signal class, and timescale has a use
+and which ones to pick will depend on the requirements and constraints on a
+per-facility, per-beamline, and per-experiment basis.  A given experiment may
+even make use of adaptivness from multiple levels!  There is abundant prior art
+in this space, being able to feedback measurements to acquisition is not a
+novel idea.
+
+
+Bluesky Integration layer
+-------------------------
+
+
+Adaptive-ness can be inserted into the data collection process at several
+levels, primarily driven by the timescale of the feedback.
 
 1. below ``bluesky`` and in (or below) the control system
 2. in ``bluesky`` plans, but without generating `~event_model.DocumentNames.event`
 3. providing feedback on a per-`~event_model.DocumentNames.event` basis
 4. providing feedback on a per-run / `~event_model.DocumentNames.start` basis
-5. asynchronous and decoupled feedback
-6. providing feedback across many runs
+5. providing feedback across many runs
 
-Each of these level of fidelity and interaction has a use and which
-ones to pick will depend on the requirements and constraints on a
-per-facility, per-beamline, and per-experiment basis.  A given
-experiment may even make use of adaptivness from multiple levels!
 
-There is abundant prior art in this space, being able to feedback
-measurements to acquisition is not a novel idea.  This package
-provides a set of reference tools for implementing levels 3 and 4 of
-these feedback loops in the context of the `bluesky project
-<https://blueskyproject.io/>`__ for any fidelity or application.
-
-Integration layer
------------------
 
 In or below the controls system
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-If you need to make decisions on very short time scales (and have a
-computation than can fit in the time budget) doing "adaptive" in or
-below the control system maybe a good choice.  One example of this is
-in the scaler devices that are used as the backend electronics for
-integrating point detector on many beamlines.  Typically they are
-configured to take a fixed length exposure, however they can be
-configured to gate on any of the channels.  Thus by gating on the I0
-(incoming photon flux) channel your other wise fixed plan would
-"adapt" the exposure time to account for upstream fluctuations in
-photon intensity.
+If you need to make decisions on very short time scales (and have a computation
+than can fit in the time budget) doing "adaptive" in or below the control
+system maybe a good choice.  One example of this is in the scaler devices that
+are used as the backend electronics for integrating point detector on many
+beamlines.  Typically they are configured to take a fixed length exposure,
+however they can be configured to gate on any of the channels.  Thus by gating
+on the I0 (incoming photon flux) channel your other wise fixed plan would
+"adapt" the exposure time to account for upstream fluctuations in photon
+intensity.
 
-You could also imagine a scenario with an imaging detector where we
-have an efficient way of telling if the image contains "good" data or
-not.  If we put the logic in the image acquisition pipe line we loud
-ask to take "N *good* images" and the plan would adapt by taking as
-many frames as required until the requested number of good frames were
-captured.
+You could also imagine a scenario with an imaging detector where we have an
+efficient way of telling if the image contains "good" data or not.  If we put
+the logic in the image acquisition pipe line we could ask to take "N *good*
+images" and the plan would adapt by taking as many frames as required until the
+requested number of good frames were captured.
 
 Configuring adaptiveness at this level can provide huge benefits, it
-transparently works for any plan we run, but can be very time
-consuming to develop and may be hardware-specific.  In general this
-level of adaptiveness is out-of-scope for this package.
+transparently works for any plan we run, but can be very time consuming to
+develop and may be hardware-specific.  In general this level of adaptiveness is
+out-of-scope for this package.
 
 In plans, but below Events
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -147,73 +201,56 @@ XANES scan and then focus on points of interest with in the map.
 
    bluesky_adaptive.per_start.recommender_factory
    bluesky_adaptive.per_start.adaptive_plan
+   bluesky_adaptive.on_stop.recommender_factory
 
-
-Asynchronous and decoupled feedback
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-In some cases we do want or need a tightly coupled synchronous
-coordination between data collection and the computation.  In both the
-per-event and per-run levels, the plan is expecting a 1:1 response
-from the recommendation engine for each piece of data collected.  In
-general, the plan has to wait for the response from algorithm before
-continuing and the communication channel between the plan.  Further, the
-communication between the algorithm and the plan necessarily very rich so
-the plan and the brains need to be fairly well coordinated.
-
-If instead we wanted to have an agent watching the data and assessing
-the quality.  If we detect we have collected enough data on the sample
-and further exposure would waste beamtime and put excess dose on the
-sample we want to complete the plan early.  Conversely, if we detect
-that the data is junk (like the sample is no longer in the beam) we
-want to abort the plan.  While this watch dog process can save us
-time, we do not want to slow down data collection to wait for
-permission to continue at every point.  In this case we only need to
-convey 3 possible states to the RunEngine and plan ``{'keep going',
-'you have enough data', 'this data is garbage please stop'}``.  In an
-analogy to `Suspenders
-<https://blueskyproject.io/bluesky/state-machine.html#automated-suspension>`__,
-this can be done at the RunEnigne level (as has been done at APS) so
-the plan does not need to even be aware of the watch dog to benefit
-from it.
-
-A slightly more coupled example of asynchronous feedback is a 1D scan
-that looks at a PV (or other shared state) for what its step size is.
-If the step size is set by a user to a fixed value an the plan run it behaves
-as a normal `~bluesky.plans.scan` with a fixed step size.  However,
-there could be an agent (or a human!) watching the data and adjusting
-the step size based on the how "interesting" the data currently looks.
-
-In both of these cases the feedback is adding value without imposing
-a cost to the plans and the failure mode of the computation failing is
-the current status quo.
-
-There are many ways that asynchronous feedback can be configured and
-implemented and is out of scope for this package.
 
 
 
 Per-many-runs
 ~~~~~~~~~~~~~
 
-At this scale we need to collect and process the results from many run
-before making any recommendations as to the next step.  While this can
-be thought of as a variation of the per-run level, this requires
-significant additional infrastructure (such as a reliable plan queuing
-system) and is out of scope for this project.
+At this scale we need to collect and process the results from many run before
+making any recommendations as to the next step.  While this can be thought of
+as a variation of the per-run level, this requires additional infrastructure
+for reliable plan queuing, as implemented by `queueserver
+<https://blueskyproject.io/bluesky-queueserver>`_, and is out of scope for this
+project.
 
 
 
-Implementation and deployment concerns
---------------------------------------
+Asynchronous and decoupled feedback
+-----------------------------------
 
-Details that need to be worked out
+In some cases we do want or need a tightly coupled synchronous coordination
+between data collection and the computation.  In both the per-event and per-run
+levels, the plan is expecting a 1:1 response from the recommendation engine for
+each piece of data collected.  In general, the plan has to wait for the
+response from algorithm before continuing.
 
- - make sure the plan and agent agree on the Document schema
- - how the documents get to the Agent (and any pre-processing / data
-   reduction that needs to be done
- - how the data will be routed back to the plan
- - the schema of the data going from the recommendation engine to the plan
- - how to handle back-pressure
- - how to handle the plan / agent getting "out of sync"
- - how to handle the agent going quiet
+Alternatively, we may instead want have an agent watching the data and
+assessing the quality.  If we detect we have collected enough data on the
+sample and further exposure would waste beamtime and put excess dose on the
+sample we want to complete the plan early.  Conversely, if we detect that the
+data is junk (like the sample is no longer in the beam) we want to abort the
+plan.  While this watch dog process can save us time, we do not want to slow
+down data collection to wait for permission to continue at every point!  In
+this case we only need to convey 3 possible states to the RunEngine and plan
+``{'keep going', 'you have enough data', 'this data is garbage please stop'}``.
+In an analogy to `Suspenders
+<https://blueskyproject.io/bluesky/state-machine.html#automated-suspension>`__,
+this can be done at the RunEnigne level (as has been done at APS) so the plan
+does not need to even be aware of the watch dog to benefit from it.
+
+A slightly more coupled example of asynchronous feedback is a 1D scan that
+looks at a PV (or other shared state) for what its step size is.  If the step
+size is set by a user to a fixed value an the plan run it behaves as a standard
+`~bluesky.plans.scan` with a fixed step size.  However, there could be an agent
+(or a human!) watching the data and adjusting the step size based on the how
+"interesting" the data currently looks.  By this mechanism we would spend more
+time collecting data in "interesting" parts of phase space and extract more
+science for a given amount of beamtime.
+
+In both of these cases the feedback is adding value without imposing a cost to
+the plans and the failure mode of the computation failing is the current status
+quo.  There are many ways that asynchronous feedback can be
+implemented and is out of scope for this package.
