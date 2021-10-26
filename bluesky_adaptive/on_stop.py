@@ -110,7 +110,7 @@ def recommender_factory(
 
     Parameters
     ----------
-    adaptive_object : adaptive.BaseLearner
+    adaptive_obj : adaptive.BaseLearner
         The recommendation engine.  Must implement
 
     independent_keys : List[String | Callable]
@@ -129,12 +129,20 @@ def recommender_factory(
         Keys passed back to the plan, must be the same length as
         the return of `adaptive_obj.ask(1)`
 
+    stream_names : Tuple[String], default ("primary",)
+        The streams to be offered to the
+
     max_count : int, optional
         The maximum number of measurements to take before poisoning the queue.
 
     queue : Queue, optional
         The communication channel for the callback to feedback to the plan.
         If not given, a new queue will be created.
+
+    target_transforms : Dict[String, Callable], optional
+        Transforms to be applied to the values from ask before returning
+        to the run engine.  This can be useful handling trivial coordinate
+        transformations.
 
     Returns
     -------
@@ -145,16 +153,6 @@ def recommender_factory(
     queue : Queue
         The communication channel between the callback and the plan.  This
         is always returned (even if the user passed it in).
-
-    stream_names : Tuple[Strting], default ("primary",)
-        The streams to be offered to the
-
-
-    target_transforms : Dict[String, Callable], optional
-        Transforms to be applied to the values from ask before returning
-        to the run engine.  This can be useful handling trivial coordinate
-        transformations.
-
 
     """
 
