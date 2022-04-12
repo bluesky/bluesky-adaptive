@@ -1,4 +1,5 @@
 """Toy recommendation engines for testing / demo purposes."""
+from .agents import BaseAgent
 
 
 class NoRecommendation(Exception):
@@ -7,7 +8,7 @@ class NoRecommendation(Exception):
     ...
 
 
-class StepRecommender:
+class StepRecommender(BaseAgent):
     """A very naive recommendation engine that takes a fixed step forward."""
 
     def __init__(self, step):
@@ -36,7 +37,7 @@ class StepRecommender:
         return self.next_point
 
 
-class SequenceRecommender:
+class SequenceRecommender(BaseAgent):
     """A very naive recommendation engine that takes a fixed step forward."""
 
     def __init__(self, seq):

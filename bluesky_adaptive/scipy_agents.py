@@ -3,9 +3,10 @@ from threading import Thread, Event
 from queue import Empty, Queue
 
 from bluesky_adaptive.recommendations import NoRecommendation
+from bluesky_adaptive.agents import BaseAgent
 
 
-class MinimizerReccomender:
+class MinimizerAgent(BaseAgent):
     """A very naive recommendation engine that uses scipy.optomize.minimize"""
 
     def __init__(self, scale=1):

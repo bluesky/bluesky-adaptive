@@ -7,12 +7,12 @@ from bluesky_adaptive.on_stop import recommender_factory
 
 def test_scipy_minimize_recommender(RE, hw):
     pytest.importorskip("scipy")
-    from bluesky_adaptive.scipy_reccomendations import MinimizerReccomender
+    from bluesky_adaptive.scipy_agents import MinimizerAgent
 
     results_list = []
 
     def do_the_thing(det, det_key):
-        recommender = MinimizerReccomender(scale=-1)
+        recommender = MinimizerAgent(scale=-1)
         cb, queue = recommender_factory(
             adaptive_obj=recommender,
             independent_keys=["np.mean(motor)"],
@@ -20,9 +20,7 @@ def test_scipy_minimize_recommender(RE, hw):
             target_keys=["motor"],
             max_count=100,
         )
-        yield from adaptive_plan(
-            [det], {hw.motor: 1}, to_recommender=cb, from_recommender=queue
-        )
+        yield from adaptive_plan([det], {hw.motor: 1}, to_recommender=cb, from_recommender=queue)
         yield from bps.mv(hw.motor, recommender.result.x)
         print(recommender.result)
         results_list.append(recommender.result)
