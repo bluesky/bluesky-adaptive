@@ -4,3 +4,6 @@ bluesky
 bluesky-live
 bluesky-widgets
 numpy
+ophyd
+scipy
+pandas
