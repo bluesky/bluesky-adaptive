@@ -43,3 +43,12 @@ def test_seq_summary_agent(RE, hw):
     )
     assert agent.n_reports == 4
     assert not any(agent.last_summary.isna())
+
+    # Reporting every 2 runs
+    agent = SequentialSummaryAgent([[1], [2], [3]], verbose=False)
+    cb, queue = recommender_factory(agent, ["motor"], ["det"], report_period=2)
+    RE(
+        adaptive_plan([hw.det], {hw.motor: 0}, to_recommender=cb, from_recommender=queue),
+    )
+    assert agent.n_reports == 2
+    assert not any(agent.last_summary.isna())

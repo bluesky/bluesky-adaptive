@@ -80,6 +80,7 @@ class SequentialSummaryAgent(BaseAgent):
         self.n_reports = 0  # Number of reports is mainly just tracked for testing.
 
     def tell(self, x, y):
+        """Caches data and updates summary"""
         self.independents.append(x)
         self.dependents.append(y)
         self.last_summary = pd.Series(self.dependents).describe()

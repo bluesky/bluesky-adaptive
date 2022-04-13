@@ -27,12 +27,10 @@ from .utils import extract_event_page
 
 
 def recommender_factory(
-    adaptive_obj, independent_keys, dependent_keys, *, max_count=10, queue=None
+    adaptive_obj, independent_keys, dependent_keys, *, max_count=10, report_period=0, queue=None
 ):
     """
-    Generate the callback and queue for an Adaptive API backed reccomender.
-
-    This recommends a fixed step size independent of the measurement.
+    Generate the callback and queue for an Adaptive API backed recommender.
 
     For each Run (aka Start) that the callback sees it will place
     either a recommendation or `None` into the queue.  Recommendations
@@ -47,8 +45,8 @@ def recommender_factory(
 
     Parameters
     ----------
-    adaptive_object : adaptive.BaseLearner
-        The recommendation engine
+    adaptive_obj : BaseAgent
+        The recommendation engine. This will be an Agent child class with an implementation of ``ask``.
 
     independent_keys : List[str]
         The names of the independent keys in the events
@@ -58,6 +56,10 @@ def recommender_factory(
 
     max_count : int, optional
         The maximum number of measurements to take before poisoning the queue.
+
+    report_period : int, optional
+        The number of runs per each report generated. Defaults to no reporting.
+        A period value less than 1 will default to no reporting.
 
     queue : Queue, optional
         The communication channel for the callback to feedback to the plan.
@@ -90,13 +92,14 @@ def recommender_factory(
                 return
             else:
                 poisoned = False
+                # Don't report during first period
+                if (0 < report_period <= doc["batch_count"]) and doc["batch_count"] % report_period == 0:
+                    adaptive_obj.report()
 
         if name == "event_page":
             if poisoned:
                 return
-            independent, measurement = extract_event_page(
-                independent_keys, dependent_keys, payload=doc["data"]
-            )
+            independent, measurement = extract_event_page(independent_keys, dependent_keys, payload=doc["data"])
             adaptive_obj.tell_many(independent, measurement)
             # pull the next point out of the adaptive API
             try:
@@ -110,9 +113,7 @@ def recommender_factory(
     return rr, queue
 
 
-def adaptive_plan(
-    dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count
-):
+def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count):
     """
     Execute an adaptive scan using an inter-run recommendation engine.
 
