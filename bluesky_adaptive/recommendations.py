@@ -1,5 +1,6 @@
 """Toy recommendation engines for testing / demo purposes."""
 from .agents import BaseAgent
+import pandas as pd
 
 
 class NoRecommendation(Exception):
@@ -65,3 +66,34 @@ class SequenceRecommender(BaseAgent):
             return next(self.seq_iter)
         except StopIteration:
             raise NoRecommendation
+
+
+class SequentialSummaryAgent(BaseAgent):
+    """Simple agent reports a statistical summary of data and is a sequence recommender"""
+
+    def __init__(self, seq, verbose=True):
+        self.seq_iter = iter(seq)
+        self.independents = []
+        self.dependents = []
+        self.last_summary = None
+        self.verbose = verbose
+        self.n_reports = 0  # Number of reports is mainly just tracked for testing.
+
+    def tell(self, x, y):
+        self.independents.append(x)
+        self.dependents.append(y)
+        self.last_summary = pd.Series(self.dependents).describe()
+
+    def ask(self, batch_size):
+        if batch_size != 1:
+            raise NotImplementedError
+        try:
+            return next(self.seq_iter)
+        except StopIteration:
+            raise NoRecommendation
+
+    def report(self):
+        self.n_reports += 1
+        if self.verbose:
+            print(self.last_summary)
+        return self.last_summary
