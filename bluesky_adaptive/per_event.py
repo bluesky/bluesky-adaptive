@@ -10,7 +10,6 @@ and the computation is amenable to streaming analysis.
 This is a "fine" grained integration of the adaptive logic into data acquisition.
 
 """
-
 from queue import Queue
 import itertools
 
@@ -23,7 +22,9 @@ from .recommendations import NoRecommendation
 from .utils import extract_event_page
 
 
-def recommender_factory(recommender, independent_keys, dependent_keys, *, max_count=10, queue=None):
+def recommender_factory(
+    recommender, independent_keys, dependent_keys, *, max_count=10, report_period=0, queue=None
+):
     """
     Generate the callback and queue for Adaptive integration.
 
@@ -37,8 +38,8 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
 
     Parameters
     ----------
-    recommender :
-        The recommendation engine
+    recommender : BaseAgent
+        The recommendation engine. This will be an Agent child class with an implementation of ``ask``.
 
     independent_keys : List[str]
         The names of the independent keys in the events
@@ -48,6 +49,10 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
 
     max_count : int, optional
         The maximum number of measurements to take before poisoning the queue.
+
+    report_period : int, optional
+        The number of events per each report generated. Defaults to no reporting.
+        A value period less than 1 will default to no reporting.
 
     queue : Queue, optional
         The communication channel for the callback to feedback to the plan.
@@ -77,6 +82,8 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
 
             independent, measurement = extract_event_page(independent_keys, dependent_keys, payload=doc["data"])
             recommender.tell_many(independent, measurement)
+            if report_period > 0 and doc["seq_num"][-1] % report_period == 0:
+                recommender.report()
             try:
                 next_point = recommender.ask(1)
             except NoRecommendation:
