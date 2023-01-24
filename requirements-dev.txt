@@ -16,3 +16,4 @@ bluesky
 databroker
 ophyd
 scipy
+pre-commit
