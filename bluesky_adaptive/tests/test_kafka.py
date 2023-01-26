@@ -165,7 +165,7 @@ def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, te
         assert len(consumed_docs) == 2
 
 
-def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config, temporary_topics):
+def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config, temporary_topics, caplog):
     class DummyAgent:
         agent_name = "dummy_agent"
 
@@ -215,6 +215,7 @@ def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config,
         )
 
         publisher("dummy_agent", dict(action="increase", args=[], kwargs={}))
+        publisher("dummy_agent", dict(action="decrease", args=[], kwargs={}))
         publisher("start", {"uid": "123"})
         publisher("stop", {"start": "123"})
 
@@ -224,3 +225,4 @@ def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config,
         # Only bluesky documents get consumed by the callbacks
         assert len(consumed_docs) == 2
         assert len(agent.cache) == 2
+        assert "Unavailable action sent to agent" in caplog.text

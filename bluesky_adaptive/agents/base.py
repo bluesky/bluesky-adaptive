@@ -84,9 +84,9 @@ class AgentConsumer(RemoteDispatcher):
         try:
             getattr(self._agent, action)(*args, **kwargs)
         except AttributeError as e:
-            logger.warn(f"Unavailable action sent to agent {self._agent.agent_name} on topic: {topic}\n" f"{e}")
+            logger.error(f"Unavailable action sent to agent {self._agent.agent_name} on topic: {topic}\n" f"{e}")
         except TypeError as e:
-            logger.warn(
+            logger.error(
                 f"Type error for {action} sent to agent {self._agent.agent_name} on topic: {topic}\n"
                 f"Are you sure your args and kwargs were appropriate?\n"
                 f"Args received: {args}\n"
