@@ -4,7 +4,7 @@ from bluesky_adaptive.agents.base import AgentConsumer
 
 
 def test_pubsub_smoke(temporary_topics, publisher_factory, consume_documents_from_kafka_until_first_stop_document):
-
+    """Smoke test to make sure bluesky-kafka is performing with helper functions"""
     with temporary_topics(topics=["test.publisher.and.subscriber"]) as (topic,):
         bluesky_publisher = publisher_factory(
             topic=topic,
@@ -23,7 +23,7 @@ def test_pubsub_smoke2(
     kafka_bootstrap_servers,
     consume_documents_from_kafka_until_first_stop_document,
 ):
-
+    """Smoke test to make sure bluesky-kafka is performing with helper consumer and Publisher from scratch"""
     with temporary_topics(topics=["test.publisher.and.subscriber"]) as (topic,):
         publisher = Publisher(
             topic=topic,
@@ -42,7 +42,7 @@ def test_pubsub_smoke3(
     broker_authorization_config,
     kafka_bootstrap_servers,
 ):
-    """Testing locally scoped consumers"""
+    """Smoke test to demonstrate locally scoped consumers"""
 
     def consume_until_len(kafka_topic, length):
         consumed_documents = []
@@ -81,7 +81,7 @@ def test_pubsub_smoke3(
 
 
 def test_dispatcher(kafka_bootstrap_servers, broker_authorization_config, temporary_topics):
-    """Test agent collection of documents and increment by command."""
+    """Test RemoteDispatcher and accumulation of docuemnts ."""
 
     def fixed_consumer(topics):
         """Collects the first 10 documents and returns the agent"""
@@ -121,9 +121,11 @@ def test_dispatcher(kafka_bootstrap_servers, broker_authorization_config, tempor
 
 
 def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, temporary_topics):
-    """Test agent collection of documents and increment by command."""
+    """Test AgentConsumer collection of documents with useless barebones agent."""
 
-    class Foo:
+    class BarebonesAgent:
+        """Agent with only necessary attributes to test non-interactive AgentConsumer"""
+
         agent_name = ""
 
     def fixed_consumer(topics):
@@ -138,7 +140,7 @@ def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, te
             bootstrap_servers=kafka_bootstrap_servers,
             group_id="dummy.agent.group",
             consumer_config={"auto.offset.reset": "earliest"},
-            agent=Foo(),
+            agent=BarebonesAgent(),
         )
         consumer.subscribe(process_document)
 
@@ -166,7 +168,12 @@ def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, te
 
 
 def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config, temporary_topics, caplog):
+    """Test AgentConsumer collection of documents with Dummy agent that caches and can interact with kafka"""
+
     class DummyAgent:
+        """Simple agent to test the interactivity of an Agent consumer by using a tell to cache documents
+        and an internal counter that can be triggered by kafka mesages"""
+
         agent_name = "dummy_agent"
 
         def __init__(self, topics):
@@ -214,8 +221,11 @@ def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config,
             key=f"{topic}.key",
         )
 
+        # Will call the agent.increase method
         publisher("dummy_agent", dict(action="increase", args=[], kwargs={}))
+        # Will cause a logger.error
         publisher("dummy_agent", dict(action="decrease", args=[], kwargs={}))
+        # Bluesky docs will get retained by scoped consumed list and agent cache
         publisher("start", {"uid": "123"})
         publisher("stop", {"start": "123"})
 
@@ -225,4 +235,5 @@ def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config,
         # Only bluesky documents get consumed by the callbacks
         assert len(consumed_docs) == 2
         assert len(agent.cache) == 2
+        # The result of an AttributeErroor getting translated to a logger error.
         assert "Unavailable action sent to agent" in caplog.text
