@@ -96,7 +96,7 @@ class AgentConsumer(RemoteDispatcher):
             )
         return True
 
-    def process_document(self, topic, name, doc):
+    def process_document(self, consumer, topic, name, doc):
         """
         Processes bluesky documents.
         Optionally
@@ -118,11 +118,10 @@ class AgentConsumer(RemoteDispatcher):
         continue_polling : bool
             return False to break out of the polling loop, return True to continue polling
         """
-
         if name == self._agent.agent_name:
-            continue_polling = self._agent_action(topic, doc)
-
-        return super().process_document(topic, name, doc) or continue_polling
+            return self._agent_action(topic, doc)
+        else:
+            return super().process_document(consumer, topic, name, doc)
 
 
 class Agent(ABC):

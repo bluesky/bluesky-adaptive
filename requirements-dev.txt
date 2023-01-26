@@ -17,3 +17,4 @@ databroker
 ophyd
 scipy
 pre-commit
+pytest-docker==1.0.1
