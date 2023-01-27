@@ -1,4 +1,4 @@
-version: '2'
+version: '3.2'
 
 services:
   zookeeper:
@@ -9,6 +9,7 @@ services:
       - 'zookeeper_data:/bitnami'
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
+
   kafka:
     image: 'docker.io/bitnami/kafka:latest'
     ports:
@@ -25,6 +26,13 @@ services:
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
     depends_on:
       - zookeeper
+
+  mongodb:
+    image: 'docker.io/library/mongo:latest'
+    ports:
+      - '27017:27017'
+    volumes:
+      - '/tmp/databroker:/data/db'
 
 volumes:
   zookeeper_data:

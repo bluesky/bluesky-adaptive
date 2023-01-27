@@ -1,6 +1,5 @@
 import inspect
 import sys
-import uuid
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
@@ -471,7 +470,8 @@ class Agent(ABC):
 
     def _write_event(self, stream, doc):
         """Add event to builder as event page, and publish to catalog"""
-        uid = str(uuid.uuid4())
+        for key in doc:
+            doc[key] = [doc[key]]  # Encapsulate everything in a list for event pages
         if not doc:
             logger.info(f"No doc presented to write_event for stream {stream}")
             return
@@ -481,7 +481,7 @@ class Agent(ABC):
             self.builder.add_stream(stream, data=doc)
             self.agent_catalog.v1.insert(*self.builder._cache._ordered[-2])  # Add descriptor for first time
         self.agent_catalog.v1.insert(*self.builder._cache._ordered[-1])
-        return uid
+        return self.builder._cache._ordered[-1][1]["uid"]
 
     def _add_to_queue(self, next_points, uid):
         """

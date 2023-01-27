@@ -18,3 +18,4 @@ ophyd
 scipy
 pre-commit
 pytest-docker==1.0.1
+git+https://github.com/bluesky/databroker.git@v2.0.0b13#egg=databroker
