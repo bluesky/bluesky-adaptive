@@ -4,7 +4,7 @@ import uuid
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
-from typing import Iterable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import msgpack
 from bluesky_kafka import Publisher, RemoteDispatcher
@@ -12,6 +12,7 @@ from bluesky_live.run_builder import RunBuilder
 from bluesky_queueserver_api import BPlan
 from bluesky_queueserver_api.http import REManagerAPI
 from databroker.client import BlueskyRun
+from numpy.typing import ArrayLike
 from tiled.client import from_profile
 from xkcdpass import xkcd_password as xp
 
@@ -245,14 +246,6 @@ class Agent(ABC):
         logger.info(f"Writing data to catalog: {self.agent_catalog}")
 
         self.metadata = metadata or {}
-        self.metadata.update(
-            dict(
-                kafka_group_id=kafka_group_id,
-                kafka_bootstrap_servers=kafka_bootstrap_servers,
-                kafka_consumer_config=kafka_consumer_config,
-                kafka_producer_config=kafka_producer_config,
-            )
-        )
         self.instance_name = (
             f"{self.name}-agent_name"
             or f"{self.name}-{xp.generate_xkcdpassword(PASSWORD_LIST, numwords=2, delimiter='-')}"
@@ -269,7 +262,7 @@ class Agent(ABC):
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(
-            agent_name=self.agent_name,
+            agent_name=self.instance_name,
             agent_class=str(type(self)),
             tiled_data_profile=data_profile_name,
             tiled_agent_profile=agent_profile_name,
@@ -301,7 +294,7 @@ class Agent(ABC):
 
     @staticmethod
     @abstractmethod
-    def unpack_run(run: BlueskyRun):
+    def unpack_run(run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         """
         Consume a Bluesky run from tiled and emit the relevant x and y for the agent.
 
@@ -319,7 +312,7 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def tell(self, x, y) -> dict:
+    def tell(self, x, y) -> Dict[str, List]:
         """
         Tell the agent about some new data
         Parameters
@@ -338,7 +331,7 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def ask(self, batch_size: int) -> Tuple[dict, Sequence]:
+    def ask(self, batch_size: int) -> Tuple[Dict[str, List], Sequence]:
         """
         Ask the agent for a new batch of points to measure.
 
@@ -357,7 +350,7 @@ class Agent(ABC):
         """
         ...
 
-    def report(self, **kwargs) -> dict:
+    def report(self, **kwargs) -> Dict[str, List]:
         """
         Create a report given the data observed by the agent.
         This could be potentially implemented in the base class to write document stream.
@@ -367,7 +360,7 @@ class Agent(ABC):
 
         raise NotImplementedError
 
-    def tell_many(self, xs, ys) -> Sequence[dict]:
+    def tell_many(self, xs, ys) -> Sequence[Dict[str, List]]:
         """
         Tell the agent about some new data. It is likely that there is a more efficient approach to
         handling multiple observations for an agent. The default behavior is to iterate over all
