@@ -136,10 +136,12 @@ class Agent(ABC):
     and told to the agent by the ``tell`` method.
 
     Children of Agent should implment the following, through direct inheritence or mixin classes:
+    Experiment specific:
     - measurement_plan_name
     - measurement_plan_args
     - measurement_plan_kwargs
     - unpack_run
+    Agent specific:
     - tell
     - ask
     - report (optional)
@@ -251,9 +253,11 @@ class Agent(ABC):
                 kafka_producer_config=kafka_producer_config,
             )
         )
-        self.metadata["agent_name"] = self.agent_name = (
-            agent_name or f"{self.name}-{xp.generate_xkcdpassword(PASSWORD_LIST, numwords=2, delimiter='-')}"
+        self.instance_name = (
+            f"{self.name}-agent_name"
+            or f"{self.name}-{xp.generate_xkcdpassword(PASSWORD_LIST, numwords=2, delimiter='-')}"
         )
+        self.metadata["agent_name"] = self.instance_name
 
         self._ask_on_tell = ask_on_tell
         self._report_on_tell = report_on_tell
