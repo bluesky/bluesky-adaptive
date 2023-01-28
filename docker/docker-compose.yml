@@ -1,0 +1,30 @@
+version: '3.2'
+
+services:
+  redis:
+    image: redis:6.2-alpine
+    ports:
+      - 6379:6379
+    networks:
+      - qserver_network
+  qserver:
+    image: qserver:latest
+    environment:
+      - REDIS_ADDR=redis:6379
+    networks:
+      - qserver_network
+    ports:
+      - 60615:60615
+  httpserver:
+    image: http-server:latest
+    ports:
+      - 60610:60610
+    environment:
+      - QSERVER_ZMQ_CONTROL_ADDRESS=tcp://qserver:60615
+      - QSERVER_ZMQ_INFO_ADDRESS=tcp://qserver:60625
+    networks:
+      - qserver_network
+
+networks:
+  qserver_network:
+    driver: bridge
