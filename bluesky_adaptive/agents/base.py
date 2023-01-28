@@ -84,10 +84,12 @@ class AgentConsumer(RemoteDispatcher):
         try:
             getattr(self._agent, action)(*args, **kwargs)
         except AttributeError as e:
-            logger.error(f"Unavailable action sent to agent {self._agent.agent_name} on topic: {topic}\n" f"{e}")
+            logger.error(
+                f"Unavailable action sent to agent {self._agent.instance_name} on topic: {topic}\n" f"{e}"
+            )
         except TypeError as e:
             logger.error(
-                f"Type error for {action} sent to agent {self._agent.agent_name} on topic: {topic}\n"
+                f"Type error for {action} sent to agent {self._agent.instance_name} on topic: {topic}\n"
                 f"Are you sure your args and kwargs were appropriate?\n"
                 f"Args received: {args}\n"
                 f"Kwargs received: {kwargs}\n"
@@ -118,7 +120,7 @@ class AgentConsumer(RemoteDispatcher):
         continue_polling : bool
             return False to break out of the polling loop, return True to continue polling
         """
-        if name == self._agent.agent_name:
+        if name == self._agent.instance_name:
             return self._agent_action(topic, doc)
         else:
             return super().process_document(consumer, topic, name, doc)
@@ -246,8 +248,9 @@ class Agent(ABC):
 
         self.metadata = metadata or {}
         self.instance_name = (
-            f"{self.name}-agent_name"
-            or f"{self.name}-{xp.generate_xkcdpassword(PASSWORD_LIST, numwords=2, delimiter='-')}"
+            f"{self.name}-{agent_name}"
+            if agent_name
+            else f"{self.name}-{xp.generate_xkcdpassword(PASSWORD_LIST, numwords=2, delimiter='-')}"
         )
         self.metadata["agent_name"] = self.instance_name
 

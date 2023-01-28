@@ -1,3 +1,4 @@
+import time as ttime
 from typing import Sequence, Tuple, Union
 
 from bluesky_live.run_builder import RunBuilder
@@ -9,7 +10,7 @@ from bluesky_adaptive.agents.base import Agent
 
 
 class TestCommunicationAgent(Agent):
-    measurement_plan_name = "test_plan"
+    measurement_plan_name = "agent_driven_nap"
 
     def __init__(
         self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
@@ -27,14 +28,17 @@ class TestCommunicationAgent(Agent):
             qserver_api_key="SECRET",
             **kwargs,
         )
+        self.count = 0
 
+    @staticmethod
     def measurement_plan_args(point) -> list:
-        return list()
+        return [1.5]
 
+    @staticmethod
     def measurement_plan_kwargs(point) -> dict:
         return dict()
 
-    def unpack_run(run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def report(self, report_number: int = 0) -> dict:
@@ -44,12 +48,44 @@ class TestCommunicationAgent(Agent):
         return (dict(agent_name=self.instance_name, report=f"ask_{batch_size}"), [0 for _ in range(batch_size)])
 
     def tell(self, x, y) -> dict:
+        self.count += 1
         return dict(x=x, y=y)
 
     def start(self):
         """Start without kafka consumer start"""
         self.builder = RunBuilder(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
+
+
+def test_agent_connection(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+    """Test agent connection to http-server via RE_Manager API"""
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub, sub):
+        agent = TestCommunicationAgent(
+            pub, sub, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
+        )
+        status = agent.re_manager.status()
+        assert isinstance(status, dict)
+        assert "worker_environment_exists" in status
+
+        # add an item to the queue
+        if not status["worker_environment_exists"]:
+            agent.re_manager.environment_open()
+        agent.re_manager.queue_clear()
+        agent._add_to_queue([1], "uid")
+        assert agent.re_manager.status()["items_in_queue"] == 1
+
+
+def test_run_plan(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub, sub):
+        agent = TestCommunicationAgent(
+            pub, sub, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
+        )
+        # add an item to the queue
+        if not agent.re_manager.status()["worker_environment_exists"]:
+            agent.re_manager.environment_open()
+        agent.re_manager.queue_clear()
+        agent._add_to_queue([1], "uid")
+        agent.re_manager.queue_start()
 
 
 def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
@@ -76,3 +112,61 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, broker_auth
         assert "ask" in cat[-1].metadata["summary"]["stream_names"]
         assert "tell" in cat[-1].metadata["summary"]["stream_names"]
         assert isinstance(ask_uid, list)
+
+
+def test_feedback_to_queue(
+    temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, publisher_factory
+):
+    """
+    Publish a stop document to kafka with the right start uid for a manufactured run.
+    Ensure something lands on the queue.
+    This test seems very brittle, sometimes failing with the following stderr:
+    GroupCoordinator/1001: Timed out LeaveGroupRequest in flight (after 5003ms, timeout #0):
+        possibly held back by preceeding blocking JoinGroupRequest with timeout in 292896ms
+    GroupCoordinator/1001: Timed out 1 in-flight, 0 retry-queued, 0 out-queue, 0 partially-sent requests
+    GroupCoordinator: 1 request(s) timed out: disconnect (after 10110ms in state UP)
+    """
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
+        agent = TestCommunicationAgent(
+            pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
+        )
+        agent.start()
+        agent.enable_continuous_suggesting()
+        agent.enable_direct_to_queue()
+
+        if not agent.re_manager.status()["worker_environment_exists"]:
+            agent.re_manager.environment_open()
+        agent.re_manager.queue_clear()
+
+        # Drop a Bluesky Run into the databroker
+        builder = RunBuilder(metadata={})
+        start = builder._cache.start_doc
+        agent.exp_catalog.v1.insert("start", start)
+        builder.close()
+        agent.exp_catalog.v1.insert("stop", builder._cache.stop_doc)
+
+        # Consume for a limited time only. Publish stop doc to reference Run in continue_polling loop
+        # Overriden agent.start() takes care of the rest
+        def consume_for_time(sec=3):
+            # Fake publish a stop doc with the right uuid.
+            fake_publisher = publisher_factory(
+                topic=sub_topic,
+                key=f"{sub_topic}.key",
+                flush_on_stop_doc=True,
+            )
+            start_time = ttime.time()
+
+            def until_time():
+                if ttime.time() > start_time + sec:
+                    return False
+                else:
+                    fake_publisher("start", builder._cache.start_doc)
+                    fake_publisher("stop", builder._cache.stop_doc)
+                    ttime.sleep(0.1)
+                    return True
+
+            agent.kafka_consumer.start(continue_polling=until_time)
+
+        consume_for_time()
+        assert agent.count > 0
+        assert agent.re_manager.status()["items_in_queue"] > 0

@@ -14,6 +14,9 @@ RUN python3.9 -m ensurepip --upgrade
 
 RUN pip3 install bluesky-queueserver
 
+# Add custom plans
+COPY 16-plans.py /usr/local/lib/python3.9/site-packages/bluesky_queueserver/profile_collection_sim/
+
 ENV REDIS_ADDR=redis:6379
 ENV QSERVER_ZMQ_CONTROL_ADDRESS=tcp://127.0.0.1:60615
 ENV QSERVER_ZMQ_INFO_ADDRESS=tcp://127.0.0.1:60625
