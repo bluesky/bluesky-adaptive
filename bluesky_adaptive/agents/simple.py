@@ -19,6 +19,7 @@ from collections import defaultdict
 from logging import getLogger
 from typing import Generator, Sequence, Tuple, Union
 
+import numpy as np
 from numpy.typing import ArrayLike
 
 from bluesky_adaptive.agents.base import Agent
@@ -26,7 +27,7 @@ from bluesky_adaptive.agents.base import Agent
 logger = getLogger("bluesky_adaptive.agents")
 
 
-class SequentialAgentMixin(Agent, ABC):
+class SequentialAgentBase(Agent, ABC):
     """Agent Mixin to take a pre-defined sequence and walk through it on ``ask``.
 
     Parameters
@@ -71,19 +72,28 @@ class SequentialAgentMixin(Agent, ABC):
         """Yield points from sequence if within bounds"""
         for point in self.sequence:
             if self.relative_bounds:
-                condition = point <= self.relative_bounds[1] or point >= self.relative_bounds[0]
+                arr = np.array(point)
+                condition = arr <= self.relative_bounds[1] or arr >= self.relative_bounds[0]
                 try:
                     if condition:
                         yield point
                         continue
-                except ValueError:
+                    else:
+                        logger.warning(
+                            f"Next point will be skipped.  {point} in sequence for {self.instance_name}, "
+                            f"is out of bounds {self.relative_bounds}"
+                        )
+                except ValueError:  # Array not float
                     if condition.all():
-                        yield point
+                        yield arr
                         continue
-            logger.warning(
-                f"Next point will be skipped.  {point} in sequence for {self.instance_name}, "
-                f"is out of bounds {self.relative_bounds}"
-            )
+                    else:
+                        logger.warning(
+                            f"Next point will be skipped.  {point} in sequence for {self.instance_name}, "
+                            f"is out of bounds {self.relative_bounds}"
+                        )
+            else:
+                yield point
 
     def tell(self, x, y) -> dict:
         self.independent_cache.append(x)

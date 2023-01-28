@@ -7,6 +7,7 @@ from numpy.typing import ArrayLike
 from tiled.client import from_profile
 
 from bluesky_adaptive.agents.base import Agent
+from bluesky_adaptive.agents.simple import SequentialAgentBase
 
 
 class TestCommunicationAgent(Agent):
@@ -170,3 +171,86 @@ def test_feedback_to_queue(
         consume_for_time()
         assert agent.count > 0
         assert agent.re_manager.status()["items_in_queue"] > 0
+
+
+class TestSequentialAgent(SequentialAgentBase):
+    measurement_plan_name = "agent_driven_nap"
+
+    def __init__(
+        self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
+    ):
+        super().__init__(
+            kafka_group_id="test.communication.group",
+            kafka_bootstrap_servers=kafka_bootstrap_servers,
+            kafka_producer_config=broker_authorization_config,
+            kafka_consumer_config={"auto.offset.reset": "latest"},
+            publisher_topic=pub_topic,
+            subscripion_topics=[sub_topic],
+            data_profile_name=tiled_profile,
+            agent_profile_name=tiled_profile,
+            qserver_host=None,
+            qserver_api_key="SECRET",
+            **kwargs,
+        )
+        self.count = 0
+
+    @staticmethod
+    def measurement_plan_args(point) -> list:
+        return [1.5]
+
+    @staticmethod
+    def measurement_plan_kwargs(point) -> dict:
+        return dict()
+
+    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+        return 0, 0
+
+    def start(self):
+        """Start without kafka consumer start"""
+        self.builder = RunBuilder(metadata=self.metadata)
+        self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
+
+
+def test_sequntial_agent(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
+        agent = TestSequentialAgent(
+            pub_topic,
+            sub_topic,
+            kafka_bootstrap_servers,
+            broker_authorization_config,
+            tiled_profile,
+            sequence=[1, 2, 3],
+        )
+        agent.start()
+
+        for i in [1, 2, 3]:
+            _, points = agent.ask()
+            assert len(points) == 1
+            assert points[0] == i
+
+        agent.stop()
+
+
+def test_sequential_agent_array(
+    temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
+):
+    from itertools import product
+
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
+        agent = TestSequentialAgent(
+            pub_topic,
+            sub_topic,
+            kafka_bootstrap_servers,
+            broker_authorization_config,
+            tiled_profile,
+            sequence=product([1, 2, 3], [4, 5, 6]),
+        )
+        agent.start()
+
+        _, points = agent.ask()
+        assert len(points) == 1
+        assert points[0][0] == 1 and points[0][1] == 4
+        _, points = agent.ask(2)
+        assert len(points) == 2
+        assert points[0][0] == 1
+        assert points[1][1] == 6
