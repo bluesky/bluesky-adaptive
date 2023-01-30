@@ -15,6 +15,7 @@
    release-history
    min_versions
    examples
+   distributed
 
 .. warning::
 
@@ -252,5 +253,26 @@ science for a given amount of beamtime.
 
 In both of these cases the feedback is adding value without imposing a cost to
 the plans and the failure mode of the computation failing is the current status
-quo.  There are many ways that asynchronous feedback can be
-implemented and is out of scope for this package.
+quo.
+
+An increasingly desirable operating paradigm for autonomous experiments considers
+the directives of many agents, or even networks of agents,
+including multiple human agents. The previously described lock-step approaches to
+experiment and analysis, leave no room for human experts to engage in the loop,
+incorporation of information from complementary techniques, or the integration of
+multiple computational agents. In this more complex paradigm, various agents must be
+able to process the captured data stream, suggest plans to be executed,
+and create reports for human consumption. This is exemplified in the case where
+multiple passive agents are performing dataset factorization or AI-based compression
+algorithms that provide visualization tools for users,  multiple active learning
+agents are providing suggestions for next experiments as they complete their
+computation, and human agents are also guiding the experiment
+(see this `NeurIPS Workshop Paper <https://arxiv.org/abs/2301.09177>`_).
+
+Here, the same :code:`tell`, :code:`report`, :code:`ask` grammar can be used in conjunction with
+Kafka, Tiled, and the RunManager. This adds some additional dependencies including
+``bluesky-queueserver``, ``tiled``, and ``bluesky-kafka``.
+Examples of these agents are provided in :ref:`distributed`.
+Furthermore, using Kafka for distributed communication, one can construct meta-agents,
+or *adjudicators*, which coordinate between a collection of agents in more sophisticated ways
+than the RunManager priority queue and provide an additional avenue for human intervention.
