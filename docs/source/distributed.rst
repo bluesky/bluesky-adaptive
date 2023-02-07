@@ -58,6 +58,14 @@ as abstract in the base Agent.
 
 .. code-block:: python
 
+
+    from bluesky_queueserver_api.http import REManagerAPI
+    import uuid
+    from typing import Sequence, Tuple, Union
+
+    import nslsii.kafka_utils
+    from numpy.typing import ArrayLike
+
     class SequentialAgentBase(Agent, ABC):
         """Agent Mixin to take a pre-defined sequence and walk through it on ``ask``.
 
@@ -187,7 +195,7 @@ as abstract in the base Agent.
             )
 
 
-    class CMSSequentialAgent(SequentialAgentBase, CMSBaseAgent):
+    class CMSSequentialAgent(CMSBaseAgent, SequentialAgentBase):
         def __init__(
             self,
             *,
