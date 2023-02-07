@@ -156,10 +156,10 @@ def test_feedback_to_queue(
                 key=f"{sub_topic}.key",
                 flush_on_stop_doc=True,
             )
-            start_time = ttime.time()
+            start_time = ttime.monotonic()
 
             def until_time():
-                if ttime.time() > start_time + sec:
+                if ttime.monotonic() > start_time + sec:
                     return False
                 else:
                     fake_publisher("start", builder._cache.start_doc)
