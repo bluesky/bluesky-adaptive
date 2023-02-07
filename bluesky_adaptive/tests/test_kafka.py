@@ -1,3 +1,4 @@
+import time as ttime
 from bluesky_kafka import BlueskyConsumer, Publisher, RemoteDispatcher
 
 from bluesky_adaptive.agents.base import AgentConsumer
@@ -143,8 +144,12 @@ def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, te
             agent=BarebonesAgent(),
         )
         consumer.subscribe(process_document)
+        start_time = ttime.time()
+        sec = 5
 
         def until_len():
+            if ttime.time() > start_time + sec:
+                return False
             if len(consumed_documents) >= 2:
                 return False
             else:
@@ -203,8 +208,12 @@ def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config,
         agent = DummyAgent(topics)
         agent.consumer.subscribe(process_document)
         agent.consumer.subscribe(agent.tell)
+        start_time = ttime.time()
+        sec = 5
 
         def until_len():
+            if ttime.time() > start_time + sec:
+                return False
             if len(consumed_documents) >= 2:
                 return False
             else:
