@@ -12,6 +12,7 @@ from bluesky_adaptive.agents.simple import SequentialAgentBase
 
 class TestCommunicationAgent(Agent):
     measurement_plan_name = "agent_driven_nap"
+    instance_name = 'bob'
 
     def __init__(
         self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs

@@ -127,7 +127,7 @@ def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, te
     class BarebonesAgent:
         """Agent with only necessary attributes to test non-interactive AgentConsumer"""
 
-        agent_name = ""
+        agent_name = instance_name = ""
 
     def fixed_consumer(topics):
         """Collects the first 10 documents and returns the agent"""
@@ -179,7 +179,7 @@ def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config,
         """Simple agent to test the interactivity of an Agent consumer by using a tell to cache documents
         and an internal counter that can be triggered by kafka mesages"""
 
-        agent_name = "dummy_agent"
+        agent_name = instance_name = "dummy_agent"
 
         def __init__(self, topics):
             self.counter = 0
