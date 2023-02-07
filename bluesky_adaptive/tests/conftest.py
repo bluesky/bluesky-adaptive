@@ -8,6 +8,7 @@ from bluesky_kafka.tests.conftest import publisher_factory  # noqa
 from bluesky_kafka.tests.conftest import pytest_addoption  # noqa
 from bluesky_kafka.tests.conftest import temporary_topics  # noqa
 from bluesky_kafka.tests.conftest import consume_documents_from_kafka_until_first_stop_document  # noqa
+from ophyd.tests.conftest import hw  # noqa
 
 
 # @pytest.fixture(autouse=True, scope="session")
