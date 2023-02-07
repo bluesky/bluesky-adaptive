@@ -9,6 +9,8 @@ from tiled.client import from_profile
 from bluesky_adaptive.agents.base import Agent
 from bluesky_adaptive.agents.simple import SequentialAgentBase
 
+from bluesky_queueserver_api.http import REManagerAPI
+
 
 class TestCommunicationAgent(Agent):
     measurement_plan_name = "agent_driven_nap"
@@ -17,6 +19,9 @@ class TestCommunicationAgent(Agent):
     def __init__(
         self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
     ):
+        qs = REManagerAPI(http_server_uri=None)
+        qs.set_authorization_key(api_key="SECRET")
+
         super().__init__(
             kafka_group_id="test.communication.group",
             kafka_bootstrap_servers=kafka_bootstrap_servers,
@@ -26,8 +31,7 @@ class TestCommunicationAgent(Agent):
             subscripion_topics=[sub_topic],
             data_profile_name=tiled_profile,
             agent_profile_name=tiled_profile,
-            qserver_host=None,
-            qserver_api_key="SECRET",
+            qserver=qs,
             **kwargs,
         )
         self.count = 0
@@ -180,6 +184,9 @@ class TestSequentialAgent(SequentialAgentBase):
     def __init__(
         self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
     ):
+        qs = REManagerAPI(http_server_uri=None)
+        qs.set_authorization_key(api_key="SECRET")
+
         super().__init__(
             kafka_group_id="test.communication.group",
             kafka_bootstrap_servers=kafka_bootstrap_servers,
@@ -189,8 +196,7 @@ class TestSequentialAgent(SequentialAgentBase):
             subscripion_topics=[sub_topic],
             data_profile_name=tiled_profile,
             agent_profile_name=tiled_profile,
-            qserver_host=None,
-            qserver_api_key="SECRET",
+            qserver=qs,
             **kwargs,
         )
         self.count = 0

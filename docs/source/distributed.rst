@@ -170,6 +170,8 @@ as abstract in the base Agent.
             kafka_config = nslsii.kafka_utils._read_bluesky_kafka_config_file(
                 config_file_path="/etc/bluesky/kafka.yml"
             )
+            qs = REManagerAPI(http_server_uri=f"https://qserver.nsls2.bnl.gov/{beamline_tla}")
+            qs.set_authorization_key(api_key=None)
             return dict(
                 kafka_group_id=f"echo-{beamline_tla}-{str(uuid.uuid4())[:8]}",
                 kafka_bootstrap_servers=kafka_config["bootstrap_servers"],
@@ -181,8 +183,7 @@ as abstract in the base Agent.
                 ],
                 data_profile_name=f"{beamline_tla}",
                 agent_profile_name=f"{beamline_tla}_bluesky_sandbox",
-                qserver_host=f"https://qserver.nsls2.bnl.gov/{beamline_tla}",
-                qserver_api_key=None,
+                qserver=qs,
             )
 
 

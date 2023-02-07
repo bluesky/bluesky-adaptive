@@ -9,7 +9,7 @@ import msgpack
 from bluesky_kafka import Publisher, RemoteDispatcher
 from bluesky_live.run_builder import RunBuilder
 from bluesky_queueserver_api import BPlan
-from bluesky_queueserver_api.http import REManagerAPI
+from bluesky_queueserver_api.api_threads import API_Threads_Mixin
 from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
@@ -171,10 +171,8 @@ class Agent(ABC):
         Tiled profile name to serve as source of data (BlueskyRuns) for the agent.
     agent_profile_name : str
         Tiled profile name to serve as storage for the agent documents.
-    qserver_host : str
-        Host to POST requests to. Something akin to 'http://localhost:60610'
-    qserver_api_key : str
-        Key for API security.
+    qserver : bluesky_queueserver_api.api_threads.API_Threads_Mixin
+        Object to manage communication with Queue Server
     agent_name : Optional[str], optional
         Agent name suffix for the instance, by default generated using 2 hyphen separated words from xkcdpass.
     metadata : Optional[dict], optional
@@ -212,8 +210,7 @@ class Agent(ABC):
         subscripion_topics: List[str],
         data_profile_name: str,
         agent_profile_name: str,
-        qserver_host: str,
-        qserver_api_key: str,
+        qserver: API_Threads_Mixin,
         agent_name: Optional[str] = None,
         metadata: Optional[dict] = None,
         ask_on_tell: bool = True,
@@ -259,8 +256,7 @@ class Agent(ABC):
         self.default_report_kwargs = {} if default_report_kwargs is None else default_report_kwargs
 
         self.builder = None
-        self.re_manager = REManagerAPI(http_server_uri=qserver_host)
-        self.re_manager.set_authorization_key(api_key=qserver_api_key)
+        self.re_manager = qserver
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(
