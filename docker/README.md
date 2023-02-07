@@ -11,3 +11,4 @@ cd ../http-server
 docker build -t http-server:latest .
 cd ../
 docker-compose up
+```
