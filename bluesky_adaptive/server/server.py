@@ -1,14 +1,19 @@
-import asyncio
 from fastapi import FastAPI
 from .server_api import router as server_api_router
-from .ioc_server import start_ioc_server
-from .shared_ns import shared_ns
-
+from .ioc_server import IOC_Server
+from .server_resources import SR
+from .worker import WorkerProcess
+from multiprocessing import Pipe
 
 import logging
 logger = logging.getLogger("uvicorn")
 
-ioc_server_task = None
+worker_process = None
+ioc_server = None
+
+def create_conn_pipes():
+    server_conn, worker_conn = Pipe()
+    return server_conn, worker_conn
 
 def build_app():
 
@@ -17,23 +22,42 @@ def build_app():
 
     @app.on_event("startup")
     async def startup_event():
-        global ioc_server_task
+        global worker_process
+        global ioc_server
+
         logger.info("Starting the server ...")
 
-        pvs_dict = {}
-        # It is expected that the following code will be replaced with something meaningful
-        for name, _ in shared_ns["server_parameters"].items():
-            pvs_dict["parameter:" + name] = {}
-        for name, _ in shared_ns["server_variables"].items():
-            pvs_dict["variable:" + name] = {}
+        server_conn, worker_conn = create_conn_pipes()
 
-        ioc_server_task = asyncio.create_task(start_ioc_server(pvs_dict=pvs_dict))
+        SR.init_comm_to_worker(conn=server_conn)
+
+        worker_process = WorkerProcess(conn=worker_conn)
+        worker_process.start()
+
+        ioc_server = IOC_Server(ioc_prefix="agent_IOC")
+        await ioc_server.start()
+
 
     @app.on_event("shutdown")
     async def shutdown_event():
-        global ioc_server_task
+        global worker_process
+        global ioc_server
         logger.info("Shutting down the server ...")
-        ioc_server_task.cancel()
+
+        ioc_server.stop()
+
+        if worker_process and worker_process.is_alive():
+            await SR.worker_initiate_stop()
+            worker_process.join(timeout=2)
+            if not worker_process.is_alive():
+                logger.info("Worker process is closed.")
+            else:
+                logger.warning("Worker process was not closed properly. Terminating the process ...")
+                worker_process.kill()
+                logger.info("Worker process is terminated.")
+
+        SR.stop_comm_to_worker()
+
 
     return app
 

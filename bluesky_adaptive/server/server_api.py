@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
-from .shared_ns import shared_ns
+from .server_resources import SR
 import typing
 
 import logging
@@ -10,6 +10,19 @@ router = APIRouter(prefix="/api")
 
 items_dict = {}
 
+def process_exceptions():
+    """
+    Must be called from within ``except`` block.
+    """
+    try:
+        raise
+    except Exception as ex:
+        logger.exception(ex)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to process the request: {ex}"
+        )
+
 
 @router.get("/")
 async def root_handler():
@@ -17,20 +30,6 @@ async def root_handler():
     This is the response for the root URL (e.g. http://localhost)
     """
     return {"message": "The HTTP server is alive!!!"}
-
-
-@router.get("/parameters/names")
-async def get_parameter_names():
-    """
-    Get the list of parameter names.
-
-    Returns
-    -------
-    dict
-        Dictionary with the following keys: ``names`` - list of names of the
-        available parameters.
-    """
-    return {"names": list(shared_ns["server_parameters"])}
 
 
 @router.get("/variables/names")
@@ -44,31 +43,13 @@ async def get_variable_names():
         Dictionary with the following keys: ``names`` - list of names of the
         available variables.
     """
-    return {"names": list(shared_ns["server_variables"])}
+    try:
+        variables = await SR.worker_get_all_variable_descriptions()
+        names = list(variables)
+    except Exception:
+        process_exceptions()
 
-
-@router.get("/parameter/{name}")
-async def get_parameter_handler(name: str):
-    """
-    Returns value of a server parameter. The API call returns HTTP Error 404 if
-    the parameter does not exist.
-
-    Parameters
-    ----------
-    name: str
-        Parameter name
-
-    Returns
-    -------
-    dict
-       A dictionary that contains one item. The dictionary maps parameter name to its value.
-    """
-    if name not in shared_ns["server_parameters"]:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Parameter {name!r} is not available."
-        )
-    return {name: shared_ns["server_parameters"][name]}
+    return {"names": names}
 
 
 @router.get("/variable/{name}")
@@ -87,49 +68,10 @@ async def get_variable_handler(name: str):
     dict
        A dictionary that contains one item. The dictionary maps variable name to its value.
     """
-    if name not in shared_ns["server_variables"]:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Variable {name!r} is not available."
-        )
-    return {name: shared_ns["server_variables"][name]}
-
-
-
-@router.post("/parameter/{name}")
-async def set_parameter_handler(name: str, payload: dict={}):
-    """
-    Sets the value of a server parameter item. The item name (``name``) is specified as part
-    of the URL. The API call is successful as long as ``payload`` dictionary contains an element
-    named ``value``.
-
-    Parameters
-    ----------
-    name: str
-        Item name
-    payload: dict
-        A dictionary ``{"value": <value>}``.
-
-    Returns
-    -------
-    dict
-       A dictionary that contains a single item. The dictionary maps item name to item value.
-    """
-    if "value" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Required parameter ('value') is missing."
-        )
-
-    if name not in shared_ns["server_parameters"]:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Parameter {name!r} is not available."
-        )
-
-    value = payload["value"]
-    shared_ns["server_parameters"][name] = value
-    return {name: value}
+    try:
+        return await SR.worker_get_variable(name=name)
+    except Exception:
+        process_exceptions()
 
 
 @router.post("/variable/{name}")
@@ -157,12 +99,8 @@ async def set_variable_handler(name: str, payload: dict={}):
             detail="Required parameter ('value') is missing."
         )
 
-    if name not in shared_ns["server_variables"]:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f"Variable {name!r} is not available."
-        )
-
-    value = payload["value"]
-    shared_ns["server_variables"][name] = value
-    return {name: value}
+    try:
+        value = payload["value"]
+        return await SR.worker_set_variable(name=name, value=value)
+    except Exception:
+        process_exceptions()
