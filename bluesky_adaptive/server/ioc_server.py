@@ -117,6 +117,9 @@ class IOC_Server:
 
         The task runs continuously until the IOC server is stopped.
         """
+
+        await self._read_vars_desc()
+
         # The options must be passed somehow from server configuration
         ioc_prefix = self._ioc_prefix
         ioc_options = {"prefix": f"{ioc_prefix}:", "macros": {}}
@@ -188,7 +191,7 @@ class IOC_Server:
         Create tasks for the server and PV updates.
         """
         try:
-            await self._read_vars_desc()
+
             self._ioc_server_task = asyncio.create_task(self._start_ioc_server())
             self._pv_update_task = asyncio.create_task(self._update_pv_values())
             logger.info("IOC server configuration was loaded. Server startup was initiated.")
@@ -206,5 +209,7 @@ class IOC_Server:
         """
         Stop the IOC server.
         """
-        self._pv_update_task.cancel()
-        self._ioc_server_task.cancel()
+        if self._pv_update_task:
+            self._pv_update_task.cancel()
+        if self._ioc_server_task:
+            self._ioc_server_task.cancel()

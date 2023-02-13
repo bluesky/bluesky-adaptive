@@ -7,6 +7,10 @@ from .utils import load_worker_startup_code, get_path_to_simulated_agent
 from collections.abc import Mapping
 import enum
 
+import logging
+
+logger = logging.getLogger("uvicorn")
+
 
 # State of the worker environment
 class EState(enum.Enum):
@@ -135,6 +139,8 @@ class WorkerProcess(Process):
         # logging.basicConfig(level=max(logging.WARNING, self._log_level))
         # setup_loggers(name="bluesky_queueserver", log_level=self._log_level)
 
+        success = True
+
         # Class that supports communication over the pipe
         self._comm_to_manager = PipeJsonRpcReceive(conn=self._conn, name="RE Worker-Manager Comm")
 
@@ -146,15 +152,23 @@ class WorkerProcess(Process):
 
         self._comm_to_manager.start()
 
-        code_path = get_path_to_simulated_agent()
-        self._ns = load_worker_startup_code(startup_script_path=code_path)
-        self._variables = self._ns.get("_agent_server_variables__", {})
+        try:
+            code_path = get_path_to_simulated_agent()
+            self._ns = load_worker_startup_code(startup_script_path=code_path)
+            self._variables = self._ns.get("_agent_server_variables__", {})
+            self._state = EState.IDLE
+        except Exception as ex:
+            s = "Failed to load the agent code."
+            if hasattr(ex, "tb"):  # ScriptLoadingError
+                logger.error("%s:\n%s\n", s, ex.tb)
+            else:
+                logger.exception("%s: %s.", s, ex)
+            success = False
 
-        self._state = EState.IDLE
-
-        while True:
-            ttime.sleep(1)
-            if self._is_stopping:
-                break
+        if success:
+            while True:
+                ttime.sleep(1)
+                if self._is_stopping:
+                    break
 
         self._comm_to_manager.stop()

@@ -20,6 +20,8 @@ def width_setter(value):
     aa._depth = value
     return value
 
+# raise Exception("Hello")
+
 register_variable("depth", aa, "_depth", pv_type="float", global_dict=globals())
 register_variable("width", None, None, pv_type="float",
                   getter=width_getter, setter=width_setter, global_dict=globals())
