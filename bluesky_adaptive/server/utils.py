@@ -7,33 +7,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-def register_variable(name, obj=None, attr_or_key=None, *, getter=None, setter=None, pv_type=None, pv_max_length=None, global_dict=None):
-    if global_dict is None:
-        raise ValueError("Missing required parameter: set 'global_dict=globals()'")
-    if not isinstance(name, str):
-        raise TypeError(f"Variable name must be a string: name={name!r}")
-    if not isinstance(attr_or_key, (str, type(None))):
-        raise TypeError(f"Name of an attribute or a key must be a string: attr_or_key={attr_or_key!r}")
-    if not isinstance(getter, type(None)) and not callable(getter):
-        raise TypeError(f"Parameter 'getter' must be callable or None: type(get)={type(getter)!r}")
-    if not isinstance(setter, type(None)) and not callable(setter):
-        raise TypeError(f"Parameter 'setter' must be callable or None: type(setter)={type(setter)!r}")
-    if not isinstance(pv_type, (str, None)):
-        raise TypeError(f"PV type must be a string: pv_type={pv_type!r}")
-    if not (isinstance(pv_max_length, int) or (pv_max_length is None)):
-        raise TypeError(f"PV max length must be int: pv_max_length={pv_max_length!r}")
-
-    global_dict.setdefault("_agent_server_variables__", {})
-    global_dict["_agent_server_variables__"][name] = {
-        "object": obj,
-        "attr_or_key": attr_or_key,
-        "pv_type": pv_type,
-        "pv_max_length": pv_max_length,
-        "getter": getter,
-        "setter": setter,
-    }
-
-
 def get_path_to_simulated_agent():
     return os.path.join(*os.path.split(__file__)[:-1], "demo", "agent_sim.py")
 

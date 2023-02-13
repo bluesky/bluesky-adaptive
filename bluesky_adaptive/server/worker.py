@@ -6,6 +6,11 @@ from .comms import PipeJsonRpcReceive
 from .utils import load_worker_startup_code, get_path_to_simulated_agent
 from collections.abc import Mapping
 import enum
+import threading
+import queue
+import json
+import traceback
+import uuid
 
 import logging
 
@@ -16,8 +21,65 @@ logger = logging.getLogger("uvicorn")
 class EState(enum.Enum):
     INITIALIZING = "initializing"
     IDLE = "idle"
+    EXECUTING_TASK = "executing_task"
     CLOSING = "closing"
     CLOSED = "closed"  # For completeness
+
+
+class RejectedError(RuntimeError):
+    ...
+
+
+worker_obj = []
+agent_server_variables = []
+
+
+def start_task(target, *args, **kwargs):
+    global worker_obj
+
+    run_in_background = kwargs.pop("run_in_background", True)
+    task_uid = kwargs.pop("task_uid", None)
+
+    if not worker_obj:
+        raise RuntimeError(f"The function 'start_task' may be called only after the worker is fully initialized")
+
+    return worker_obj[0]._start_task(
+        name="task",
+        target=target,
+        target_args=args,
+        target_kwargs=kwargs,
+        run_in_background=run_in_background,
+        task_uid=task_uid,
+    )
+
+
+def register_variable(name, obj=None, attr_or_key=None, *, getter=None, setter=None, pv_type=None, pv_max_length=None):
+    global agent_server_variables
+
+    if not worker_obj:
+        raise RuntimeError(f"The function 'start_task' may be called only after the worker is fully initialized")
+
+    if not isinstance(name, str):
+        raise TypeError(f"Variable name must be a string: name={name!r}")
+    if not isinstance(attr_or_key, (str, type(None))):
+        raise TypeError(f"Name of an attribute or a key must be a string: attr_or_key={attr_or_key!r}")
+    if not isinstance(getter, type(None)) and not callable(getter):
+        raise TypeError(f"Parameter 'getter' must be callable or None: type(get)={type(getter)!r}")
+    if not isinstance(setter, type(None)) and not callable(setter):
+        raise TypeError(f"Parameter 'setter' must be callable or None: type(setter)={type(setter)!r}")
+    if not isinstance(pv_type, (str, None)):
+        raise TypeError(f"PV type must be a string: pv_type={pv_type!r}")
+    if not (isinstance(pv_max_length, int) or (pv_max_length is None)):
+        raise TypeError(f"PV max length must be int: pv_max_length={pv_max_length!r}")
+
+    agent_server_variables[0][name] = {
+        "object": obj,
+        "attr_or_key": attr_or_key,
+        "pv_type": pv_type,
+        "pv_max_length": pv_max_length,
+        "getter": getter,
+        "setter": setter,
+    }
 
 
 class WorkerProcess(Process):
@@ -49,9 +111,16 @@ class WorkerProcess(Process):
 
         self._log_level = log_level
 
-        self._is_stopping = False
+        self._exit_event = None
+        self._execution_queue = None
 
-        self._state = EState.INITIALIZING
+        self._running_task_uid = None
+
+        self._background_tasks_num = 0
+        self._completed_tasks = []
+        self._completed_tasks_lock = None  # threading.Lock()
+
+        self._env_state = EState.INITIALIZING
 
         self._conn = conn
         self._config_dict = config or {}
@@ -59,9 +128,218 @@ class WorkerProcess(Process):
         self._ns = {}  # Namespace
         self._variables = {}  # Descriptions of variables
 
+    # ------------------------------------------------------------
+
+    def _generate_task_func(self, parameters):
+        """
+        Generate function for execution of a task (target function). The function is
+        performing all necessary steps to complete execution of the task and report
+        the results and could be executed in main or background thread.
+        """
+        name = parameters["name"]
+        task_uid = parameters["task_uid"]
+        time_submit = parameters["time_submit"]
+        time_start = ttime.time()
+        target = parameters["target"]
+        target_args = parameters["target_args"]
+        target_kwargs = parameters["target_kwargs"]
+        run_in_background = parameters["run_in_background"]
+
+        def task_func():
+            # This is the function executed in a separate thread
+            try:
+
+                if run_in_background:
+                    self._background_tasks_num += 1
+                else:
+                    self._env_state = EState.EXECUTING_TASK
+                    self._running_task_uid = task_uid
+
+                return_value = target(*target_args, **target_kwargs)
+
+                # Attempt to serialize the result to JSON. The result can not be sent to the client
+                #   if it can not be serialized, so it is better for the function to fail here so that
+                #   proper error message could be sent to the client.
+                try:
+                    json.dumps(return_value)  # The result of the conversion is intentionally discarded
+                except Exception as ex_json:
+                    raise ValueError(f"Task result can not be serialized as JSON: {ex_json}") from ex_json
+
+                success, err_msg, err_tb = True, "", ""
+            except Exception as ex:
+                s = f"Error occurred while executing {name!r}"
+                err_msg = f"{s}: {str(ex)}"
+                if hasattr(ex, "tb"):  # ScriptLoadingError
+                    err_tb = str(ex.tb)
+                else:
+                    err_tb = traceback.format_exc()
+                logger.error("%s:\n%s\n", err_msg, err_tb)
+
+                return_value, success = None, False
+            finally:
+                if run_in_background:
+                    self._background_tasks_num = max(self._background_tasks_num - 1, 0)
+                else:
+                    self._env_state = EState.IDLE
+                    self._running_task_uid = None
+
+            with self._completed_tasks_lock:
+                task_res = {
+                    "task_uid": task_uid,
+                    "success": success,
+                    "msg": err_msg,
+                    "traceback": err_tb,
+                    "return_value": return_value,
+                    "time_submit": time_submit,
+                    "time_start": time_start,
+                    "time_stop": ttime.time(),
+                }
+                self._completed_tasks.append(task_res)
+
+        return task_func
+
+    def _start_task(
+        self,
+        *,
+        name,
+        target,
+        target_args=None,
+        target_kwargs=None,
+        run_in_background=True,
+        task_uid=None,
+    ):
+        """
+        Run ``target`` (any callable) in the main thread or a separate daemon thread. The callable
+        is passed arguments ``target_args`` and ``target_kwargs``. The function returns once
+        the generated function is passed to the main thread, started in a background thead or fails
+        to start. The function is not waiting for the execution result.
+
+        Parameters
+        ----------
+        name: str
+            The name used in background thread name and error messages.
+        target: callable
+            Callable (function or method) to execute.
+        target_args: list
+            List of target args (passed to ``target``).
+        target_kwargs: dict
+            Dictionary of target kwargs (passed to ``target``).
+        run_in_background: boolean
+            Run in a background thread if ``True``, run as the main thread otherwise.
+        task_uid: str or None
+            UID of the task. If ``None``, then the new UID is generated.
+        """
+        target_args, target_kwargs = target_args or [], target_kwargs or {}
+        status, msg = "accepted", ""
+
+        task_uid = task_uid or str(uuid.uuid4())
+        time_submit = ttime.time()
+        logger.debug("Starting task '%s'. Task UID: '%s'.", name, task_uid)
+
+        try:
+            # Verify that the environment is ready
+            acceptable_states = (EState.IDLE, EState.EXECUTING_TASK)
+            if self._env_state not in acceptable_states:
+                raise RejectedError(
+                    f"Incorrect environment state: '{self._env_state.value}'. "
+                    f"Acceptable states: {[_.value for _ in acceptable_states]}"
+                )
+
+            task_uid_short = task_uid.split("-")[-1]
+            thread_name = f"BS Agent - {name} {task_uid_short} "
+
+            parameters = {
+                "name": name,
+                "task_uid": task_uid,
+                "time_submit": time_submit,
+                "target": target,
+                "target_args": target_args,
+                "target_kwargs": target_kwargs,
+                "run_in_background": run_in_background,
+            }
+            # Generate the target function even if it is not used here to validate parameters
+            #   (if it is executed in the main thread), because this is the right place to fail.
+            target_func = self._generate_task_func(parameters)
+
+            if run_in_background:
+                th = threading.Thread(target=target_func, name=thread_name, daemon=True)
+                th.start()
+            else:
+                self._execution_queue.put((parameters))
+
+        except RejectedError as ex:
+            status, msg = "rejected", f"Task {name!r} was rejected by RE Worker process: {ex}"
+        except Exception as ex:
+            status, msg = "error", f"Error occurred while to starting the task {name!r}: {ex}"
+
+        logger.debug(
+            "Completing the request to start the task '%s' ('%s'): status='%s' msg='%s'.",
+            name,
+            task_uid,
+            status,
+            msg,
+        )
+
+        # Payload contains information that may be useful for tracking the execution of the task.
+        payload = {"task_uid": task_uid, "time_submit": time_submit, "run_in_background": run_in_background}
+
+        return status, msg, task_uid, payload
+
+    def _execute_task(self, parameters):
+        """
+        Execute a plan or a task pulled from ``self._execution_queue``. Note, that the queue
+        is used exclusively to pass data between threads and may contain at most 1 element.
+        This is not a plan queue. The function is expected to run in the main thread.
+        """
+        logger.debug("Starting execution of a task in main thread ...")
+        try:
+            func = self._generate_task_func(parameters)
+
+            # The function 'func' is self-sufficient: it is responsible for catching and processing
+            #   exceptions and handling execution results.
+            func()
+
+        except Exception as ex:
+            # The exception was raised while preparing the function for execution.
+            logger.exception("Failed to execute task in main thread: %s", ex)
+        else:
+            logger.debug("Task execution is completed.")
+        finally:
+            self._env_state = EState.IDLE
+
+    def _execute_in_main_thread(self):
+        """
+        Run this function to block the main thread. The function is polling
+        `self._execution_queue` and executes the plans that are in the queue.
+        If the queue is empty, then the thread remains idle.
+        """
+        # This function blocks the main thread
+        while True:
+            # Polling 10 times per second. This is fast enough for slowly executed plans.
+            # ttime.sleep(0.1)
+            # Exit the thread if the Event is set (necessary to gracefully close the process)
+            if self._exit_event.is_set():
+                break
+            try:
+                parameters = self._execution_queue.get(timeout=0.1)
+                self._env_state = EState.EXECUTING_TASK
+                self._execute_task(parameters)
+            except queue.Empty:
+                pass
+
+    # ------------------------------------------------------------
+
     def _status_handler(self):
+
+        background_tasks_num = self._background_tasks_num
+        foreground_tasks_num = self._execution_queue.qsize()
+        task_uid = self._running_task_uid
+
         status = {
-            "state": self._state.value,
+            "state": self._env_state.value,
+            "task_uid": task_uid,
+            "foreground_tasks_num": foreground_tasks_num,
+            "background_tasks_num": background_tasks_num,
         }
         return status
 
@@ -129,7 +407,7 @@ class WorkerProcess(Process):
 
     def _stop_worker_handler(self):
         print("STOPPING THE WORKER .........................")
-        self._is_stopping = True
+        self._exit_event.set()
 
     def run(self):
         """
@@ -140,6 +418,12 @@ class WorkerProcess(Process):
         # setup_loggers(name="bluesky_queueserver", log_level=self._log_level)
 
         success = True
+        worker_obj.append(self)
+        agent_server_variables.append(self._variables)
+
+        self._exit_event = threading.Event()
+        self._execution_queue = queue.Queue()
+        self._completed_tasks_lock = threading.Lock()
 
         # Class that supports communication over the pipe
         self._comm_to_manager = PipeJsonRpcReceive(conn=self._conn, name="RE Worker-Manager Comm")
@@ -155,8 +439,7 @@ class WorkerProcess(Process):
         try:
             code_path = get_path_to_simulated_agent()
             self._ns = load_worker_startup_code(startup_script_path=code_path)
-            self._variables = self._ns.get("_agent_server_variables__", {})
-            self._state = EState.IDLE
+            self._env_state = EState.IDLE
         except Exception as ex:
             s = "Failed to load the agent code."
             if hasattr(ex, "tb"):  # ScriptLoadingError
@@ -166,9 +449,7 @@ class WorkerProcess(Process):
             success = False
 
         if success:
-            while True:
-                ttime.sleep(1)
-                if self._is_stopping:
-                    break
+            logger.info("RE Environment is ready")
+            self._execute_in_main_thread()
 
         self._comm_to_manager.stop()
