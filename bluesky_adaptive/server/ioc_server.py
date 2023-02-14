@@ -87,28 +87,26 @@ class IOC_Server:
                     #   to avoid unnecessary triggering of monitors. This behavior seems consistent
                     #   with standard IOC behavior.
 
-                    if lock.locked():
-                        return value
+                    if not lock.locked():
 
-                    async with lock:
-                        is_updated = False
-                        if value != obj.setpoint.value:
-                            is_updated = True
-                            await obj.setpoint.write(value)
-
-                        if not self._ctxvar_internal_update.get(False):
-                            # Update PVs and the respective variables in the worker after external PV put.
-                            print(f"Writing new value of the variable {var_name!r}: type={type(value)} value={value}")
-                            vres = await SR.worker_set_variable(name=var_name, value=value)
-                            value = vres[var_name]
-                            if not is_updated or value != obj.setpoint.value:
+                        async with lock:
+                            if value != obj.setpoint.value:
                                 await obj.setpoint.write(value)
-                            await obj.readback.write(value)
 
-                        elif value != obj.readback.value:
-                            await obj.readback.write(value)
+                            if not self._ctxvar_internal_update.get(False):
+                                # Update PVs and the respective variables in the worker after external PV put.
+                                print(f"Writing new value of the variable {var_name!r}: type={type(value)} value={value}")
+                                vres = await SR.worker_set_variable(name=var_name, value=value)
+                                value = vres[var_name]
+                                if value != obj.setpoint.value:
+                                    await obj.setpoint.write(value)
 
-                    raise SkipWrite()
+                            if value != obj.readback.value:
+                                await obj.readback.write(value)
+
+                        raise SkipWrite()
+
+                    return value
 
                     # update_monitors = (value != obj.readback.value)
 
@@ -126,8 +124,8 @@ class IOC_Server:
                     #     await obj.readback.write(value)
                     # else:
                     #     raise SkipWrite()
-
-                    return value
+                    #
+                    # return value
 
                 return put
 
