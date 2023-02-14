@@ -386,8 +386,14 @@ class WorkerProcess(Process):
         self._comm_to_manager.start()
 
         try:
-            code_path = get_path_to_simulated_agent()
-            self._ns = load_worker_startup_code(startup_script_path=code_path)
+            startup_script_path = self._config_dict.get("startup_script_path")
+            startup_module_name = self._config_dict.get("startup_module_name")
+            if not startup_script_path and not startup_module_name:
+                startup_script_path = get_path_to_simulated_agent()
+            self._ns = load_worker_startup_code(
+                startup_script_path=startup_script_path,
+                startup_module_name=startup_module_name,
+            )
             self._env_state = EState.IDLE
         except Exception as ex:
             s = "Failed to load the agent code."

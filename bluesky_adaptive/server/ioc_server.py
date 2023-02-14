@@ -43,7 +43,7 @@ class IOC_Server:
     """
 
     def __init__(self, ioc_prefix="agent_ioc", pv_update_period=0.1):
-        self._ioc_prefix = "agent_ioc"
+        self._ioc_prefix = ioc_prefix
         self._pv_update_period = pv_update_period
         self._vars_desc = {}
         self._vars_to_pv_names = {}
