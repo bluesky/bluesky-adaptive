@@ -80,26 +80,52 @@ class IOC_Server:
 
             def put_factory(var_name):
 
+                lock = asyncio.Lock()
+
                 async def put(obj, instance, value):
                     # Update setpoint and readback only if the new value is different from the PV value
                     #   to avoid unnecessary triggering of monitors. This behavior seems consistent
                     #   with standard IOC behavior.
-                    update_monitors = (value != obj.readback.value)
 
-                    if not self._ctxvar_internal_update.get(False):
-                        # Update PVs and the respective variables in the worker after external PV put.
-                        print(f"Writing new value of the variable {var_name!r}: type={type(value)} value={value}")
-                        if update_monitors:
+                    if lock.locked():
+                        return value
+
+                    async with lock:
+                        is_updated = False
+                        if value != obj.setpoint.value:
+                            is_updated = True
+                            await obj.setpoint.write(value)
+
+                        if not self._ctxvar_internal_update.get(False):
+                            # Update PVs and the respective variables in the worker after external PV put.
+                            print(f"Writing new value of the variable {var_name!r}: type={type(value)} value={value}")
+                            vres = await SR.worker_set_variable(name=var_name, value=value)
+                            value = vres[var_name]
+                            if not is_updated or value != obj.setpoint.value:
+                                await obj.setpoint.write(value)
                             await obj.readback.write(value)
-                        vres = await SR.worker_set_variable(name=var_name, value=value)
-                        value = vres[var_name]
-                        if not update_monitors:
-                            raise SkipWrite()
-                    elif update_monitors:
-                        # Update PVs to match the respective variables in the worker.
-                        await obj.readback.write(value)
-                    else:
-                        raise SkipWrite()
+
+                        elif value != obj.readback.value:
+                            await obj.readback.write(value)
+
+                    raise SkipWrite()
+
+                    # update_monitors = (value != obj.readback.value)
+
+                    # if not self._ctxvar_internal_update.get(False):
+                    #     # Update PVs and the respective variables in the worker after external PV put.
+                    #     print(f"Writing new value of the variable {var_name!r}: type={type(value)} value={value}")
+                    #     if update_monitors:
+                    #         await obj.readback.write(value)
+                    #     vres = await SR.worker_set_variable(name=var_name, value=value)
+                    #     value = vres[var_name]
+                    #     if not update_monitors:
+                    #         raise SkipWrite()
+                    # elif update_monitors:
+                    #     # Update PVs to match the respective variables in the worker.
+                    #     await obj.readback.write(value)
+                    # else:
+                    #     raise SkipWrite()
 
                     return value
 
