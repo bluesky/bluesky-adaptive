@@ -1,5 +1,4 @@
-from bluesky_adaptive.server.worker import register_variable
-from bluesky_adaptive.server.worker import start_task
+from bluesky_adaptive.server import register_variable, start_task
 
 print(f"The script implementing the simulated agent ...")
 
@@ -34,13 +33,3 @@ register_variable("width", None, None, pv_type="float", getter=width_getter, set
 register_variable("x", bb, "x", pv_type="int", pv_max_length=1000)
 register_variable("y", bb, "y", pv_type="int")
 register_variable("v", globals(), "_v", pv_type="int")
-
-
-# register_variable("depth", aa, "_depth", pv_type="float", global_dict=globals())
-# register_variable("width", None, None, pv_type="float",
-#                   getter=width_getter, setter=width_setter, global_dict=globals())
-# register_variable("x", bb, "x", pv_type="int", pv_max_length=1000, global_dict=globals())
-# register_variable("y", bb, "y", pv_type="int", global_dict=globals())
-# register_variable("v", globals(), "_v", pv_type="int", global_dict=globals())
-
-# print(f"_agent_server_variables__ = {_agent_server_variables__}")

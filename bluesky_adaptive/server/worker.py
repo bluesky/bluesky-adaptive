@@ -3,7 +3,7 @@ import os
 import logging
 import time as ttime
 from .comms import PipeJsonRpcReceive
-from .utils import load_worker_startup_code, get_path_to_simulated_agent
+from .utils import load_worker_startup_code, get_path_to_simulated_agent, WR
 from collections.abc import Mapping
 import enum
 import threading
@@ -29,57 +29,6 @@ class EState(enum.Enum):
 class RejectedError(RuntimeError):
     ...
 
-
-worker_obj = []
-agent_server_variables = []
-
-
-def start_task(target, *args, **kwargs):
-    global worker_obj
-
-    run_in_background = kwargs.pop("run_in_background", True)
-    task_uid = kwargs.pop("task_uid", None)
-
-    if not worker_obj:
-        raise RuntimeError(f"The function 'start_task' may be called only after the worker is fully initialized")
-
-    return worker_obj[0]._start_task(
-        name="task",
-        target=target,
-        target_args=args,
-        target_kwargs=kwargs,
-        run_in_background=run_in_background,
-        task_uid=task_uid,
-    )
-
-
-def register_variable(name, obj=None, attr_or_key=None, *, getter=None, setter=None, pv_type=None, pv_max_length=None):
-    global agent_server_variables
-
-    if not worker_obj:
-        raise RuntimeError(f"The function 'start_task' may be called only after the worker is fully initialized")
-
-    if not isinstance(name, str):
-        raise TypeError(f"Variable name must be a string: name={name!r}")
-    if not isinstance(attr_or_key, (str, type(None))):
-        raise TypeError(f"Name of an attribute or a key must be a string: attr_or_key={attr_or_key!r}")
-    if not isinstance(getter, type(None)) and not callable(getter):
-        raise TypeError(f"Parameter 'getter' must be callable or None: type(get)={type(getter)!r}")
-    if not isinstance(setter, type(None)) and not callable(setter):
-        raise TypeError(f"Parameter 'setter' must be callable or None: type(setter)={type(setter)!r}")
-    if not isinstance(pv_type, (str, None)):
-        raise TypeError(f"PV type must be a string: pv_type={pv_type!r}")
-    if not (isinstance(pv_max_length, int) or (pv_max_length is None)):
-        raise TypeError(f"PV max length must be int: pv_max_length={pv_max_length!r}")
-
-    agent_server_variables[0][name] = {
-        "object": obj,
-        "attr_or_key": attr_or_key,
-        "pv_type": pv_type,
-        "pv_max_length": pv_max_length,
-        "getter": getter,
-        "setter": setter,
-    }
 
 
 class WorkerProcess(Process):
@@ -198,7 +147,7 @@ class WorkerProcess(Process):
 
         return task_func
 
-    def _start_task(
+    def start_task(
         self,
         *,
         name,
@@ -418,8 +367,8 @@ class WorkerProcess(Process):
         # setup_loggers(name="bluesky_queueserver", log_level=self._log_level)
 
         success = True
-        worker_obj.append(self)
-        agent_server_variables.append(self._variables)
+        WR.set_worker_obj(self)
+        WR.set_agent_server_vars(self._variables)
 
         self._exit_event = threading.Event()
         self._execution_queue = queue.Queue()
