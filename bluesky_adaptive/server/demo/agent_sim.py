@@ -1,4 +1,4 @@
-from bluesky_adaptive.server import register_variable, start_task
+from bluesky_adaptive.server import register_variable, start_task, startup_decorator, shutdown_decorator
 
 print(f"The script implementing the simulated agent ...")
 
@@ -17,14 +17,33 @@ def some_function(a):
     print(f"Function is running: a = {a!r}", flush=True)
 
 def width_getter():
-    return aa._depth
+    return aa._width
 
 def width_setter(value):
-    aa._depth = value
+    aa._width = value
     # task_info = start_task(some_function, 50)
-    task_info = start_task(some_function, 50, run_in_background=False)
+    task_info = start_task(some_function, value, run_in_background=False)
     print(f"task_info = {task_info}")
     return value
+
+@startup_decorator
+def startup1():
+    print(f"This is startup function #1")
+    aa._depth = 20
+
+@startup_decorator
+def startup2():
+    print(f"This is startup function #2")
+    aa._width = 70
+
+@shutdown_decorator
+def shutdown1():
+    print(f"This is shutdown function #1")
+
+@shutdown_decorator
+def shutdown2():
+    print(f"This is shutdown function #2")
+
 
 # raise Exception("Hello")
 

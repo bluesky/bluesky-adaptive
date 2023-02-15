@@ -11,6 +11,7 @@ logger = logging.getLogger("uvicorn")
 
 worker_process = None
 ioc_server = None
+worker_shutdown_timeout = 5
 
 def create_conn_pipes():
     server_conn, worker_conn = Pipe()
@@ -23,14 +24,13 @@ def build_app():
 
     @app.on_event("startup")
     async def startup_event():
-        global worker_process
-        global ioc_server
-
+        global worker_process, ioc_server, worker_shutdown_timeout
         logger.info("Starting the server ...")
 
         ioc_prefix = os.environ.get("BS_AGENT_IOC_PREFIX", "agent_ioc")
         startup_script_path = os.environ.get("BS_AGENT_STARTUP_SCRIPT_PATH", None)
         startup_module_name = os.environ.get("BS_AGENT_STARTUP_MODULE_NAME", None)
+        worker_shutdown_timeout = os.environ.get("BS_AGENT_WORKER_SHUTDOWN_TIMEOUT", 5)
 
         worker_config = {
             "startup_script_path": startup_script_path,
@@ -50,8 +50,7 @@ def build_app():
 
     @app.on_event("shutdown")
     async def shutdown_event():
-        global worker_process
-        global ioc_server
+        global worker_process, ioc_server, worker_shutdown_timeout
         logger.info("Shutting down the server ...")
 
         ioc_server.stop()

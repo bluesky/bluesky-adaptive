@@ -394,7 +394,18 @@ class WorkerProcess(Process):
                 startup_script_path=startup_script_path,
                 startup_module_name=startup_module_name,
             )
+
+            # Executing startup tasks
+            n_startup_tasks = len(WR.startup_tasks)
+            if n_startup_tasks:
+                print(f"Executing startup tasks ({n_startup_tasks}):")
+                for n, func in enumerate(WR.startup_tasks):
+                    print(f"Task {n} ...")
+                    func()
+                print("Startup tasks are completed.")
+
             self._env_state = EState.IDLE
+
         except Exception as ex:
             s = "Failed to load the agent code."
             if hasattr(ex, "tb"):  # ScriptLoadingError
@@ -406,5 +417,16 @@ class WorkerProcess(Process):
         if success:
             logger.info("RE Environment is ready")
             self._execute_in_main_thread()
+
+        self._env_state = EState.CLOSING
+
+        # Executing shutdown tasks
+        n_shutdown_tasks = len(WR.shutdown_tasks)
+        if n_shutdown_tasks:
+            print(f"Executing shutdown tasks ({n_shutdown_tasks}):")
+            for n, func in enumerate(WR.shutdown_tasks):
+                print(f"Task {n} ...")
+                func()
+            print("Shutdown tasks are completed.")
 
         self._comm_to_manager.stop()

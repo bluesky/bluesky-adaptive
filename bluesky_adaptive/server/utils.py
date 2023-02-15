@@ -11,6 +11,8 @@ class _WorkerResources():
     def __init__(self):
         self._worker_obj = None
         self._agent_server_vars = None
+        self._startup_tasks = []
+        self._shutdown_tasks = []
 
     def _check_initialization(self):
         if (self._worker_obj is None) or (self._agent_server_vars is None):
@@ -26,6 +28,20 @@ class _WorkerResources():
         self._check_initialization()
         return self._agent_server_vars
 
+    @property
+    def startup_tasks(self):
+        """
+        Returns the reference to the list of startup tasks (not the copy).
+        """
+        return self._startup_tasks
+
+    @property
+    def shutdown_tasks(self):
+        """
+        Returns the reference to the list of shutdown tasks (not the copy).
+        """
+        return self._shutdown_tasks
+
     def set_worker_obj(self, worker_obj):
         """
         This method should not be called by user code.
@@ -37,6 +53,12 @@ class _WorkerResources():
         This method should not be called by user code.
         """
         self._agent_server_vars = agent_server_vars
+
+    def add_startup_task(self, func):
+        self._startup_tasks.append(func)
+
+    def add_shutdown_task(self,  func):
+        self._shutdown_tasks.append(func)
 
 
 WR = _WorkerResources()
@@ -147,6 +169,30 @@ def register_variable(name, obj=None, attr_or_key=None, *, getter=None, setter=N
         "getter": getter,
         "setter": setter,
     }
+
+
+def startup_decorator(func):
+    """
+    The decorated functions are executed during startup after loading the script.
+    The functions are executed in the order in which they appear in the code.
+    The functions should accept no parameters. The returned values are ignored.
+
+    The decorate will not work only with stand-alone function, not with a method of a class.
+    """
+    WR.add_startup_task(func)
+    return func
+
+
+def shutdown_decorator(func):
+    """
+    The decorated functions are executed during shutdown.
+    The functions are executed in the order in which they appear in the code.
+    The functions should accept no parameters. The returned values are ignored.
+
+    The decorate will not work only with stand-alone function, not with a method of a class.
+    """
+    WR.add_shutdown_task(func)
+    return func
 
 
 def get_path_to_simulated_agent():
