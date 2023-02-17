@@ -1,3 +1,5 @@
+import contextvars
+import functools
 import importlib
 import os
 import sys
@@ -351,3 +353,19 @@ def load_worker_startup_code(*, startup_module_name=None, startup_script_path=No
         nspace = {}
 
     return nspace
+
+
+_internal_process = contextvars.ContextVar("internal_process", default=False)
+
+def no_reentry(func):
+    @functools.wraps(func)
+    async def inner(*args, **kwargs):
+        if _internal_process.get():
+            return
+        try:
+            _internal_process.set(True)
+            return await func(*args, **kwargs)
+        finally:
+            _internal_process.set(False)
+
+    return inner
