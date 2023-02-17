@@ -655,3 +655,27 @@ class Agent(ABC):
     def signal_handler(self, signal, frame):
         self.stop(exit_status="abort", reason="forced exit ctrl+c")
         sys.exit(0)
+
+    @staticmethod
+    def qserver_from_host_and_key(host: str, key: str):
+        """Convenience method to prouduce RE Manager object to manage communication with Queue Server.
+        This is one of several paradigms for communication, albeit a common one.
+        See bluesky_queueserver_api documentation for more details.
+
+
+        Parameters
+        ----------
+        host : str
+            URI for host of HTTP Server
+        key : str
+            Authorization key for HTTP Server API
+
+        Returns
+        -------
+        qserver : bluesky_queueserver_api.api_threads.API_Threads_Mixin
+        """
+        from bluesky_queueserver_api.http import REManagerAPI
+
+        qserver = REManagerAPI(http_server_uri=host)
+        qserver.set_authorization_key(api_key=key)
+        return qserver
