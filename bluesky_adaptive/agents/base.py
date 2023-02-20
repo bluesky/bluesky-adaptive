@@ -142,9 +142,7 @@ class Agent(ABC):
 
     Children of Agent should implment the following, through direct inheritence or mixin classes:
     Experiment specific:
-    - measurement_plan_name
-    - measurement_plan_args
-    - measurement_plan_kwargs
+    - measurement_plan
     - unpack_run
     Agent specific:
     - tell
@@ -242,27 +240,26 @@ class Agent(ABC):
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
 
-    @property
     @abstractmethod
-    def measurement_plan_name(self) -> str:
-        """String name of registered plan"""
-        ...
+    def measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
+        """Fetch the string name of a registered plan, as well as the positional and keyword
+        arguments to pass that plan.
 
-    @staticmethod
-    @abstractmethod
-    def measurement_plan_args(point) -> list:
-        """
-        List of arguments to pass to plan from a point to measure.
-        This is a good place to transform relative into absolute motor coords.
-        """
-        ...
+        Args/Kwargs is a common place to transform relative into absolute motor coords, or
+        other device specific parameters.
 
-    @staticmethod
-    @abstractmethod
-    def measurement_plan_kwargs(point) -> dict:
-        """
-        Construct dictionary of keyword arguments to pass the plan, from a point to measure.
-        This is a good place to transform relative into absolute motor coords.
+        Parameters
+        ----------
+        point : ArrayLike
+            Next point to measure using a given plan
+
+        Returns
+        -------
+        plan_name : str
+        plan_args : List
+            List of arguments to pass to plan from a point to measure.
+        plan_kwargs : dict
+            Dictionary of keyword arguments to pass the plan, from a point to measure.
         """
         ...
 
@@ -473,13 +470,13 @@ class Agent(ABC):
 
         """
         for point in next_points:
-            kwargs = self.measurement_plan_kwargs(point)
+            plan_name, args, kwargs = self.measurement_plan(point)
             kwargs.setdefault("md", {})
             kwargs["md"].update(self.default_plan_md)
             kwargs["md"]["agent_ask_uid"] = uid
             plan = BPlan(
-                self.measurement_plan_name,
-                *self.measurement_plan_args(point),
+                plan_name,
+                args,
                 **kwargs,
             )
             r = self.re_manager.item_add(plan, pos=self.queue_add_position)
