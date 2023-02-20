@@ -6,13 +6,13 @@ from logging import getLogger
 from typing import Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import msgpack
+import tiled
 from bluesky_kafka import Publisher, RemoteDispatcher
 from bluesky_live.run_builder import RunBuilder
 from bluesky_queueserver_api import BPlan
 from bluesky_queueserver_api.api_threads import API_Threads_Mixin
 from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
-from tiled.client import from_profile
 from xkcdpass import xkcd_password as xp
 
 logger = getLogger("bluesky_adaptive.agents")
@@ -26,7 +26,7 @@ class AgentConsumer(RemoteDispatcher):
         topics,
         bootstrap_servers,
         group_id,
-        agent,
+        agent=None,
         consumer_config=None,
         polling_duration=0.05,
         deserializer=msgpack.loads,
@@ -45,7 +45,7 @@ class AgentConsumer(RemoteDispatcher):
         group_id : str
             Required string identifier for Kafka Consumer group
         agent : Agent
-            Instance of the agent to send directives to
+            Instance of the agent to send directives to. Must be set to send directives.
         consumer_config : dict
             Override default configuration or specify additional configuration
             options to confluent_kafka.Consumer.
@@ -125,6 +125,9 @@ class AgentConsumer(RemoteDispatcher):
         else:
             return super().process_document(consumer, topic, name, doc)
 
+    def set_agent(self, agent):
+        self._agent = agent
+
 
 class Agent(ABC):
     """Abstract base class for a single plan agent. These agents should consume data, decide where to measure next,
@@ -151,29 +154,20 @@ class Agent(ABC):
 
     Parameters
     ----------
-    kafka_group_id : str
-        Required string identifier for the consumer's Kafka Consumer group.
-    kafka_bootstrap_servers : str
-        Comma-delimited list of Kafka server addresses as a string
-        such as ``'broker1:9092,broker2:9092,127.0.0.1:9092'``
-    kafka_consumer_config : dict
-        Override default configuration or specify additional configuration
-        options to confluent_kafka.Consumer.
-    kafka_producer_config : dict
-        Override default configuration or specify additional configuration
-        options to confluent_kafka.Producer.
-    publisher_topic : str
-        Existing topic to publish agent documents to.
-    subscripion_topics : List[str]
-        List of existing_topics as strings such as ["topic-1", "topic-2"]. These should be
-        the sources of the Bluesky stop documents that trigger ``tell`` and agent directives.
-    data_profile_name : str
-        Tiled profile name to serve as source of data (BlueskyRuns) for the agent.
-    agent_profile_name : str
-        Tiled profile name to serve as storage for the agent documents.
+    kafka_consumer : AgentConsumer
+        Consumer (subscriber) of Kafka Bluesky documents. It should be subcribed to the sources of
+        Bluesky stop documents that will trigger ``tell``.
+        AgentConsumer is a child class of bluesky_kafka.RemoteDispatcher that enables
+        kafka messages to trigger agent directives.
+    kafka_producer : Publisher
+        Bluesky Kafka publisher to produce document stream of agent actions.
+    tiled_data_node : tiled.client.node.Node
+        Tiled node to serve as source of data (BlueskyRuns) for the agent.
+    tiled_agent_node : tiled.client.node.Node
+        Tiled node to serve as storage for the agent documents.
     qserver : bluesky_queueserver_api.api_threads.API_Threads_Mixin
         Object to manage communication with Queue Server
-    agent_name : Optional[str], optional
+    agent_run_suffix : Optional[str], optional
         Agent name suffix for the instance, by default generated using 2 hyphen separated words from xkcdpass.
     metadata : Optional[dict], optional
         Optional extra metadata to add to agent start document, by default {}
@@ -202,51 +196,38 @@ class Agent(ABC):
     def __init__(
         self,
         *,
-        kafka_group_id: str,
-        kafka_bootstrap_servers: str,
-        kafka_consumer_config: dict,
-        kafka_producer_config: dict,
-        publisher_topic: str,
-        subscripion_topics: List[str],
-        data_profile_name: str,
-        agent_profile_name: str,
+        kafka_consumer: AgentConsumer,
+        kafka_producer: Publisher,
+        tiled_data_node: tiled.client.node.Node,
+        tiled_agent_node: tiled.client.node.Node,
         qserver: API_Threads_Mixin,
-        agent_name: Optional[str] = None,
+        agent_run_suffix: Optional[str] = None,
         metadata: Optional[dict] = None,
-        ask_on_tell: bool = True,
+        ask_on_tell: Optional[bool] = True,
         direct_to_queue: Optional[bool] = True,
-        report_on_tell: bool = False,
+        report_on_tell: Optional[bool] = False,
         default_report_kwargs: Optional[dict] = None,
         queue_add_position: Optional[Union[int, Literal["front", "back"]]] = None,
     ):
 
         logger.debug("Initializing agent.")
-        self.kafka_consumer = AgentConsumer(
-            topics=subscripion_topics,
-            bootstrap_servers=kafka_bootstrap_servers,
-            group_id=kafka_group_id,
-            consumer_config=kafka_consumer_config,
-            agent=self,
-        )
+        self.kafka_consumer = kafka_consumer
+        self.kafka_consumer.set_agent(self)
         self.kafka_consumer.subscribe(self._on_stop_router)
-        self.kafka_producer = Publisher(
-            topic=publisher_topic,
-            bootstrap_servers=kafka_bootstrap_servers,
-            key="",
-            producer_config=kafka_producer_config,
-        )
+
+        self.kafka_producer = kafka_producer
         logger.debug("Kafka set up successfully.")
 
-        self.exp_catalog = from_profile(data_profile_name)
+        self.exp_catalog = tiled_data_node
         logger.info(f"Reading data from catalog: {self.exp_catalog}")
 
-        self.agent_catalog = from_profile(agent_profile_name)
+        self.agent_catalog = tiled_agent_node
         logger.info(f"Writing data to catalog: {self.agent_catalog}")
 
         self.metadata = metadata or {}
         self.instance_name = (
-            f"{self.name}-{agent_name}"
-            if agent_name
+            f"{self.name}-{agent_run_suffix}"
+            if agent_run_suffix
             else f"{self.name}-{xp.generate_xkcdpassword(PASSWORD_LIST, numwords=2, delimiter='-')}"
         )
         self.metadata["agent_name"] = self.instance_name
@@ -259,12 +240,7 @@ class Agent(ABC):
         self.re_manager = qserver
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
-        self.default_plan_md = dict(
-            agent_name=self.instance_name,
-            agent_class=str(type(self)),
-            tiled_data_profile=data_profile_name,
-            tiled_agent_profile=agent_profile_name,
-        )
+        self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
 
     @property
     @abstractmethod
@@ -679,3 +655,86 @@ class Agent(ABC):
         qserver = REManagerAPI(http_server_uri=host)
         qserver.set_authorization_key(api_key=key)
         return qserver
+
+    @classmethod
+    def from_kwargs(
+        cls,
+        kafka_group_id: str,
+        kafka_bootstrap_servers: str,
+        kafka_consumer_config: dict,
+        kafka_producer_config: dict,
+        publisher_topic: str,
+        subscripion_topics: List[str],
+        data_profile_name: str,
+        agent_profile_name: str,
+        qserver_host: str,
+        qserver_api_key: str,
+        **kwargs,
+    ):
+        """Convenience method for producing an Agent from keyword arguments describing the
+        Kafka, Tiled, and Qserver setup.
+        Assumes tiled is loaded from profile, and the REManagerAPI is based on the http api.
+
+        Parameters
+        ----------
+        kafka_group_id : str
+            Required string identifier for the consumer's Kafka Consumer group.
+        kafka_bootstrap_servers : str
+            Comma-delimited list of Kafka server addresses as a string
+            such as ``'broker1:9092,broker2:9092,127.0.0.1:9092'``
+        kafka_consumer_config : dict
+            Override default configuration or specify additional configuration
+            options to confluent_kafka.Consumer.
+        kafka_producer_config : dict
+            Override default configuration or specify additional configuration
+            options to confluent_kafka.Producer.
+        publisher_topic : str
+            Existing topic to publish agent documents to.
+        subscripion_topics : List[str]
+            List of existing_topics as strings such as ["topic-1", "topic-2"]. These should be
+            the sources of the Bluesky stop documents that trigger ``tell`` and agent directives.
+        data_profile_name : str
+            Tiled profile name to serve as source of data (BlueskyRuns) for the agent.
+        agent_profile_name : str
+            Tiled profile name to serve as storage for the agent documents.
+        qserver_host : str
+            Host to POST requests to. Something akin to 'http://localhost:60610'
+        qserver_api_key : str
+            Key for API security.
+        kwargs : dict
+            Additional keyword arguments for init
+        """
+        from bluesky_queueserver_api.http import REManagerAPI
+        from tiled.client import from_profile
+
+        kafka_consumer = AgentConsumer(
+            topics=subscripion_topics,
+            bootstrap_servers=kafka_bootstrap_servers,
+            group_id=kafka_group_id,
+            consumer_config=kafka_consumer_config,
+        )
+        kafka_producer = Publisher(
+            topic=publisher_topic,
+            bootstrap_servers=kafka_bootstrap_servers,
+            key="",
+            producer_config=kafka_producer_config,
+        )
+        tiled_data_node = from_profile(data_profile_name)
+        tiled_agent_node = from_profile(agent_profile_name)
+
+        re_manager = REManagerAPI(http_server_uri=qserver_host)
+        re_manager.set_authorization_key(api_key=qserver_api_key)
+
+        if "metadata" in kwargs:
+            kwargs["metadata"].update(
+                dict(tiled_data_profile=data_profile_name, tiled_agent_profile=agent_profile_name)
+            )
+
+        return cls.__init__(
+            kafka_consumer=kafka_consumer,
+            kafka_producer=kafka_producer,
+            tiled_data_node=tiled_data_node,
+            tiled_agent_node=tiled_agent_node,
+            qserver=re_manager,
+            **kwargs,
+        )
