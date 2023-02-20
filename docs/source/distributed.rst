@@ -27,9 +27,7 @@ following.
 Experiment specific
 -------------------
 
-.. autoproperty:: bluesky_adaptive.agents.base.Agent.measurement_plan_name
-.. automethod:: bluesky_adaptive.agents.base.Agent.measurement_plan_args
-.. automethod:: bluesky_adaptive.agents.base.Agent.measurement_plan_kwargs
+.. automethod:: bluesky_adaptive.agents.base.Agent.measurement_plan
 
 
 Agent 'brains' specific
@@ -55,6 +53,10 @@ In this case the user need only construct `CMSBaseAgent` for some CMS specific v
 and combine the `SequentialAgent` and `CMSBaseAgent`.
 This can be done through direct inheritence or mixins, as all necessary methods are declared
 as abstract in the base Agent.
+
+The default API supports passing the objects for communication, allowing for flexible customization.
+A convenience method `from_config_kwargs` supports automatic construction of the Kafka producer and consumers,
+as well as the qserver API using some common configuration keys. Both are demonstrated below for reference.
 
 .. code-block:: python
 
@@ -151,26 +153,43 @@ as abstract in the base Agent.
             return dict(percent_completion=[self.ask_count / len(self.sequence)])
 
     class CMSBaseAgent:
-        measurement_plan_name = "simple_scan"
 
-        @staticmethod
-        def measurement_plan_args(point) -> list:
-            """
-            List of arguments to pass to plan from a point to measure.
-            This is a good place to transform relative into absolute motor coords.
-            """
-            return point
-
-        @staticmethod
-        def measurement_plan_kwargs(point) -> dict:
-            """
-            Construct dictionary of keyword arguments to pass the plan, from a point to measure.
-            This is a good place to transform relative into absolute motor coords.
-            """
-            return {}
+        def measurement_plan(self, point):
+            return "simple_scan", point, {}
 
         def unpack_run(run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
             return run.start["experiment_state"], run.primary.data["detector"]
+
+        @staticmethod
+        def get_beamline_objects() -> dict:
+            beamline_tla = "cms"
+            kafka_config = nslsii.kafka_utils._read_bluesky_kafka_config_file(
+                config_file_path="/etc/bluesky/kafka.yml"
+            )
+            qs = REManagerAPI(http_server_uri=f"https://qserver.nsls2.bnl.gov/{beamline_tla}")
+            qs.set_authorization_key(api_key=None)
+
+            kafka_consumer = bluesky_adaptive.agents.base.AgentConsumer(
+                topics=[
+                    f"{beamline_tla}.bluesky.runengine.documents",
+                ],
+                consumer_config=kafka_config["runengine_producer_config"],
+                bootstrap_servers=kafka_config["bootstrap_servers"],
+                group_id=f"echo-{beamline_tla}-{str(uuid.uuid4())[:8]}"
+            )
+            kafka_producer = bluesky_kafka.Publisher(
+                topic=f"{beamline_tla}.bluesky.adjudicators",
+                bootstrap_servers=kafka_config["bootstrap_servers"],
+                key="cms.key",
+                producer_config=kafka_config["runengine_producer_config"]
+            )
+
+            return dict(kafka_consumer=kafka_consumer,
+                        kafka_producer=kafka_producer,
+                        tiled_data_node=tiled.client.from_profile(f"{beamline_tla}"),
+                        tiled_agent_node=tiled.client.from_profile(f"{beamline_tla}_bluesky_sandbox"),
+                        qserver=qs)
+
 
         @staticmethod
         def get_beamline_kwargs() -> dict:
@@ -178,8 +197,6 @@ as abstract in the base Agent.
             kafka_config = nslsii.kafka_utils._read_bluesky_kafka_config_file(
                 config_file_path="/etc/bluesky/kafka.yml"
             )
-            qs = REManagerAPI(http_server_uri=f"https://qserver.nsls2.bnl.gov/{beamline_tla}")
-            qs.set_authorization_key(api_key=None)
             return dict(
                 kafka_group_id=f"echo-{beamline_tla}-{str(uuid.uuid4())[:8]}",
                 kafka_bootstrap_servers=kafka_config["bootstrap_servers"],
@@ -191,8 +208,11 @@ as abstract in the base Agent.
                 ],
                 data_profile_name=f"{beamline_tla}",
                 agent_profile_name=f"{beamline_tla}_bluesky_sandbox",
-                qserver=qs,
+                qserver_host=f"https://qserver.nsls2.bnl.gov/{beamline_tla}",
+                qserver_api_key=None
             )
+
+
 
 
     class CMSSequentialAgent(CMSBaseAgent, SequentialAgentBase):
@@ -202,7 +222,16 @@ as abstract in the base Agent.
             sequence: Sequence[Union[float, ArrayLike]],
             relative_bounds: Tuple[Union[float, ArrayLike]] = None,
             **kwargs,
-        ) -> None:
-            _default_kwargs = self.get_beamline_kwargs()
+        ):
+            _default_kwargs = self.get_beamline_objects()
             _default_kwargs.update(kwargs)
             super().__init__(sequence=sequence, relative_bounds=relative_bounds, **_default_kwargs)
+
+        @classmethod
+        def from_config_kwargs(cls, *,
+            sequence: Sequence[Union[float, ArrayLike]],
+            relative_bounds: Tuple[Union[float, ArrayLike]] = None,
+            **kwargs,):
+            _default_kwargs = self.get_beamline_kwargs()
+            _default_kwargs.update(kwargs)
+            super().from_kwargs(sequence=sequence, relative_bounds=relative_bounds, **_default_kwargs)

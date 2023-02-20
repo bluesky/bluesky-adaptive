@@ -654,7 +654,7 @@ class Agent(ABC):
         return qserver
 
     @classmethod
-    def from_kwargs(
+    def from_config_kwargs(
         cls,
         kafka_group_id: str,
         kafka_bootstrap_servers: str,
