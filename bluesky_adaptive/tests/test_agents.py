@@ -1,20 +1,20 @@
 import time as ttime
 from typing import Sequence, Tuple, Union
 
+from bluesky_kafka import Publisher
 from bluesky_live.run_builder import RunBuilder
+from bluesky_queueserver_api.http import REManagerAPI
 from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
 
-from bluesky_adaptive.agents.base import Agent
+from bluesky_adaptive.agents.base import Agent, AgentConsumer
 from bluesky_adaptive.agents.simple import SequentialAgentBase
-
-from bluesky_queueserver_api.http import REManagerAPI
 
 
 class TestCommunicationAgent(Agent):
     measurement_plan_name = "agent_driven_nap"
-    instance_name = 'bob'
+    instance_name = "bob"
 
     def __init__(
         self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
@@ -22,27 +22,35 @@ class TestCommunicationAgent(Agent):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
 
+        kafka_consumer = AgentConsumer(
+            topics=[sub_topic],
+            bootstrap_servers=kafka_bootstrap_servers,
+            group_id="test.communication.group",
+            consumer_config={"auto.offset.reset": "latest"},
+        )
+
+        kafka_producer = Publisher(
+            topic=pub_topic,
+            bootstrap_servers=kafka_bootstrap_servers,
+            key="",
+            producer_config=broker_authorization_config,
+        )
+
+        tiled_data_node = from_profile(tiled_profile)
+        tiled_agent_node = from_profile(tiled_profile)
+
         super().__init__(
-            kafka_group_id="test.communication.group",
-            kafka_bootstrap_servers=kafka_bootstrap_servers,
-            kafka_producer_config=broker_authorization_config,
-            kafka_consumer_config={"auto.offset.reset": "latest"},
-            publisher_topic=pub_topic,
-            subscripion_topics=[sub_topic],
-            data_profile_name=tiled_profile,
-            agent_profile_name=tiled_profile,
+            kafka_consumer=kafka_consumer,
+            kafka_producer=kafka_producer,
+            tiled_agent_node=tiled_agent_node,
+            tiled_data_node=tiled_data_node,
             qserver=qs,
             **kwargs,
         )
         self.count = 0
 
-    @staticmethod
-    def measurement_plan_args(point) -> list:
-        return [1.5]
-
-    @staticmethod
-    def measurement_plan_kwargs(point) -> dict:
-        return dict()
+    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], dict()
 
     def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
@@ -187,27 +195,35 @@ class TestSequentialAgent(SequentialAgentBase):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
 
+        kafka_consumer = AgentConsumer(
+            topics=[sub_topic],
+            bootstrap_servers=kafka_bootstrap_servers,
+            group_id="test.communication.group",
+            consumer_config={"auto.offset.reset": "latest"},
+        )
+
+        kafka_producer = Publisher(
+            topic=pub_topic,
+            bootstrap_servers=kafka_bootstrap_servers,
+            key="",
+            producer_config=broker_authorization_config,
+        )
+
+        tiled_data_node = from_profile(tiled_profile)
+        tiled_agent_node = from_profile(tiled_profile)
+
         super().__init__(
-            kafka_group_id="test.communication.group",
-            kafka_bootstrap_servers=kafka_bootstrap_servers,
-            kafka_producer_config=broker_authorization_config,
-            kafka_consumer_config={"auto.offset.reset": "latest"},
-            publisher_topic=pub_topic,
-            subscripion_topics=[sub_topic],
-            data_profile_name=tiled_profile,
-            agent_profile_name=tiled_profile,
+            kafka_consumer=kafka_consumer,
+            kafka_producer=kafka_producer,
+            tiled_agent_node=tiled_agent_node,
+            tiled_data_node=tiled_data_node,
             qserver=qs,
             **kwargs,
         )
         self.count = 0
 
-    @staticmethod
-    def measurement_plan_args(point) -> list:
-        return [1.5]
-
-    @staticmethod
-    def measurement_plan_kwargs(point) -> dict:
-        return dict()
+    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], dict()
 
     def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0

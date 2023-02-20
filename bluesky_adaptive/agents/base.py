@@ -476,7 +476,7 @@ class Agent(ABC):
             kwargs["md"]["agent_ask_uid"] = uid
             plan = BPlan(
                 plan_name,
-                args,
+                *args,
                 **kwargs,
             )
             r = self.re_manager.item_add(plan, pos=self.queue_add_position)
