@@ -1,4 +1,5 @@
 from bluesky_adaptive.server import register_variable, start_task, startup_decorator, shutdown_decorator
+import sys
 
 print(f"The script implementing the simulated agent ...")
 
@@ -12,6 +13,8 @@ aa = AA()
 bb = {"x": 100, "y": 900}
 
 _v = 600
+
+_no_pv = 100
 
 def some_function(a):
     print(f"Function is running: a = {a!r}", flush=True)
@@ -30,6 +33,7 @@ def width_setter(value):
 def startup1():
     print(f"This is startup function #1")
     aa._depth = 20
+    print(f"sys.__stdin__.isatty() = {sys.__stdin__.isatty()}")
 
 @startup_decorator
 def startup2():
@@ -52,3 +56,4 @@ register_variable("width", None, None, pv_type="float", getter=width_getter, set
 register_variable("x", bb, "x", pv_type="int", pv_max_length=1000)
 register_variable("y", bb, "y", pv_type="int")
 register_variable("v", globals(), "_v", pv_type="int")
+register_variable("no_pv", globals(), "_no_pv")

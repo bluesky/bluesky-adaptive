@@ -366,6 +366,9 @@ class WorkerProcess(Process):
         # logging.basicConfig(level=max(logging.WARNING, self._log_level))
         # setup_loggers(name="bluesky_queueserver", log_level=self._log_level)
 
+        import sys
+        sys.__stdin__ = sys.stdin
+
         success = True
         WR.set_worker_obj(self)
         WR.set_agent_server_vars(self._variables)
