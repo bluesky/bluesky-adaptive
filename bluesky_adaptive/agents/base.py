@@ -455,7 +455,9 @@ class Agent(ABC):
         self.agent_catalog.v1.insert(*self.builder._cache._ordered[-1])
         return self.builder._cache._ordered[-1][1]["uid"]
 
-    def _add_to_queue(self, next_points, uid):
+    def _add_to_queue(
+        self, next_points, uid, re_manager=None, position: Optional[Union[int, Literal["front", "back"]]] = None
+    ):
         """
         Adds a single set of points to the queue as bluesky plans
 
@@ -464,6 +466,10 @@ class Agent(ABC):
         next_points : Iterable
             New points to measure
         uid : str
+        re_manager : Optional[bluesky_queueserver_api.api_threads.API_Threads_Mixin]
+            Defaults to self.re_manager
+        position : Optional[Union[int, Literal[&quot;front&quot;, &quot;back&quot;]]]
+            Defaults to self.queue_add_position
 
         Returns
         -------
@@ -479,7 +485,9 @@ class Agent(ABC):
                 *args,
                 **kwargs,
             )
-            r = self.re_manager.item_add(plan, pos=self.queue_add_position)
+            if re_manager is None:
+                re_manager = self.re_manager
+            r = re_manager.item_add(plan, pos=self.queue_add_position if position is None else position)
             logger.debug(f"Sent http-server request for point {point}\n." f"Received reponse: {r}")
         return
 
@@ -507,7 +515,7 @@ class Agent(ABC):
         uid = self._write_event("ask", doc)
         logger.info(f"Issued ask and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid)
-        self._check_queue_and_start()
+        self._check_queue_and_start()  # TODO: remove this and encourage updated qserver functionality
 
     def _create_suggestion_list(self, points, uid):
         """Create suggestions for adjudicator"""
@@ -735,3 +743,111 @@ class Agent(ABC):
             qserver=re_manager,
             **kwargs,
         )
+
+
+class MonarchSubjectAgent(Agent, ABC):
+    # Drive a beamline. On stop doc check. By default manual trigger.
+
+    def __init__(self, *args, subject_qserver: API_Threads_Mixin, **kwargs):
+        """Abstract base class for a MonarchSubject agent. These agents only consume documents from one
+        (Monarch) source, and can dictate the behavior of a different (Subject) queue.
+        This can be useful in a multimodal measurement where
+        one measurement is very fast and the other is very slow: after some amount of data collection on the fast
+        measurement, the agent can dictate that the slow measurement probe what it considers as interesting. The
+        agent maintains the functionality of a regular Agent, and adds plans to the Monarch queue.
+
+        By default, the Subject is only directed when manually triggered by the agent server or by
+        a kafka directive. If an automated approach to asking the subject is required,
+        ``subject_ask_condition`` must be overriden. This is commonly done by using a wall-clock interval,
+        and/or a model confidence trigger.
+
+        Children of MonarchSubjectAgent must implment the following, through direct inheritence or mixin classes:
+        Experiment specific:
+        - measurement_plan
+        - unpack_run
+        - subject_measurement_plan
+        Agent specific:
+        - tell
+        - ask
+        - subject_ask
+        - report (optional)
+        - name (optional)
+
+        Parameters
+        ----------
+        subject_qserver : API_Threads_Mixin
+            Object to manage communication with the Subject Queue Server
+        """
+        super().__init__(**kwargs)
+        self.subject_re_manager = subject_qserver
+
+    @abstractmethod
+    def subject_measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
+        """Details for subject plan.
+        Fetch the string name of a registered plan, as well as the positional and keyword
+        arguments to pass that plan.
+
+        Args/Kwargs is a common place to transform relative into absolute motor coords, or
+        other device specific parameters.
+
+        Parameters
+        ----------
+        point : ArrayLike
+            Next point to measure using a given plan
+
+        Returns
+        -------
+        plan_name : str
+        plan_args : List
+            List of arguments to pass to plan from a point to measure.
+        plan_kwargs : dict
+            Dictionary of keyword arguments to pass the plan, from a point to measure.
+        """
+        ...
+
+    @abstractmethod
+    def subject_ask(self, batch_size: int) -> Tuple[Dict[str, List], Sequence]:
+        """
+        Ask the agent for a new batch of points to measure on the subject queue.
+
+        Parameters
+        ----------
+        batch_size : int
+            Number of new points to measure
+
+        Returns
+        -------
+        doc : dict
+            key metadata from the ask approach
+        next_points : Sequence
+            Sequence of independent variables of length batch size
+
+        """
+        ...
+
+    def subject_ask_condition(self):
+        """Option to build in a trigger method that is run on using the document router subcription.
+
+        Returns
+        -------
+        bool
+        """
+        return False
+
+    def add_suggestions_to_subject_queue(self, batch_size: int):
+        """Calls ask, adds suggestions to queue, and writes out event"""
+        doc, next_points = self.subject_ask(batch_size)
+        uid = self._write_event("subject_ask", doc)
+        logger.info("Issued ask to subject and adding to the queue. {uid}")
+        self._add_to_queue(next_points, uid, re_manager=self.subject_re_manager, position="front")
+
+    def _on_stop_router(self, name, doc):
+        ret = super()._on_stop_router(name, doc)
+        if name != "stop":
+            return ret
+
+        if self.subject_ask_condition():
+            if self._direct_to_queue:
+                self.add_suggestions_to_subject_queue(1)
+            else:
+                raise NotImplementedError
