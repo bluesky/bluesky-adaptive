@@ -1,4 +1,5 @@
 # flake8: noqa
+import threading
 from contextlib import contextmanager
 from typing import Literal, Tuple, Union
 
@@ -11,7 +12,12 @@ from tiled.client import from_profile
 
 from bluesky_adaptive.agents.base import AgentConsumer
 from bluesky_adaptive.agents.simple import SequentialAgentBase
-from bluesky_adaptive.server import register_variable, shutdown_decorator, start_task, startup_decorator
+from bluesky_adaptive.server import (
+    register_variable,
+    shutdown_decorator,
+    start_task,
+    startup_decorator,
+)
 
 
 class TestSequentialAgent(SequentialAgentBase):
@@ -86,77 +92,66 @@ broker_authorization_config = {
 }
 tiled_profile = "testing_sandbox"
 kafka_bootstrap_servers = "127.0.0.1:9092"
-
-
-@contextmanager
-def temporary_topics(topics, bootstrap_servers=None, admin_client_config=None):
-    if bootstrap_servers is None:
-        bootstrap_servers = kafka_bootstrap_servers
-
-    if admin_client_config is None:
-        admin_client_config = broker_authorization_config
-
-    try:
-        # delete existing requested topics
-        # this will delete any un-consumed messages
-        # the intention is to make tests repeatable by ensuring
-        # they always start with a topics having no "old" messages
-        delete_topics(
-            bootstrap_servers=bootstrap_servers,
-            topics_to_delete=topics,
-            admin_client_config=admin_client_config,
-        )
-        create_topics(
-            bootstrap_servers=bootstrap_servers,
-            topics_to_create=topics,
-            admin_client_config=admin_client_config,
-        )
-        yield topics
-    finally:
-        delete_topics(
-            bootstrap_servers=bootstrap_servers,
-            topics_to_delete=topics,
-            admin_client_config=admin_client_config,
-        )
-
-    return
-
-
+bootstrap_servers = kafka_bootstrap_servers
+admin_client_config = broker_authorization_config
+topics = ["test.publisher", "test.subscriber"]
+pub_topic, sub_topic = topics
 # Block of borrowed code from tests ###############################################################
 
-import threading
 agent_thread = None
+agent = TestSequentialAgent(
+    pub_topic,
+    sub_topic,
+    kafka_bootstrap_servers,
+    broker_authorization_config,
+    tiled_profile,
+    sequence=[1, 2, 3],
+)
 
-with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
-    agent = TestSequentialAgent(
-        pub_topic,
-        sub_topic,
-        kafka_bootstrap_servers,
-        broker_authorization_config,
-        tiled_profile,
-        sequence=[1, 2, 3],
+
+@startup_decorator
+def startup_topics():
+    delete_topics(
+        bootstrap_servers=bootstrap_servers,
+        topics_to_delete=topics,
+        admin_client_config=admin_client_config,
+    )
+    create_topics(
+        bootstrap_servers=bootstrap_servers,
+        topics_to_create=topics,
+        admin_client_config=admin_client_config,
     )
 
-    @startup_decorator
-    def startup():
-        # print("Doing nothing")
 
-        # Temporary (or permanent) solution for starting the agent in a thread.
-        # If this is permanent, 'agent' must have a way to exit the loop durng shutdown.
-        agent_thread = threading.Thread(target=agent.start, name="agent-loop", daemon=True)
-        agent_thread.start()
+@startup_decorator
+def startup_agent():
+    # Temporary (or permanent) solution for starting the agent in a thread.
+    # If this is permanent, 'agent' must have a way to exit the loop durng shutdown.
+    agent_thread = threading.Thread(target=agent.start, name="agent-loop", daemon=True)
+    agent_thread.start()
+    # agent.start()
 
-    @shutdown_decorator
-    def shutdown():
-        print("Doing nothing.")
-        # return agent.stop()
 
-    register_variable("test_attr", agent, "test_attr")
-    register_variable(
-        "operating_mode",
-        None,
-        None,
-        getter=agent.operating_mode_getter,
-        setter=agent.operating_mode_setter,
-        pv_type="str",
+@shutdown_decorator
+def shutdown_agent():
+    return agent.stop()
+
+
+@shutdown_decorator
+def shutdown_topics():
+    delete_topics(
+        bootstrap_servers=bootstrap_servers,
+        topics_to_delete=topics,
+        admin_client_config=admin_client_config,
     )
+
+
+register_variable("test_attr", agent, "test_attr")
+register_variable(
+    "operating_mode",
+    None,
+    None,
+    getter=agent.operating_mode_getter,
+    setter=agent.operating_mode_setter,
+    pv_type="str",
+)
