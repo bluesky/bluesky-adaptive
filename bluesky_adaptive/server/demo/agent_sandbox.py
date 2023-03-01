@@ -11,12 +11,7 @@ from tiled.client import from_profile
 
 from bluesky_adaptive.agents.base import AgentConsumer
 from bluesky_adaptive.agents.simple import SequentialAgentBase
-from bluesky_adaptive.server import (
-    register_variable,
-    shutdown_decorator,
-    start_task,
-    startup_decorator,
-)
+from bluesky_adaptive.server import register_variable, shutdown_decorator, start_task, startup_decorator
 
 
 class TestSequentialAgent(SequentialAgentBase):
