@@ -76,6 +76,9 @@ class TestSequentialAgent(SequentialAgentBase):
     def operating_mode_getter(self):
         return self._operating_mode
 
+    def report(self, **kwargs) -> dict:
+        return {"test": "report"}
+
 
 # Block of borrowed code from tests ###############################################################
 broker_authorization_config = {
@@ -123,7 +126,6 @@ def startup_agent():
     # If this is permanent, 'agent' must have a way to exit the loop durng shutdown.
     agent_thread = threading.Thread(target=agent.start, name="agent-loop", daemon=True)
     agent_thread.start()
-    # agent.start()
 
 
 @shutdown_decorator
@@ -149,3 +151,24 @@ register_variable(
     setter=agent.operating_mode_setter,
     pv_type="str",
 )
+
+
+def add_suggestions_to_queue(batch_size):
+    start_task(agent.add_suggestions_to_queue, batch_size)
+
+
+def generate_report(args_kwargs):
+    """Cheap setter wrapper for generate report.
+    All setters must take a single value, so this takes args and kwargs as a tuple to unpack.
+
+    Parameters
+    ----------
+    args_kwargs : Tuple[List, dict]
+        Tuple of args and kwargs passed to the API `POST` as a `value`
+    """
+    _, kwargs = args_kwargs
+    start_task(agent.generate_report, **kwargs)
+
+
+register_variable("add_suggestions_to_queue", setter=add_suggestions_to_queue)
+register_variable("generate_report", setter=generate_report)
