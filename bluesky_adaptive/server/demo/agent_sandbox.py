@@ -1,6 +1,5 @@
 # flake8: noqa
 import threading
-from contextlib import contextmanager
 from typing import Literal, Tuple, Union
 
 from bluesky_kafka import Publisher
