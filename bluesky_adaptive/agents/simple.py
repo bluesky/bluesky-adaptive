@@ -140,6 +140,7 @@ class SklearnEstimatorAgentBase(Agent, ABC):
 
     def update_model_params(self, params: dict):
         self.model.set_params(**params)
+        self.close_and_restart()
 
     def server_registrations(self) -> None:
         super().server_registrations()

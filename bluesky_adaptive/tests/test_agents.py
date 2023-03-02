@@ -1,4 +1,3 @@
-import threading
 import time as ttime
 from typing import Sequence, Tuple, Union
 
@@ -70,6 +69,9 @@ class TestCommunicationAgent(Agent):
         """Start without kafka consumer start"""
         self.builder = RunBuilder(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
+
+    def server_registrations(self) -> None:
+        return None
 
 
 def test_agent_connection(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
@@ -234,6 +236,9 @@ class TestSequentialAgent(SequentialAgentBase):
         self.builder = RunBuilder(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
 
+    def server_registrations(self) -> None:
+        return None
+
 
 def test_sequntial_agent(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
@@ -278,6 +283,32 @@ def test_sequential_agent_array(
         assert len(points) == 2
         assert points[0][0] == 1
         assert points[1][1] == 6
+
+
+def test_close_and_restart(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+    "Starts agent, restarts it, closes it. Tests for 2 bluesky runs with same agent name."
+
+    class Agent(TestSequentialAgent):
+        """Actually start kafka"""
+
+        def start(self):
+            return SequentialAgentBase.start(self)
+
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
+        agent = Agent(
+            pub_topic,
+            sub_topic,
+            kafka_bootstrap_servers,
+            broker_authorization_config,
+            tiled_profile,
+            sequence=[1, 2, 3],
+        )
+        agent.start()
+        ttime.sleep(1.0)
+        agent.close_and_restart()
+        agent.stop()
+        node = from_profile(tiled_profile)
+        assert node[-1].metadata["start"]["agent_name"] == node[-2].metadata["start"]["agent_name"]
 
 
 class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
@@ -327,6 +358,9 @@ class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
     def unpack_run(self, run: BlueskyRun):
         return 0, 0
 
+    def server_registrations(self) -> None:
+        return None
+
 
 def test_monarch_subject(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
@@ -339,8 +373,7 @@ def test_monarch_subject(temporary_topics, kafka_bootstrap_servers, broker_autho
             sequence=[1, 2, 3],
         )
 
-        agent_thread = threading.Thread(target=agent.start, name="agent-loop", daemon=True)
-        agent_thread.start()
+        agent.start()
         while True:
             # Awaiting the agent build before artificial ask
             if agent.builder is not None:

@@ -146,10 +146,7 @@ def startup_topics():
 
 @startup_decorator
 def startup_agent():
-    # Temporary (or permanent) solution for starting the agent in a thread.
-    # If this is permanent, 'agent' must have a way to exit the loop durng shutdown.
-    agent_thread = threading.Thread(target=agent.start, name="agent-loop", daemon=True)
-    agent_thread.start()
+    agent.start()
 
 
 @shutdown_decorator

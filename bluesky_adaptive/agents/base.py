@@ -1,6 +1,7 @@
 import copy
 import inspect
 import sys
+import threading
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
@@ -244,6 +245,7 @@ class Agent(ABC):
         self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
         self.tell_cache = list()
         self.server_registrations()
+        self._kafka_thread = None
 
     @abstractmethod
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
@@ -617,6 +619,13 @@ class Agent(ABC):
             self._tell(uid)
 
     def start(self, ask_at_start=False):
+        """Starts kakfka listener in background thread
+
+        Parameters
+        ----------
+        ask_at_start : bool, optional
+            Whether to ask for a suggestion immediately, by default False
+        """
         logger.debug("Issuing Agent start document and starting to listen to Kafka")
         self.builder = RunBuilder(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
@@ -624,7 +633,8 @@ class Agent(ABC):
         logger.info(f"Agent start document uuid={self.builder._cache.start_doc['uid']}")
         if ask_at_start:
             self.add_suggestions_to_queue(1)
-        self.kafka_consumer.start()
+        self._kafka_thread = threading.Thread(target=self.kafka_consumer.start, name="agent-loop", daemon=True)
+        self._kafka_thread.start()
 
     def stop(self, exit_status="success", reason=""):
         logger.debug("Attempting agent stop.")
