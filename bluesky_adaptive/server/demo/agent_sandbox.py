@@ -58,6 +58,14 @@ class TestSequentialAgent(SequentialAgentBase):
         # Regular attribute
         self.test_attr = 123
 
+        self.registrations()
+
+    def registrations(self):
+        register_variable("add_suggestions_to_queue_inner", setter=self.add_suggestions_to_queue)
+        register_variable(
+            "generate_report_inner", setter=lambda value: self.generate_report(*value[0], **value[1])
+        )
+
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [self._sleep_duration], dict()
 
