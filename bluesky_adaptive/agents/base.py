@@ -1,3 +1,4 @@
+import copy
 import inspect
 import sys
 from abc import ABC, abstractmethod
@@ -632,6 +633,32 @@ class Agent(ABC):
             f"Stopped agent with exit status {exit_status.upper()}"
             f"{(' for reason: ' + reason) if reason else '.'}"
         )
+
+    def close_and_restart(self, *, clear_tell_cache=False, retell_all=False, reason=""):
+        """Utility for closing and restarting an agent with the same name.
+        This is primarily for methods that change the hyperparameters of an agent on the fly,
+        but in doing so may change the shape/nature of the agent document stream. This will
+        keep the documents consistent between hyperparameters as individual BlueskyRuns.
+
+        Parameters
+        ----------
+        clear_tell_cache : bool, optional
+            Clears the cache of data the agent has been told about, by default False.
+            This is useful for a clean slate.
+        retell_all : bool, optional
+            Resets the cache and tells the agent about all previous data, by default False.
+            This can be useful if the agent has not retained knowledge from previous tells.
+        reason : str, optional
+            Reason for closing and restarting the agent, to be recorded to logs, by default ""
+        """
+        self.stop(reason=f"Close and Restart: {reason}")
+        if clear_tell_cache:
+            self.tell_cache = list()
+        elif retell_all:
+            uids = copy.copy(self.tell_cache)
+            self.tell_cache = list()
+            self.tell_agent_by_uid(uids)
+        self.start()
 
     def signal_handler(self, signal, frame):
         self.stop(exit_status="abort", reason="forced exit ctrl+c")
