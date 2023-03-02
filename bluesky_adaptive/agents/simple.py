@@ -113,9 +113,10 @@ class SequentialAgentBase(Agent, ABC):
         return dict(percent_completion=[self.ask_count / len(self.sequence)])
 
 
-class DecompositionAgentBase(Agent, ABC):
-    def __init__(self, *, estimator: sklearn.base.TransformerMixin, **kwargs):
-        """Passive, report only agent that provide dataset analysis for decomposition.
+class SklearnEstimatorAgentBase(Agent, ABC):
+    def __init__(self, *, estimator: sklearn.base.BaseEstimator, **kwargs):
+        """Basic functionality for sklearn estimators. Maintains independent and dependent caches.
+        Strictly passive agent with do ask mechanism: will raise NotImplementedError
 
         Parameters
         ----------
@@ -137,6 +138,27 @@ class DecompositionAgentBase(Agent, ABC):
     def ask(self, batch_size):
         raise NotImplementedError
 
+    def update_model_params(self, params: dict):
+        self.model.set_params(**params)
+
+    def server_registrations(self) -> None:
+        super().server_registrations()
+        self._register_method("update_model_params")
+
+
+class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
+    def __init__(self, *, estimator: sklearn.base.TransformerMixin, **kwargs):
+        """Passive, report only agent that provide dataset analysis for decomposition.
+
+        Parameters
+        ----------
+        estimator : sklearn.base.TransformerMixin
+            Estimator instance that inherits from TransformerMixin and BaseEstimator
+            This model will be used to call fit transform.
+            Common examples include PCA and NMF.
+        """
+        super().__init__(estimator=estimator, **kwargs)
+
     def report(self, **kwargs):
         weights = self.model.fit_transform(
             np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
@@ -153,15 +175,8 @@ class DecompositionAgentBase(Agent, ABC):
             latest_data=[self.tell_cache[-1]],
         )
 
-    def update_model_params(self, params: dict):
-        self.model.set_params(**params)
 
-    def server_registrations(self) -> None:
-        super().server_registrations()
-        self._register_method("update_model_params")
-
-
-class ClusterAgentBase(Agent, ABC):
+class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
     def __init__(self, *, estimator: sklearn.base.ClusterMixin, **kwargs):
         """Passive, report only agent that provide dataset analysis for clustering.
 
@@ -172,18 +187,7 @@ class ClusterAgentBase(Agent, ABC):
             This model will be used to call fit transform.
             Common examples include kmeans.
         """
-        super().__init__(**kwargs)
-        self.independent_cache = []
-        self.observable_cache = []
-        self.model = estimator
-
-    def tell(self, x, y):
-        self.independent_cache.append(x)
-        self.observable_cache.append(y)
-        return dict(independent_variable=[x], observable=[y], cache_len=[len(self.independent_cache)])
-
-    def ask(self, batch_size):
-        raise NotImplementedError
+        super().__init__(estimator=estimator, **kwargs)
 
     def report(self, **kwargs):
         arr = np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
@@ -198,10 +202,3 @@ class ClusterAgentBase(Agent, ABC):
             cache_len=[len(self.independent_cache)],
             latest_data=[self.tell_cache[-1]],
         )
-
-    def update_model_params(self, params: dict):
-        self.model.set_params(**params)
-
-    def server_registrations(self) -> None:
-        super().server_registrations()
-        self._register_method("update_model_params")
