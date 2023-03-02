@@ -240,6 +240,7 @@ class Agent(ABC):
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
+        self.tell_cache = list()
 
     @abstractmethod
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
@@ -564,6 +565,19 @@ class Agent(ABC):
     def trigger_condition(uid) -> bool:
         return True
 
+    def _tell(self, uid):
+        run = self.exp_catalog[uid]
+        try:
+            independent_variable, dependent_variable = self.unpack_run(run)
+        except KeyError as e:
+            logger.warning(f"Ignoring key error in unpack for data {uid}:\n {e}")
+            return
+        logger.debug("Telling agent about some new data.")
+        doc = self.tell(independent_variable, dependent_variable)
+        doc["exp_uid"] = [uid]
+        self._write_event("tell", doc)
+        self.tell_cache.append(uid)
+
     def _on_stop_router(self, name, doc):
         """Document router that runs each time a stop document is seen."""
         if name != "stop":
@@ -576,19 +590,9 @@ class Agent(ABC):
             )
             return
 
-        logger.info(f"New data detected, telling the agent about this start doc: {uid}")
-        run = self.exp_catalog[uid]
-        try:
-            independent_variable, dependent_variable = self.unpack_run(run)
-        except KeyError as e:
-            logger.warning(f"Ignoring key error in unpack for data {uid}:\n {e}")
-            return
-
         # Tell
-        logger.debug("Telling agent about some new data.")
-        doc = self.tell(independent_variable, dependent_variable)
-        doc["exp_uid"] = [uid]
-        self._write_event("tell", doc)
+        logger.info(f"New data detected, telling the agent about this start doc: {uid}")
+        self._tell(uid)
 
         # Report
         if self.report_on_tell:
@@ -607,11 +611,7 @@ class Agent(ABC):
         logger.info("Telling agent list of uids")
         for uid in uids:
             logger.info(f"Telling agent about start document{uid}")
-            run = self.exp_catalog[uid]
-            independent_variable, dependent_variable = self.unpack_run(run)
-            doc = self.tell(independent_variable, dependent_variable)
-            doc["exp_uid"] = [uid]
-            self._write_event("tell", doc)
+            self._tell(uid)
 
     def start(self, ask_at_start=False):
         logger.debug("Issuing Agent start document and starting to listen to Kafka")
