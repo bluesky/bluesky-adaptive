@@ -20,6 +20,7 @@ from logging import getLogger
 from typing import Generator, Sequence, Tuple, Union
 
 import numpy as np
+import sklearn
 from numpy.typing import ArrayLike
 
 from bluesky_adaptive.agents.base import Agent
@@ -110,3 +111,89 @@ class SequentialAgentBase(Agent, ABC):
 
     def report(self, **kwargs) -> dict:
         return dict(percent_completion=[self.ask_count / len(self.sequence)])
+
+
+class DecompositionAgentBase(Agent, ABC):
+    def __init__(self, *, estimator: sklearn.base.TransformerMixin, **kwargs):
+        """Passive, report only agent that provide dataset analysis for decomposition.
+
+        Parameters
+        ----------
+        estimator : sklearn.base.TransformerMixin
+            Estimator instance that inherits from TransformerMixin and BaseEstimator
+            This model will be used to call fit transform.
+            Common examples include PCA and NMF.
+        """
+        super().__init__(**kwargs)
+        self.independent_cache = []
+        self.observable_cache = []
+        self.model = estimator
+
+    def tell(self, x, y):
+        self.independent_cache.append(x)
+        self.observable_cache.append(y)
+        return dict(independent_variable=[x], observable=[y], cache_len=[len(self.independent_cache)])
+
+    def ask(self, batch_size):
+        raise NotImplementedError
+
+    def report(self, **kwargs):
+        weights = self.model.fit_transform(
+            np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
+        )
+        try:
+            components = self.model.components_
+        except AttributeError:
+            components = []
+
+        return dict(
+            weights=[weights],
+            components=[components],
+            cache_len=[len(self.independent_cache)],
+            latest_data=[self.tell_cache[-1]],
+        )
+
+    def update_model_params(self, params: dict):
+        self.model.set_params(**params)
+
+
+class ClusterAgentBase(Agent, ABC):
+    def __init__(self, *, estimator: sklearn.base.ClusterMixin, **kwargs):
+        """Passive, report only agent that provide dataset analysis for clustering.
+
+        Parameters
+        ----------
+        estimator : sklearn.base.ClusterMixin
+            Estimator instance that inherits from ClusterMixin, TransformerMixin and BaseEstimator
+            This model will be used to call fit transform.
+            Common examples include kmeans.
+        """
+        super().__init__(**kwargs)
+        self.independent_cache = []
+        self.observable_cache = []
+        self.model = estimator
+
+    def tell(self, x, y):
+        self.independent_cache.append(x)
+        self.observable_cache.append(y)
+        return dict(independent_variable=[x], observable=[y], cache_len=[len(self.independent_cache)])
+
+    def ask(self, batch_size):
+        raise NotImplementedError
+
+    def report(self, **kwargs):
+        arr = np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
+        self.model.fit(arr)
+        clusters = self.model.predict(arr)
+        distances = self.model.transform(arr)
+
+        return dict(
+            clusters=[clusters],
+            distances=[distances],
+            cluster_centers=[self.model.cluster_centers_],
+            cache_len=[len(self.independent_cache)],
+            latest_data=[self.tell_cache[-1]],
+        )
+
+    def update_model_params(self, params: dict):
+        self.model.set_params(**params)
