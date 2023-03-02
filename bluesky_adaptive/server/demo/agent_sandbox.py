@@ -1,6 +1,6 @@
 # flake8: noqa
 import threading
-from typing import Literal, Tuple, Union
+from typing import Callable, Literal, Tuple, Union
 
 from bluesky_kafka import Publisher
 from bluesky_kafka.utils import create_topics, delete_topics
@@ -60,11 +60,27 @@ class TestSequentialAgent(SequentialAgentBase):
 
         self.registrations()
 
-    def registrations(self):
-        register_variable("add_suggestions_to_queue_inner", setter=self.add_suggestions_to_queue)
+    def _register_property(self, name, property_name=None, **kwargs):
+        [kwargs.pop(key, None) for key in ("getter", "setter")]  # Cannot pass getter/setter
+        property_name = name if property_name is None else property_name
         register_variable(
-            "generate_report_inner", setter=lambda value: self.generate_report(*value[0], **value[1])
+            name,
+            getter=lambda: getattr(self.__class__, property_name).fget(self),
+            setter=lambda x: getattr(self.__class__, property_name).fset(self, x),
+            **kwargs,
         )
+
+    def _register_method(self, name, method_name=None, **kwargs):
+        [kwargs.pop(key, None) for key in ("getter", "setter")]  # Cannot pass getter/setter
+        method_name = name if method_name is None else method_name
+        if not isinstance(getattr(self, method_name), Callable):
+            raise TypeError(f"Method {method_name} must be a callable function.")
+        register_variable(name, setter=lambda value: start_task(getattr(self, method_name)(*value[0], **value[1])))
+
+    def registrations(self):
+        self._register_method("generate_report")
+        self._register_method("add_suggestions_to_queue_inner", "add_suggestions_to_queue")
+        self._register_property("queue_add_position")
 
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [self._sleep_duration], dict()
