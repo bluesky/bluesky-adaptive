@@ -8,3 +8,4 @@ bluesky-queueserver-api
 xkcdpass
 tiled
 numpy
+scikit-learn
