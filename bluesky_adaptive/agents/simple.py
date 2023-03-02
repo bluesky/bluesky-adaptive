@@ -156,6 +156,10 @@ class DecompositionAgentBase(Agent, ABC):
     def update_model_params(self, params: dict):
         self.model.set_params(**params)
 
+    def server_registrations(self) -> None:
+        super().server_registrations()
+        self._register_method("update_model_params")
+
 
 class ClusterAgentBase(Agent, ABC):
     def __init__(self, *, estimator: sklearn.base.ClusterMixin, **kwargs):
@@ -197,3 +201,7 @@ class ClusterAgentBase(Agent, ABC):
 
     def update_model_params(self, params: dict):
         self.model.set_params(**params)
+
+    def server_registrations(self) -> None:
+        super().server_registrations()
+        self._register_method("update_model_params")
