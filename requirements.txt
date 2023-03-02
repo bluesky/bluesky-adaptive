@@ -3,4 +3,8 @@
 bluesky
 bluesky-live
 bluesky-widgets
+bluesky-kafka
+bluesky-queueserver-api
+xkcdpass
+tiled
 numpy
