@@ -1,8 +1,9 @@
-from os import path
-from setuptools import setup, find_packages
 import sys
-import versioneer
+from os import path
 
+from setuptools import find_packages, setup
+
+import versioneer
 
 # NOTE: This file must remain Python 2 compatible for the foreseeable future,
 # to ensure that we error out properly for people with outdated setuptools
@@ -29,14 +30,20 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.rst"), encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
-with open(path.join(here, "requirements.txt")) as requirements_file:
-    # Parse requirements.txt, ignoring any commented-out lines.
-    requirements = [
-        line
-        for line in requirements_file.read().splitlines()
-        if not line.startswith("#")
-    ]
 
+def read_requirements(filename):
+    with open(path.join(here, filename)) as requirements_file:
+        # Parse requirements.txt, ignoring any commented-out lines.
+        requirements = [line for line in requirements_file.read().splitlines() if not line.startswith("#")]
+    return requirements
+
+
+requirements = read_requirements("requirements.txt")
+categorized_requirements = {key: read_requirements(f"requirements-{key}.txt") for key in ["agents"]}
+
+extras_require = {}
+extras_require["agents"] = categorized_requirements["agents"]
+extras_require["all"] = categorized_requirements["agents"]
 
 setup(
     name="bluesky-adaptive",
@@ -63,6 +70,7 @@ setup(
         ]
     },
     install_requires=requirements,
+    extras_require=extras_require,
     license="BSD (3-clause)",
     classifiers=[
         "Development Status :: 2 - Pre-Alpha",
