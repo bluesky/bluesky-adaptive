@@ -309,6 +309,7 @@ def test_close_and_restart(temporary_topics, kafka_bootstrap_servers, broker_aut
         agent.stop()
         node = from_profile(tiled_profile)
         assert node[-1].metadata["start"]["agent_name"] == node[-2].metadata["start"]["agent_name"]
+        assert node[-1].metadata["start"]["uid"] != node[-2].metadata["start"]["uid"]
 
 
 class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
