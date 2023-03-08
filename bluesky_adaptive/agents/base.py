@@ -2,18 +2,20 @@ import copy
 import inspect
 import sys
 import threading
+import time as ttime
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
-from typing import Callable, Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Literal, Optional, Sequence, Tuple, TypedDict, Union
 
 import msgpack
+import numpy as np
 import tiled
 from bluesky_kafka import Publisher, RemoteDispatcher
-from bluesky_live.run_builder import RunBuilder
 from bluesky_queueserver_api import BPlan
 from bluesky_queueserver_api.api_threads import API_Threads_Mixin
 from databroker.client import BlueskyRun
+from event_model import compose_run
 from numpy.typing import ArrayLike
 from xkcdpass import xkcd_password as xp
 
@@ -133,6 +135,44 @@ class AgentConsumer(RemoteDispatcher):
         self._agent = agent
 
 
+class DataKeys(TypedDict):
+    dtype: str
+    dtype_str: str
+    dtype_descr: list
+    shape: list
+
+
+def infer_data_keys(doc: dict) -> DataKeys:
+    data_keys = dict()
+    _bad_iterables = (str, bytes, dict)
+    _type_map = {
+        "number": (float, np.floating, complex),
+        "array": (np.ndarray, list, tuple),
+        "string": (str,),
+        "integer": (int, np.integer),
+    }
+    for key, val in doc.items():
+        if isinstance(val, Iterable) and not isinstance(val, _bad_iterables):
+            dtype = "array"
+        else:
+            for json_type, py_types in _type_map.items():
+                if isinstance(val, py_types):
+                    dtype = json_type
+                    break
+            else:
+                raise TypeError()
+        arr_val = np.asanyarray(val)
+        arr_dtype = arr_val.dtype
+        data_keys[key] = dict(
+            dtype=dtype,
+            dtype_str=arr_dtype.str,
+            dtype_descr=arr_dtype.descr,
+            shape=list(arr_val.shape),
+            source="agent",
+        )
+    return data_keys
+
+
 class Agent(ABC):
     """Abstract base class for a single plan agent. These agents should consume data, decide where to measure next,
     and execute a single type of plan (something akin to move and count).
@@ -238,7 +278,8 @@ class Agent(ABC):
         self._report_on_tell = report_on_tell
         self.default_report_kwargs = {} if default_report_kwargs is None else default_report_kwargs
 
-        self.builder = None
+        self._compose_run_bundle = None
+        self._compose_descriptor_bundles = dict()
         self.re_manager = qserver
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
@@ -449,18 +490,23 @@ class Agent(ABC):
 
     def _write_event(self, stream, doc):
         """Add event to builder as event page, and publish to catalog"""
-        for key in doc:
-            doc[key] = [doc[key]]  # Encapsulate everything in a list for event pages
         if not doc:
             logger.info(f"No doc presented to write_event for stream {stream}")
             return
-        if stream in self.builder._streams:
-            self.builder.add_data(stream, data=doc)
-        else:
-            self.builder.add_stream(stream, data=doc)
-            self.agent_catalog.v1.insert(*self.builder._cache._ordered[-2])  # Add descriptor for first time
-        self.agent_catalog.v1.insert(*self.builder._cache._ordered[-1])
-        return self.builder._cache._ordered[-1][1]["uid"]
+        if stream not in self._compose_descriptor_bundles:
+            data_keys = infer_data_keys(doc)
+            self._compose_descriptor_bundles[stream] = self._compose_run_bundle.compose_descriptor(
+                name=stream, data_keys=data_keys
+            )
+            self.agent_catalog.v1.insert("descriptor", self._compose_descriptor_bundles[stream].descriptor_doc)
+
+        t = ttime.time()
+        event_doc = self._compose_descriptor_bundles[stream].compose_event(
+            data=doc, timestamps={k: t for k in doc}
+        )
+        self.agent_catalog.v1.insert("event", event_doc)
+
+        return event_doc["uid"]
 
     def _add_to_queue(
         self, next_points, uid, re_manager=None, position: Optional[Union[int, Literal["front", "back"]]] = None
@@ -635,10 +681,10 @@ class Agent(ABC):
             Whether to ask for a suggestion immediately, by default False
         """
         logger.debug("Issuing Agent start document and starting to listen to Kafka")
-        self.builder = RunBuilder(metadata=self.metadata)
-        self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
-        logger.info(f"Agent name={self.builder._cache.start_doc['agent_name']}")
-        logger.info(f"Agent start document uuid={self.builder._cache.start_doc['uid']}")
+        self._compose_run_bundle = compose_run(metadata=self.metadata)
+        self.agent_catalog.v1.insert("start", self._compose_run_bundle.start_doc)
+        logger.info(f"Agent name={self._compose_run_bundle.start_doc['agent_name']}")
+        logger.info(f"Agent start document uuid={self._compose_run_bundle.start_doc['uid']}")
         if ask_at_start:
             self.add_suggestions_to_queue(1)
         self._kafka_thread = threading.Thread(target=self.kafka_consumer.start, name="agent-loop", daemon=True)
@@ -646,8 +692,8 @@ class Agent(ABC):
 
     def stop(self, exit_status="success", reason=""):
         logger.debug("Attempting agent stop.")
-        self.builder.close(exit_status=exit_status, reason=reason)
-        self.agent_catalog.v1.insert("stop", self.builder._cache.stop_doc)
+        stop_doc = self._compose_run_bundle.compose_stop(exit_status=exit_status, reason=reason)
+        self.agent_catalog.v1.insert("stop", stop_doc)
         self.kafka_producer.flush()
         self.kafka_consumer.stop()
         logger.info(
