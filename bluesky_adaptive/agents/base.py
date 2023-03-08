@@ -285,7 +285,10 @@ class Agent(ABC):
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
         self.tell_cache = list()
-        self.server_registrations()
+        try:
+            self.server_registrations()
+        except RuntimeError as e:
+            logger.warning(f"Agent server unable to make registrations. Continuing regardless of\n {e}")
         self._kafka_thread = None
 
     @abstractmethod
@@ -633,7 +636,7 @@ class Agent(ABC):
             return
         logger.debug("Telling agent about some new data.")
         doc = self.tell(independent_variable, dependent_variable)
-        doc["exp_uid"] = [uid]
+        doc["exp_uid"] = uid
         self._write_event("tell", doc)
         self.tell_cache.append(uid)
 
