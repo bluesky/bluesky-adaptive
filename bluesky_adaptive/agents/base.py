@@ -571,6 +571,14 @@ class Agent(ABC):
         return True
 
     def _tell(self, uid):
+        """Private tell to encapsulate the processing of a uid.
+        This allows the user tell to just consume an independent and dependent variable.
+
+        Parameters
+        ----------
+        uid : str
+            Unique key to grab from Tiled.
+        """
         run = self.exp_catalog[uid]
         try:
             independent_variable, dependent_variable = self.unpack_run(run)
