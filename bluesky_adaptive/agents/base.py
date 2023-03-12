@@ -1,9 +1,11 @@
+import copy
 import inspect
 import sys
+import threading
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
-from typing import Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
+from typing import Callable, Dict, Iterable, List, Literal, Optional, Sequence, Tuple, Union
 
 import msgpack
 import tiled
@@ -14,6 +16,8 @@ from bluesky_queueserver_api.api_threads import API_Threads_Mixin
 from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from xkcdpass import xkcd_password as xp
+
+from bluesky_adaptive.server import register_variable, start_task
 
 logger = getLogger("bluesky_adaptive.agents")
 PASSWORD_LIST = xp.generate_wordlist(wordfile=xp.locate_wordfile(), min_length=3, max_length=6)
@@ -239,6 +243,9 @@ class Agent(ABC):
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
+        self.tell_cache = list()
+        self.server_registrations()
+        self._kafka_thread = None
 
     @abstractmethod
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
@@ -455,7 +462,9 @@ class Agent(ABC):
         self.agent_catalog.v1.insert(*self.builder._cache._ordered[-1])
         return self.builder._cache._ordered[-1][1]["uid"]
 
-    def _add_to_queue(self, next_points, uid):
+    def _add_to_queue(
+        self, next_points, uid, re_manager=None, position: Optional[Union[int, Literal["front", "back"]]] = None
+    ):
         """
         Adds a single set of points to the queue as bluesky plans
 
@@ -464,6 +473,10 @@ class Agent(ABC):
         next_points : Iterable
             New points to measure
         uid : str
+        re_manager : Optional[bluesky_queueserver_api.api_threads.API_Threads_Mixin]
+            Defaults to self.re_manager
+        position : Optional[Union[int, Literal['front', 'back']]]
+            Defaults to self.queue_add_position
 
         Returns
         -------
@@ -479,7 +492,9 @@ class Agent(ABC):
                 *args,
                 **kwargs,
             )
-            r = self.re_manager.item_add(plan, pos=self.queue_add_position)
+            if re_manager is None:
+                re_manager = self.re_manager
+            r = re_manager.item_add(plan, pos=self.queue_add_position if position is None else position)
             logger.debug(f"Sent http-server request for point {point}\n." f"Received reponse: {r}")
         return
 
@@ -507,7 +522,7 @@ class Agent(ABC):
         uid = self._write_event("ask", doc)
         logger.info(f"Issued ask and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid)
-        self._check_queue_and_start()
+        self._check_queue_and_start()  # TODO: remove this and encourage updated qserver functionality
 
     def _create_suggestion_list(self, points, uid):
         """Create suggestions for adjudicator"""
@@ -555,6 +570,19 @@ class Agent(ABC):
     def trigger_condition(uid) -> bool:
         return True
 
+    def _tell(self, uid):
+        run = self.exp_catalog[uid]
+        try:
+            independent_variable, dependent_variable = self.unpack_run(run)
+        except KeyError as e:
+            logger.warning(f"Ignoring key error in unpack for data {uid}:\n {e}")
+            return
+        logger.debug("Telling agent about some new data.")
+        doc = self.tell(independent_variable, dependent_variable)
+        doc["exp_uid"] = [uid]
+        self._write_event("tell", doc)
+        self.tell_cache.append(uid)
+
     def _on_stop_router(self, name, doc):
         """Document router that runs each time a stop document is seen."""
         if name != "stop":
@@ -567,19 +595,9 @@ class Agent(ABC):
             )
             return
 
-        logger.info(f"New data detected, telling the agent about this start doc: {uid}")
-        run = self.exp_catalog[uid]
-        try:
-            independent_variable, dependent_variable = self.unpack_run(run)
-        except KeyError as e:
-            logger.warning(f"Ignoring key error in unpack for data {uid}:\n {e}")
-            return
-
         # Tell
-        logger.debug("Telling agent about some new data.")
-        doc = self.tell(independent_variable, dependent_variable)
-        doc["exp_uid"] = [uid]
-        self._write_event("tell", doc)
+        logger.info(f"New data detected, telling the agent about this start doc: {uid}")
+        self._tell(uid)
 
         # Report
         if self.report_on_tell:
@@ -598,13 +616,16 @@ class Agent(ABC):
         logger.info("Telling agent list of uids")
         for uid in uids:
             logger.info(f"Telling agent about start document{uid}")
-            run = self.exp_catalog[uid]
-            independent_variable, dependent_variable = self.unpack_run(run)
-            doc = self.tell(independent_variable, dependent_variable)
-            doc["exp_uid"] = [uid]
-            self._write_event("tell", doc)
+            self._tell(uid)
 
     def start(self, ask_at_start=False):
+        """Starts kakfka listener in background thread
+
+        Parameters
+        ----------
+        ask_at_start : bool, optional
+            Whether to ask for a suggestion immediately, by default False
+        """
         logger.debug("Issuing Agent start document and starting to listen to Kafka")
         self.builder = RunBuilder(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
@@ -612,7 +633,8 @@ class Agent(ABC):
         logger.info(f"Agent start document uuid={self.builder._cache.start_doc['uid']}")
         if ask_at_start:
             self.add_suggestions_to_queue(1)
-        self.kafka_consumer.start()
+        self._kafka_thread = threading.Thread(target=self.kafka_consumer.start, name="agent-loop", daemon=True)
+        self._kafka_thread.start()
 
     def stop(self, exit_status="success", reason=""):
         logger.debug("Attempting agent stop.")
@@ -625,9 +647,94 @@ class Agent(ABC):
             f"{(' for reason: ' + reason) if reason else '.'}"
         )
 
+    def close_and_restart(self, *, clear_tell_cache=False, retell_all=False, reason=""):
+        """Utility for closing and restarting an agent with the same name.
+        This is primarily for methods that change the hyperparameters of an agent on the fly,
+        but in doing so may change the shape/nature of the agent document stream. This will
+        keep the documents consistent between hyperparameters as individual BlueskyRuns.
+
+        Parameters
+        ----------
+        clear_tell_cache : bool, optional
+            Clears the cache of data the agent has been told about, by default False.
+            This is useful for a clean slate.
+        retell_all : bool, optional
+            Resets the cache and tells the agent about all previous data, by default False.
+            This can be useful if the agent has not retained knowledge from previous tells.
+        reason : str, optional
+            Reason for closing and restarting the agent, to be recorded to logs, by default ""
+        """
+        self.stop(reason=f"Close and Restart: {reason}")
+        if clear_tell_cache:
+            self.tell_cache = list()
+        elif retell_all:
+            uids = copy.copy(self.tell_cache)
+            self.tell_cache = list()
+            self.tell_agent_by_uid(uids)
+        self.start()
+
     def signal_handler(self, signal, frame):
         self.stop(exit_status="abort", reason="forced exit ctrl+c")
         sys.exit(0)
+
+    def _register_property(self, name: str, property_name: Optional[str] = None, **kwargs):
+        """Wrapper to register property to bluesky-adaptive server instead of attribute or variable.
+
+        Parameters
+        ----------
+        name : str
+            Name by which the variable is accessible through the REST API. The PV name is generated by converting
+            the variable names to upper-case letters. The name does not need to match the actual name of
+            the variable used in the code. The name should be selected so that it could be conveniently used
+            in the API.
+        property_name : Optional[str]
+            The name of a class property, by default the same name used in the REST API.
+        """
+
+        [kwargs.pop(key, None) for key in ("getter", "setter")]  # Cannot pass getter/setter
+        property_name = name if property_name is None else property_name
+        register_variable(
+            name,
+            getter=lambda: getattr(self.__class__, property_name).fget(self),
+            setter=lambda x: getattr(self.__class__, property_name).fset(self, x),
+            **kwargs,
+        )
+
+    def _register_method(self, name, method_name=None, **kwargs):
+        """Wrapper to register generic method to bluesky-adaptive server instead of attribute or variable.
+        To call the method, pass the setter a json with of form:
+        {value: [[args,],
+                 {kwargs}]}
+        This is a temporary solution that makes use of only the setter API and not a dedicated interface.
+        This will be deprecated in the future.
+
+        Parameters
+        ----------
+        name : str
+            Name by which the variable is accessible through the REST API. The PV name is generated by converting
+            the variable names to upper-case letters. The name does not need to match the actual name of
+            the variable used in the code. The name should be selected so that it could be conveniently used
+            in the API.
+        method_name : Optional[str]
+            The name of the method, by default the same name used in the REST API.
+        """
+        [kwargs.pop(key, None) for key in ("getter", "setter")]  # Cannot pass getter/setter
+        method_name = name if method_name is None else method_name
+        if not isinstance(getattr(self, method_name), Callable):
+            raise TypeError(f"Method {method_name} must be a callable function.")
+        register_variable(name, setter=lambda value: start_task(getattr(self, method_name)(*value[0], **value[1])))
+
+    def server_registrations(self) -> None:
+        """
+        Method to generate all server registrations during agent initialization.
+        This method can be used in subclasses, to override or extend the default registrations.
+        """
+        self._register_method("generate_report")
+        self._register_method("add_suggestions_to_queue")
+        self._register_method("tell_agent_by_uid")
+        self._register_property("queue_add_position", pv_type="str")
+        self._register_property("ask_on_tell", pv_type="bool")
+        self._register_property("report_on_tell", pv_type="bool")
 
     @staticmethod
     def qserver_from_host_and_key(host: str, key: str):
@@ -735,3 +842,115 @@ class Agent(ABC):
             qserver=re_manager,
             **kwargs,
         )
+
+
+class MonarchSubjectAgent(Agent, ABC):
+    # Drive a beamline. On stop doc check. By default manual trigger.
+
+    def __init__(self, *args, subject_qserver: API_Threads_Mixin, **kwargs):
+        """Abstract base class for a MonarchSubject agent. These agents only consume documents from one
+        (Monarch) source, and can dictate the behavior of a different (Subject) queue.
+        This can be useful in a multimodal measurement where
+        one measurement is very fast and the other is very slow: after some amount of data collection on the fast
+        measurement, the agent can dictate that the slow measurement probe what it considers as interesting. The
+        agent maintains the functionality of a regular Agent, and adds plans to the Monarch queue.
+
+        By default, the Subject is only directed when manually triggered by the agent server or by
+        a kafka directive. If an automated approach to asking the subject is required,
+        ``subject_ask_condition`` must be overriden. This is commonly done by using a wall-clock interval,
+        and/or a model confidence trigger.
+
+        Children of MonarchSubjectAgent must implment the following, through direct inheritence or mixin classes:
+        Experiment specific:
+        - measurement_plan
+        - unpack_run
+        - subject_measurement_plan
+        Agent specific:
+        - tell
+        - ask
+        - subject_ask
+        - report (optional)
+        - name (optional)
+
+        Parameters
+        ----------
+        subject_qserver : API_Threads_Mixin
+            Object to manage communication with the Subject Queue Server
+        """
+        super().__init__(**kwargs)
+        self.subject_re_manager = subject_qserver
+
+    @abstractmethod
+    def subject_measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
+        """Details for subject plan.
+        Fetch the string name of a registered plan, as well as the positional and keyword
+        arguments to pass that plan.
+
+        Args/Kwargs is a common place to transform relative into absolute motor coords, or
+        other device specific parameters.
+
+        Parameters
+        ----------
+        point : ArrayLike
+            Next point to measure using a given plan
+
+        Returns
+        -------
+        plan_name : str
+        plan_args : List
+            List of arguments to pass to plan from a point to measure.
+        plan_kwargs : dict
+            Dictionary of keyword arguments to pass the plan, from a point to measure.
+        """
+        ...
+
+    @abstractmethod
+    def subject_ask(self, batch_size: int) -> Tuple[Dict[str, List], Sequence]:
+        """
+        Ask the agent for a new batch of points to measure on the subject queue.
+
+        Parameters
+        ----------
+        batch_size : int
+            Number of new points to measure
+
+        Returns
+        -------
+        doc : dict
+            key metadata from the ask approach
+        next_points : Sequence
+            Sequence of independent variables of length batch size
+
+        """
+        ...
+
+    def subject_ask_condition(self):
+        """Option to build in a trigger method that is run on using the document router subcription.
+
+        Returns
+        -------
+        bool
+        """
+        return False
+
+    def add_suggestions_to_subject_queue(self, batch_size: int):
+        """Calls ask, adds suggestions to queue, and writes out event"""
+        doc, next_points = self.subject_ask(batch_size)
+        uid = self._write_event("subject_ask", doc)
+        logger.info("Issued ask to subject and adding to the queue. {uid}")
+        self._add_to_queue(next_points, uid, re_manager=self.subject_re_manager, position="front")
+
+    def _on_stop_router(self, name, doc):
+        ret = super()._on_stop_router(name, doc)
+        if name != "stop":
+            return ret
+
+        if self.subject_ask_condition():
+            if self._direct_to_queue:
+                self.add_suggestions_to_subject_queue(1)
+            else:
+                raise NotImplementedError
+
+    def server_registrations(self) -> None:
+        super().server_registrations()
+        self._register_method("add_suggestions_to_subject_queue")

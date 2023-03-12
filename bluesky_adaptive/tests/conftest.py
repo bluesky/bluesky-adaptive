@@ -10,6 +10,7 @@ from bluesky_kafka.tests.conftest import temporary_topics  # noqa
 from bluesky_kafka.tests.conftest import consume_documents_from_kafka_until_first_stop_document  # noqa
 from ophyd.tests.conftest import hw  # noqa
 
+from tiled.client import from_profile
 
 # @pytest.fixture(autouse=True, scope="session")
 # def spin_docker(docker_ip, docker_services):  # noqa
@@ -24,3 +25,8 @@ from ophyd.tests.conftest import hw  # noqa
 @pytest.fixture(scope="function")
 def tiled_profile():
     return "testing_sandbox"
+
+
+@pytest.fixture(scope="module")
+def tiled_node():
+    return from_profile("testing_sandbox")

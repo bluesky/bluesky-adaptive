@@ -1,6 +1,6 @@
 # flake8: noqa
-from contextlib import contextmanager
-from typing import Literal, Tuple, Union
+import threading
+from typing import Callable, Literal, Tuple, Union
 
 from bluesky_kafka import Publisher
 from bluesky_kafka.utils import create_topics, delete_topics
@@ -58,6 +58,30 @@ class TestSequentialAgent(SequentialAgentBase):
         # Regular attribute
         self.test_attr = 123
 
+        self.registrations()
+
+    def _register_property(self, name, property_name=None, **kwargs):
+        [kwargs.pop(key, None) for key in ("getter", "setter")]  # Cannot pass getter/setter
+        property_name = name if property_name is None else property_name
+        register_variable(
+            name,
+            getter=lambda: getattr(self.__class__, property_name).fget(self),
+            setter=lambda x: getattr(self.__class__, property_name).fset(self, x),
+            **kwargs,
+        )
+
+    def _register_method(self, name, method_name=None, **kwargs):
+        [kwargs.pop(key, None) for key in ("getter", "setter")]  # Cannot pass getter/setter
+        method_name = name if method_name is None else method_name
+        if not isinstance(getattr(self, method_name), Callable):
+            raise TypeError(f"Method {method_name} must be a callable function.")
+        register_variable(name, setter=lambda value: start_task(getattr(self, method_name)(*value[0], **value[1])))
+
+    def registrations(self):
+        self._register_method("generate_report")
+        self._register_method("add_suggestions_to_queue_inner", "add_suggestions_to_queue")
+        self._register_property("queue_add_position")
+
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [self._sleep_duration], dict()
 
@@ -76,6 +100,9 @@ class TestSequentialAgent(SequentialAgentBase):
     def operating_mode_getter(self):
         return self._operating_mode
 
+    def report(self, **kwargs) -> dict:
+        return {"test": "report"}
+
 
 # Block of borrowed code from tests ###############################################################
 broker_authorization_config = {
@@ -86,77 +113,83 @@ broker_authorization_config = {
 }
 tiled_profile = "testing_sandbox"
 kafka_bootstrap_servers = "127.0.0.1:9092"
-
-
-@contextmanager
-def temporary_topics(topics, bootstrap_servers=None, admin_client_config=None):
-    if bootstrap_servers is None:
-        bootstrap_servers = kafka_bootstrap_servers
-
-    if admin_client_config is None:
-        admin_client_config = broker_authorization_config
-
-    try:
-        # delete existing requested topics
-        # this will delete any un-consumed messages
-        # the intention is to make tests repeatable by ensuring
-        # they always start with a topics having no "old" messages
-        delete_topics(
-            bootstrap_servers=bootstrap_servers,
-            topics_to_delete=topics,
-            admin_client_config=admin_client_config,
-        )
-        create_topics(
-            bootstrap_servers=bootstrap_servers,
-            topics_to_create=topics,
-            admin_client_config=admin_client_config,
-        )
-        yield topics
-    finally:
-        delete_topics(
-            bootstrap_servers=bootstrap_servers,
-            topics_to_delete=topics,
-            admin_client_config=admin_client_config,
-        )
-
-    return
-
-
+bootstrap_servers = kafka_bootstrap_servers
+admin_client_config = broker_authorization_config
+topics = ["test.publisher", "test.subscriber"]
+pub_topic, sub_topic = topics
 # Block of borrowed code from tests ###############################################################
 
-import threading
 agent_thread = None
+agent = TestSequentialAgent(
+    pub_topic,
+    sub_topic,
+    kafka_bootstrap_servers,
+    broker_authorization_config,
+    tiled_profile,
+    sequence=[1, 2, 3],
+)
 
-with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
-    agent = TestSequentialAgent(
-        pub_topic,
-        sub_topic,
-        kafka_bootstrap_servers,
-        broker_authorization_config,
-        tiled_profile,
-        sequence=[1, 2, 3],
+
+@startup_decorator
+def startup_topics():
+    delete_topics(
+        bootstrap_servers=bootstrap_servers,
+        topics_to_delete=topics,
+        admin_client_config=admin_client_config,
+    )
+    create_topics(
+        bootstrap_servers=bootstrap_servers,
+        topics_to_create=topics,
+        admin_client_config=admin_client_config,
     )
 
-    @startup_decorator
-    def startup():
-        # print("Doing nothing")
 
-        # Temporary (or permanent) solution for starting the agent in a thread.
-        # If this is permanent, 'agent' must have a way to exit the loop durng shutdown.
-        agent_thread = threading.Thread(target=agent.start, name="agent-loop", daemon=True)
-        agent_thread.start()
+@startup_decorator
+def startup_agent():
+    agent.start()
 
-    @shutdown_decorator
-    def shutdown():
-        print("Doing nothing.")
-        # return agent.stop()
 
-    register_variable("test_attr", agent, "test_attr")
-    register_variable(
-        "operating_mode",
-        None,
-        None,
-        getter=agent.operating_mode_getter,
-        setter=agent.operating_mode_setter,
-        pv_type="str",
+@shutdown_decorator
+def shutdown_agent():
+    return agent.stop()
+
+
+@shutdown_decorator
+def shutdown_topics():
+    delete_topics(
+        bootstrap_servers=bootstrap_servers,
+        topics_to_delete=topics,
+        admin_client_config=admin_client_config,
     )
+
+
+register_variable("test_attr", agent, "test_attr")
+register_variable(
+    "operating_mode",
+    None,
+    None,
+    getter=agent.operating_mode_getter,
+    setter=agent.operating_mode_setter,
+    pv_type="str",
+)
+
+
+def add_suggestions_to_queue(batch_size):
+    start_task(agent.add_suggestions_to_queue, batch_size)
+
+
+def generate_report(args_kwargs):
+    """Cheap setter wrapper for generate report.
+    All setters must take a single value, so this takes args and kwargs as a tuple to unpack.
+
+    Parameters
+    ----------
+    args_kwargs : Tuple[List, dict]
+        Tuple of args and kwargs passed to the API `POST` as a `value`
+    """
+    _, kwargs = args_kwargs
+    start_task(agent.generate_report, **kwargs)
+
+
+register_variable("add_suggestions_to_queue", setter=add_suggestions_to_queue)
+register_variable("generate_report", setter=generate_report)

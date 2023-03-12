@@ -8,7 +8,7 @@ from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
 
-from bluesky_adaptive.agents.base import Agent, AgentConsumer
+from bluesky_adaptive.agents.base import Agent, AgentConsumer, MonarchSubjectAgent
 from bluesky_adaptive.agents.simple import SequentialAgentBase
 
 
@@ -69,6 +69,9 @@ class TestCommunicationAgent(Agent):
         """Start without kafka consumer start"""
         self.builder = RunBuilder(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
+
+    def server_registrations(self) -> None:
+        return None
 
 
 def test_agent_connection(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
@@ -233,6 +236,9 @@ class TestSequentialAgent(SequentialAgentBase):
         self.builder = RunBuilder(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
 
+    def server_registrations(self) -> None:
+        return None
+
 
 def test_sequntial_agent(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
@@ -277,3 +283,121 @@ def test_sequential_agent_array(
         assert len(points) == 2
         assert points[0][0] == 1
         assert points[1][1] == 6
+
+
+def test_close_and_restart(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+    "Starts agent, restarts it, closes it. Tests for 2 bluesky runs with same agent name."
+
+    class Agent(TestSequentialAgent):
+        """Actually start kafka"""
+
+        def start(self):
+            return SequentialAgentBase.start(self)
+
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
+        agent = Agent(
+            pub_topic,
+            sub_topic,
+            kafka_bootstrap_servers,
+            broker_authorization_config,
+            tiled_profile,
+            sequence=[1, 2, 3],
+        )
+        agent.start()
+        ttime.sleep(1.0)
+        agent.close_and_restart()
+        agent.stop()
+        node = from_profile(tiled_profile)
+        assert node[-1].metadata["start"]["agent_name"] == node[-2].metadata["start"]["agent_name"]
+        assert node[-1].metadata["start"]["uid"] != node[-2].metadata["start"]["uid"]
+
+
+class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
+    """A bad monarch subject, where the monarch and subject queues are the same."""
+
+    def __init__(
+        self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
+    ):
+        qs = REManagerAPI(http_server_uri=None)
+        qs.set_authorization_key(api_key="SECRET")
+        kafka_consumer = AgentConsumer(
+            topics=[sub_topic],
+            bootstrap_servers=kafka_bootstrap_servers,
+            group_id="test.communication.group",
+            consumer_config={"auto.offset.reset": "latest"},
+        )
+
+        kafka_producer = Publisher(
+            topic=pub_topic,
+            bootstrap_servers=kafka_bootstrap_servers,
+            key="",
+            producer_config=broker_authorization_config,
+        )
+
+        tiled_data_node = from_profile(tiled_profile)
+        tiled_agent_node = from_profile(tiled_profile)
+
+        super().__init__(
+            kafka_consumer=kafka_consumer,
+            kafka_producer=kafka_producer,
+            tiled_agent_node=tiled_agent_node,
+            tiled_data_node=tiled_data_node,
+            qserver=qs,
+            subject_qserver=qs,
+            **kwargs,
+        )
+
+    def measurement_plan(self, point: ArrayLike):
+        return "agent_driven_nap", [0.5], dict()
+
+    def subject_measurement_plan(self, point: ArrayLike):
+        return "agent_driven_nap", [0.7], dict()
+
+    def subject_ask(self, batch_size: int):
+        return dict(), [0.0 for _ in range(batch_size)]
+
+    def unpack_run(self, run: BlueskyRun):
+        return 0, 0
+
+    def server_registrations(self) -> None:
+        return None
+
+
+def test_monarch_subject(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
+        agent = TestMonarchSubject(
+            pub_topic,
+            sub_topic,
+            kafka_bootstrap_servers,
+            broker_authorization_config,
+            tiled_profile,
+            sequence=[1, 2, 3],
+        )
+
+        agent.start()
+        while True:
+            # Awaiting the agent build before artificial ask
+            if agent.builder is not None:
+                if agent.builder._cache.start_doc["uid"] in agent.agent_catalog:
+                    break
+            else:
+                continue
+
+        # add an item to the queue by the channel of monarch and subject
+        # Suggestions may land in history or queue depending on timing
+        if not agent.re_manager.status()["worker_environment_exists"]:
+            agent.re_manager.environment_open()
+        agent.re_manager.queue_clear()
+        agent.re_manager.history_clear()
+
+        agent.add_suggestions_to_queue(1)
+        while agent.re_manager.status()["manager_state"] == "executing_queue":
+            continue
+        assert agent.re_manager.status()["items_in_queue"] + agent.re_manager.status()["items_in_history"] == 1
+
+        agent.add_suggestions_to_subject_queue(1)
+        while agent.re_manager.status()["manager_state"] == "executing_queue":
+            continue
+        assert agent.re_manager.status()["items_in_queue"] + agent.re_manager.status()["items_in_history"] == 2
+
+        agent.stop()
