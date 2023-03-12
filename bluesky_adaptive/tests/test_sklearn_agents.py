@@ -47,6 +47,7 @@ class DummyAgentMixin:
             tiled_agent_node=tiled_agent_node,
             tiled_data_node=tiled_data_node,
             qserver=qs,
+            ask_on_tell=False,
             **kwargs,
         )
         self.counter = 0
@@ -67,7 +68,7 @@ class TestClusterAgent(DummyAgentMixin, ClusterAgentBase):
     ...
 
 
-@pytest.mark.parametrize("estimator", [PCA(2), NMF(2)])
+@pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
 def test_decomp_agent(
     estimator, temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, tiled_node
 ):
@@ -109,7 +110,7 @@ def test_decomp_agent(
         agent.stop()
 
 
-@pytest.mark.parametrize("estimator", [PCA(2), NMF(2)])
+@pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
 def test_decomp_remodel_from_report(
     estimator,
     temporary_topics,
@@ -169,7 +170,7 @@ def test_decomp_remodel_from_report(
         assert len(data["independent_vars"]) == 5
 
 
-@pytest.mark.parametrize("estimator", [KMeans(2)])
+@pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
 def test_cluster_agent(
     estimator, temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, tiled_node
 ):
@@ -185,10 +186,87 @@ def test_cluster_agent(
         agent.start()
         for i in range(5):
             agent.tell(float(i), np.random.rand(10))
-            agent.tell_cache.append(i)  # dummy uid
+            agent.tell_cache.append(f"uid{i}")  # dummy uid
+        agent.generate_report()
+        xr = tiled_node[-1].report.read()
+        assert xr.cluster_centers.shape == (1, 2, 10)  # shape after 1 report
+        assert xr.latest_data[-1].data == "uid4"  # most recent uid
 
+        for i in range(5, 10):
+            agent.tell(float(i), np.random.rand(10))
+            agent.tell_cache.append(f"uid{i}")  # dummy uid
         agent.generate_report()
         assert "report" in tiled_node[-1]
-        # TODO: Test shapes and reading of output
 
+        # Letting mongo catch up then checking for 2 reports
+        now = ttime.monotonic()
+        while len(tiled_node[-1].report.read().time) == 1:
+            ttime.sleep(0.5)
+            if ttime.monotonic() - now > 10:
+                break
+
+        xr = tiled_node[-1].report.read()
+        assert xr.cluster_centers.shape == (2, 2, 10)
+        assert xr.latest_data[-1].data == "uid9"
         agent.stop()
+
+
+@pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
+def test_cluster_remodel_from_report(
+    estimator,
+    temporary_topics,
+    kafka_bootstrap_servers,
+    broker_authorization_config,
+    tiled_profile,
+    tiled_node,
+    hw,
+):
+    """Tests the rebuilding of the model from a given report, including the varaible shape pieces."""
+    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
+        agent = TestClusterAgent(
+            pub_topic,
+            sub_topic,
+            kafka_bootstrap_servers,
+            broker_authorization_config,
+            tiled_profile,
+            estimator=estimator,
+        )
+        agent.start()
+        agent_uid = agent._compose_run_bundle.start_doc["uid"]
+        publisher = Publisher(
+            topic=sub_topic,
+            bootstrap_servers=kafka_bootstrap_servers,
+            producer_config=broker_authorization_config,
+            key=f"{sub_topic}.key",
+            flush_on_stop_doc=True,
+        )
+        RE = RunEngine()
+        RE.subscribe(publisher)
+        RE.subscribe(tiled_node.v1.insert)
+
+        for i in range(5):
+            RE(count([hw.det]))
+
+        # Letting mongo/kafka catch up to start/stop + 7 tells
+        now = ttime.monotonic()
+        while len(list(tiled_node[agent_uid].documents())) != 7:
+            ttime.sleep(0.5)
+            if ttime.monotonic() - now > 60:
+                break
+        assert "tell" in tiled_node[agent_uid]
+        agent.generate_report()
+        agent.stop()
+
+        # Letting mongo/kafka catch up to report
+        now = ttime.monotonic()
+        while not ("report" in tiled_node[agent_uid]):
+            ttime.sleep(0.5)
+            if ttime.monotonic() - now > 30:
+                break
+        model, data = agent.remodel_from_report(tiled_node[agent_uid])
+        assert isinstance(model, type(estimator))
+        assert data["cluster_centers"].shape[0] == 2
+        assert data["distances"].shape == (5, 2)
+        assert data["clusters"].shape == (5,)
+        assert len(data["observables"]) == 5
+        assert len(data["independent_vars"]) == 5
