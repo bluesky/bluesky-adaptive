@@ -475,7 +475,7 @@ class Agent(ABC):
         uid : str
         re_manager : Optional[bluesky_queueserver_api.api_threads.API_Threads_Mixin]
             Defaults to self.re_manager
-        position : Optional[Union[int, Literal[&quot;front&quot;, &quot;back&quot;]]]
+        position : Optional[Union[int, Literal['front', 'back']]]
             Defaults to self.queue_add_position
 
         Returns
