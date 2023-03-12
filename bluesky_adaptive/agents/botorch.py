@@ -39,6 +39,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
         out_dim=1,
         partial_acq_function: Optional[Callable] = None,
         num_restarts: int = 10,
+        raw_samples: int = 20,
         **kwargs
     ):
         """Single Task GP based Bayesian Optimization
@@ -58,6 +59,11 @@ class SingleTaskGPAgentBase(Agent, ABC):
             By default UCB with beta at 0.1
         num_restarts : int, optional
             Number of restarts for optimizing the acquisition function, by default 10
+        raw_samples : int, optional
+            Number of samples used to instantiate the initial conditions of the acquisition function optimizer.
+            For a discussion of num_restarts vs raw_samples, see:
+            https://github.com/pytorch/botorch/issues/366
+            Defaults to 20.
         """
         super().__init__(**kwargs)
         self.inputs = None
@@ -82,9 +88,11 @@ class SingleTaskGPAgentBase(Agent, ABC):
         if partial_acq_function is None:
             self._partial_acqf = lambda gp: UpperConfidenceBound(gp, beta=0.1)
             self.acqf_name = "UpperConfidenceBound"
-        self._partial_acqf = partial_acq_function
-        self.acqf_name = "custom"
+        else:
+            self._partial_acqf = partial_acq_function
+            self.acqf_name = "custom"
         self.num_restarts = num_restarts
+        self.raw_samples = raw_samples
 
     def server_registrations(self) -> None:
         super().server_registrations()
@@ -117,7 +125,9 @@ class SingleTaskGPAgentBase(Agent, ABC):
         """
         fit_gpytorch_mll(self.mll)
         acqf = self._partial_acqf(self.surrogate_model)
-        return dict(state_dict=acqf.state_dict())
+        return {
+            "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy() for key, val in acqf.state_dict().items()
+        }
 
     def ask(self, batch_size=1):
         """Fit GP, optimize acquisition function, and return next points.
@@ -126,9 +136,20 @@ class SingleTaskGPAgentBase(Agent, ABC):
         fit_gpytorch_mll(self.mll)
         acqf = self._partial_acqf(self.surrogate_model)
         candidate, acq_value = optimize_acqf(
-            acq_function=acqf, bounds=self.bounds, q=batch_size, num_restarts=self.num_restarts
+            acq_function=acqf,
+            bounds=self.bounds,
+            q=batch_size,
+            num_restarts=self.num_restarts,
+            raw_samples=self.raw_samples,
         )
         return (
-            dict(candidate=candidate, acquisition_value=acq_value, state_dict=acqf.state_dict()),
+            dict(
+                candidate=candidate.detach().numpy(),
+                acquisition_value=acq_value.detach().numpy(),
+                **{
+                    "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                    for key, val in acqf.state_dict().items()
+                },
+            ),
             torch.atleast_1d(candidate).detach().numpy(),
         )
