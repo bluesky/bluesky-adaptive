@@ -152,20 +152,65 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         super().__init__(estimator=estimator, **kwargs)
 
     def start(self, *args, **kwargs):
-        _md = dict(model_type=str(self.model).split("(")[0], n_clusters=self.model.n_clusters)
+        _md = dict(model_type=str(self.model).split("(")[0], model_params=self.model.get_params())
         self.metadata.update(_md)
         super().start(*args, **kwargs)
 
     def report(self, **kwargs):
         arr = np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
         self.model.fit(arr)
-        clusters = self.model.predict(arr)
-        distances = self.model.transform(arr)
 
         return dict(
-            clusters=clusters,
-            distances=distances,
             cluster_centers=self.model.cluster_centers_,
             cache_len=len(self.independent_cache),
             latest_data=self.tell_cache[-1],
+        )
+
+    def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+        """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
+
+        This enables fixed dimension reports that can be stacked and compared, while also allowing for
+        deep inspection at the time of a report.
+
+        Parameters
+        ----------
+        run : BlueskyRun
+            Agent Run
+        idx : int, optional
+            Report index, by default most recent
+
+        Returns
+        -------
+        model : SklearnEstimatorAgentBase
+        data : dict
+            Dictionary of model components, weights, independent_vars, and observables
+        """
+        module_ = importlib.import_module("sklearn.cluster")
+        model = getattr(module_, run.start["model_type"])().set_params(**run.start["model_params"])
+        idx = -1 if idx is None else idx
+        model.cluster_centers_ = run.report["data"]["cluster_centers"][idx]
+        latest_uid = run.report["data"]["latest_data"][idx]
+        independents, observables = [], []
+        for uid in run.tell["data"]["exp_uid"]:
+            ind, obs = self.unpack_run(uid)
+            independents.append(ind)
+            observables.append(obs)
+            if uid == latest_uid:
+                break
+        independents, observables = zip(*sorted(zip(independents, observables)))
+        arr = np.array(observables)
+        try:
+            clusters = self.model.predict(arr)
+            distances = self.model.transform(arr)
+        except AttributeError:
+            model.fit(arr)
+            model.cluster_centers_ = run.report["data"]["cluster_centers"][idx]
+            clusters = self.model.predict(arr)
+            distances = self.model.transform(arr)
+        return model, dict(
+            clusters=clusters,
+            distances=distances,
+            cluster_centers=self.model.cluster_centers_,
+            independent_vars=independents,
+            observables=observables,
         )
