@@ -16,11 +16,14 @@ Experiment specific:
     - unpack_run
 """
 
+import importlib
 from abc import ABC
 from logging import getLogger
+from typing import Tuple
 
 import numpy as np
 import sklearn
+from databroker.client import BlueskyRun
 
 from bluesky_adaptive.agents.base import Agent
 
@@ -74,20 +77,64 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
         """
         super().__init__(estimator=estimator, **kwargs)
 
+    def start(self, *args, **kwargs):
+        _md = dict(model_type=str(self.model).split("(")[0], model_params=self.model.get_params())
+        self.metadata.update(_md)
+        super().start(*args, **kwargs)
+
     def report(self, **kwargs):
-        weights = self.model.fit_transform(
-            np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
-        )
+        self.model.fit(np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))]))
         try:
             components = self.model.components_
         except AttributeError:
             components = []
-
         return dict(
-            weights=[weights],
-            components=[components],
-            cache_len=[len(self.independent_cache)],
-            latest_data=[self.tell_cache[-1]],
+            components=components,
+            cache_len=len(self.independent_cache),
+            latest_data=self.tell_cache[-1],
+        )
+
+    def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+        """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
+
+        This enables fixed dimension reports that can be stacked and compared, while also allowing for
+        deep inspection at the time of a report.
+
+        Parameters
+        ----------
+        run : BlueskyRun
+            Agent Run
+        idx : int, optional
+            Report index, by default most recent
+
+        Returns
+        -------
+        model : sklearn.base.TransformerMixin
+        data : dict
+            Dictionary of model components, weights, independent_vars, and observables
+        """
+        module_ = importlib.import_module("sklearn.decomposition")
+        model = getattr(module_, run.start["model_type"])().set_params(**run.start["model_params"])
+        idx = -1 if idx is None else idx
+        model.components_ = run.report["data"]["components"][idx]
+        latest_uid = run.report["data"]["latest_data"][idx]
+        independents, observables = [], []
+        for uid in run.tell["data"]["exp_uid"]:
+            ind, obs = self.unpack_run(uid)
+            independents.append(ind)
+            observables.append(obs)
+            if uid == latest_uid:
+                break
+        independents, observables = zip(*sorted(zip(independents, observables)))
+        arr = np.array(observables)
+        try:
+            weights = model.transform(arr)
+        except AttributeError:
+            model.fit(arr)
+            model.components_ = run.report["data"]["components"][idx]
+            weights = model.transform(arr)
+        return model, dict(
+            components=model.components_, weights=weights, independent_vars=independents, observables=observables
         )
 
 
@@ -104,6 +151,11 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         """
         super().__init__(estimator=estimator, **kwargs)
 
+    def start(self, *args, **kwargs):
+        _md = dict(model_type=str(self.model).split("(")[0], n_clusters=self.model.n_clusters)
+        self.metadata.update(_md)
+        super().start(*args, **kwargs)
+
     def report(self, **kwargs):
         arr = np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
         self.model.fit(arr)
@@ -111,9 +163,9 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         distances = self.model.transform(arr)
 
         return dict(
-            clusters=[clusters],
-            distances=[distances],
-            cluster_centers=[self.model.cluster_centers_],
-            cache_len=[len(self.independent_cache)],
-            latest_data=[self.tell_cache[-1]],
+            clusters=clusters,
+            distances=distances,
+            cluster_centers=self.model.cluster_centers_,
+            cache_len=len(self.independent_cache),
+            latest_data=self.tell_cache[-1],
         )
