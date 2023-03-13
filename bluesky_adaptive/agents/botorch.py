@@ -15,13 +15,14 @@ Experiment specific:
 import importlib
 from abc import ABC
 from logging import getLogger
-from typing import Callable, Optional
+from typing import Callable, Optional, Tuple
 
 import torch
 from botorch import fit_gpytorch_mll
-from botorch.acquisition import UpperConfidenceBound
+from botorch.acquisition import AcquisitionFunction, UpperConfidenceBound
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
+from databroker.client import BlueskyRun
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from bluesky_adaptive.agents.base import Agent
@@ -125,9 +126,14 @@ class SingleTaskGPAgentBase(Agent, ABC):
         """
         fit_gpytorch_mll(self.mll)
         acqf = self._partial_acqf(self.surrogate_model)
-        return {
-            "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy() for key, val in acqf.state_dict().items()
-        }
+        return dict(
+            latest_data=self.tell_cache[-1],
+            cache_len=self.inputs.shape[0],
+            **{
+                "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                for key, val in acqf.state_dict().items()
+            },
+        )
 
     def ask(self, batch_size=1):
         """Fit GP, optimize acquisition function, and return next points.
@@ -146,6 +152,8 @@ class SingleTaskGPAgentBase(Agent, ABC):
             dict(
                 candidate=candidate.detach().numpy(),
                 acquisition_value=acq_value.detach().numpy(),
+                latest_data=self.tell_cache[-1],
+                cache_len=self.inputs.shape[0],
                 **{
                     "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
                     for key, val in acqf.state_dict().items()
@@ -153,3 +161,11 @@ class SingleTaskGPAgentBase(Agent, ABC):
             ),
             torch.atleast_1d(candidate).detach().numpy(),
         )
+
+    def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[AcquisitionFunction, SingleTaskGP]:
+        idx = -1 if idx is None else idx
+        keys = [key for key in run.report["data"].keys() if key.split("-")[0] == "STATEDICT"]
+        state_dict = {".".join(key[10:].split(":")): torch.tensor(run.report["data"][key][idx]) for key in keys}
+        acqf = self._partial_acqf(self.surrogate_model)
+        acqf.load_state_dict(state_dict)
+        return acqf, acqf.model

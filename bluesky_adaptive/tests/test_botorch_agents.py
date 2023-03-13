@@ -2,6 +2,7 @@ from typing import Tuple, Union
 
 import numpy as np
 import torch
+from botorch.acquisition import UpperConfidenceBound
 from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
@@ -86,3 +87,31 @@ def test_gp_agent(tiled_profile, tiled_node):
     assert xr["STATEDICT-beta"].shape == (1,)
     xr = run.tell.read()
     assert isinstance(xr, Dataset)
+
+
+def test_remodel_from_report(tiled_profile, tiled_node):
+    bounds = torch.Tensor([(0, 1), (0, 1)])
+    agent = TestGPAgent(tiled_profile, bounds=bounds)
+    agent.start()
+    agent_uid = agent._compose_run_bundle.start_doc["uid"]
+    for i in range(5):
+        uid = f"uid{i}"
+        x = np.random.rand(2)
+        y = 1 - np.sum(np.sin(x)) + np.random.rand() * 0.01
+        doc = agent.tell(x, y)
+        doc["exp_uid"] = uid
+        agent._write_event("tell", doc)
+        agent.tell_cache.append(uid)
+    agent.generate_report()
+    agent.stop()
+
+    new_agent = TestGPAgent(
+        tiled_profile, bounds=bounds, partial_acq_function=lambda gp: UpperConfidenceBound(gp, beta=1.5)
+    )
+    # TODO: Make agent with different acq params to see reset
+    acqf, gp = new_agent.remodel_from_report(tiled_node[agent_uid])
+    assert (
+        gp.get_parameter("covar_module.base_kernel.raw_lengthscale")
+        == agent.surrogate_model.get_parameter("covar_module.base_kernel.raw_lengthscale")
+    ).all()
+    assert acqf.beta == 0.1
