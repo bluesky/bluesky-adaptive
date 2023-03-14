@@ -50,7 +50,7 @@ class SklearnEstimatorAgentBase(Agent, ABC):
     def tell(self, x, y):
         self.independent_cache.append(x)
         self.observable_cache.append(y)
-        return dict(independent_variable=[x], observable=[y], cache_len=[len(self.independent_cache)])
+        return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
 
     def ask(self, batch_size):
         raise NotImplementedError
@@ -94,7 +94,8 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
             latest_data=self.tell_cache[-1],
         )
 
-    def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+    @staticmethod
+    def remodel_from_report(run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
         """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
 
         This enables fixed dimension reports that can be stacked and compared, while also allowing for
@@ -119,8 +120,9 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
         model.components_ = run.report["data"]["components"][idx]
         latest_uid = run.report["data"]["latest_data"][idx]
         independents, observables = [], []
-        for uid in run.tell["data"]["exp_uid"]:
-            ind, obs = self.unpack_run(uid)
+        for ind, obs, uid in zip(
+            run.tell["data"]["independent_variable"], run.tell["data"]["observable"], run.tell["data"]["exp_uid"]
+        ):
             independents.append(ind)
             observables.append(obs)
             if uid == latest_uid:
@@ -166,7 +168,8 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
             latest_data=self.tell_cache[-1],
         )
 
-    def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+    @staticmethod
+    def remodel_from_report(run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
         """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
 
         This enables fixed dimension reports that can be stacked and compared, while also allowing for
@@ -191,8 +194,9 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         model.cluster_centers_ = run.report["data"]["cluster_centers"][idx]
         latest_uid = run.report["data"]["latest_data"][idx]
         independents, observables = [], []
-        for uid in run.tell["data"]["exp_uid"]:
-            ind, obs = self.unpack_run(uid)
+        for ind, obs, uid in zip(
+            run.tell["data"]["independent_variable"], run.tell["data"]["observable"], run.tell["data"]["exp_uid"]
+        ):
             independents.append(ind)
             observables.append(obs)
             if uid == latest_uid:
