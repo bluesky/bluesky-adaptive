@@ -200,17 +200,17 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         independents, observables = zip(*sorted(zip(independents, observables)))
         arr = np.array(observables)
         try:
-            clusters = self.model.predict(arr)
-            distances = self.model.transform(arr)
+            clusters = model.predict(arr)
+            distances = model.transform(arr)
         except AttributeError:
             model.fit(arr)
             model.cluster_centers_ = run.report["data"]["cluster_centers"][idx]
-            clusters = self.model.predict(arr)
-            distances = self.model.transform(arr)
+            clusters = model.predict(arr)
+            distances = model.transform(arr)
         return model, dict(
             clusters=clusters,
             distances=distances,
-            cluster_centers=self.model.cluster_centers_,
+            cluster_centers=model.cluster_centers_,
             independent_vars=independents,
             observables=observables,
         )
