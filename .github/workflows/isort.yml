@@ -18,4 +18,4 @@ jobs:
           pip install isort
       - name: Run black
         run: |
-          isort . --c
+          isort . -c
