@@ -969,7 +969,7 @@ class MonarchSubjectAgent(Agent, ABC):
         ...
 
     @abstractmethod
-    def subject_ask(self, batch_size: int) -> Tuple[Dict[str, List], Sequence]:
+    def subject_ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
         Ask the agent for a new batch of points to measure on the subject queue.
 
@@ -980,9 +980,10 @@ class MonarchSubjectAgent(Agent, ABC):
 
         Returns
         -------
-        doc : dict
-            key metadata from the ask approach
-        next_points : Sequence
+        docs : Sequence[dict]
+            Documents of key metadata from the ask approach for each point in next_points.
+            Must be length of batch size.
+        next_points : Sequence[ArrayLike]
             Sequence of independent variables of length batch size
 
         """
@@ -999,8 +1000,13 @@ class MonarchSubjectAgent(Agent, ABC):
 
     def add_suggestions_to_subject_queue(self, batch_size: int):
         """Calls ask, adds suggestions to queue, and writes out event"""
-        doc, next_points = self.subject_ask(batch_size)
-        uid = self._write_event("subject_ask", doc)
+        docs, next_points = self.subject_ask(batch_size)
+        uid = str(uuid.uuid4())
+        for batch_idx, (doc, next_point) in enumerate(zip(docs, next_points)):
+            doc["suggestion"] = next_point
+            doc["batch_idx"] = batch_idx
+            doc["batch_size"] = len(next_points)
+            self._write_event("subject_ask", doc)
         logger.info("Issued ask to subject and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid, re_manager=self.subject_re_manager, position="front")
 
