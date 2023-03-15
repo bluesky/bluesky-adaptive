@@ -2,9 +2,9 @@ import time as ttime
 from typing import Sequence, Tuple, Union
 
 from bluesky_kafka import Publisher
-from bluesky_live.run_builder import RunBuilder
 from bluesky_queueserver_api.http import REManagerAPI
 from databroker.client import BlueskyRun
+from event_model import compose_run
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
 
@@ -67,8 +67,8 @@ class TestCommunicationAgent(Agent):
 
     def start(self):
         """Start without kafka consumer start"""
-        self.builder = RunBuilder(metadata=self.metadata)
-        self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
+        self._compose_run_bundle = compose_run(metadata=self.metadata)
+        self.agent_catalog.v1.insert("start", self._compose_run_bundle.start_doc)
 
     def server_registrations(self) -> None:
         return None
@@ -155,12 +155,11 @@ def test_feedback_to_queue(
             agent.re_manager.environment_open()
         agent.re_manager.queue_clear()
 
-        # Drop a Bluesky Run into the databroker
-        builder = RunBuilder(metadata={})
-        start = builder._cache.start_doc
+        compose_run_bundle = compose_run(metadata={})
+        start = compose_run_bundle.start_doc
         agent.exp_catalog.v1.insert("start", start)
-        builder.close()
-        agent.exp_catalog.v1.insert("stop", builder._cache.stop_doc)
+        stop = compose_run_bundle.compose_stop()
+        agent.exp_catalog.v1.insert("stop", stop)
 
         # Consume for a limited time only. Publish stop doc to reference Run in continue_polling loop
         # Overriden agent.start() takes care of the rest
@@ -177,8 +176,8 @@ def test_feedback_to_queue(
                 if ttime.monotonic() > start_time + sec:
                     return False
                 else:
-                    fake_publisher("start", builder._cache.start_doc)
-                    fake_publisher("stop", builder._cache.stop_doc)
+                    fake_publisher("start", start)
+                    fake_publisher("stop", stop)
                     ttime.sleep(0.1)
                     return True
 
@@ -233,8 +232,8 @@ class TestSequentialAgent(SequentialAgentBase):
 
     def start(self):
         """Start without kafka consumer start"""
-        self.builder = RunBuilder(metadata=self.metadata)
-        self.agent_catalog.v1.insert("start", self.builder._cache.start_doc)
+        self._compose_run_bundle = compose_run(metadata=self.metadata)
+        self.agent_catalog.v1.insert("start", self._compose_run_bundle.start_doc)
 
     def server_registrations(self) -> None:
         return None
