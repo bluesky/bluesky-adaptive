@@ -68,7 +68,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
         """
         super().__init__(**kwargs)
         self.inputs = None
-        self.observables = None
+        self.targets = None
 
         self.device = (
             torch.device("cuda" if torch.cuda.is_available() else "cpu")
