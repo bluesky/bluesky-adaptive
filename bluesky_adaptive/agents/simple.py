@@ -15,7 +15,6 @@ Experiment specific:
     - unpack_run
 """
 from abc import ABC
-from collections import defaultdict
 from logging import getLogger
 from typing import Generator, Sequence, Tuple, Union
 
@@ -98,15 +97,16 @@ class SequentialAgentBase(Agent, ABC):
     def tell(self, x, y) -> dict:
         self.independent_cache.append(x)
         self.observable_cache.append(y)
-        return dict(independent_variable=[x], observable=[y], cache_len=[len(self.independent_cache)])
+        return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
 
-    def ask(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
-        doc = defaultdict(list)
+    def ask(self, batch_size: int = 1) -> Tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
+        docs = []
+        proposals = []
         for _ in range(batch_size):
             self.ask_count += 1
-            doc["proposal"].append(next(self._position_generator))
-        doc["ask_count"] = [self.ask_count]
-        return [doc], [doc["proposal"]]
+            proposals.append(next(self._position_generator))
+            docs.append(dict(proposal=proposals[-1], ask_count=self.ask_count))
+        return docs, proposals
 
     def report(self, **kwargs) -> dict:
-        return dict(percent_completion=[self.ask_count / len(self.sequence)])
+        return dict(percent_completion=self.ask_count / len(self.sequence))
