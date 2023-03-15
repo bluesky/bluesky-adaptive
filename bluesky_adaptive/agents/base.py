@@ -334,7 +334,7 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def tell(self, x, y) -> Dict[str, List]:
+    def tell(self, x, y) -> Dict[str, ArrayLike]:
         """
         Tell the agent about some new data
         Parameters
@@ -353,7 +353,7 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def ask(self, batch_size: int) -> Tuple[Dict[str, List], Sequence]:
+    def ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
         Ask the agent for a new batch of points to measure.
 
@@ -364,15 +364,15 @@ class Agent(ABC):
 
         Returns
         -------
-        doc : dict
-            key metadata from the ask approach
+        docs : Sequence[dict]
+            Documents of key metadata from the ask approach for each point in next_points.
+            Must be length of batch size.
         next_points : Sequence
             Sequence of independent variables of length batch size
-
         """
         ...
 
-    def report(self, **kwargs) -> Dict[str, List]:
+    def report(self, **kwargs) -> Dict[str, ArrayLike]:
         """
         Create a report given the data observed by the agent.
         This could be potentially implemented in the base class to write document stream.
@@ -569,9 +569,9 @@ class Agent(ABC):
         """Calls ask, adds suggestions to queue, and writes out events.
         This will create one event for each suggestion.
         """
-        doc, next_points = self.ask(batch_size)
+        docs, next_points = self.ask(batch_size)
         uid = str(uuid.uuid4())
-        for batch_idx, next_point in enumerate(next_points):
+        for batch_idx, (doc, next_point) in enumerate(zip(docs, next_points)):
             doc["suggestion"] = next_point
             doc["batch_idx"] = batch_idx
             doc["batch_size"] = len(next_points)
