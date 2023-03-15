@@ -20,14 +20,12 @@ from .utils import no_reentry
 
 import logging
 
-caproto.select_backend('array')
+caproto.select_backend("array")
 
 
-pvproperty_with_rbv = get_pv_pair_wrapper(setpoint_suffix='',
-                                          readback_suffix='_RBV')
+pvproperty_with_rbv = get_pv_pair_wrapper(setpoint_suffix="", readback_suffix="_RBV")
 
 logger = logging.getLogger(__name__)
-
 
 
 class IOC_Server:
@@ -57,7 +55,6 @@ class IOC_Server:
 
         self._ctxvar_internal_update = contextvars.ContextVar("internal_update")
 
-
     def _create_ioc_class(self):
         """
         Create the new IOC class with the set of PVs defined by variable descriptions.
@@ -82,7 +79,6 @@ class IOC_Server:
             print(f"Creating a new PV: {pv_name!r}")
 
             def put_factory(var_name):
-
                 @no_reentry
                 async def put(obj, instance, value):
                     # Update setpoint and readback only if the new value is different from the PV value
@@ -108,7 +104,7 @@ class IOC_Server:
                 return put
 
             body[property_name] = pvproperty_with_rbv(name=pv_name, put=put_factory(name), **params)
-            self._vars_to_pv_names[name] =  self._ioc_prefix + ":" + pv_name
+            self._vars_to_pv_names[name] = self._ioc_prefix + ":" + pv_name
 
         return type("ServerIOC", (PVGroup,), body)
 
@@ -125,7 +121,7 @@ class IOC_Server:
         # The options must be passed somehow from server configuration
         ioc_prefix = self._ioc_prefix
         ioc_options = {"prefix": f"{ioc_prefix}:", "macros": {}}
-        run_options = {'log_pv_names': False, 'interfaces': ['0.0.0.0']}
+        run_options = {"log_pv_names": False, "interfaces": ["0.0.0.0"]}
 
         server_ioc_class = self._create_ioc_class()
 
@@ -136,6 +132,7 @@ class IOC_Server:
         except Exception as ex:
             print("Failed to start the IOC server ...")
             import traceback
+
             traceback.print_exc()
 
     async def _update_pv_values(self):
@@ -193,7 +190,6 @@ class IOC_Server:
         Create tasks for the server and PV updates.
         """
         try:
-
             self._ioc_server_task = asyncio.create_task(self._start_ioc_server())
             self._pv_update_task = asyncio.create_task(self._update_pv_values())
             logger.info("IOC server configuration was loaded. Server startup was initiated.")

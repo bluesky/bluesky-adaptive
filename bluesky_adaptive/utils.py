@@ -92,7 +92,4 @@ def extract_event_page(*key_lists, payload):
     """
     # the data comes out of the EventPag "column major"
     # we transpose to get "row major"
-    return tuple(
-        np.atleast_2d(np.asarray([payload[k] for k in key_list])).T
-        for key_list in key_lists
-    )
+    return tuple(np.atleast_2d(np.asarray([payload[k] for k in key_list])).T for key_list in key_lists)

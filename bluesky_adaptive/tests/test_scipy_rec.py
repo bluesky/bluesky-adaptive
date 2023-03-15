@@ -20,9 +20,7 @@ def test_scipy_minimize_recommender(RE, hw):
             target_keys=["motor"],
             max_count=100,
         )
-        yield from adaptive_plan(
-            [det], {hw.motor: 1}, to_recommender=cb, from_recommender=queue
-        )
+        yield from adaptive_plan([det], {hw.motor: 1}, to_recommender=cb, from_recommender=queue)
         yield from bps.mv(hw.motor, recommender.result.x)
         print(recommender.result)
         results_list.append(recommender.result)

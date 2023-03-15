@@ -26,9 +26,7 @@ from .recommendations import NoRecommendation
 from .utils import extract_event_page
 
 
-def recommender_factory(
-    adaptive_obj, independent_keys, dependent_keys, *, max_count=10, queue=None
-):
+def recommender_factory(adaptive_obj, independent_keys, dependent_keys, *, max_count=10, queue=None):
     """
     Generate the callback and queue for an Adaptive API backed reccomender.
 
@@ -94,9 +92,7 @@ def recommender_factory(
         if name == "event_page":
             if poisoned:
                 return
-            independent, measurement = extract_event_page(
-                independent_keys, dependent_keys, payload=doc["data"]
-            )
+            independent, measurement = extract_event_page(independent_keys, dependent_keys, payload=doc["data"])
             adaptive_obj.tell_many(independent, measurement)
             # pull the next point out of the adaptive API
             try:
@@ -110,9 +106,7 @@ def recommender_factory(
     return rr, queue
 
 
-def adaptive_plan(
-    dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count
-):
+def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count):
     """
     Execute an adaptive scan using an inter-run recommendation engine.
 

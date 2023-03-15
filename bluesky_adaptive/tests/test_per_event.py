@@ -8,8 +8,19 @@ from bluesky_adaptive.recommendations import SequenceRecommender
 
 
 def test_seq_recommender(RE, hw):
-
-    recommender = SequenceRecommender([[1,], [2,], [3,]])  # noqa
+    recommender = SequenceRecommender(
+        [
+            [
+                1,
+            ],
+            [
+                2,
+            ],
+            [
+                3,
+            ],
+        ]
+    )  # noqa
 
     cb, queue = recommender_factory(recommender, ["motor"], ["det"])
     dc = DocCollector()

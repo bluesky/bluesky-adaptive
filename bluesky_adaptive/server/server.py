@@ -8,18 +8,20 @@ import os
 from .logging_setup import setup_loggers
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 worker_process = None
 ioc_server = None
 worker_shutdown_timeout = 5
 
+
 def create_conn_pipes():
     server_conn, worker_conn = Pipe()
     return server_conn, worker_conn
 
-def build_app():
 
+def build_app():
     app = FastAPI()
     app.include_router(server_api_router)
 
@@ -30,7 +32,7 @@ def build_app():
         log_level = os.environ.get("BS_AGENT_LOG_LEVEL", "INFO")
         if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR"):
             raise ValueError(
-                f"Logging level value {log_level!r} is not supported. "             
+                f"Logging level value {log_level!r} is not supported. "
                 "Check value of 'BS_AGENT_LOG_LEVEL' environment variable"
             )
         setup_loggers(log_level=log_level)
@@ -56,7 +58,6 @@ def build_app():
 
         ioc_server = IOC_Server(ioc_prefix=ioc_prefix)
         await ioc_server.start()
-
 
     @app.on_event("shutdown")
     async def shutdown_event():

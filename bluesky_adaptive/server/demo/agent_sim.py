@@ -3,10 +3,12 @@ import sys
 
 print(f"The script implementing the simulated agent ...")
 
+
 class AA:
     def __init__(self):
         self._depth = 10
         self._width = 60
+
 
 aa = AA()
 
@@ -16,11 +18,14 @@ _v = 600
 
 _no_pv = 100
 
+
 def some_function(a):
     print(f"Function is running: a = {a!r}", flush=True)
 
+
 def width_getter():
     return aa._width
+
 
 def width_setter(value):
     aa._width = value
@@ -29,20 +34,24 @@ def width_setter(value):
     print(f"task_info = {task_info}")
     return value
 
+
 @startup_decorator
 def startup1():
     print(f"This is startup function #1")
     aa._depth = 20
     print(f"sys.__stdin__.isatty() = {sys.__stdin__.isatty()}")
 
+
 @startup_decorator
 def startup2():
     print(f"This is startup function #2")
     aa._width = 70
 
+
 @shutdown_decorator
 def shutdown1():
     print(f"This is shutdown function #1")
+
 
 @shutdown_decorator
 def shutdown2():

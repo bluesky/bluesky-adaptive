@@ -23,9 +23,7 @@ from .recommendations import NoRecommendation
 from .utils import extract_event_page
 
 
-def recommender_factory(
-    recommender, independent_keys, dependent_keys, *, max_count=10, queue=None
-):
+def recommender_factory(recommender, independent_keys, dependent_keys, *, max_count=10, queue=None):
     """
     Generate the callback and queue for gpCAM integration.
 
@@ -77,9 +75,7 @@ def recommender_factory(
                 queue.put(None)
                 return
 
-            independent, measurement = extract_event_page(
-                independent_keys, dependent_keys, payload=doc["data"]
-            )
+            independent, measurement = extract_event_page(independent_keys, dependent_keys, payload=doc["data"])
             recommender.tell_many(independent, measurement)
             try:
                 next_point = recommender.ask(1)
@@ -94,13 +90,7 @@ def recommender_factory(
 
 
 def adaptive_plan(
-    dets,
-    first_point,
-    *,
-    to_recommender,
-    from_recommender,
-    md=None,
-    take_reading=bps.trigger_and_read
+    dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bps.trigger_and_read
 ):
     """
     Execute an adaptive scan using an per event-run recommendation engine.
@@ -151,9 +141,7 @@ def adaptive_plan(
     _md = {"hints": {}}
     _md.update(md or {})
     try:
-        _md["hints"].setdefault(
-            "dimensions", [(m.hints["fields"], "primary") for m in first_point.keys()]
-        )
+        _md["hints"].setdefault("dimensions", [(m.hints["fields"], "primary") for m in first_point.keys()])
     except (AttributeError, KeyError):
         ...
 

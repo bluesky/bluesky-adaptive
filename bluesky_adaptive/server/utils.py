@@ -6,10 +6,11 @@ import sys
 import traceback
 
 import logging
+
 logger = logging.getLogger(__name__)
 
 
-class _WorkerResources():
+class _WorkerResources:
     def __init__(self):
         self._worker_obj = None
         self._agent_server_vars = None
@@ -59,7 +60,7 @@ class _WorkerResources():
     def add_startup_task(self, func):
         self._startup_tasks.append(func)
 
-    def add_shutdown_task(self,  func):
+    def add_shutdown_task(self, func):
         self._shutdown_tasks.append(func)
 
 
@@ -98,7 +99,9 @@ def start_task(target, *args, run_in_background=True, task_uid=None, **kwargs):
     )
 
 
-def register_variable(name, obj=None, attr_or_key=None, *, getter=None, setter=None, pv_type=None, pv_max_length=None):
+def register_variable(
+    name, obj=None, attr_or_key=None, *, getter=None, setter=None, pv_type=None, pv_max_length=None
+):
     """
     Register variable to make it accessible by external API. All registered variables are accessible with
     REST API. Variables with defined ``pv_type`` are also accessible as PVs of the IOC. If ``pv_max_length`` is
@@ -235,7 +238,6 @@ def load_startup_module(module_name):
     importlib.invalidate_caches()
 
     try:
-
         _module = importlib.import_module(module_name)
         nspace = _module.__dict__
 
@@ -299,7 +301,6 @@ def load_startup_script(script_path, *, enable_local_imports=True):
         raise ScriptLoadingError(msg, ex_str) from ex
 
     finally:
-
         patch = "del __file__\n"  # Do not delete '__name__'
         exec(patch, nspace, nspace)
 
@@ -347,15 +348,14 @@ def load_worker_startup_code(*, startup_module_name=None, startup_script_path=No
         nspace = load_startup_script(startup_script_path)
 
     else:
-        logger.warning(
-            "Source of startup information is not specified. No startup code is loaded."
-        )
+        logger.warning("Source of startup information is not specified. No startup code is loaded.")
         nspace = {}
 
     return nspace
 
 
 _internal_process = contextvars.ContextVar("internal_process", default=False)
+
 
 def no_reentry(func):
     @functools.wraps(func)

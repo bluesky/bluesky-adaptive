@@ -163,15 +163,10 @@ def recommender_factory(
         target_transforms = {}
 
     def tell_recommender(event):
-
         run = event.run
 
-        independent_map = call_or_eval(
-            {j: val for j, val in enumerate(independent_keys)}, run, stream_names
-        )
-        dependent_map = call_or_eval(
-            {j: val for j, val in enumerate(dependent_keys)}, run, stream_names
-        )
+        independent_map = call_or_eval({j: val for j, val in enumerate(independent_keys)}, run, stream_names)
+        dependent_map = call_or_eval({j: val for j, val in enumerate(dependent_keys)}, run, stream_names)
 
         independent = tuple(independent_map[j] for j in range(len(independent_keys)))
         measurement = tuple(dependent_map[j] for j in range(len(dependent_keys)))
@@ -185,12 +180,7 @@ def recommender_factory(
             if run.metadata["start"].get("batch_count") >= max_count:
                 queue.put(None)
             else:
-                queue.put(
-                    {
-                        k: target_transforms.get(k, lambda x: x)(v)
-                        for k, v in zip(target_keys, next_point)
-                    }
-                )
+                queue.put({k: target_transforms.get(k, lambda x: x)(v) for k, v in zip(target_keys, next_point)})
 
     def tell_recommender_on_completion(run):
         run.events.completed.connect(tell_recommender)

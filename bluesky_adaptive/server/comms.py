@@ -19,6 +19,7 @@ class CommTimeoutError(TimeoutError):
 
     ...
 
+
 class RequestFailedError(RuntimeError):
     """
     Raised when communication error occurs
@@ -179,7 +180,6 @@ class PipeJsonRpcReceive:
 
     def _start_conn_thread(self):
         if not self._thread_running:
-
             # Clear the pipe from outdated unprocessed messages.
             while self._conn.poll():
                 self._conn.recv()
@@ -236,7 +236,6 @@ class PipeJsonRpcReceive:
                 break
 
     def _handle_msg(self, msg):
-
         # if logger.level < 11:  # Print output only if logging level is DEBUG (10) or less
         #     msg_json = json.loads(msg)
         #     We don't want to print 'heartbeat' messages
@@ -402,7 +401,6 @@ class PipeJsonRpcSendAsync:
             msg = format_jsonrpc_msg(method, params, notification=notification)
 
             try:
-
                 # 'fut_send' sent along with the message. If the thread is still sending the previous
                 #   message, the future is not going to be set until the current message is sent.
                 fut_send = self._loop.create_future()
