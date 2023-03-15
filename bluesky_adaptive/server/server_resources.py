@@ -1,7 +1,7 @@
-from .comms import PipeJsonRpcSendAsync, CommTimeoutError, RequestFailedError
+from .comms import PipeJsonRpcSendAsync, RequestFailedError
 
-class ServerResources():
 
+class ServerResources:
     def __init__(self):
         self._comm_to_worker = None
 
@@ -57,7 +57,6 @@ class ServerResources():
             raise RequestFailedError(result["msg"])
         return {result["name"]: result["value"]}
 
-
     async def worker_initiate_stop(self):
         """
         Initiate orderly closing of the worker process. Wait for the process to close using ``join()``
@@ -68,7 +67,6 @@ class ServerResources():
         CommTimeoutError
         """
         await self._comm_to_worker.send_msg("stop_worker")
-
 
 
 SR = ServerResources()

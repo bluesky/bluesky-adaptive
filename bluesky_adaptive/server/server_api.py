@@ -1,14 +1,15 @@
-from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
-from .server_resources import SR
-import typing
-
 import logging
-logger = logging.getLogger("uvicorn")
+
+from fastapi import APIRouter, HTTPException, status
+
+from .server_resources import SR
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api")
 
 items_dict = {}
+
 
 def process_exceptions():
     """
@@ -19,8 +20,7 @@ def process_exceptions():
     except Exception as ex:
         logger.exception(ex)
         raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Failed to process the request: {ex}"
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to process the request: {ex}"
         )
 
 
@@ -75,7 +75,7 @@ async def get_variable_handler(name: str):
 
 
 @router.post("/variable/{name}")
-async def set_variable_handler(name: str, payload: dict={}):
+async def set_variable_handler(name: str, payload: dict = {}):
     """
     Sets the value of a server variable. The item name (``name``) is specified as part
     of the URL. The API call is successful as long as ``payload`` dictionary contains an element
@@ -95,8 +95,7 @@ async def set_variable_handler(name: str, payload: dict={}):
     """
     if "value" not in payload:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Required parameter ('value') is missing."
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Required parameter ('value') is missing."
         )
 
     try:

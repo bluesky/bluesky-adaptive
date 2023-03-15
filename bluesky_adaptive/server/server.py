@@ -1,30 +1,43 @@
+import logging
+import os
+from multiprocessing import Pipe
+
 from fastapi import FastAPI
-from .server_api import router as server_api_router
+
 from .ioc_server import IOC_Server
+from .logging_setup import setup_loggers
+from .server_api import router as server_api_router
 from .server_resources import SR
 from .worker import WorkerProcess
-from multiprocessing import Pipe
-import os
 
-import logging
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 
 worker_process = None
 ioc_server = None
 worker_shutdown_timeout = 5
 
+
 def create_conn_pipes():
     server_conn, worker_conn = Pipe()
     return server_conn, worker_conn
 
-def build_app():
 
+def build_app():
     app = FastAPI()
     app.include_router(server_api_router)
 
     @app.on_event("startup")
     async def startup_event():
         global worker_process, ioc_server, worker_shutdown_timeout
+
+        log_level = os.environ.get("BS_AGENT_LOG_LEVEL", "INFO")
+        if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR"):
+            raise ValueError(
+                f"Logging level value {log_level!r} is not supported. "
+                "Check value of 'BS_AGENT_LOG_LEVEL' environment variable"
+            )
+        setup_loggers(log_level=log_level)
+
         logger.info("Starting the server ...")
 
         ioc_prefix = os.environ.get("BS_AGENT_IOC_PREFIX", "agent_ioc")
@@ -41,12 +54,11 @@ def build_app():
 
         SR.init_comm_to_worker(conn=server_conn)
 
-        worker_process = WorkerProcess(conn=worker_conn, config=worker_config)
+        worker_process = WorkerProcess(conn=worker_conn, config=worker_config, log_level=log_level)
         worker_process.start()
 
         ioc_server = IOC_Server(ioc_prefix=ioc_prefix)
         await ioc_server.start()
-
 
     @app.on_event("shutdown")
     async def shutdown_event():
@@ -56,7 +68,7 @@ def build_app():
         ioc_server.stop()
 
         if worker_process and worker_process.is_alive():
-            print(f"Stopping the worker process ...")
+            print("Stopping the worker process ...")
             await SR.worker_initiate_stop()
             worker_process.join(timeout=2)
             if not worker_process.is_alive():

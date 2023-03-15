@@ -1,20 +1,19 @@
-from multiprocessing import Process
-import os
-import logging
-import time as ttime
-from .comms import PipeJsonRpcReceive
-from .utils import load_worker_startup_code, get_path_to_simulated_agent, WR
-from collections.abc import Mapping
 import enum
-import threading
-import queue
 import json
+import logging
+import queue
+import threading
+import time as ttime
 import traceback
 import uuid
+from collections.abc import Mapping
+from multiprocessing import Process
 
-import logging
+from .comms import PipeJsonRpcReceive
+from .logging_setup import setup_loggers
+from .utils import WR, get_path_to_simulated_agent, load_worker_startup_code
 
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 
 
 # State of the worker environment
@@ -28,7 +27,6 @@ class EState(enum.Enum):
 
 class RejectedError(RuntimeError):
     ...
-
 
 
 class WorkerProcess(Process):
@@ -52,7 +50,6 @@ class WorkerProcess(Process):
         log_level=logging.DEBUG,
         **kwargs,
     ):
-
         if not conn:
             raise RuntimeError("Invalid value of parameter 'conn': %S.", str(conn))
 
@@ -97,7 +94,6 @@ class WorkerProcess(Process):
         def task_func():
             # This is the function executed in a separate thread
             try:
-
                 if run_in_background:
                     self._background_tasks_num += 1
                 else:
@@ -279,7 +275,6 @@ class WorkerProcess(Process):
     # ------------------------------------------------------------
 
     def _status_handler(self):
-
         background_tasks_num = self._background_tasks_num
         foreground_tasks_num = self._execution_queue.qsize()
         task_uid = self._running_task_uid
@@ -293,9 +288,9 @@ class WorkerProcess(Process):
         return status
 
     def _variables_handler(self):
-        vars = {k: {
-            "pv_type": v["pv_type"], "pv_max_length": v["pv_max_length"]
-            } for k, v in self._variables.items()}
+        vars = {
+            k: {"pv_type": v["pv_type"], "pv_max_length": v["pv_max_length"]} for k, v in self._variables.items()
+        }
         return {"success": True, "msg": "", "variables": vars}
 
     def _variable_get_handler(self, *, name):
@@ -343,7 +338,7 @@ class WorkerProcess(Process):
                 if (obj is None) or (attr_or_key is None):
                     raise Exception(f"Object for variable {name!r} is not properly set")
                 if isinstance(obj, Mapping) and (attr_or_key in obj):
-                    obj[attr_or_key] =  value
+                    obj[attr_or_key] = value
                 elif hasattr(obj, attr_or_key):
                     setattr(obj, attr_or_key, value)
                 else:
@@ -364,9 +359,10 @@ class WorkerProcess(Process):
         by the `start` method.
         """
         # logging.basicConfig(level=max(logging.WARNING, self._log_level))
-        # setup_loggers(name="bluesky_queueserver", log_level=self._log_level)
+        setup_loggers(log_level=self._log_level)
 
         import sys
+
         sys.__stdin__ = sys.stdin
 
         success = True

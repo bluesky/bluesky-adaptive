@@ -12,23 +12,20 @@ dictates.
 This corresponds to a "middle" scale of adaptive integration into
 data collection.
 """
-import uuid
 import itertools
-from queue import Queue, Empty
+import uuid
+from queue import Empty, Queue
 
-import bluesky.preprocessors as bpp
 import bluesky.plan_stubs as bps
 import bluesky.plans as bp
-
+import bluesky.preprocessors as bpp
 from event_model import RunRouter
 
 from .recommendations import NoRecommendation
 from .utils import extract_event_page
 
 
-def recommender_factory(
-    adaptive_obj, independent_keys, dependent_keys, *, max_count=10, queue=None
-):
+def recommender_factory(adaptive_obj, independent_keys, dependent_keys, *, max_count=10, queue=None):
     """
     Generate the callback and queue for an Adaptive API backed reccomender.
 
@@ -94,9 +91,7 @@ def recommender_factory(
         if name == "event_page":
             if poisoned:
                 return
-            independent, measurement = extract_event_page(
-                independent_keys, dependent_keys, payload=doc["data"]
-            )
+            independent, measurement = extract_event_page(independent_keys, dependent_keys, payload=doc["data"])
             adaptive_obj.tell_many(independent, measurement)
             # pull the next point out of the adaptive API
             try:
@@ -110,9 +105,7 @@ def recommender_factory(
     return rr, queue
 
 
-def adaptive_plan(
-    dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count
-):
+def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count):
     """
     Execute an adaptive scan using an inter-run recommendation engine.
 

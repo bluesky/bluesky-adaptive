@@ -1,33 +1,24 @@
 import asyncio
-import copy
 import contextvars
+import copy
+import logging
 
 import caproto
-from caproto import ChannelType, SkipWrite
-from caproto.server import PVGroup, ioc_arg_parser, pvproperty, run, get_pv_pair_wrapper
-
+from caproto import SkipWrite
 from caproto.asyncio.server import start_server
-import functools
-
-from collections.abc import Iterable
-import numpy
-from textwrap import dedent
+from caproto.server import PVGroup, get_pv_pair_wrapper
 
 from .comms import CommTimeoutError
 from .server_resources import SR
-from .worker import EState
 from .utils import no_reentry
+from .worker import EState
 
-import logging
-
-caproto.select_backend('array')
+caproto.select_backend("array")
 
 
-pvproperty_with_rbv = get_pv_pair_wrapper(setpoint_suffix='',
-                                          readback_suffix='_RBV')
+pvproperty_with_rbv = get_pv_pair_wrapper(setpoint_suffix="", readback_suffix="_RBV")
 
-logger = logging.getLogger("uvicorn")
-
+logger = logging.getLogger(__name__)
 
 
 class IOC_Server:
@@ -57,7 +48,6 @@ class IOC_Server:
 
         self._ctxvar_internal_update = contextvars.ContextVar("internal_update")
 
-
     def _create_ioc_class(self):
         """
         Create the new IOC class with the set of PVs defined by variable descriptions.
@@ -82,7 +72,6 @@ class IOC_Server:
             print(f"Creating a new PV: {pv_name!r}")
 
             def put_factory(var_name):
-
                 @no_reentry
                 async def put(obj, instance, value):
                     # Update setpoint and readback only if the new value is different from the PV value
@@ -108,7 +97,7 @@ class IOC_Server:
                 return put
 
             body[property_name] = pvproperty_with_rbv(name=pv_name, put=put_factory(name), **params)
-            self._vars_to_pv_names[name] =  self._ioc_prefix + ":" + pv_name
+            self._vars_to_pv_names[name] = self._ioc_prefix + ":" + pv_name
 
         return type("ServerIOC", (PVGroup,), body)
 
@@ -125,7 +114,7 @@ class IOC_Server:
         # The options must be passed somehow from server configuration
         ioc_prefix = self._ioc_prefix
         ioc_options = {"prefix": f"{ioc_prefix}:", "macros": {}}
-        run_options = {'log_pv_names': False, 'interfaces': ['0.0.0.0']}
+        run_options = {"log_pv_names": False, "interfaces": ["0.0.0.0"]}
 
         server_ioc_class = self._create_ioc_class()
 
@@ -134,8 +123,9 @@ class IOC_Server:
             await start_server(self._ioc.pvdb, **run_options)
 
         except Exception as ex:
-            print("Failed to start the IOC server ...")
+            print(f"Failed to start the IOC server: {ex}")
             import traceback
+
             traceback.print_exc()
 
     async def _update_pv_values(self):
@@ -193,7 +183,6 @@ class IOC_Server:
         Create tasks for the server and PV updates.
         """
         try:
-
             self._ioc_server_task = asyncio.create_task(self._start_ioc_server())
             self._pv_update_task = asyncio.create_task(self._update_pv_values())
             logger.info("IOC server configuration was loaded. Server startup was initiated.")

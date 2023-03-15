@@ -1,6 +1,7 @@
-from scipy.optimize import minimize
-from threading import Thread, Event
 from queue import Empty, Queue
+from threading import Event, Thread
+
+from scipy.optimize import minimize
 
 from bluesky_adaptive.recommendations import NoRecommendation
 

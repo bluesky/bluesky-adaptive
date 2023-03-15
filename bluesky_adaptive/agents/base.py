@@ -251,7 +251,6 @@ class Agent(ABC):
         default_report_kwargs: Optional[dict] = None,
         queue_add_position: Optional[Union[int, Literal["front", "back"]]] = None,
     ):
-
         logger.debug("Initializing agent.")
         self.kafka_consumer = kafka_consumer
         self.kafka_consumer.set_agent(self)

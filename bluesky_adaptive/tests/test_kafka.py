@@ -1,4 +1,5 @@
 import time as ttime
+
 from bluesky_kafka import BlueskyConsumer, Publisher, RemoteDispatcher
 
 from bluesky_adaptive.agents.base import AgentConsumer
