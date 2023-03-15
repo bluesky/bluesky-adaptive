@@ -16,6 +16,6 @@ jobs:
           python -m pip install --upgrade pip setuptools numpy
 
           pip install isort
-      - name: Run black
+      - name: Run ISort
         run: |
           isort . -c

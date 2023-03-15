@@ -13,6 +13,7 @@ sphinx-copybutton
 sphinx_rtd_theme
 
 fastapi
+caproto
 
 bluesky
 databroker
