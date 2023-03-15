@@ -3,6 +3,7 @@ import inspect
 import sys
 import threading
 import time as ttime
+import uuid
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
@@ -490,7 +491,7 @@ class Agent(ABC):
 
         return parser
 
-    def _write_event(self, stream, doc):
+    def _write_event(self, stream, doc, uid=None):
         """Add event to builder as event page, and publish to catalog"""
         if not doc:
             logger.info(f"No doc presented to write_event for stream {stream}")
@@ -504,7 +505,7 @@ class Agent(ABC):
 
         t = ttime.time()
         event_doc = self._compose_descriptor_bundles[stream].compose_event(
-            data=doc, timestamps={k: t for k in doc}
+            data=doc, timestamps={k: t for k in doc}, uid=uid
         )
         self.agent_catalog.v1.insert("event", event_doc)
 
@@ -565,9 +566,15 @@ class Agent(ABC):
             logger.info("Agent is starting an idle queue with exactly 1 item.")
 
     def add_suggestions_to_queue(self, batch_size: int):
-        """Calls ask, adds suggestions to queue, and writes out event"""
+        """Calls ask, adds suggestions to queue, and writes out events.
+        This will create one event for each suggestion.
+        """
         doc, next_points = self.ask(batch_size)
-        uid = self._write_event("ask", doc)
+        uid = str(uuid.uuid4())
+        for batch_idx, next_point in enumerate(next_points):
+            doc["suggestion"] = next_point
+            doc["batch_idx"] = batch_idx
+            self._write_event("ask", doc, uid=uid)
         logger.info(f"Issued ask and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid)
         self._check_queue_and_start()  # TODO: remove this and encourage updated qserver functionality
