@@ -1,6 +1,4 @@
 from multiprocessing import Process
-import os
-import logging
 import time as ttime
 from .comms import PipeJsonRpcReceive
 from .utils import load_worker_startup_code, get_path_to_simulated_agent, WR

@@ -67,7 +67,7 @@ def build_app():
         ioc_server.stop()
 
         if worker_process and worker_process.is_alive():
-            print(f"Stopping the worker process ...")
+            print("Stopping the worker process ...")
             await SR.worker_initiate_stop()
             worker_process.join(timeout=2)
             if not worker_process.is_alive():

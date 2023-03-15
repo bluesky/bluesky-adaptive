@@ -1,7 +1,5 @@
 from fastapi import APIRouter, HTTPException, status
-from pydantic import BaseModel
 from .server_resources import SR
-import typing
 
 import logging
 

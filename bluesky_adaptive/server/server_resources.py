@@ -1,4 +1,4 @@
-from .comms import PipeJsonRpcSendAsync, CommTimeoutError, RequestFailedError
+from .comms import PipeJsonRpcSendAsync, RequestFailedError
 
 
 class ServerResources:

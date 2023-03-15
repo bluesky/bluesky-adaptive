@@ -1,7 +1,7 @@
 from bluesky_adaptive.server import register_variable, start_task, startup_decorator, shutdown_decorator
 import sys
 
-print(f"The script implementing the simulated agent ...")
+print("The script implementing the simulated agent ...")
 
 
 class AA:
@@ -37,25 +37,25 @@ def width_setter(value):
 
 @startup_decorator
 def startup1():
-    print(f"This is startup function #1")
+    print("This is startup function #1")
     aa._depth = 20
     print(f"sys.__stdin__.isatty() = {sys.__stdin__.isatty()}")
 
 
 @startup_decorator
 def startup2():
-    print(f"This is startup function #2")
+    print("This is startup function #2")
     aa._width = 70
 
 
 @shutdown_decorator
 def shutdown1():
-    print(f"This is shutdown function #1")
+    print("This is shutdown function #1")
 
 
 @shutdown_decorator
 def shutdown2():
-    print(f"This is shutdown function #2")
+    print("This is shutdown function #2")
 
 
 # raise Exception("Hello")

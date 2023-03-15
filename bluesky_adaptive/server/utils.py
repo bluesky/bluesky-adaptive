@@ -19,7 +19,7 @@ class _WorkerResources:
 
     def _check_initialization(self):
         if (self._worker_obj is None) or (self._agent_server_vars is None):
-            raise RuntimeError(f"Worker initialization is incomplete")
+            raise RuntimeError("Worker initialization is incomplete")
 
     @property
     def worker_obj(self):

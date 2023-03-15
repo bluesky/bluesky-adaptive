@@ -3,15 +3,10 @@ import copy
 import contextvars
 
 import caproto
-from caproto import ChannelType, SkipWrite
-from caproto.server import PVGroup, ioc_arg_parser, pvproperty, run, get_pv_pair_wrapper
+from caproto import SkipWrite
+from caproto.server import PVGroup, get_pv_pair_wrapper
 
 from caproto.asyncio.server import start_server
-import functools
-
-from collections.abc import Iterable
-import numpy
-from textwrap import dedent
 
 from .comms import CommTimeoutError
 from .server_resources import SR
@@ -130,7 +125,7 @@ class IOC_Server:
             await start_server(self._ioc.pvdb, **run_options)
 
         except Exception as ex:
-            print("Failed to start the IOC server ...")
+            print(f"Failed to start the IOC server: {ex}")
             import traceback
 
             traceback.print_exc()
