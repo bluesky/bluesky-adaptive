@@ -144,7 +144,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             batch_size = 1
         fit_gpytorch_mll(self.mll)
         acqf = self._partial_acqf(self.surrogate_model)
-        candidate, _ = optimize_acqf(
+        candidate, acq_value = optimize_acqf(
             acq_function=acqf,
             bounds=self.bounds,
             q=batch_size,
@@ -152,14 +152,18 @@ class SingleTaskGPAgentBase(Agent, ABC):
             raw_samples=self.raw_samples,
         )
         return (
-            dict(
-                latest_data=self.tell_cache[-1],
-                cache_len=self.inputs.shape[0],
-                **{
-                    "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
-                    for key, val in acqf.state_dict().items()
-                },
-            ),
+            [
+                dict(
+                    candidate=candidate.detach().numpy(),
+                    acquisition_value=acq_value.detach().numpy(),
+                    latest_data=self.tell_cache[-1],
+                    cache_len=self.inputs.shape[0],
+                    **{
+                        "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                        for key, val in acqf.state_dict().items()
+                    },
+                )
+            ],
             torch.atleast_1d(candidate).detach().numpy(),
         )
 
