@@ -106,7 +106,7 @@ class SequentialAgentBase(Agent, ABC):
             self.ask_count += 1
             doc["proposal"].append(next(self._position_generator))
         doc["ask_count"] = [self.ask_count]
-        return doc, doc["proposal"]
+        return [doc], [doc["proposal"]]
 
     def report(self, **kwargs) -> dict:
         return dict(percent_completion=[self.ask_count / len(self.sequence)])
