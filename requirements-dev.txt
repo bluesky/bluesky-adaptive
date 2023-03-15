@@ -12,6 +12,8 @@ numpydoc
 sphinx-copybutton
 sphinx_rtd_theme
 
+fastapi
+
 bluesky
 databroker
 ophyd

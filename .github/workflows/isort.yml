@@ -1,4 +1,4 @@
-name: Check Code Style - BLACK
+name: Check Code Style - ISORT
 
 on: [push, pull_request]
 
