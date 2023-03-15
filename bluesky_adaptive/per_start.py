@@ -12,14 +12,13 @@ dictates.
 This corresponds to a "middle" scale of adaptive integration into
 data collection.
 """
-import uuid
 import itertools
-from queue import Queue, Empty
+import uuid
+from queue import Empty, Queue
 
-import bluesky.preprocessors as bpp
 import bluesky.plan_stubs as bps
 import bluesky.plans as bp
-
+import bluesky.preprocessors as bpp
 from event_model import RunRouter
 
 from .recommendations import NoRecommendation

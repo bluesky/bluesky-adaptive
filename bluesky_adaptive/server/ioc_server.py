@@ -1,19 +1,17 @@
 import asyncio
-import copy
 import contextvars
+import copy
+import logging
 
 import caproto
 from caproto import SkipWrite
-from caproto.server import PVGroup, get_pv_pair_wrapper
-
 from caproto.asyncio.server import start_server
+from caproto.server import PVGroup, get_pv_pair_wrapper
 
 from .comms import CommTimeoutError
 from .server_resources import SR
-from .worker import EState
 from .utils import no_reentry
-
-import logging
+from .worker import EState
 
 caproto.select_backend("array")
 

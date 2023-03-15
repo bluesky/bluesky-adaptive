@@ -1,5 +1,6 @@
-from bluesky_adaptive.server import register_variable, start_task, startup_decorator, shutdown_decorator
 import sys
+
+from bluesky_adaptive.server import register_variable, shutdown_decorator, start_task, startup_decorator
 
 print("The script implementing the simulated agent ...")
 

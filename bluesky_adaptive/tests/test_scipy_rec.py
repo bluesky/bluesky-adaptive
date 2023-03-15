@@ -1,8 +1,8 @@
-import pytest
 import bluesky.plan_stubs as bps
+import pytest
 
-from bluesky_adaptive.per_start import adaptive_plan
 from bluesky_adaptive.on_stop import recommender_factory
+from bluesky_adaptive.per_start import adaptive_plan
 
 
 def test_scipy_minimize_recommender(RE, hw):

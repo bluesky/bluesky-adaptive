@@ -14,13 +14,12 @@ data collection.
 """
 from queue import Queue
 
-from .recommendations import NoRecommendation
-
+import event_model
 from bluesky_live.bluesky_run import BlueskyRun, DocumentCache
 from bluesky_widgets.models.utils import call_or_eval
-import event_model
-
 from ophyd.sim import NumpySeqHandler
+
+from .recommendations import NoRecommendation
 
 
 def stream_documents_into_runs(add_run):

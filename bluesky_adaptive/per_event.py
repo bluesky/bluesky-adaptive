@@ -11,12 +11,11 @@ This is a "fine" grained integration of the adaptive logic into data acquisition
 
 """
 
-from queue import Queue
 import itertools
+from queue import Queue
 
-import bluesky.preprocessors as bpp
 import bluesky.plan_stubs as bps
-
+import bluesky.preprocessors as bpp
 from event_model import RunRouter
 
 from .recommendations import NoRecommendation

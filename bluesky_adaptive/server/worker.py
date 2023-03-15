@@ -1,17 +1,17 @@
-from multiprocessing import Process
-import time as ttime
-from .comms import PipeJsonRpcReceive
-from .utils import load_worker_startup_code, get_path_to_simulated_agent, WR
-from collections.abc import Mapping
 import enum
-import threading
-import queue
 import json
+import queue
+import logging
+import threading
+import time as ttime
 import traceback
 import uuid
-from .logging_setup import setup_loggers
+from collections.abc import Mapping
+from multiprocessing import Process
 
-import logging
+from .comms import PipeJsonRpcReceive
+from .logging_setup import setup_loggers
+from .utils import WR, get_path_to_simulated_agent, load_worker_startup_code
 
 logger = logging.getLogger(__name__)
 

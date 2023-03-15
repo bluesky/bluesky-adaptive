@@ -1,13 +1,14 @@
+import logging
+import os
+from multiprocessing import Pipe
+
 from fastapi import FastAPI
-from .server_api import router as server_api_router
+
 from .ioc_server import IOC_Server
+from .logging_setup import setup_loggers
+from .server_api import router as server_api_router
 from .server_resources import SR
 from .worker import WorkerProcess
-from multiprocessing import Pipe
-import os
-from .logging_setup import setup_loggers
-
-import logging
 
 logger = logging.getLogger(__name__)
 

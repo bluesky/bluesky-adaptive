@@ -1,13 +1,14 @@
 import asyncio
 import json
+import logging
+import queue
 import threading
 import uuid
-import queue
+
 from jsonrpc import JSONRPCResponseManager
 from jsonrpc.dispatcher import Dispatcher
-from .logging_setup import PPrintForLogging as ppfl
 
-import logging
+from .logging_setup import PPrintForLogging as ppfl
 
 logger = logging.getLogger(__name__)
 

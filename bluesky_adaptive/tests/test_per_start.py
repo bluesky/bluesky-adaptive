@@ -1,13 +1,9 @@
 from queue import Empty
 
 import pytest
-
 from bluesky.tests.utils import DocCollector
 
-from bluesky_adaptive.per_start import (
-    recommender_factory,
-    adaptive_plan,
-)
+from bluesky_adaptive.per_start import adaptive_plan, recommender_factory
 from bluesky_adaptive.recommendations import SequenceRecommender
 
 

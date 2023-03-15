@@ -1,9 +1,6 @@
 from bluesky.tests.utils import DocCollector
 
-from bluesky_adaptive.per_event import (
-    recommender_factory,
-    adaptive_plan,
-)
+from bluesky_adaptive.per_event import adaptive_plan, recommender_factory
 from bluesky_adaptive.recommendations import SequenceRecommender
 
 
