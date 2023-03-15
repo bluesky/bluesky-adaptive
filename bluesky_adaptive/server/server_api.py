@@ -4,7 +4,7 @@ from .server_resources import SR
 import typing
 
 import logging
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api")
 

@@ -5,9 +5,10 @@ from .server_resources import SR
 from .worker import WorkerProcess
 from multiprocessing import Pipe
 import os
+from .logging_setup import setup_loggers
 
 import logging
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 
 worker_process = None
 ioc_server = None
@@ -25,6 +26,15 @@ def build_app():
     @app.on_event("startup")
     async def startup_event():
         global worker_process, ioc_server, worker_shutdown_timeout
+
+        log_level = os.environ.get("BS_AGENT_LOG_LEVEL", "INFO")
+        if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR"):
+            raise ValueError(
+                f"Logging level value {log_level!r} is not supported. "             
+                "Check value of 'BS_AGENT_LOG_LEVEL' environment variable"
+            )
+        setup_loggers(log_level=log_level)
+
         logger.info("Starting the server ...")
 
         ioc_prefix = os.environ.get("BS_AGENT_IOC_PREFIX", "agent_ioc")
@@ -41,7 +51,7 @@ def build_app():
 
         SR.init_comm_to_worker(conn=server_conn)
 
-        worker_process = WorkerProcess(conn=worker_conn, config=worker_config)
+        worker_process = WorkerProcess(conn=worker_conn, config=worker_config, log_level=log_level)
         worker_process.start()
 
         ioc_server = IOC_Server(ioc_prefix=ioc_prefix)

@@ -26,7 +26,7 @@ caproto.select_backend('array')
 pvproperty_with_rbv = get_pv_pair_wrapper(setpoint_suffix='',
                                           readback_suffix='_RBV')
 
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 
 
 

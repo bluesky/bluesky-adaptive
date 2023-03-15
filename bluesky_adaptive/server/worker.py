@@ -11,10 +11,10 @@ import queue
 import json
 import traceback
 import uuid
+from .logging_setup import setup_loggers
 
 import logging
-
-logger = logging.getLogger("uvicorn")
+logger = logging.getLogger(__name__)
 
 
 # State of the worker environment
@@ -28,7 +28,6 @@ class EState(enum.Enum):
 
 class RejectedError(RuntimeError):
     ...
-
 
 
 class WorkerProcess(Process):
@@ -76,6 +75,7 @@ class WorkerProcess(Process):
 
         self._ns = {}  # Namespace
         self._variables = {}  # Descriptions of variables
+
 
     # ------------------------------------------------------------
 
@@ -364,7 +364,7 @@ class WorkerProcess(Process):
         by the `start` method.
         """
         # logging.basicConfig(level=max(logging.WARNING, self._log_level))
-        # setup_loggers(name="bluesky_queueserver", log_level=self._log_level)
+        setup_loggers(log_level=self._log_level)
 
         import sys
         sys.__stdin__ = sys.stdin
