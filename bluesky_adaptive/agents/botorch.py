@@ -41,7 +41,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
         partial_acq_function: Optional[Callable] = None,
         num_restarts: int = 10,
         raw_samples: int = 20,
-        **kwargs
+        **kwargs,
     ):
         """Single Task GP based Bayesian Optimization
 
@@ -139,6 +139,9 @@ class SingleTaskGPAgentBase(Agent, ABC):
         """Fit GP, optimize acquisition function, and return next points.
         Document retains candidate, acquisition values, and state dictionary.
         """
+        if batch_size > 1:
+            logger.warning(f"Batch size greater than 1 is not implemented. Reducing {batch_size} to 1.")
+            batch_size = 1
         fit_gpytorch_mll(self.mll)
         acqf = self._partial_acqf(self.surrogate_model)
         candidate, acq_value = optimize_acqf(
@@ -149,16 +152,18 @@ class SingleTaskGPAgentBase(Agent, ABC):
             raw_samples=self.raw_samples,
         )
         return (
-            dict(
-                candidate=candidate.detach().numpy(),
-                acquisition_value=acq_value.detach().numpy(),
-                latest_data=self.tell_cache[-1],
-                cache_len=self.inputs.shape[0],
-                **{
-                    "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
-                    for key, val in acqf.state_dict().items()
-                },
-            ),
+            [
+                dict(
+                    candidate=candidate.detach().numpy(),
+                    acquisition_value=acq_value.detach().numpy(),
+                    latest_data=self.tell_cache[-1],
+                    cache_len=self.inputs.shape[0],
+                    **{
+                        "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                        for key, val in acqf.state_dict().items()
+                    },
+                )
+            ],
             torch.atleast_1d(candidate).detach().numpy(),
         )
 

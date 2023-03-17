@@ -74,9 +74,9 @@ def test_gp_agent(tiled_profile, tiled_node):
         agent.tell_cache.append(uid)
     agent.generate_report()
     doc, query = agent.ask()
-    agent._write_event("ask", doc)
+    agent._write_event("ask", doc[0])
     doc, query = agent.ask()
-    agent._write_event("ask", doc)
+    agent._write_event("ask", doc[0])
     agent.stop()
     assert len(query) == 1
     run = tiled_node[agent_uid]

@@ -3,6 +3,7 @@ import inspect
 import sys
 import threading
 import time as ttime
+import uuid
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
@@ -333,7 +334,7 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def tell(self, x, y) -> Dict[str, List]:
+    def tell(self, x, y) -> Dict[str, ArrayLike]:
         """
         Tell the agent about some new data
         Parameters
@@ -352,7 +353,7 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def ask(self, batch_size: int) -> Tuple[Dict[str, List], Sequence]:
+    def ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
         Ask the agent for a new batch of points to measure.
 
@@ -363,15 +364,15 @@ class Agent(ABC):
 
         Returns
         -------
-        doc : dict
-            key metadata from the ask approach
+        docs : Sequence[dict]
+            Documents of key metadata from the ask approach for each point in next_points.
+            Must be length of batch size.
         next_points : Sequence
             Sequence of independent variables of length batch size
-
         """
         ...
 
-    def report(self, **kwargs) -> Dict[str, List]:
+    def report(self, **kwargs) -> Dict[str, ArrayLike]:
         """
         Create a report given the data observed by the agent.
         This could be potentially implemented in the base class to write document stream.
@@ -490,7 +491,7 @@ class Agent(ABC):
 
         return parser
 
-    def _write_event(self, stream, doc):
+    def _write_event(self, stream, doc, uid=None):
         """Add event to builder as event page, and publish to catalog"""
         if not doc:
             logger.info(f"No doc presented to write_event for stream {stream}")
@@ -504,7 +505,7 @@ class Agent(ABC):
 
         t = ttime.time()
         event_doc = self._compose_descriptor_bundles[stream].compose_event(
-            data=doc, timestamps={k: t for k in doc}
+            data=doc, timestamps={k: t for k in doc}, uid=uid
         )
         self.agent_catalog.v1.insert("event", event_doc)
 
@@ -565,9 +566,16 @@ class Agent(ABC):
             logger.info("Agent is starting an idle queue with exactly 1 item.")
 
     def add_suggestions_to_queue(self, batch_size: int):
-        """Calls ask, adds suggestions to queue, and writes out event"""
-        doc, next_points = self.ask(batch_size)
-        uid = self._write_event("ask", doc)
+        """Calls ask, adds suggestions to queue, and writes out events.
+        This will create one event for each suggestion.
+        """
+        docs, next_points = self.ask(batch_size)
+        uid = str(uuid.uuid4())
+        for batch_idx, (doc, next_point) in enumerate(zip(docs, next_points)):
+            doc["suggestion"] = next_point
+            doc["batch_idx"] = batch_idx
+            doc["batch_size"] = len(next_points)
+            self._write_event("ask", doc, uid=f"{uid}/{batch_idx}")
         logger.info(f"Issued ask and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid)
         self._check_queue_and_start()  # TODO: remove this and encourage updated qserver functionality
@@ -961,7 +969,7 @@ class MonarchSubjectAgent(Agent, ABC):
         ...
 
     @abstractmethod
-    def subject_ask(self, batch_size: int) -> Tuple[Dict[str, List], Sequence]:
+    def subject_ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
         Ask the agent for a new batch of points to measure on the subject queue.
 
@@ -972,9 +980,10 @@ class MonarchSubjectAgent(Agent, ABC):
 
         Returns
         -------
-        doc : dict
-            key metadata from the ask approach
-        next_points : Sequence
+        docs : Sequence[dict]
+            Documents of key metadata from the ask approach for each point in next_points.
+            Must be length of batch size.
+        next_points : Sequence[ArrayLike]
             Sequence of independent variables of length batch size
 
         """
@@ -991,8 +1000,13 @@ class MonarchSubjectAgent(Agent, ABC):
 
     def add_suggestions_to_subject_queue(self, batch_size: int):
         """Calls ask, adds suggestions to queue, and writes out event"""
-        doc, next_points = self.subject_ask(batch_size)
-        uid = self._write_event("subject_ask", doc)
+        docs, next_points = self.subject_ask(batch_size)
+        uid = str(uuid.uuid4())
+        for batch_idx, (doc, next_point) in enumerate(zip(docs, next_points)):
+            doc["suggestion"] = next_point
+            doc["batch_idx"] = batch_idx
+            doc["batch_size"] = len(next_points)
+            self._write_event("subject_ask", doc)
         logger.info("Issued ask to subject and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid, re_manager=self.subject_re_manager, position="front")
 
