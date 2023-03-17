@@ -20,6 +20,8 @@ from event_model import compose_run
 from numpy.typing import ArrayLike
 from xkcdpass import xkcd_password as xp
 
+from bluesky_adaptive.adjudicators.msg import DEFAULT_NAME as ADJUDICATOR_STREAM_NAME
+from bluesky_adaptive.adjudicators.msg import AdjudicatorMsg, Suggestion
 from bluesky_adaptive.server import register_variable, start_task
 
 logger = getLogger("bluesky_adaptive.agents")
@@ -234,6 +236,10 @@ class Agent(ABC):
         Default kwargs for calling the ``report`` method, by default None
     queue_add_position : Optional[Union[int, Literal[&quot;front&quot;, &quot;back&quot;]]], optional
         Starting postion to add to the queue if adding directly to the queue, by default "back".
+    endstation_key : Optional[str]
+        Optional string that is needed for Adjudicator functionality. This keys the qserver API instance to
+        a particular endstation. This way child Agents can maintain multiple queues for different unit operations.
+        For example, this could be a beamline three letter acronym or other distinct key.
     """
 
     def __init__(
@@ -251,6 +257,7 @@ class Agent(ABC):
         report_on_tell: Optional[bool] = False,
         default_report_kwargs: Optional[dict] = None,
         queue_add_position: Optional[Union[int, Literal["front", "back"]]] = None,
+        endstation_key: Optional[str] = "",
     ):
         logger.debug("Initializing agent.")
         self.kafka_consumer = kafka_consumer
@@ -281,6 +288,7 @@ class Agent(ABC):
         self._compose_run_bundle = None
         self._compose_descriptor_bundles = dict()
         self.re_manager = qserver
+        self.endstation_key = endstation_key
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
@@ -565,57 +573,80 @@ class Agent(ABC):
             self.re_manager.queue_start()
             logger.info("Agent is starting an idle queue with exactly 1 item.")
 
-    def add_suggestions_to_queue(self, batch_size: int):
-        """Calls ask, adds suggestions to queue, and writes out events.
-        This will create one event for each suggestion.
+    def _ask_and_write_events(
+        self, batch_size: int, ask_method: Optional[Callable] = None, stream_name: Optional[str] = "ask"
+    ):
+        """Private ask method for consistency across calls and changes to docs streams.
+
+        Parameters
+        ----------
+        batch_size : int
+            Size of batch passed to ask
+        ask_method : Optional[Callable]
+            self.ask, or self.subject_ask, or some target ask function.
+            Defaults to self.ask
+        stream_name : Optional[str]
+            Name for ask stream corresponding to `ask_method`. 'ask', 'subject_ask', or other.
+            Defaults to 'ask'
+
+        Returns
+        -------
+        next_points : list
+            Next points to be sent to adjudicator or queue
+        uid : str
         """
-        docs, next_points = self.ask(batch_size)
+        if ask_method is None:
+            ask_method = self.ask
+        docs, next_points = ask_method(batch_size)
         uid = str(uuid.uuid4())
         for batch_idx, (doc, next_point) in enumerate(zip(docs, next_points)):
             doc["suggestion"] = next_point
             doc["batch_idx"] = batch_idx
             doc["batch_size"] = len(next_points)
-            self._write_event("ask", doc, uid=f"{uid}/{batch_idx}")
+            self._write_event(stream_name, doc, uid=f"{uid}/{batch_idx}")
+        return next_points, uid
+
+    def add_suggestions_to_queue(self, batch_size: int):
+        """Calls ask, adds suggestions to queue, and writes out events.
+        This will create one event for each suggestion.
+        """
+        next_points, uid = self._ask_and_write_events(batch_size)
         logger.info(f"Issued ask and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid)
         self._check_queue_and_start()  # TODO: remove this and encourage updated qserver functionality
 
-    def _create_suggestion_list(self, points, uid):
+    def _create_suggestion_list(self, points: Sequence, uid: str, measurement_plan: Optional[Callable] = None):
         """Create suggestions for adjudicator"""
-        raise NotImplementedError
-        """Not implementing yet to lighten PR load. Copied is implementation from MMM.
         suggestions = []
         for point in points:
-            kwargs = self.measurement_plan_kwargs(point)
+            plan_name, args, kwargs = (
+                self.measurement_plan(point) if measurement_plan is None else measurement_plan(point)
+            )
             kwargs.setdefault("md", {})
             kwargs["md"].update(self.default_plan_md)
             kwargs["md"]["agent_ask_uid"] = uid
-            args = self.measurement_plan_args(point)
             suggestions.append(
                 Suggestion(
                     ask_uid=uid,
-                    plan_name=self.measurement_plan_name,
+                    plan_name=plan_name,
                     plan_args=args,
                     plan_kwargs=kwargs,
                 )
             )
         return suggestions
-        """
 
     def generate_suggestions_for_adjudicator(self, batch_size: int):
-        raise NotImplementedError
-        """ Not implementing yet to lighten PR load. Copied is implementation from MMM.
-        doc, next_points = self.ask(batch_size)
-        uid = self._write_event("ask", doc)
-        logger.info(f"Issued ask and sending to adjudicator. {uid}")
+        """Calls ask, sends suggestions to adjudicator, and writes out events.
+        This will create one event for each suggestion."""
+        next_points, uid = self._ask_and_write_events(batch_size)
+        logger.info(f"Issued ask and sending to the adjudicator. {uid}")
         suggestions = self._create_suggestion_list(next_points, uid)
         msg = AdjudicatorMsg(
-            agent_name=self.agent_name,
+            agent_name=self.instance_name,
             suggestions_uid=str(uuid.uuid4()),
-            suggestions={self.beamline_tla: suggestions},
+            suggestions={self.endstation_key: suggestions},
         )
         self.kafka_producer(ADJUDICATOR_STREAM_NAME, msg.dict())
-        """
 
     def generate_report(self, **kwargs):
         doc = self.report(**kwargs)
@@ -911,7 +942,14 @@ class Agent(ABC):
 class MonarchSubjectAgent(Agent, ABC):
     # Drive a beamline. On stop doc check. By default manual trigger.
 
-    def __init__(self, *args, subject_qserver: API_Threads_Mixin, **kwargs):
+    def __init__(
+        self,
+        *args,
+        subject_qserver: API_Threads_Mixin,
+        subject_kafka_producer: Publisher,
+        subject_endstation_key: Optional[str] = "",  # TODO: Make producer optional since Adjudicator is
+        **kwargs,
+    ):
         """Abstract base class for a MonarchSubject agent. These agents only consume documents from one
         (Monarch) source, and can dictate the behavior of a different (Subject) queue.
         This can be useful in a multimodal measurement where
@@ -940,9 +978,17 @@ class MonarchSubjectAgent(Agent, ABC):
         ----------
         subject_qserver : API_Threads_Mixin
             Object to manage communication with the Subject Queue Server
+        subject_kafka_producer : Publisher
+            Bluesky Kafka publisher to produce document stream of agent actions to Adjudicators
+        subject_endstation_key : Optional[str]
+            Optional string that is needed for Adjudicator functionality. This keys the qserver API instance to
+            a particular endstation. This way child Agents can maintain multiple queues for different unit ops.
+            For example, this could be a beamline three letter acronym or other distinct key.
         """
         super().__init__(**kwargs)
         self.subject_re_manager = subject_qserver
+        self.subject_kafka_producer = subject_kafka_producer
+        self.subject_endstation_key = subject_endstation_key
 
     @abstractmethod
     def subject_measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
@@ -1000,13 +1046,7 @@ class MonarchSubjectAgent(Agent, ABC):
 
     def add_suggestions_to_subject_queue(self, batch_size: int):
         """Calls ask, adds suggestions to queue, and writes out event"""
-        docs, next_points = self.subject_ask(batch_size)
-        uid = str(uuid.uuid4())
-        for batch_idx, (doc, next_point) in enumerate(zip(docs, next_points)):
-            doc["suggestion"] = next_point
-            doc["batch_idx"] = batch_idx
-            doc["batch_size"] = len(next_points)
-            self._write_event("subject_ask", doc)
+        next_points, uid = self._ask_and_write_events(batch_size, self.subject_ask, "subject_ask")
         logger.info("Issued ask to subject and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid, re_manager=self.subject_re_manager, position="front")
 
@@ -1020,6 +1060,17 @@ class MonarchSubjectAgent(Agent, ABC):
                 self.add_suggestions_to_subject_queue(1)
             else:
                 raise NotImplementedError
+
+    def generate_suggestions_for_adjudicator(self, batch_size: int):
+        next_points, uid = self._ask_and_write_events(batch_size, self.subject_ask, "subject_ask")
+        logger.info(f"Issued subject ask and sending to the adjudicator. {uid}")
+        suggestions = self._create_suggestion_list(next_points, uid, self.subject_measurement_plan)
+        msg = AdjudicatorMsg(
+            agent_name=self.instance_name,
+            suggestions_uid=str(uuid.uuid4()),
+            suggestions={self.subject_endstation_key: suggestions},
+        )
+        self.subject_kafka_producer(ADJUDICATOR_STREAM_NAME, msg.dict())
 
     def server_registrations(self) -> None:
         super().server_registrations()
