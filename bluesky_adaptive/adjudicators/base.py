@@ -27,7 +27,7 @@ class DequeSet:
 
     def append(self, d):
         if d in self:
-            logger.debug(f"Attempt to add redunt point to DequeSet ignored: {d}")
+            logger.debug(f"Attempt to add redundant point to DequeSet ignored: {d}")
             return
         self._set.add(d)
         self._dequeue.append(d)
@@ -135,3 +135,45 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
         The returned tuples will be deconstructed to add suggestions to the queue.
         """
         ...
+
+
+class AgentByNameAdjudicator(AdjudicatorBase):
+    """Adjudicator that only allows messages from a set primary agent, and uses a single qserver.
+    Parameters
+    ----------
+    qserver :  dict[str, API_Threads_Mixin]
+        Dictionary of objects to manage communication with Queue Server. These should be keyed by the beamline TLA
+        expected in AdjudicatorMsg.suggestions dictionary.
+    """
+
+    def __init__(self, *args, qservers: dict[str, API_Threads_Mixin], **kwargs):
+        self._primary_agent = ""
+        self._re_managers = qservers
+        super().__init__(*args, **kwargs)
+
+    @property
+    def primary_agent(self):
+        return self._primary_agent
+
+    @primary_agent.setter
+    def primary_agent(self, name: str):
+        self._primary_agent = "str"
+
+    def server_registrations(self) -> None:
+        self._register_property("priamry_agent")
+        super().server_registrations()
+
+    def make_judgments(self) -> Sequence[Tuple[API_Threads_Mixin, str, Suggestion]]:
+        judgments = []
+
+        if self.primary_agent not in self.agent_names:
+            logger.debug(f"Agent {self.primary_agent} not known to the Adjudicator")
+        else:
+            adjudicator_msg = self.current_suggestions[self.primary_agent]
+            for key, manager in self._re_managers.items():
+                suggestions = adjudicator_msg.suggestions.get(key, [])
+                for suggestion in suggestions:
+                    judgments.append(
+                        Judgment(re_manager=manager, agent_name=self.primary_agent, suggestion=suggestion)
+                    )
+        return judgments
