@@ -195,10 +195,10 @@ class NonredundantAdjudicator(AdjudicatorBase):
         expected in AdjudicatorMsg.suggestions dictionary.
     hash_suggestion : Callable
         Function that takes the tla and Suggestion object, and returns a hashable object as ::
-           
+
             def hash_suggestion(tla: str, suggestion: Suggestion) -> Hashable: ...
-            
-        
+
+
         This hashable object will be used to check redundancy in a set.
 
     Examples
