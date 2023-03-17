@@ -24,6 +24,9 @@ class Judgment(BaseModel):
     agent_name: str
     suggestion: Suggestion
 
+    class Config:
+        arbitrary_types_allowed = True
+
     def __init__(self, re_manager: API_Threads_Mixin, agent_name: str, suggestion: Suggestion, **kwargs) -> None:
         super().__init__(re_manager=re_manager, agent_name=agent_name, suggestion=suggestion, **kwargs)
 
