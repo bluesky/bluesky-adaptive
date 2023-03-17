@@ -218,7 +218,6 @@ class NonredundantAdjudicator(AdjudicatorBase):
         hash_suggestion: Callable,
         **kwargs,
     ):
-
         super().__init__(topics, bootstrap_servers, group_id, *args, **kwargs)
         self.hash_suggestion = hash_suggestion
         self.suggestion_set = set()
