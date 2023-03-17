@@ -1,6 +1,6 @@
 # Adjudicators
 
-The purpose of an adjudicator is to provide another layer of misdirection between the agents and the RunEngine Manager.
+The purpose of an adjudicator is to provide another layer of indirection between the agents and the RunEngine Manager.
 This is not required, as agents can send plans directly to the queue.
 Alternatively, many agents can send plans to an adjudicator that acts as a meta-agent, filtering and deciding which plans from many agents make it to the queue.
 In this way, the adjudicator acts as an extra experiment manager.
