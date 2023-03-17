@@ -575,7 +575,7 @@ class Agent(ABC):
             doc["suggestion"] = next_point
             doc["batch_idx"] = batch_idx
             doc["batch_size"] = len(next_points)
-            self._write_event("ask", doc, uid=uid)
+            self._write_event("ask", doc, uid=f"{uid}/{batch_idx}")
         logger.info(f"Issued ask and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid)
         self._check_queue_and_start()  # TODO: remove this and encourage updated qserver functionality
