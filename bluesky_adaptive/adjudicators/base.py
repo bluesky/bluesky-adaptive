@@ -11,7 +11,6 @@ from bluesky_queueserver_api.api_threads import API_Threads_Mixin
 
 from bluesky_adaptive.adjudicators.msg import DEFAULT_NAME, AdjudicatorMsg, Judgment, Suggestion
 from bluesky_adaptive.agents.base import Agent as BaseAgent
-from bluesky_adaptive.server.demo.agent_sandbox import add_suggestions_to_queue
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +98,7 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
     def prompt_judgment(self, flag: bool):
         self._prompt = flag
 
-    def add_suggestion_to_queue(self, re_manager: API_Threads_Mixin, agent_name: str, suggestion: Suggestion):
+    def _add_suggestion_to_queue(self, re_manager: API_Threads_Mixin, agent_name: str, suggestion: Suggestion):
         if suggestion.ask_uid in self._ask_uids:
             logger.debug(f"Ask uid {suggestion.ask_uid} has already been seen. Not adding anything to the queue.")
             return
@@ -118,7 +117,7 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
         Method to generate all server registrations during agent initialization.
         This method can be used in subclasses, to override or extend the default registrations.
         """
-        self._register_method("make_judgements", "_make_judgements")
+        self._register_method("make_judgements", "_make_judgments_and_add_to_queue")
         self._register_property("prompt_judgement")
 
     def _make_judgments_and_add_to_queue(self):
@@ -127,7 +126,7 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
         for judgment in judgments:
             if not isinstance(judgment, Judgment):
                 judgment = Judgment(*judgment)  # Validate
-            add_suggestions_to_queue(**judgment.dict())
+            self._add_suggestion_to_queue(**judgment.dict())
 
     @abstractmethod()
     def make_judgments(self) -> Sequence[Tuple[API_Threads_Mixin, str, Suggestion]]:
