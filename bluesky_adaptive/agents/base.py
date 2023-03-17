@@ -204,8 +204,8 @@ class Agent(ABC):
         Bluesky stop documents that will trigger ``tell``.
         AgentConsumer is a child class of bluesky_kafka.RemoteDispatcher that enables
         kafka messages to trigger agent directives.
-    kafka_producer : Publisher
-        Bluesky Kafka publisher to produce document stream of agent actions.
+    kafka_producer : Optional[Publisher]
+        Bluesky Kafka publisher to produce document stream of agent actions for optional Adjudicator.
     tiled_data_node : tiled.client.node.Node
         Tiled node to serve as source of data (BlueskyRuns) for the agent.
     tiled_agent_node : tiled.client.node.Node
@@ -246,10 +246,10 @@ class Agent(ABC):
         self,
         *,
         kafka_consumer: AgentConsumer,
-        kafka_producer: Publisher,
         tiled_data_node: tiled.client.node.Node,
         tiled_agent_node: tiled.client.node.Node,
         qserver: API_Threads_Mixin,
+        kafka_producer: Optional[Publisher],
         agent_run_suffix: Optional[str] = None,
         metadata: Optional[dict] = None,
         ask_on_tell: Optional[bool] = True,
@@ -946,8 +946,8 @@ class MonarchSubjectAgent(Agent, ABC):
         self,
         *args,
         subject_qserver: API_Threads_Mixin,
-        subject_kafka_producer: Publisher,
-        subject_endstation_key: Optional[str] = "",  # TODO: Make producer optional since Adjudicator is
+        subject_kafka_producer: Optional[Publisher] = None,
+        subject_endstation_key: Optional[str] = "",
         **kwargs,
     ):
         """Abstract base class for a MonarchSubject agent. These agents only consume documents from one
@@ -978,7 +978,7 @@ class MonarchSubjectAgent(Agent, ABC):
         ----------
         subject_qserver : API_Threads_Mixin
             Object to manage communication with the Subject Queue Server
-        subject_kafka_producer : Publisher
+        subject_kafka_producer : Optional[Publisher]
             Bluesky Kafka publisher to produce document stream of agent actions to Adjudicators
         subject_endstation_key : Optional[str]
             Optional string that is needed for Adjudicator functionality. This keys the qserver API instance to
