@@ -64,7 +64,13 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
         self._prompt = True
 
     def start(self, *args, **kwargs):
-        self._thread = Thread(target=self.start, name="adjudicator-loop", daemon=True, args=args, kwargs=kwargs)
+        self._thread = Thread(
+            target=BlueskyConsumer.start,
+            name="adjudicator-loop",
+            daemon=True,
+            args=[self] + list(args),
+            kwargs=kwargs,
+        )
         self._thread.start()
 
     def process_document(self, topic, name, doc):
@@ -128,7 +134,7 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
                 judgment = Judgment(*judgment)  # Validate
             self._add_suggestion_to_queue(**judgment.dict())
 
-    @abstractmethod()
+    @abstractmethod
     def make_judgments(self) -> Sequence[Tuple[API_Threads_Mixin, str, Suggestion]]:
         """Instance method to make judgements based on current suggestions.
         The returned tuples will be deconstructed to add suggestions to the queue.
@@ -156,7 +162,7 @@ class AgentByNameAdjudicator(AdjudicatorBase):
 
     @primary_agent.setter
     def primary_agent(self, name: str):
-        self._primary_agent = "str"
+        self._primary_agent = name
 
     def server_registrations(self) -> None:
         self._register_property("priamry_agent")
