@@ -20,9 +20,9 @@ from event_model import compose_run
 from numpy.typing import ArrayLike
 from xkcdpass import xkcd_password as xp
 
-from bluesky_adaptive.adjudicators.msg import DEFAULT_NAME as ADJUDICATOR_STREAM_NAME
-from bluesky_adaptive.adjudicators.msg import AdjudicatorMsg, Suggestion
-from bluesky_adaptive.server import register_variable, start_task
+from ..adjudicators.msg import DEFAULT_NAME as ADJUDICATOR_STREAM_NAME
+from ..adjudicators.msg import AdjudicatorMsg, Suggestion
+from ..server import register_variable, start_task
 
 logger = getLogger("bluesky_adaptive.agents")
 PASSWORD_LIST = xp.generate_wordlist(wordfile=xp.locate_wordfile(), min_length=3, max_length=6)
