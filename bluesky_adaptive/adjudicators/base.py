@@ -132,7 +132,7 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
         for judgment in judgments:
             if not isinstance(judgment, Judgment):
                 judgment = Judgment(*judgment)  # Validate
-            self._add_suggestion_to_queue(**judgment.dict())
+            self._add_suggestion_to_queue(judgment.re_manager, judgment.agent_name, judgment.suggestion)
 
     @abstractmethod
     def make_judgments(self) -> Sequence[Tuple[API_Threads_Mixin, str, Suggestion]]:
