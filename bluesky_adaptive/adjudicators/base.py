@@ -63,6 +63,11 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
         self._ask_uids = DequeSet()
         self._prompt = True
 
+        try:
+            self.server_registrations()
+        except RuntimeError as e:
+            logger.warning(f"Agent server unable to make registrations. Continuing regardless of\n {e}")
+
     def start(self, *args, **kwargs):
         self._thread = Thread(
             target=BlueskyConsumer.start,
@@ -124,7 +129,8 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
         This method can be used in subclasses, to override or extend the default registrations.
         """
         self._register_method("make_judgements", "_make_judgments_and_add_to_queue")
-        self._register_property("prompt_judgement")
+        self._register_property("prompt_judgment")
+        self._register_property("current_suggestions")
 
     def _make_judgments_and_add_to_queue(self):
         """Internal wrapper for making judgements, validating, and adding to queue."""
