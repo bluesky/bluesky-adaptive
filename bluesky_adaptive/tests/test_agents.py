@@ -59,7 +59,7 @@ class TestCommunicationAgent(Agent):
         return dict(agent_name=self.instance_name, report=f"report_{report_number}")
 
     def ask(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
-        return (dict(agent_name=self.instance_name, report=f"ask_{batch_size}"), [0 for _ in range(batch_size)])
+        return ([dict(agent_name=self.instance_name, report=f"ask_{batch_size}")], [0 for _ in range(batch_size)])
 
     def tell(self, x, y) -> dict:
         self.count += 1
@@ -114,8 +114,8 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, broker_auth
             pub, sub, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
         )
         agent.start()
-        doc, _ = agent.ask(1)
-        ask_uid = agent._write_event("ask", doc)
+        docs, _ = agent.ask(1)
+        ask_uid = agent._write_event("ask", docs[0])
         doc = agent.tell(0, 0)
         _ = agent._write_event("tell", doc)
         doc = agent.report()
@@ -128,7 +128,7 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, broker_auth
         assert "report" in cat[-1].metadata["summary"]["stream_names"]
         assert "ask" in cat[-1].metadata["summary"]["stream_names"]
         assert "tell" in cat[-1].metadata["summary"]["stream_names"]
-        assert isinstance(ask_uid, list)
+        assert isinstance(ask_uid, str)
 
 
 def test_feedback_to_queue(
@@ -353,7 +353,7 @@ class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
         return "agent_driven_nap", [0.7], dict()
 
     def subject_ask(self, batch_size: int):
-        return dict(), [0.0 for _ in range(batch_size)]
+        return [dict()], [0.0 for _ in range(batch_size)]
 
     def unpack_run(self, run: BlueskyRun):
         return 0, 0
@@ -376,8 +376,8 @@ def test_monarch_subject(temporary_topics, kafka_bootstrap_servers, broker_autho
         agent.start()
         while True:
             # Awaiting the agent build before artificial ask
-            if agent.builder is not None:
-                if agent.builder._cache.start_doc["uid"] in agent.agent_catalog:
+            if agent._compose_run_bundle is not None:
+                if agent._compose_run_bundle.start_doc["uid"] in agent.agent_catalog:
                     break
             else:
                 continue
