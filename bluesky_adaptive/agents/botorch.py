@@ -75,7 +75,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             if device is None
             else torch.device(device)
         )
-        self.bounds = torch.tensor(bounds, device=self.device)
+        self.bounds = torch.tensor(bounds, device=self.device).view(2, -1)
         if gp is None:
             dummy_x, dummy_y = torch.randn(2, self.bounds.shape[-1], device=self.device), torch.randn(
                 2, out_dim, device=self.device
