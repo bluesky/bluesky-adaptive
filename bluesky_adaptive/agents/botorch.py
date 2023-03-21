@@ -75,9 +75,11 @@ class SingleTaskGPAgentBase(Agent, ABC):
             if device is None
             else torch.device(device)
         )
-        self.bounds = torch.tensor(bounds, device=self.device)
+        self.bounds = torch.tensor(bounds, device=self.device).view(2, -1)
         if gp is None:
-            dummy_x, dummy_y = torch.randn(2, self.bounds.shape[-1]), torch.randn(2, out_dim)
+            dummy_x, dummy_y = torch.randn(2, self.bounds.shape[-1], device=self.device), torch.randn(
+                2, out_dim, device=self.device
+            )
             gp = SingleTaskGP(dummy_x, dummy_y)
 
         self.surrogate_model = gp
@@ -112,11 +114,13 @@ class SingleTaskGPAgentBase(Agent, ABC):
 
     def tell(self, x, y):
         if self.inputs is None:
-            self.inputs = torch.atleast_2d(torch.tensor(x))
-            self.targets = torch.atleast_1d(torch.tensor(y))
+            self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device))
+            self.targets = torch.atleast_1d(torch.tensor(y, device=self.device))
         else:
-            self.inputs = torch.cat([self.inputs, torch.atleast_2d(torch.tensor(x))], dim=0)
-            self.targets = torch.cat([self.targets, torch.atleast_1d(torch.tensor(y))], dim=0)
+            self.inputs = torch.cat([self.inputs, torch.atleast_2d(torch.tensor(x, device=self.device))], dim=0)
+            self.targets = torch.cat([self.targets, torch.atleast_1d(torch.tensor(y, device=self.device))], dim=0)
+            self.inputs.to(self.device)
+            self.targets.to(self.device)
         self.surrogate_model.set_train_data(self.inputs, self.targets, strict=False)
         return dict(independent_variable=x, observable=y, cache_len=len(self.targets))
 
@@ -130,7 +134,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             latest_data=self.tell_cache[-1],
             cache_len=self.inputs.shape[0],
             **{
-                "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                "STATEDICT-" + ":".join(key.split(".")): val.detach().cpu().numpy()
                 for key, val in acqf.state_dict().items()
             },
         )
@@ -144,6 +148,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             batch_size = 1
         fit_gpytorch_mll(self.mll)
         acqf = self._partial_acqf(self.surrogate_model)
+        acqf.to(self.device)
         candidate, acq_value = optimize_acqf(
             acq_function=acqf,
             bounds=self.bounds,
@@ -154,17 +159,17 @@ class SingleTaskGPAgentBase(Agent, ABC):
         return (
             [
                 dict(
-                    candidate=candidate.detach().numpy(),
-                    acquisition_value=acq_value.detach().numpy(),
+                    candidate=candidate.detach().cpu().numpy(),
+                    acquisition_value=acq_value.detach().cpu().numpy(),
                     latest_data=self.tell_cache[-1],
                     cache_len=self.inputs.shape[0],
                     **{
-                        "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                        "STATEDICT-" + ":".join(key.split(".")): val.detach().cpu().numpy()
                         for key, val in acqf.state_dict().items()
                     },
                 )
             ],
-            torch.atleast_1d(candidate).detach().numpy(),
+            torch.atleast_1d(candidate).detach().cpu().numpy(),
         )
 
     def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[AcquisitionFunction, SingleTaskGP]:
@@ -173,4 +178,5 @@ class SingleTaskGPAgentBase(Agent, ABC):
         state_dict = {".".join(key[10:].split(":")): torch.tensor(run.report["data"][key][idx]) for key in keys}
         acqf = self._partial_acqf(self.surrogate_model)
         acqf.load_state_dict(state_dict)
+        acqf.to(self.device)
         return acqf, acqf.model
