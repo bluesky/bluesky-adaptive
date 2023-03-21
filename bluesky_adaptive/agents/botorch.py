@@ -117,8 +117,8 @@ class SingleTaskGPAgentBase(Agent, ABC):
             self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device))
             self.targets = torch.atleast_1d(torch.tensor(y, device=self.device))
         else:
-            self.inputs = torch.cat([self.inputs, torch.atleast_2d(torch.tensor(x))], dim=0)
-            self.targets = torch.cat([self.targets, torch.atleast_1d(torch.tensor(y))], dim=0)
+            self.inputs = torch.cat([self.inputs, torch.atleast_2d(torch.tensor(x, device=self.device))], dim=0)
+            self.targets = torch.cat([self.targets, torch.atleast_1d(torch.tensor(y, device=self.device))], dim=0)
             self.inputs.to(self.device)
             self.targets.to(self.device)
         self.surrogate_model.set_train_data(self.inputs, self.targets, strict=False)
