@@ -104,7 +104,11 @@ class SequentialAgentBase(Agent, ABC):
         proposals = []
         for _ in range(batch_size):
             self.ask_count += 1
-            proposals.append(next(self._position_generator))
+            try:
+                proposals.append(next(self._position_generator))
+            except StopIteration:
+                logger.warning("StopIteration met. Stopping sequential agent thread.")
+                self.stop()
             docs.append(dict(proposal=proposals[-1], ask_count=self.ask_count))
         return docs, proposals
 
