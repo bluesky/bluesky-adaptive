@@ -134,7 +134,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             latest_data=self.tell_cache[-1],
             cache_len=self.inputs.shape[0],
             **{
-                "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                "STATEDICT-" + ":".join(key.split(".")): val.detach().cpu().numpy()
                 for key, val in acqf.state_dict().items()
             },
         )
@@ -159,17 +159,17 @@ class SingleTaskGPAgentBase(Agent, ABC):
         return (
             [
                 dict(
-                    candidate=candidate.detach().numpy(),
-                    acquisition_value=acq_value.detach().numpy(),
+                    candidate=candidate.detach().cpu().numpy(),
+                    acquisition_value=acq_value.detach().cpu().numpy(),
                     latest_data=self.tell_cache[-1],
                     cache_len=self.inputs.shape[0],
                     **{
-                        "STATEDICT-" + ":".join(key.split(".")): val.detach().numpy()
+                        "STATEDICT-" + ":".join(key.split(".")): val.detach().cpu().numpy()
                         for key, val in acqf.state_dict().items()
                     },
                 )
             ],
-            torch.atleast_1d(candidate).detach().numpy(),
+            torch.atleast_1d(candidate).detach().cpu().numpy(),
         )
 
     def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[AcquisitionFunction, SingleTaskGP]:
