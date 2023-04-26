@@ -2,6 +2,10 @@
 Release History
 ===============
 
+v0.3.1 (2023-04-26)
+-------------------
++ MANIFEST updates for packaging and documentation
+
 v0.3.0 (2023-04-26)
 -------------------
 + Add distributed agents: base classes, simple, sklearn, and gpytorch agents
