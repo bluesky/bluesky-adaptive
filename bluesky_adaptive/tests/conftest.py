@@ -2,7 +2,6 @@
 
 import pytest
 from bluesky.tests.conftest import RE  # noqa
-from bluesky_kafka.tests.conftest import broker_authorization_config  # noqa
 from bluesky_kafka.tests.conftest import kafka_bootstrap_servers  # noqa
 from bluesky_kafka.tests.conftest import publisher_factory  # noqa
 from bluesky_kafka.tests.conftest import pytest_addoption  # noqa
@@ -21,6 +20,16 @@ from tiled.client import from_profile
 # @pytest.fixture(scope="session")
 # def docker_compose_file(pytestconfig):
 #     return os.path.join(str(pytestconfig.rootdir), "bluesky_adaptive", "tests", "docker-compose.yml")
+
+
+@pytest.fixture(scope="function")
+def broker_authorization_config():
+    return {
+        # "security.protocol": "SASL_PLAINTEXT",
+        # "sasl.mechanisms": "PLAIN",
+        # "sasl.username": "user",
+        # "sasl.password": "password",
+    }
 
 
 @pytest.fixture(scope="function")
