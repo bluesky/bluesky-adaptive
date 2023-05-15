@@ -13,12 +13,23 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.7", "3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10"]
 
       fail-fast: false
     steps:
 
     - uses: actions/checkout@v2
+
+    - name: Build docker containers
+      run: |
+        docker build -t qserver:latest docker/queue-server
+        docker build -t http-server:latest docker/http-server
+
+    - name: Start docker containers
+      run: docker-compose -f docker/docker-compose.yml up -d
+
+    - name: is Kafka running?
+      run: docker ps -a
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v2
@@ -32,6 +43,7 @@ jobs:
         pip install --upgrade pip wheel
         pip install .
         pip install -r requirements-dev.txt
+        pip install -r requirements-agents.txt
         pip list
 
     - name: Test with pytest
