@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from copy import deepcopy
 from threading import Lock, Thread
-from typing import Callable, List, Sequence, Tuple
+from typing import Callable, Dict, List, Sequence, Tuple
 
 from bluesky_kafka import BlueskyConsumer
 from bluesky_queueserver_api import BPlan
@@ -157,7 +157,7 @@ class AgentByNameAdjudicator(AdjudicatorBase):
         expected in AdjudicatorMsg.suggestions dictionary.
     """
 
-    def __init__(self, *args, qservers: dict[str, API_Threads_Mixin], **kwargs):
+    def __init__(self, *args, qservers: Dict[str, API_Threads_Mixin], **kwargs):
         self._primary_agent = ""
         self._re_managers = qservers
         super().__init__(*args, **kwargs)
