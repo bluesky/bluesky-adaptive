@@ -16,7 +16,7 @@ Experiment specific:
 """
 from abc import ABC
 from logging import getLogger
-from typing import Generator, Sequence, Tuple, Union
+from typing import Dict, Generator, Sequence, Tuple, Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -99,7 +99,7 @@ class SequentialAgentBase(Agent, ABC):
         self.observable_cache.append(y)
         return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
 
-    def ask(self, batch_size: int = 1) -> Tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def ask(self, batch_size: int = 1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         docs = []
         proposals = []
         for _ in range(batch_size):

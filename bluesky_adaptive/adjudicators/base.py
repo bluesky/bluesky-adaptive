@@ -3,7 +3,7 @@ from abc import ABC, abstractmethod
 from collections import deque
 from copy import deepcopy
 from threading import Lock, Thread
-from typing import Callable, Sequence, Tuple
+from typing import Callable, List, Sequence, Tuple
 
 from bluesky_kafka import BlueskyConsumer
 from bluesky_queueserver_api import BPlan
@@ -55,7 +55,7 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
     _register_method = BaseAgent._register_method
     _register_property = BaseAgent._register_property
 
-    def __init__(self, topics: list[str], bootstrap_servers: str, group_id: str, *args, **kwargs):
+    def __init__(self, topics: List[str], bootstrap_servers: str, group_id: str, *args, **kwargs):
         super().__init__(topics, bootstrap_servers, group_id, *args, **kwargs)
         self._lock = Lock()
         self._thread = None
