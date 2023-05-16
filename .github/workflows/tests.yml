@@ -45,8 +45,8 @@ jobs:
         pip install -r requirements-dev.txt
         pip install -r requirements-agents.txt
         pip list
-        mkdir -p venv/etc/tiled/profiles
-        cp bluesky_adaptive/tests/tiled_client_config.yml venv/etc/tiled/profiles/
+        mkdir -p ~/.config/tiled/profiles
+        cp bluesky_adaptive/tests/tiled_client_config.yml ~/.config/tiled/profiles
 
     - name: Test with pytest
       shell: bash -l {0}
