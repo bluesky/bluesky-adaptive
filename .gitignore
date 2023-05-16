@@ -78,6 +78,7 @@ target/
 
 #VSCode
 .vscode/
+*.code-workspace
 
 #Ipython Notebook
 .ipynb_checkpoints
