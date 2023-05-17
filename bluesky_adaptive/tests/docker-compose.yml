@@ -1,19 +1,21 @@
-version: '3.2'
+version: '3'
 
 services:
   zookeeper:
-    image: 'docker.io/bitnami/zookeeper:latest'
+    image: 'docker.io/bitnami/zookeeper:3.8'
+    container_name: zookeeper
     ports:
       - '2181:2181'
     volumes:
-      - 'zookeeper_data:/bitnami'
+      - './zookeeper:/bitnami/zookeeper/conf'
+      - 'zookeeper_data:/bitnami/zookeeper/data'
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     networks:
       - re_manager
-
   kafka:
-    image: 'docker.io/bitnami/kafka:latest'
+    image: 'docker.io/bitnami/kafka:2.8'
+    container_name: kafka
     ports:
       - '9092:9092'
       - '29092:29092'
@@ -24,7 +26,7 @@ services:
       - ALLOW_PLAINTEXT_LISTENER=yes
       - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
       - KAFKA_CFG_LISTENERS=PLAINTEXT://:29092,PLAINTEXT_HOST://:9092
-      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://127.0.0.1:9092
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka:29092,PLAINTEXT_HOST://kafka:9092
       - KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE=false
     depends_on:
       - zookeeper
@@ -33,11 +35,13 @@ services:
 
   mongodb:
     image: 'docker.io/library/mongo:latest'
+    container_name: mongodb
     ports:
       - '27017:27017'
     volumes:
       - '/tmp/databroker:/data/db'
-
+    networks:
+      - re_manager
   redis:
     image: redis:6.2-alpine
     ports:
