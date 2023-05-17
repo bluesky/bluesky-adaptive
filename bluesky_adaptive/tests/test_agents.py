@@ -84,8 +84,13 @@ def test_agent_connection(temporary_topics, kafka_bootstrap_servers, broker_auth
         assert isinstance(status, dict)
         assert "worker_environment_exists" in status
 
-        # add an item to the queue
+        # add an item to the queue. Close and reopen env to make sure plan is there.
         if not status["worker_environment_exists"]:
+            agent.re_manager.environment_open()
+        else:
+            agent.re_manager.environment_close()
+            while agent.re_manager.status()["worker_environment_exists"]:
+                ttime.sleep(0.1)
             agent.re_manager.environment_open()
         agent.re_manager.queue_clear()
         agent._add_to_queue([1], "uid")
