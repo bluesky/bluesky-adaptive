@@ -17,6 +17,20 @@ ioc_server = None
 worker_shutdown_timeout = 5
 
 
+def to_boolean(value):
+    """
+    Returns ``True`` or ``False`` if ``value`` is found in one of the lists of supported values.
+    Otherwise returns ``None`` (typicall means that the value is not set).
+    """
+    v = value.lower() if isinstance(value, str) else value
+    if v in (True, "y", "yes", "t", "true", "on", "1"):
+        return True
+    elif v in (False, "", "n", "no", "f", "false", "off", "0"):
+        return False
+    else:
+        return None
+
+
 def create_conn_pipes():
     server_conn, worker_conn = Pipe()
     return server_conn, worker_conn
@@ -41,6 +55,7 @@ def build_app():
         logger.info("Starting the server ...")
 
         ioc_prefix = os.environ.get("BS_AGENT_IOC_PREFIX", "agent_ioc")
+        start_ioc_server = to_boolean(os.environ.get("BS_AGENT_START_IOC_SERVER", "false"))
         startup_script_path = os.environ.get("BS_AGENT_STARTUP_SCRIPT_PATH", None)
         startup_module_name = os.environ.get("BS_AGENT_STARTUP_MODULE_NAME", None)
         worker_shutdown_timeout = os.environ.get("BS_AGENT_WORKER_SHUTDOWN_TIMEOUT", 5)
@@ -57,15 +72,17 @@ def build_app():
         worker_process = WorkerProcess(conn=worker_conn, config=worker_config, log_level=log_level)
         worker_process.start()
 
-        ioc_server = IOC_Server(ioc_prefix=ioc_prefix)
-        await ioc_server.start()
+        if start_ioc_server:
+            ioc_server = IOC_Server(ioc_prefix=ioc_prefix)
+            await ioc_server.start()
 
     @app.on_event("shutdown")
     async def shutdown_event():
         global worker_process, ioc_server, worker_shutdown_timeout
         logger.info("Shutting down the server ...")
 
-        ioc_server.stop()
+        if ioc_server:
+            ioc_server.stop()
 
         if worker_process and worker_process.is_alive():
             print("Stopping the worker process ...")
@@ -83,7 +100,7 @@ def build_app():
     return app
 
 
-# Start with uvicorn (default host: 129.0.0.1 default port: 8000)
+# Start with uvicorn (default host: 127.0.0.1 default port: 8000)
 # uvicorn bluesky_adaptive.server:app
 # Start with gunicorn (single worker)
 # gunicorn -k uvicorn.workers.UvicornWorker bluesky_adaptive.server:app

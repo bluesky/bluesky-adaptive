@@ -414,7 +414,7 @@ class WorkerProcess(Process):
             success = False
 
         if success:
-            logger.info("RE Environment is ready")
+            logger.info("Agent environment is ready")
             self._execute_in_main_thread()
 
         self._env_state = EState.CLOSING
