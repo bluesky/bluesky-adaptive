@@ -92,6 +92,7 @@ def test_agent_connection(temporary_topics, kafka_bootstrap_servers, broker_auth
             while agent.re_manager.status()["worker_environment_exists"]:
                 ttime.sleep(0.1)
             agent.re_manager.environment_open()
+        agent.re_manager.permissions_reload()
         agent.re_manager.queue_clear()
         agent._add_to_queue([1], "uid")
         assert agent.re_manager.status()["items_in_queue"] == 1
