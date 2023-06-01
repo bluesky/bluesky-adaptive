@@ -1,4 +1,3 @@
-db.reg.register_handler("srw", SRWFileHandler, overwrite=True)
 db.reg.register_handler("shadow", ShadowFileHandler, overwrite=True)
 db.reg.register_handler("SIREPO_FLYER", SRWFileHandler, overwrite=True)
 
@@ -25,11 +24,4 @@ bec.disable_table()
 # import sys
 # sys.path.insert(0, "../")
 
-mi = np.array([0, 1])
-
-dofs = [[kbv.x_rot, kbv.offz, kbh.x_rot, kbh.offz][i] for i in mi]  # noqa F821
-
-hard_bounds = np.array([[-0.20, +0.20], [-1.00, +1.00], [-0.20, +0.20], [-1.00, +1.00]])[mi] * 5e-1
-
-# for dof in dofs:
-#    dof.kind = "hinted"
+kb_dofs = [kbv.x_rot, kbv.offz, kbh.x_rot, kbh.offz]  # noqa F821
