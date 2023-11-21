@@ -16,28 +16,29 @@ from queue import Queue
 
 import bluesky.plan_stubs as bps
 import bluesky.preprocessors as bpp
+from bluesky.utils import RunEngineControlException
 from event_model import RunRouter
 
-from .recommendations import NoRecommendation
+from .recommendations import NoRecommendation, RecommendedPause
 from .utils import extract_event_page
 
 
 def recommender_factory(recommender, independent_keys, dependent_keys, *, max_count=10, queue=None):
     """
-    Generate the callback and queue for gpCAM integration.
+    Generate the callback and queue for recommender agent integration.
 
     For each Event that the callback sees it will place either a
-    recommendation or `None` into the queue.  Recommendations will be
-    of a dict mapping the independent_keys to the recommended values and
+    recommendation, `None`, or Exception for the Run Engine into the queue.
+    Recommendations will be of a dict mapping the independent_keys to the recommended values and
     should be interpreted by the plan as a request for more data.  A `None`
-    placed in the queue should be interpreted by the plan as in instruction to
-    terminate the run.
+    placed in the queue should be interpreted by the plan as in instruction to terminate the run.
+    An `Exception` placed in the queue will be raised by the plan.
 
 
     Parameters
     ----------
-    pgcam_object : gpCAM
-        The gpcam recommendation engine
+    recommender : object
+        The recommendation agent object with ask/tell interface
 
     independent_keys : List[str]
         The names of the independent keys in the events
@@ -81,6 +82,9 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
             except NoRecommendation:
                 # no recommendation
                 queue.put(None)
+            except RunEngineControlException as e:
+                # Recommendation to stop/abort/pause
+                queue.put(e)
             else:
                 queue.put({k: v for k, v in zip(independent_keys, next_point)})
 
@@ -152,7 +156,7 @@ def adaptive_plan(
 
     @bpp.subs_decorator(to_recommender)
     @bpp.run_decorator(md=_md)
-    def gp_inner_plan():
+    def adaptive_inner_plan():
         next_point = first_point
         while True:
             # this assumes that m.name == the key in Event
@@ -163,5 +167,9 @@ def adaptive_plan(
             next_point = from_recommender.get(timeout=1)
             if next_point is None:
                 return
+            elif isinstance(next_point, RecommendedPause):
+                yield from bps.pause()
+            elif isinstance(next_point, Exception):
+                raise next_point
 
-    return (yield from gp_inner_plan())
+    return (yield from adaptive_inner_plan())

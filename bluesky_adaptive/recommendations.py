@@ -1,8 +1,15 @@
 """Toy recommendation engines for testing / demo purposes."""
+from bluesky.utils import RunEngineControlException
 
 
 class NoRecommendation(Exception):
     """Exception to signal we have no recommended action."""
+
+    ...
+
+
+class RecommendedPause(RunEngineControlException):
+    """Exception to signal that we recommend pausing the plan"""
 
     ...
 
