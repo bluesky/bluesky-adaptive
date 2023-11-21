@@ -8,7 +8,7 @@ class NoRecommendation(Exception):
     ...
 
 
-class RecommendedPause(RunEngineControlException):
+class RequestPause(RunEngineControlException):
     """Exception to signal that we recommend pausing the plan"""
 
     ...

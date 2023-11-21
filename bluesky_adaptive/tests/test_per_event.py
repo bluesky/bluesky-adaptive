@@ -3,7 +3,7 @@ from bluesky.tests.utils import DocCollector
 from bluesky.utils import RequestAbort, RequestStop, RunEngineInterrupted
 
 from bluesky_adaptive.per_event import adaptive_plan, recommender_factory
-from bluesky_adaptive.recommendations import RecommendedPause, SequenceRecommender
+from bluesky_adaptive.recommendations import RequestPause, SequenceRecommender
 
 
 def test_seq_recommender(RE, hw):
@@ -107,7 +107,7 @@ class PauseSequenceRecommender(SequenceRecommender):
     def ask(self, *args, **kwargs):
         next_point = super().ask(*args, **kwargs)
         if any([p > 2 for p in next_point]):
-            raise RecommendedPause("Too big!")
+            raise RequestPause("Too big!")
         else:
             return next_point
 

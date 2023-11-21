@@ -19,7 +19,7 @@ import bluesky.preprocessors as bpp
 from bluesky.utils import RunEngineControlException
 from event_model import RunRouter
 
-from .recommendations import NoRecommendation, RecommendedPause
+from .recommendations import NoRecommendation, RequestPause
 from .utils import extract_event_page
 
 
@@ -167,7 +167,7 @@ def adaptive_plan(
             next_point = from_recommender.get(timeout=1)
             if next_point is None:
                 return
-            elif isinstance(next_point, RecommendedPause):
+            elif isinstance(next_point, RequestPause):
                 yield from bps.pause()
             elif isinstance(next_point, Exception):
                 raise next_point
