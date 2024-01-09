@@ -4,7 +4,7 @@ The following docker files are split up for the queue-server and http-server for
 
 ## To run the containers:
 On a Mac, to use the display you will need to install XQuartz and allow connections from network clients.
-The queue-monitor gui image is built on [jozo/pyqt5](https://hub.docker.com/r/jozo/pyqt5). 
+The queue-monitor gui container image is built on the base image [jozo/pyqt5](https://hub.docker.com/r/jozo/pyqt5). 
 
 ```bash
 cd docker/queue-server
