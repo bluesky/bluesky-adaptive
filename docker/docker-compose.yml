@@ -31,7 +31,7 @@ services:
     environment:
       - QSERVER_ZMQ_CONTROL_ADDRESS=tcp://qserver:60615
       - QSERVER_ZMQ_INFO_ADDRESS=tcp://qserver:60625
-      - DISPLAY=${LOCAL_DISPLAY_IP}:0
+      - DISPLAY=${LOCAL_DISPLAY}
     networks:
       - qserver_network
     volumes:

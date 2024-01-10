@@ -23,4 +23,7 @@ RUN chmod +x /entrypoint.sh
 # VNC viewer
 EXPOSE 5901
 
+# Sets up and echos the environment
 ENTRYPOINT [ "/entrypoint.sh" ]
+
+CMD ["queue-monitor"]
