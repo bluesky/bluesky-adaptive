@@ -24,6 +24,19 @@ services:
       - QSERVER_ZMQ_INFO_ADDRESS=tcp://qserver:60625
     networks:
       - qserver_network
+  queue-monitor:
+    image: queue-monitor:latest
+    ports:
+      - 5901:5901
+    environment:
+      - QSERVER_ZMQ_CONTROL_ADDRESS=tcp://qserver:60615
+      - QSERVER_ZMQ_INFO_ADDRESS=tcp://qserver:60625
+      - DISPLAY=${LOCAL_DISPLAY}
+    networks:
+      - qserver_network
+    volumes:
+      - /tmp/.X11-unix:/tmp/.X11-unix
+    user: qtuser
 
   zookeeper:
     image: docker.io/confluentinc/cp-zookeeper:7.3.0
@@ -38,8 +51,8 @@ services:
     image: docker.io/confluentinc/cp-kafka:7.3.0
     container_name: broker
     ports:
-    # To learn about configuring Kafka for access across networks see
-    # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
+      # To learn about configuring Kafka for access across networks see
+      # https://www.confluent.io/blog/kafka-client-cannot-connect-to-broker-on-aws-on-docker-etc/
       - "9092:9092"
     depends_on:
       - zookeeper
