@@ -17,6 +17,6 @@ else
 fi
 # If on a Mac, execute xhost + with LOCAL_DISPLAY_IP
 if [[ "$(uname)" == "Darwin" ]]; then
-    xhost + "$LOCAL_DISPLAY_IP"
+    xhost +"$LOCAL_DISPLAY_IP"
 fi
 export LOCAL_DISPLAY_IP LOCAL_DISPLAY
