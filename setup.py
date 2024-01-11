@@ -1,3 +1,4 @@
+import itertools as it
 import sys
 from os import path
 
@@ -39,11 +40,15 @@ def read_requirements(filename):
 
 
 requirements = read_requirements("requirements.txt")
-categorized_requirements = {key: read_requirements(f"requirements-{key}.txt") for key in ["agents"]}
+categorized_requirements = {
+    key: read_requirements(f"requirements-{key}.txt")
+    for key in ("agents", "dev")
+}
 
-extras_require = {}
-extras_require["agents"] = categorized_requirements["agents"]
-extras_require["all"] = categorized_requirements["agents"]
+extras_require = categorized_requirements.copy()
+extras_require["all"] = [
+    extra for extra in it.chain.from_iterable(categorized_requirements.values())
+]
 
 setup(
     name="bluesky-adaptive",
