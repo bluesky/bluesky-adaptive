@@ -34,8 +34,11 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as readme_file:
 
 def read_requirements(filename):
     with open(path.join(here, filename)) as requirements_file:
-        # Parse requirements.txt, ignoring any commented-out lines.
-        requirements = [line for line in requirements_file.read().splitlines() if not line.startswith("#")]
+        # Parse requirements file, ignoring any empty or commented-out lines.
+        requirements = [
+            line for line in requirements_file.read().splitlines()
+            if not (line.startswith("#") or line.strip()=="")
+            ]
     return requirements
 
 
