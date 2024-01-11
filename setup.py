@@ -31,6 +31,7 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.rst"), encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
+# fmt: off
 
 def read_requirements(filename):
     with open(path.join(here, filename)) as requirements_file:
@@ -52,6 +53,8 @@ extras_require = categorized_requirements.copy()
 extras_require["all"] = [
     extra for extra in it.chain.from_iterable(categorized_requirements.values())
 ]
+
+# fmt: on
 
 setup(
     name="bluesky-adaptive",
