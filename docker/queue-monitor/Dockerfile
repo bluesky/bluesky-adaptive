@@ -1,7 +1,7 @@
 FROM jozo/pyqt5
 
 # Upgrade pip and setuptools
-RUN apt-get update \ 
+RUN apt-get update \
     && apt-get install -y \
     python3-pip \
     python3-setuptools \
