@@ -31,15 +31,17 @@ here = path.abspath(path.dirname(__file__))
 with open(path.join(here, "README.rst"), encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
+
 # fmt: off
+
 
 def read_requirements(filename):
     with open(path.join(here, filename)) as requirements_file:
         # Parse requirements file, ignoring any empty or commented-out lines.
         requirements = [
             line for line in requirements_file.read().splitlines()
-            if not (line.startswith("#") or line.strip()=="")
-            ]
+            if not (line.startswith("#") or line.strip() == "")
+        ]
     return requirements
 
 
@@ -54,7 +56,9 @@ extras_require["all"] = [
     extra for extra in it.chain.from_iterable(categorized_requirements.values())
 ]
 
+
 # fmt: on
+
 
 setup(
     name="bluesky-adaptive",
