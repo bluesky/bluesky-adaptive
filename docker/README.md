@@ -5,7 +5,7 @@ The following docker files are split up for the queue-server and http-server for
 ## To run the containers:
 On a Mac, to use the display you will need to install XQuartz and allow connections from network clients.
 The bash script `local_display.sh` will set up a LOCAL_DISPLAY variable of the host machine and add it to the XQuartz access control list (if needed).
-The queue-monitor gui image is built on [jozo/pyqt5](https://hub.docker.com/r/jozo/pyqt5). 
+The queue-monitor gui image is built on [jozo/pyqt5](https://hub.docker.com/r/jozo/pyqt5).
 
 ```bash
 cd docker/queue-server

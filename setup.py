@@ -1,3 +1,4 @@
+import itertools as it
 import sys
 from os import path
 
@@ -31,19 +32,33 @@ with open(path.join(here, "README.rst"), encoding="utf-8") as readme_file:
     readme = readme_file.read()
 
 
+# fmt: off
+
+
 def read_requirements(filename):
     with open(path.join(here, filename)) as requirements_file:
-        # Parse requirements.txt, ignoring any commented-out lines.
-        requirements = [line for line in requirements_file.read().splitlines() if not line.startswith("#")]
+        # Parse requirements file, ignoring any empty or commented-out lines.
+        requirements = [
+            line for line in requirements_file.read().splitlines()
+            if not (line.startswith("#") or line.strip() == "")
+        ]
     return requirements
 
 
 requirements = read_requirements("requirements.txt")
-categorized_requirements = {key: read_requirements(f"requirements-{key}.txt") for key in ["agents"]}
+categorized_requirements = {
+    key: read_requirements(f"requirements-{key}.txt")
+    for key in ("agents", "dev")
+}
 
-extras_require = {}
-extras_require["agents"] = categorized_requirements["agents"]
-extras_require["all"] = categorized_requirements["agents"]
+extras_require = categorized_requirements.copy()
+extras_require["all"] = [
+    extra for extra in it.chain.from_iterable(categorized_requirements.values())
+]
+
+
+# fmt: on
+
 
 setup(
     name="bluesky-adaptive",
