@@ -60,12 +60,10 @@ class DummyAgentMixin:
         return self.counter, np.random.rand(10)
 
 
-class TestDecompAgent(DummyAgentMixin, DecompositionAgentBase):
-    ...
+class TestDecompAgent(DummyAgentMixin, DecompositionAgentBase): ...
 
 
-class TestClusterAgent(DummyAgentMixin, ClusterAgentBase):
-    ...
+class TestClusterAgent(DummyAgentMixin, ClusterAgentBase): ...
 
 
 @pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])

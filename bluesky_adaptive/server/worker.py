@@ -25,12 +25,10 @@ class EState(enum.Enum):
     CLOSED = "closed"  # For completeness
 
 
-class RejectedError(RuntimeError):
-    ...
+class RejectedError(RuntimeError): ...
 
 
 class WorkerProcess(Process):
-
     """
     The class implementing the Worker process.
 

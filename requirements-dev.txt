@@ -3,6 +3,7 @@
 codecov
 coverage
 flake8
+black
 pytest
 sphinx
 # These are dependencies of various sphinx extensions for documentation.
