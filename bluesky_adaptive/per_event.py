@@ -95,9 +95,7 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
     return rr, queue
 
 
-def adaptive_plan(
-    dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bps.trigger_and_read
-):
+def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=None):
     """
     Execute an adaptive scan using an per event-run recommendation engine.
 
@@ -143,6 +141,9 @@ def adaptive_plan(
 
         Defaults to `bluesky.plan_stubs.trigger_and_read`
     """
+    if take_reading is None:
+        take_reading = bps.trigger_and_read
+
     # TODO inject args / kwargs here.
     _md = {"hints": {}}
     _md.update(md or {})

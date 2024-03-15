@@ -12,6 +12,7 @@ dictates.
 This corresponds to a "middle" scale of adaptive integration into
 data collection.
 """
+
 import itertools
 import uuid
 from queue import Empty, Queue
@@ -105,7 +106,7 @@ def recommender_factory(adaptive_obj, independent_keys, dependent_keys, *, max_c
     return rr, queue
 
 
-def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=bp.count):
+def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=None, take_reading=None):
     """
     Execute an adaptive scan using an inter-run recommendation engine.
 
@@ -151,6 +152,8 @@ def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=Non
         Defaults to `bluesky.plans.count`
 
     """
+    if take_reading is None:
+        take_reading = bp.count
     # extract the motors
     motors = list(first_point.keys())
     # convert the first_point variable to from we will be getting
