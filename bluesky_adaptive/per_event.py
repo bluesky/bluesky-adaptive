@@ -85,6 +85,9 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
             except RunEngineControlException as e:
                 # Recommendation to stop/abort/pause
                 queue.put(e)
+            except Exception as e:
+                # Some other exception will be raised by the plan
+                queue.put(e)
             else:
                 queue.put({k: v for k, v in zip(independent_keys, next_point)})
 
