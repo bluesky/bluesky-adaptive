@@ -54,8 +54,7 @@ class OfflineAgentMixin:
         return self.counter, np.random.rand(10)
 
 
-class TestGPAgent(OfflineAgentMixin, SingleTaskGPAgentBase):
-    ...
+class TestGPAgent(OfflineAgentMixin, SingleTaskGPAgentBase): ...
 
 
 def test_gp_agent(tiled_profile, tiled_node):

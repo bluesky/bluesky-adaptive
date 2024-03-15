@@ -12,6 +12,7 @@ dictates.
 This corresponds to a "middle" scale of adaptive integration into
 data collection.
 """
+
 from queue import Queue
 
 import event_model
