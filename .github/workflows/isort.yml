@@ -3,7 +3,7 @@ name: Check Code Style - ISORT
 on: [push, pull_request]
 
 jobs:
-  lint:
+  lint-isort:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

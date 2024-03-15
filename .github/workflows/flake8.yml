@@ -3,7 +3,7 @@ name: Check Code Style - FLAKE8
 on: [push, pull_request]
 
 jobs:
-  lint:
+  lint-flake8:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

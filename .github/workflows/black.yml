@@ -3,7 +3,7 @@ name: Check Code Style - BLACK
 on: [push, pull_request, workflow_dispatch]
 
 jobs:
-  lint:
+  lint-black:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
