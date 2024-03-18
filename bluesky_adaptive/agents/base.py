@@ -12,6 +12,7 @@ from typing import Callable, Dict, Iterable, List, Literal, Optional, Sequence, 
 import msgpack
 import numpy as np
 import tiled
+import tiled.client.node
 from bluesky_kafka import Publisher, RemoteDispatcher
 from bluesky_queueserver_api import BPlan
 from bluesky_queueserver_api.api_threads import API_Threads_Mixin
