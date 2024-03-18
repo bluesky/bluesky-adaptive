@@ -1,3 +1,4 @@
+import os
 import time as ttime
 from typing import Tuple, Union
 
@@ -108,6 +109,11 @@ def test_decomp_agent(
         agent.stop()
 
 
+@pytest.mark.xfail(
+    os.environ.get("GITHUB_ACTIONS") == "true",
+    raises=TimeoutError,
+    reason="Kafka timeout awaiting messages to arrive",
+)  # Allow timeout in GHA CI/CD
 @pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
 def test_decomp_remodel_from_report(
     estimator,
@@ -149,7 +155,7 @@ def test_decomp_remodel_from_report(
         while len(list(tiled_node[agent_uid].documents())) != 7:
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 60:
-                break
+                raise TimeoutError
         assert "tell" in tiled_node[agent_uid]
         agent.generate_report()
         agent.stop()
@@ -159,7 +165,7 @@ def test_decomp_remodel_from_report(
         while not ("report" in tiled_node[agent_uid]):
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 30:
-                break
+                raise TimeoutError
         model, data = agent.remodel_from_report(tiled_node[agent_uid])
         assert isinstance(model, type(estimator))
         assert data["components"].shape[0] == 2
@@ -209,6 +215,11 @@ def test_cluster_agent(
         agent.stop()
 
 
+@pytest.mark.xfail(
+    os.environ.get("GITHUB_ACTIONS") == "true",
+    raises=TimeoutError,
+    reason="Kafka timeout awaiting messages to arrive",
+)  # Allow timeout in GHA CI/CD
 @pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
 def test_cluster_remodel_from_report(
     estimator,
@@ -250,7 +261,7 @@ def test_cluster_remodel_from_report(
         while len(list(tiled_node[agent_uid].documents())) != 7:
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 60:
-                break
+                raise TimeoutError
         assert "tell" in tiled_node[agent_uid]
         agent.generate_report()
         agent.stop()
@@ -260,7 +271,7 @@ def test_cluster_remodel_from_report(
         while not ("report" in tiled_node[agent_uid]):
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 30:
-                break
+                raise TimeoutError
         model, data = agent.remodel_from_report(tiled_node[agent_uid])
         assert isinstance(model, type(estimator))
         assert data["cluster_centers"].shape[0] == 2

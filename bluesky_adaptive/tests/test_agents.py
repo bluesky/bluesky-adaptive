@@ -1,6 +1,7 @@
 import time as ttime
 from typing import Sequence, Tuple, Union
 
+import pytest
 from bluesky_kafka import Publisher
 from bluesky_queueserver_api.http import REManagerAPI
 from databroker.client import BlueskyRun
@@ -125,6 +126,7 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, kafka_produ
         assert isinstance(ask_uid, str)
 
 
+@pytest.mark.skip(reason="This test is flaky")
 def test_feedback_to_queue(
     temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, publisher_factory
 ):

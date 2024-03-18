@@ -12,15 +12,6 @@ from ophyd.tests.conftest import hw  # noqa
 
 from tiled.client import from_profile
 
-# @pytest.fixture(autouse=True, scope="session")
-# def spin_docker(docker_ip, docker_services):  # noqa
-#     return docker_ip
-
-
-# @pytest.fixture(scope="session")
-# def docker_compose_file(pytestconfig):
-#     return os.path.join(str(pytestconfig.rootdir), "bluesky_adaptive", "tests", "docker-compose.yml")
-
 
 @pytest.fixture(scope="session")
 def kafka_producer_config():
