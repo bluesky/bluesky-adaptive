@@ -25,7 +25,7 @@ class NoTiled:
 class TestAgent(Agent):
     measurement_plan_name = "agent_driven_nap"
 
-    def __init__(self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, qs, **kwargs):
+    def __init__(self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, qs, **kwargs):
         kafka_consumer = AgentConsumer(
             topics=[sub_topic],
             bootstrap_servers=kafka_bootstrap_servers,
@@ -36,7 +36,7 @@ class TestAgent(Agent):
             topic=pub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
             key="",
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
         )
         super().__init__(
             kafka_consumer=kafka_consumer,
@@ -90,13 +90,13 @@ class AccumulateAdjudicator(AgentByNameAdjudicator):
             return True
 
 
-def test_accumulate(temporary_topics, kafka_bootstrap_servers, broker_authorization_config):
+def test_accumulate(temporary_topics, kafka_bootstrap_servers, kafka_producer_config):
     # Smoke test for the kafka comms and acumulation with `continue_polling` function
     with temporary_topics(topics=["test.adjudicator"]) as (topic,):
         publisher = Publisher(
             topic=topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{topic}.key",
         )
         re_manager = REManagerAPI(http_server_uri=None)
@@ -119,7 +119,7 @@ def test_accumulate(temporary_topics, kafka_bootstrap_servers, broker_authorizat
         assert len(adjudicator.consumed_documents) == 1
 
 
-def test_send_to_adjudicator(temporary_topics, kafka_bootstrap_servers, broker_authorization_config):
+def test_send_to_adjudicator(temporary_topics, kafka_bootstrap_servers, kafka_producer_config):
     def consume_until_len(kafka_topic, length):
         consumed_documents = []
         start_time = ttime.monotonic()
@@ -148,24 +148,24 @@ def test_send_to_adjudicator(temporary_topics, kafka_bootstrap_servers, broker_a
 
     # Test the internal publisher
     with temporary_topics(topics=["test.adjudicator", "test.data"]) as (adj_topic, bs_topic):
-        agent = TestAgent(adj_topic, bs_topic, kafka_bootstrap_servers, broker_authorization_config, None)
+        agent = TestAgent(adj_topic, bs_topic, kafka_bootstrap_servers, kafka_producer_config, None)
         agent.kafka_producer("test", {"some": "dict"})
         cache = consume_until_len(kafka_topic=adj_topic, length=1)
         assert len(cache) == 1
 
     # Test agent sending to adjudicator
     with temporary_topics(topics=["test.adjudicator", "test.data"]) as (adj_topic, bs_topic):
-        agent = TestAgent(adj_topic, bs_topic, kafka_bootstrap_servers, broker_authorization_config, None)
+        agent = TestAgent(adj_topic, bs_topic, kafka_bootstrap_servers, kafka_producer_config, None)
         agent.start()
         agent.generate_suggestions_for_adjudicator(1)
         cache = consume_until_len(kafka_topic=adj_topic, length=1)
         assert len(cache) == 1
 
 
-def test_adjudicator_receipt(temporary_topics, kafka_bootstrap_servers, broker_authorization_config):
+def test_adjudicator_receipt(temporary_topics, kafka_bootstrap_servers, kafka_producer_config):
     # Test agent sending to adjudicator
     with temporary_topics(topics=["test.adjudicator", "test.data"]) as (adj_topic, bs_topic):
-        agent = TestAgent(adj_topic, bs_topic, kafka_bootstrap_servers, broker_authorization_config, None)
+        agent = TestAgent(adj_topic, bs_topic, kafka_bootstrap_servers, kafka_producer_config, None)
         agent.start()
         adjudicator = AccumulateAdjudicator(
             topics=[adj_topic],
@@ -184,7 +184,7 @@ def test_adjudicator_receipt(temporary_topics, kafka_bootstrap_servers, broker_a
         assert len(adjudicator.consumed_documents) == 1
 
 
-def test_adjudicator_by_name(temporary_topics, kafka_bootstrap_servers, broker_authorization_config):
+def test_adjudicator_by_name(temporary_topics, kafka_bootstrap_servers, kafka_producer_config):
     with temporary_topics(topics=["test.adjudicator", "test.data"]) as (adj_topic, bs_topic):
         re_manager = REManagerAPI(http_server_uri=None)
         re_manager.set_authorization_key(api_key="SECRET")
@@ -203,7 +203,7 @@ def test_adjudicator_by_name(temporary_topics, kafka_bootstrap_servers, broker_a
             adj_topic,
             bs_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             re_manager,
             endstation_key="tst",
         )
@@ -213,7 +213,7 @@ def test_adjudicator_by_name(temporary_topics, kafka_bootstrap_servers, broker_a
             adj_topic,
             bs_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             re_manager,
             endstation_key="tst",
         )
@@ -259,7 +259,7 @@ def test_adjudicator_by_name(temporary_topics, kafka_bootstrap_servers, broker_a
         assert judgments[0].re_manager == re_manager
 
 
-def test_nonredundant_adjudicator(temporary_topics, kafka_bootstrap_servers, broker_authorization_config):
+def test_nonredundant_adjudicator(temporary_topics, kafka_bootstrap_servers, kafka_producer_config):
     def _hash_suggestion(tla, suggestion: Suggestion):
         return f"{tla} {suggestion.plan_name} {str(suggestion.plan_args)}"
 
@@ -280,7 +280,7 @@ def test_nonredundant_adjudicator(temporary_topics, kafka_bootstrap_servers, bro
             adj_topic,
             bs_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             re_manager,
             endstation_key="tst",
         )

@@ -18,7 +18,7 @@ class TestSequentialAgent(SequentialAgentBase):
     measurement_plan_name = "agent_driven_nap"
 
     def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
+        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
     ):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
@@ -34,7 +34,7 @@ class TestSequentialAgent(SequentialAgentBase):
             topic=pub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
             key="",
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
         )
 
         tiled_data_node = from_profile(tiled_profile)
@@ -105,7 +105,7 @@ class TestSequentialAgent(SequentialAgentBase):
 
 
 # Block of borrowed code from tests ###############################################################
-broker_authorization_config = {
+kafka_producer_config = {
     "acks": 1,
     "enable.idempotence": False,
     "request.timeout.ms": 1000,
@@ -114,7 +114,7 @@ broker_authorization_config = {
 tiled_profile = "testing_sandbox"
 kafka_bootstrap_servers = "127.0.0.1:9092"
 bootstrap_servers = kafka_bootstrap_servers
-admin_client_config = broker_authorization_config
+admin_client_config = kafka_producer_config
 topics = ["test.publisher", "test.subscriber"]
 pub_topic, sub_topic = topics
 # Block of borrowed code from tests ###############################################################
@@ -124,7 +124,7 @@ agent = TestSequentialAgent(
     pub_topic,
     sub_topic,
     kafka_bootstrap_servers,
-    broker_authorization_config,
+    kafka_producer_config,
     tiled_profile,
     sequence=[1, 2, 3],
 )

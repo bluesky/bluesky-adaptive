@@ -2,7 +2,6 @@
 
 import pytest
 from bluesky.tests.conftest import RE  # noqa
-from bluesky_kafka.tests.conftest import broker_authorization_config  # noqa
 from bluesky_kafka.tests.conftest import kafka_bootstrap_servers  # noqa
 from bluesky_kafka.tests.conftest import publisher_factory  # noqa
 from bluesky_kafka.tests.conftest import pytest_addoption  # noqa
@@ -21,6 +20,15 @@ from tiled.client import from_profile
 # @pytest.fixture(scope="session")
 # def docker_compose_file(pytestconfig):
 #     return os.path.join(str(pytestconfig.rootdir), "bluesky_adaptive", "tests", "docker-compose.yml")
+
+
+@pytest.fixture(scope="session")
+def kafka_producer_config():
+    return {
+        "acks": 1,
+        "enable.idempotence": False,
+        "request.timeout.ms": 5000,
+    }
 
 
 @pytest.fixture(scope="function")

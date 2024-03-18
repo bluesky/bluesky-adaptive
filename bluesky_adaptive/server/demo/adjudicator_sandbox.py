@@ -7,7 +7,7 @@ from bluesky_adaptive.adjudicators.base import NonredundantAdjudicator
 from bluesky_adaptive.adjudicators.msg import Suggestion
 from bluesky_adaptive.server import shutdown_decorator, startup_decorator
 
-broker_authorization_config = {
+kafka_producer_config = {
     "acks": 1,
     "enable.idempotence": False,
     "request.timeout.ms": 1000,
@@ -16,7 +16,7 @@ broker_authorization_config = {
 tiled_profile = "testing_sandbox"
 kafka_bootstrap_servers = "127.0.0.1:9092"
 bootstrap_servers = kafka_bootstrap_servers
-admin_client_config = broker_authorization_config
+admin_client_config = kafka_producer_config
 topics = ["test.publisher", "test.subscriber"]
 adj_topic, sub_topic = topics
 
