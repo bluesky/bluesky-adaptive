@@ -1,3 +1,4 @@
+import os
 import time as ttime
 from typing import Tuple, Union
 
@@ -19,7 +20,7 @@ from bluesky_adaptive.agents.sklearn import ClusterAgentBase, DecompositionAgent
 
 class DummyAgentMixin:
     def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
+        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
     ):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
@@ -35,7 +36,7 @@ class DummyAgentMixin:
             topic=pub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
             key="",
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
         )
 
         tiled_data_node = from_profile(tiled_profile)
@@ -68,7 +69,7 @@ class TestClusterAgent(DummyAgentMixin, ClusterAgentBase): ...
 
 @pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
 def test_decomp_agent(
-    estimator, temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, tiled_node
+    estimator, temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, tiled_node
 ):
     """Tests decomposition agents reporting and readback of reports."""
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
@@ -76,7 +77,7 @@ def test_decomp_agent(
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             estimator=estimator,
         )
@@ -108,12 +109,17 @@ def test_decomp_agent(
         agent.stop()
 
 
+@pytest.mark.xfail(
+    os.environ.get("GITHUB_ACTIONS") == "true",
+    raises=TimeoutError,
+    reason="Kafka timeout awaiting messages to arrive",
+)  # Allow timeout in GHA CI/CD
 @pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
 def test_decomp_remodel_from_report(
     estimator,
     temporary_topics,
     kafka_bootstrap_servers,
-    broker_authorization_config,
+    kafka_producer_config,
     tiled_profile,
     tiled_node,
     hw,
@@ -124,7 +130,7 @@ def test_decomp_remodel_from_report(
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             estimator=estimator,
         )
@@ -133,7 +139,7 @@ def test_decomp_remodel_from_report(
         publisher = Publisher(
             topic=sub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{sub_topic}.key",
             flush_on_stop_doc=True,
         )
@@ -149,7 +155,7 @@ def test_decomp_remodel_from_report(
         while len(list(tiled_node[agent_uid].documents())) != 7:
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 60:
-                break
+                raise TimeoutError
         assert "tell" in tiled_node[agent_uid]
         agent.generate_report()
         agent.stop()
@@ -159,7 +165,7 @@ def test_decomp_remodel_from_report(
         while not ("report" in tiled_node[agent_uid]):
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 30:
-                break
+                raise TimeoutError
         model, data = agent.remodel_from_report(tiled_node[agent_uid])
         assert isinstance(model, type(estimator))
         assert data["components"].shape[0] == 2
@@ -170,14 +176,14 @@ def test_decomp_remodel_from_report(
 
 @pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
 def test_cluster_agent(
-    estimator, temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, tiled_node
+    estimator, temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, tiled_node
 ):
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
         agent = TestClusterAgent(
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             estimator=estimator,
         )
@@ -209,12 +215,17 @@ def test_cluster_agent(
         agent.stop()
 
 
+@pytest.mark.xfail(
+    os.environ.get("GITHUB_ACTIONS") == "true",
+    raises=TimeoutError,
+    reason="Kafka timeout awaiting messages to arrive",
+)  # Allow timeout in GHA CI/CD
 @pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
 def test_cluster_remodel_from_report(
     estimator,
     temporary_topics,
     kafka_bootstrap_servers,
-    broker_authorization_config,
+    kafka_producer_config,
     tiled_profile,
     tiled_node,
     hw,
@@ -225,7 +236,7 @@ def test_cluster_remodel_from_report(
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             estimator=estimator,
         )
@@ -234,7 +245,7 @@ def test_cluster_remodel_from_report(
         publisher = Publisher(
             topic=sub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{sub_topic}.key",
             flush_on_stop_doc=True,
         )
@@ -250,7 +261,7 @@ def test_cluster_remodel_from_report(
         while len(list(tiled_node[agent_uid].documents())) != 7:
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 60:
-                break
+                raise TimeoutError
         assert "tell" in tiled_node[agent_uid]
         agent.generate_report()
         agent.stop()
@@ -260,7 +271,7 @@ def test_cluster_remodel_from_report(
         while not ("report" in tiled_node[agent_uid]):
             ttime.sleep(0.5)
             if ttime.monotonic() - now > 30:
-                break
+                raise TimeoutError
         model, data = agent.remodel_from_report(tiled_node[agent_uid])
         assert isinstance(model, type(estimator))
         assert data["cluster_centers"].shape[0] == 2

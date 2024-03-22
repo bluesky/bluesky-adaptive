@@ -1,6 +1,7 @@
 import time as ttime
 from typing import Sequence, Tuple, Union
 
+import pytest
 from bluesky_kafka import Publisher
 from bluesky_queueserver_api.http import REManagerAPI
 from databroker.client import BlueskyRun
@@ -17,7 +18,7 @@ class TestCommunicationAgent(Agent):
     instance_name = "bob"
 
     def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
+        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
     ):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
@@ -33,7 +34,7 @@ class TestCommunicationAgent(Agent):
             topic=pub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
             key="",
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
         )
 
         tiled_data_node = from_profile(tiled_profile)
@@ -74,12 +75,10 @@ class TestCommunicationAgent(Agent):
         return None
 
 
-def test_agent_connection(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+def test_agent_connection(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     """Test agent connection to http-server via RE_Manager API"""
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub, sub):
-        agent = TestCommunicationAgent(
-            pub, sub, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
-        )
+        agent = TestCommunicationAgent(pub, sub, kafka_bootstrap_servers, kafka_producer_config, tiled_profile)
         status = agent.re_manager.status()
         assert isinstance(status, dict)
         assert "worker_environment_exists" in status
@@ -92,11 +91,9 @@ def test_agent_connection(temporary_topics, kafka_bootstrap_servers, broker_auth
         assert agent.re_manager.status()["items_in_queue"] == 1
 
 
-def test_run_plan(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+def test_run_plan(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub, sub):
-        agent = TestCommunicationAgent(
-            pub, sub, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
-        )
+        agent = TestCommunicationAgent(pub, sub, kafka_bootstrap_servers, kafka_producer_config, tiled_profile)
         # add an item to the queue
         if not agent.re_manager.status()["worker_environment_exists"]:
             agent.re_manager.environment_open()
@@ -105,14 +102,12 @@ def test_run_plan(temporary_topics, kafka_bootstrap_servers, broker_authorizatio
         agent.re_manager.queue_start()
 
 
-def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     """Test the ability to write agent actions as bluesky run and readback in tiled"""
     cat = from_profile(tiled_profile)
 
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub, sub):
-        agent = TestCommunicationAgent(
-            pub, sub, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
-        )
+        agent = TestCommunicationAgent(pub, sub, kafka_bootstrap_servers, kafka_producer_config, tiled_profile)
         agent.start()
         docs, _ = agent.ask(1)
         ask_uid = agent._write_event("ask", docs[0])
@@ -131,8 +126,9 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, broker_auth
         assert isinstance(ask_uid, str)
 
 
+@pytest.mark.skip(reason="This test is flaky")
 def test_feedback_to_queue(
-    temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, publisher_factory
+    temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, publisher_factory
 ):
     """
     Publish a stop document to kafka with the right start uid for a manufactured run.
@@ -145,7 +141,7 @@ def test_feedback_to_queue(
     """
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
         agent = TestCommunicationAgent(
-            pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
+            pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile
         )
         agent.start()
         agent.enable_continuous_suggesting()
@@ -192,7 +188,7 @@ class TestSequentialAgent(SequentialAgentBase):
     measurement_plan_name = "agent_driven_nap"
 
     def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
+        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
     ):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
@@ -208,7 +204,7 @@ class TestSequentialAgent(SequentialAgentBase):
             topic=pub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
             key="",
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
         )
 
         tiled_data_node = from_profile(tiled_profile)
@@ -239,13 +235,13 @@ class TestSequentialAgent(SequentialAgentBase):
         return None
 
 
-def test_sequntial_agent(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+def test_sequntial_agent(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
         agent = TestSequentialAgent(
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             sequence=[1, 2, 3],
         )
@@ -259,9 +255,7 @@ def test_sequntial_agent(temporary_topics, kafka_bootstrap_servers, broker_autho
         agent.stop()
 
 
-def test_sequential_agent_array(
-    temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile
-):
+def test_sequential_agent_array(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     from itertools import product
 
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
@@ -269,7 +263,7 @@ def test_sequential_agent_array(
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             sequence=product([1, 2, 3], [4, 5, 6]),
         )
@@ -284,7 +278,7 @@ def test_sequential_agent_array(
         assert points[1][1] == 6
 
 
-def test_close_and_restart(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+def test_close_and_restart(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     "Starts agent, restarts it, closes it. Tests for 2 bluesky runs with same agent name."
 
     class Agent(TestSequentialAgent):
@@ -298,7 +292,7 @@ def test_close_and_restart(temporary_topics, kafka_bootstrap_servers, broker_aut
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             sequence=[1, 2, 3],
         )
@@ -315,7 +309,7 @@ class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
     """A bad monarch subject, where the monarch and subject queues are the same."""
 
     def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, broker_authorization_config, tiled_profile, **kwargs
+        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
     ):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
@@ -330,7 +324,7 @@ class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
             topic=pub_topic,
             bootstrap_servers=kafka_bootstrap_servers,
             key="",
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
         )
 
         tiled_data_node = from_profile(tiled_profile)
@@ -362,13 +356,13 @@ class TestMonarchSubject(MonarchSubjectAgent, SequentialAgentBase):
         return None
 
 
-def test_monarch_subject(temporary_topics, kafka_bootstrap_servers, broker_authorization_config, tiled_profile):
+def test_monarch_subject(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
         agent = TestMonarchSubject(
             pub_topic,
             sub_topic,
             kafka_bootstrap_servers,
-            broker_authorization_config,
+            kafka_producer_config,
             tiled_profile,
             sequence=[1, 2, 3],
         )

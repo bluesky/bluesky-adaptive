@@ -21,7 +21,7 @@ def test_pubsub_smoke(temporary_topics, publisher_factory, consume_documents_fro
 
 def test_pubsub_smoke2(
     temporary_topics,
-    broker_authorization_config,
+    kafka_producer_config,
     kafka_bootstrap_servers,
     consume_documents_from_kafka_until_first_stop_document,
 ):
@@ -30,7 +30,7 @@ def test_pubsub_smoke2(
         publisher = Publisher(
             topic=topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{topic}.key",
         )
         publisher("start", {"uid": "123"})
@@ -41,7 +41,7 @@ def test_pubsub_smoke2(
 
 def test_pubsub_smoke3(
     temporary_topics,
-    broker_authorization_config,
+    kafka_producer_config,
     kafka_bootstrap_servers,
 ):
     """Smoke test to demonstrate locally scoped consumers"""
@@ -73,7 +73,7 @@ def test_pubsub_smoke3(
         publisher = Publisher(
             topic=topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{topic}.key",
         )
         publisher("start", {"uid": "123"})
@@ -82,7 +82,7 @@ def test_pubsub_smoke3(
         assert len(cache) == 1
 
 
-def test_dispatcher(kafka_bootstrap_servers, broker_authorization_config, temporary_topics):
+def test_dispatcher(kafka_bootstrap_servers, kafka_producer_config, temporary_topics):
     """Test RemoteDispatcher and accumulation of docuemnts ."""
 
     def fixed_consumer(topics):
@@ -113,7 +113,7 @@ def test_dispatcher(kafka_bootstrap_servers, broker_authorization_config, tempor
         publisher = Publisher(
             topic=topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{topic}.key",
         )
         publisher("start", {"uid": "123"})
@@ -122,7 +122,7 @@ def test_dispatcher(kafka_bootstrap_servers, broker_authorization_config, tempor
         assert len(docs) == 2
 
 
-def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, temporary_topics):
+def test_agent_consumer(kafka_bootstrap_servers, kafka_producer_config, temporary_topics):
     """Test AgentConsumer collection of documents with useless barebones agent."""
 
     class BarebonesAgent:
@@ -163,7 +163,7 @@ def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, te
         publisher = Publisher(
             topic=topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{topic}.key",
         )
         publisher("start", {"uid": "123"})
@@ -173,7 +173,7 @@ def test_agent_consumer(kafka_bootstrap_servers, broker_authorization_config, te
         assert len(consumed_docs) == 2
 
 
-def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config, temporary_topics, caplog):
+def test_agent_interaction(kafka_bootstrap_servers, kafka_producer_config, temporary_topics, caplog):
     """Test AgentConsumer collection of documents with Dummy agent that caches and can interact with kafka"""
 
     class DummyAgent:
@@ -227,7 +227,7 @@ def test_agent_interaction(kafka_bootstrap_servers, broker_authorization_config,
         publisher = Publisher(
             topic=topic,
             bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=broker_authorization_config,
+            producer_config=kafka_producer_config,
             key=f"{topic}.key",
         )
 
