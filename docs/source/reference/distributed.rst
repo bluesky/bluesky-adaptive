@@ -38,7 +38,13 @@ Agent 'brains' specific
 .. automethod:: bluesky_adaptive.agents.base.Agent.report
 .. autoproperty:: bluesky_adaptive.agents.base.Agent.name
 
-The complete base class is given as follows:
+Agent Initialization Requirements
+---------------------------------
+
+The complete base class is given below.
+In it, there are a number of required arguments for initialization. It is expected that as the API changes
+some of these will become optional. Specifically, these arguments set up the communication between the agent and {Tiled, 
+Kafka, and the QueueServer}.
 
 .. autoclass:: bluesky_adaptive.agents.base.Agent
 

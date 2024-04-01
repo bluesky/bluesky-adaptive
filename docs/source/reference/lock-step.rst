@@ -40,8 +40,11 @@ only expect a recommendation once per-run.
    bluesky_adaptive.on_stop.recommender_factory
 
 
-Examples
-~~~~~~~~
+Integrated Demonstrations
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following examaples are provided to illustrate the rational and mechanics behind the lock-step implementations.
+They show how to build a reccomender factory from scratch, with the agent embedded in the factory, where the agent is a simple step function.
 
 
 Per-event

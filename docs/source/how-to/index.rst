@@ -16,3 +16,8 @@ Below is a list of available how-to guides. (Note: As this is a placeholder, the
    :maxdepth: 2
    :caption: How-to Guides
 
+   use-service
+   extend-my-tool
+   dev-agent-brains
+   dev-agent-comms
+

@@ -10,13 +10,13 @@ API Reference
 -------------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Reference
 
    agent-api
    lock-step
    distributed
    example-agents
-
    release-history
 
 
