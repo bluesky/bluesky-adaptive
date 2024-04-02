@@ -74,7 +74,7 @@ It does involve more moving parts, which may require additional infrastructure t
 1. **Inherit from Base Agent Class**: Your tool should inherit from `bluesky_adaptive.agents.base.Agent`, implementing the required methods such as `ask`, `tell`, and `report`. 
 An abstract base class like `base.Agent` will protect you at runtime from missing any of the required methods.
 This allows your tool to receive data, make decisions, and suggest future actions.
-The instructions here are the same as above, but the agent specific methods should also return a dictionary that is stored as an event document in the Bluesky document model.
+The instructions here are the same as above, but the agent specific methods should also return a dictionary that is stored as an event document in the Bluesky document model. The values of this dictionary should be arrays or scalars that do not change shape throughout the experiment, and the keys should be strings.
 Again, the `tell` method should be fast, as this happens every time a new event is emitted. `tell_many` does not need to be implemented here, as the ABC holds a default, but if vectorized operations are possible, it is recommended to implement it.
 The `ask` and `report` have no obligation to be quick, as they are not necessarily called in the same tight loop.
 

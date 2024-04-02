@@ -62,6 +62,11 @@ def report(self) -> dict:
 When developing your agent, consider the specific needs of your experimental workflow and how the agent can best serve those needs through these three methods. Depending on your application, you might prioritize rapid decision-making, detailed analysis of each step, or robust reporting for human oversight.
 
 ## What should I include in the document/dictionary?
+```{note}
+Document values should be arrays or scalars that do not change shape throughout the experiment. Keys should be strings.
+For more information see [the reference api](../reference/agent-api).
+```
+
 The `tell` document, like the `tell` method should be lightweight. Downstream it is stored with timestamps, so it is not necessary to include that information in the document.
 These timestamps can make it useful for queries such as, "Given this report at this time, what was the most recent data the agent had seen?".
 

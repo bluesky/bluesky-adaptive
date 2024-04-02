@@ -14,6 +14,19 @@ These three methods are the core of the agent API, that works for both the lock-
 Critically, each of the three methods will return documents that are stored as unique streams in the event model. This enables us to look back at what an agent saw and was thinking as an experimental campaign progressed. As such, it is important that the shape of each field in these docs remain consistent throughout the experiment.
 A simple, but sufficiently complex example is provided in `bluesky_adaptive.agents.botorch.SingleTaskGPAgentBase`.
 
+## A Note on Documents
+```{note}
+In the lockstep API the agent methods below are not expected to return documents (as of 0.3.1). 
+In the asynchronous API, the agent methods below are expected to return documents.
+These documents are treated like detectors in the event model, and are stored in the event model as a unique stream.
+Because of this, it is critical for the agent to return documents that are consistent in shape and content.
+```
+This allows the Databroker, or Tiled, to slice the output of the agent and reconstruct the full dataset that informed the agent's decision making.
+For example, we may want to look at a particular component of a decompositio over time, or a subset of weights in a neural network. 
+If the agent has registered methdos that will change the shape fo the document stream, it should be closed and restarted. 
+This can be accomplished automatically using `self.close_and_restart()` after the modification.
+Detailed use of this can be found in the [sklearn example agents](../reference/example-agents.md), as a common need for decomposition and clustering agents is to change the number of components or clusters as more data is gathered. 
+
 ## Tell 
 The `tell` method converts the (x,y) pair into pytorch tensors and manages any GPU/CPU needs. It returns a document that holds the independent and dependent pair, as well as the current cache length. 
 This operation occurs every time the triggering document is received, therefore it should be fast. 
