@@ -22,7 +22,7 @@ topics relevant to experimental automation, adaptive algorithms, and integration
 
 .. toctree::
    :maxdepth: 1
-   :caption: Key Concepts
+   :caption: Explainations
 
    axes-of-adaptive
    adaptiveness

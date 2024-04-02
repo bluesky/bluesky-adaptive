@@ -13,7 +13,7 @@ Getting Started
 Below is a list of tutorials currently available. As this section is in development, more tutorials will be added over time. 
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Available Tutorials
 
    getting-started

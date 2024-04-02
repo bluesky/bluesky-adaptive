@@ -13,7 +13,7 @@ Guides
 Below is a list of available how-to guides. (Note: As this is a placeholder, the actual guides will be listed here in the future.)
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: How-to Guides
 
    use-service

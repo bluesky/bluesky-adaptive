@@ -134,7 +134,7 @@ html_theme_options = dict(
         )
     ],
     show_toc_level=2,
-    show_nav_level=2,
+    show_nav_level=1,
 )
 
 # A dictionary of values to pass into the template engine’s context for all pages
