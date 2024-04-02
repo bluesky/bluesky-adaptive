@@ -165,7 +165,7 @@ def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=Non
     _md.update(md or {})
 
     @bpp.subs_decorator(to_recommender)
-    def gp_inner_plan():
+    def inner_plan():
         # drain the queue in case there is anything left over from a previous
         # run
         while True:
@@ -190,4 +190,4 @@ def adaptive_plan(dets, first_point, *, to_recommender, from_recommender, md=Non
 
         return uids
 
-    return (yield from gp_inner_plan())
+    return (yield from inner_plan())
