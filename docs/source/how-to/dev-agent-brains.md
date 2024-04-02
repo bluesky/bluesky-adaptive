@@ -18,19 +18,32 @@ def tell(self, x, y) -> dict:
     return {"x": x, "y": y}
 ```
 
+The `tell_many` method is exactly like the tell method, but for multiple entries at a time. For instance, if your `BlueskyRun` actually collects several points in your experiment space. This is not required for the async agents that build off the base class, but the default implementation is a simple loop over the `tell` method.
+Therefore, it is advised to implement this method if vectorized operations are possible.
+
+```python
+def tell_many(self, xs, ys) -> List[dict]:
+    self.vetorized_update_internal_state(xs, ys)
+    return [{"x": x, "y": y} for x, y in zip(xs, ys)]
+```
+
 ## The `ask` Method
 
 The `ask` method is called to query your agent for its next recommendation on what experiment should be conducted next.
 This method should return the parameters for the next step in the experiment based on the current state of the agent.
 This can include the next set of conditions to test or the next location to sample.
 It should also return a dictionary whos contents will be stored as an event document in the Bluesky document model.
-This dictionary gives you the opportunity to record any additional information about the agent's decision-making process, the reasoning behind the decision, or any other relevant details that you may want to analyze later. 
+This dictionary gives you the opportunity to record any additional information about the agent's decision-making process, the reasoning behind the decision, or any other relevant details that you may want to analyze later.
+Specifically, the `ask` method should return a tuple of two sequences: a sequence of dictionaries and a sequence of arrays.
+Even if you are only returning one step, it should be in a list.
 
 ```python
-def ask(self) -> Tuple[ArrayLike, dict]:
+def ask(self, batch_size) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
     # Example logic to determine the next step
-    next_step = self.calculate_next_step()
-    return next_step, {"next_step": next_step, "reasoning":..., "other_info":...}
+    next_steps = [self.calculate_next_step() for _ in range(batch_size)]
+    return ([{"next_step": next_step, "reasoning":..., "other_info":...} for next_step in next_steps], 
+        [np.atleast_1d(next_step) for next_step in next_steps]
+    )
 ```
 
 ## The `report` Method

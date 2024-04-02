@@ -27,13 +27,12 @@ This is done by specifying a plan that takes a reading and the detectors to be r
 These methods are used by the `reccomender_factory` to interact with your agent.
 Currently, there is no abstract base class to enforce these methods, because there are only two methods to implement.
 The `tell` method should be fast, and is often a caching operation, e.g., updating the arrays your agent uses to make decisions.
-The `ask` method can then be used to trigger your existing logic to make a decision and return the next point to measure (in independent variable space from step 2).
+For lockstep agents, a `tell_many` method is also provided, which is called with a list of x and y values. This is necessary for event_pages, with a simple default shown below. 
+The `ask` method can then be used to trigger your existing logic to make a decision and return the next points to measure (in independent variable space from step 2).
+This method consumes a batch size, but for lockstep agents, the batchsize is necessarily 1.  It should return a list of values corresponding to the list of independent keys. (Even if there is only one independent key, it should return a list of length 1.)
 Unlike the asynchronous case, in the lockstep case, neither of these methods currently return documents, but this may change in the future.
 
     ```python
-    from numpy.typing import ArrayLike
-    from typing import Tuple
-
     class YourAgent:
         def __init__(self, *args, **kwargs):
             # Initialization code for your tool
@@ -43,14 +42,19 @@ Unlike the asynchronous case, in the lockstep case, neither of these methods cur
             # Process new data
             pass
 
-        def ask(self) -> ArrayLike:
+        def tell_many(self, xs: ArrayLike, ys: ArrayLike):
+            # Process multiple new data points
+            for x, y in zip(xs, ys):
+                self.tell(x, y)
+
+        def ask(self, batch_size=1) -> Sequence[ArrayLike]:
             # Decide on the next experiment step
             # Here you should call your tools pre-existing logic to make a choice.
             next_step = self.your_existing_logic()
-            return next_step
+            return np.atleast_1d(next_step)
     ```
 
-5. **Execute with RunEngine**: Execute your custom adaptive measurement plan with the Bluesky RunEngine, ensuring real-time data analysis and adaptive decision-making.
+1. **Execute with RunEngine**: Execute your custom adaptive measurement plan with the Bluesky RunEngine, ensuring real-time data analysis and adaptive decision-making.
 
     ```python
     RE = RunEngine({})
@@ -71,14 +75,11 @@ It does involve more moving parts, which may require additional infrastructure t
 An abstract base class like `base.Agent` will protect you at runtime from missing any of the required methods.
 This allows your tool to receive data, make decisions, and suggest future actions.
 The instructions here are the same as above, but the agent specific methods should also return a dictionary that is stored as an event document in the Bluesky document model.
-Again, the `tell` method should be fast, as this happens every time a new event is emitted. The `ask` and `report` have no obligation to be quick, as they are not necessarily called in the same tight loop.
+Again, the `tell` method should be fast, as this happens every time a new event is emitted. `tell_many` does not need to be implemented here, as the ABC holds a default, but if vectorized operations are possible, it is recommended to implement it.
+The `ask` and `report` have no obligation to be quick, as they are not necessarily called in the same tight loop.
 
 
     ```python
-    from bluesky_adaptive.agents.base import Agent
-    from numpy.typing import ArrayLike
-    from typing import Tuple
-
     class YourAsyncAgent(Agent):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
@@ -88,9 +89,9 @@ Again, the `tell` method should be fast, as this happens every time a new event 
             # Process new data
             return {}
 
-        def ask(self) -> Tuple[ArrayLike, dict]:
+        def ask(self, batch_size=1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
             # Decide on the next experiment step
-            return next_step, {}
+            return [{...} for next_step in next_steps], [np.atleast_1d(next_step) for next_step in next_steps]
 
         def report(self) -> dict:
             # Generate a report of the agent's current state

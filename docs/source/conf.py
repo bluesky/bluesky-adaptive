@@ -150,6 +150,8 @@ html_context = dict(
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 
+# This is a warning that causes failures, but the cross ref links are in tact.
+suppress_warnings = ["myst.xref_missing"]
 
 # -- Options for HTMLHelp output ------------------------------------------
 

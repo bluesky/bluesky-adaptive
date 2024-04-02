@@ -16,3 +16,7 @@ Below is a list of tutorials currently available. As this section is in developm
    :maxdepth: 2
    :caption: Available Tutorials
 
+   getting-started
+   lockstep
+   async
+
