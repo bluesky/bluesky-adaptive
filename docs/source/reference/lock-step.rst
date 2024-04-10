@@ -1,8 +1,51 @@
-Examples
-========
+=========================
+Lock Step Implementations
+=========================
 
-This will be a sequence of worked examples of how to write your own cb / queue
-factory.
+As discussed in :doc:`../explanations/lock-step`, the synchronous approach to agent implementation can be
+accomplished on a per-event or per-run basis in `bluesky-adaptive`.
+The core of synchronous integration lies in the utilization of adaptive plans and factory functions.
+The adaptive plans 
+
+Per-Event
+~~~~~~~~~
+
+In cases where the computation we need to do to recommend the next step
+is fast compared to the time it takes to collect a single data point (
+aka an `~event_model.DocumentNames.event`), then it makes sense to run
+the recommendation engine on every Event. 
+
+.. autosummary::
+   :nosignatures:
+   :toctree: api_gen
+
+   bluesky_adaptive.per_event.recommender_factory
+   bluesky_adaptive.per_event.adaptive_plan
+
+
+Per-Run
+~~~~~~~
+
+In cases where the data we need to make a decision about what to do next
+maps more closely to a Run, we do the same as the :ref:`per_event` case, but
+only expect a recommendation once per-run.
+
+
+.. autosummary::
+   :toctree: api_gen
+   :nosignatures:
+
+   bluesky_adaptive.per_start.recommender_factory
+   bluesky_adaptive.per_start.adaptive_plan
+   bluesky_adaptive.on_stop.recommender_factory
+
+
+Integrated Demonstrations
+~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The following examaples are provided to illustrate the rational and mechanics behind the lock-step implementations.
+They show how to build a reccomender factory from scratch, with the agent embedded in the factory, where the agent is a simple step function.
+
 
 Per-event
 ---------

@@ -35,7 +35,7 @@ jobs:
         docker-compose up -d
         popd
 
-    - name: Log for are containers running?
+    - name: Log which containers are running
       run: docker ps -a
 
     - name: Check container status and fetch logs if any failed
@@ -77,7 +77,7 @@ jobs:
         cp ./bluesky_adaptive/tests/podman/tiled_client_config.yml /home/runner/.config/tiled/profiles/tiled_client_config.yml
         pip list
 
-    - name: Reload Permissions for QServer (Not necessary, but helpful)
+    - name: Reload Permissions for QServer (Ensures plans are available)
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail

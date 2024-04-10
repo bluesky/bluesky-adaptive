@@ -28,21 +28,21 @@ jobs:
 
         pip install .
         pip install -r requirements-dev.txt
+        pip install -r requirements-agents.txt
         pip list
 
     - name: Build Docs
       run: |
         make -C docs/ html
 
-    - name: Upload built docs as artifacts
-      uses: actions/upload-artifact@v3
-      with:
-        name: docs
-        path: build
-
     - name: Set env.REPOSITORY_NAME # just the repo, as opposed to org/repo
       run: echo "REPOSITORY_NAME=${GITHUB_REPOSITORY#*/}" >> $GITHUB_ENV
 
+    - name: Upload built docs as artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ${{ env.REPOSITORY_NAME }}-docs
+        path: docs/build/html
 
     - name: Deploy documentation to blueskyproject.io.
       if: github.repository_owner == 'bluesky' && github.ref_name == 'main'

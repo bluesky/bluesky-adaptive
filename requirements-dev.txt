@@ -11,7 +11,9 @@ ipython
 matplotlib
 numpydoc
 sphinx-copybutton
-sphinx_rtd_theme
+sphinx-design
+pydata-sphinx-theme
+myst-parser
 
 fastapi
 caproto
