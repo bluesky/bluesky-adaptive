@@ -24,4 +24,4 @@ ophyd
 scipy
 pre-commit
 databroker @ git+https://github.com/bluesky/databroker.git@v2.0.0b38#egg=databroker
-tiled[all]
+tiled[client]
