@@ -6,6 +6,6 @@ bluesky-widgets
 bluesky-kafka
 bluesky-queueserver-api
 xkcdpass
-tiled
+tiled[client]
 numpy
 pydantic
