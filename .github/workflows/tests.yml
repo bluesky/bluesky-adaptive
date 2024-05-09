@@ -87,8 +87,9 @@ jobs:
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail
+        sudo apt-get update && sudo apt-get install -y gdb
         ulimit -c unlimited
-        sudo coverage run -m pytest -v
+        gdb --batch -ex "run" -ex "bt" --args python -m coverage run -m pytest -v
         coverage report
 
     - uses: actions/upload-artifact@master # capture all crashes as build artifacts
