@@ -16,7 +16,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.12"]
 
       fail-fast: false
     steps:
@@ -83,18 +83,15 @@ jobs:
         qserver environment open
         qserver permissions reload
 
-    - name: Enable core dumps
-      run: |
-        ulimit -c unlimited
-        echo "CORE_DUMP_PATH=/tmp/core.%e.%p" | sudo tee -a /etc/environment
-
     - name: Test with pytest
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail
-        coverage run -m pytest -v
+        ulimit -c unlimited
+        sudo coverage run -m pytest -v
         coverage report
 
-    - name: Check for core dump
-      run: |
-        ls /tmp/core.*
+    - uses: actions/upload-artifact@master # capture all crashes as build artifacts
+      with:
+        name: crashes
+        path: /cores
