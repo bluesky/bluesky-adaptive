@@ -92,7 +92,7 @@ jobs:
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail
-        coverage run -m pytest -s -v
+        coverage run -m pytest -v
         coverage report
 
     - name: Check for core dump
