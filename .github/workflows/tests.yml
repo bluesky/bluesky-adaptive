@@ -16,18 +16,17 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9"] # TODO: expand versions
+        python-version: ["3.9", "3.10", "3.11", "3.12"]
 
       fail-fast: false
     steps:
 
     - uses: actions/checkout@v4
 
-    # TODO (maffettone): Change host after CD into bluesky/bluesky-pods
     - name: Download and build bluesky-pods
       run: |
-        docker pull ghcr.io/maffettone/bluesky-pods-bluesky:latest
-        docker tag ghcr.io/maffettone/bluesky-pods-bluesky:latest bluesky:latest
+        docker pull ghcr.io/bluesky/bluesky-pods-bluesky:latest
+        docker tag ghcr.io/bluesky/bluesky-pods-bluesky:latest bluesky:latest
 
     - name: Start Bluesky containers
       run: |
