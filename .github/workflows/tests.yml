@@ -83,9 +83,18 @@ jobs:
         qserver environment open
         qserver permissions reload
 
+    - name: Enable core dumps
+      run: |
+        ulimit -c unlimited
+        echo "CORE_DUMP_PATH=/tmp/core.%e.%p" | sudo tee -a /etc/environment
 
     - name: Test with pytest
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail
-        pytest -s -v
+        coverage run -m pytest -s -v
+        coverage report
+
+    - name: Check for core dump
+      run: |
+        ls /tmp/core.*
