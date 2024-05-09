@@ -207,9 +207,9 @@ class Agent(ABC):
         kafka messages to trigger agent directives.
     kafka_producer : Optional[Publisher]
         Bluesky Kafka publisher to produce document stream of agent actions for optional Adjudicator.
-    tiled_data_node : tiled.client.node.Node
+    tiled_data_node : tiled.client.container.Container
         Tiled node to serve as source of data (BlueskyRuns) for the agent.
-    tiled_agent_node : tiled.client.node.Node
+    tiled_agent_node : tiled.client.container.Container
         Tiled node to serve as storage for the agent documents.
     qserver : bluesky_queueserver_api.api_threads.API_Threads_Mixin
         Object to manage communication with Queue Server
@@ -247,8 +247,8 @@ class Agent(ABC):
         self,
         *,
         kafka_consumer: AgentConsumer,
-        tiled_data_node: tiled.client.node.Node,
-        tiled_agent_node: tiled.client.node.Node,
+        tiled_data_node: tiled.client.container.Container,
+        tiled_agent_node: tiled.client.container.Container,
         qserver: API_Threads_Mixin,
         kafka_producer: Optional[Publisher],
         agent_run_suffix: Optional[str] = None,
