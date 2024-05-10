@@ -10,17 +10,11 @@ on:
       - cron: '0 0 * * 0'  # weekly
 
 jobs:
-  unit-tests:
+  unit-tests-3-11:
 
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        python-version: ["3.11", "3.12"]
-
-      fail-fast: false
     steps:
-
     - uses: actions/checkout@v4
 
     - name: Download and build bluesky-pods
@@ -59,10 +53,10 @@ jobs:
           exit 1
         fi
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.11
 
     - name: Install
       shell: bash -l {0}
@@ -89,3 +83,77 @@ jobs:
         set -vxeuo pipefail
         coverage run -m pytest -v
         coverage report
+  unit-tests-3-12:
+    needs: unit-tests-3-11
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Download and build bluesky-pods
+      run: |
+        docker pull ghcr.io/bluesky/bluesky-pods-bluesky:main
+        docker tag ghcr.io/bluesky/bluesky-pods-bluesky:main bluesky:latest
+
+    - name: Start Bluesky containers
+      run: |
+        pushd bluesky_adaptive/tests/podman
+        docker-compose up -d
+        popd
+
+    - name: Log which containers are running
+      run: docker ps -a
+
+    - name: Check container status and fetch logs if any failed
+      run: |
+        failed_containers=()
+        while read -r container; do
+          status=$(docker inspect --format='{{.State.Status}}' "$container")
+          if [ "$status" != "running" ]; then
+            echo "::error ::Container $container has status $status"
+            failed_containers+=("$container")
+          fi
+        done < <(docker ps -aq)
+
+        for container in "${failed_containers[@]}"; do
+          echo "Logs for $container:"
+          docker logs "$container"
+        done
+        
+        if [ ${#failed_containers[@]} -ne 0 ]; then
+          echo "::error ::Some containers failed to start"
+          docker ps -a
+          exit 1
+        fi
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.12
+
+    - name: Install
+      shell: bash -l {0}
+      run: |
+        set -vxeuo pipefail
+        pip install --upgrade pip wheel
+        pip install .
+        pip install -r requirements-dev.txt
+        pip install -r requirements-agents.txt
+        mkdir -p /home/runner/.config/tiled/profiles
+        cp ./bluesky_adaptive/tests/podman/tiled_client_config.yml /home/runner/.config/tiled/profiles/tiled_client_config.yml
+        pip list
+
+    - name: Reload Permissions for QServer (Ensures plans are available)
+      shell: bash -l {0}
+      run: |
+        set -vxeuo pipefail
+        qserver environment open
+        qserver permissions reload
+
+    - name: Test with pytest
+      shell: bash -l {0}
+      run: |
+        set -vxeuo pipefail
+        coverage run -m pytest -v
+        coverage report
+
