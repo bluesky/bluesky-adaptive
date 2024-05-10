@@ -10,8 +10,14 @@ on:
       - cron: '0 0 * * 0'  # weekly
 
 jobs:
-  unit-tests-3-12:
+  unit-tests:
     runs-on: ubuntu-latest
+
+    strategy:
+       matrix:
+         python-version: ["3.9", "3.10", "3.11", "3.12"]
+
+       fail-fast: false
 
     steps:
     - uses: actions/checkout@v4
@@ -52,10 +58,10 @@ jobs:
           exit 1
         fi
 
-    - name: Set up Python 3.12
+    - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
       with:
-        python-version: 3.12
+        python-version: ${{ matrix.python-version }}
 
     - name: Install
       shell: bash -l {0}
