@@ -191,11 +191,12 @@ def test_adjudicator_receipt(temporary_topics, kafka_bootstrap_servers, kafka_pr
         assert len(adjudicator.consumed_documents) == 1
 
 
-@pytest.mark.xfail(
-    os.environ.get("GITHUB_ACTIONS") == "true",
-    raises=TimeoutError,
-    reason="Kafka timeout awaiting messages to arrive",
-)  # Allow timeout in GHA CI/CD
+# @pytest.mark.xfail(
+#     os.environ.get("GITHUB_ACTIONS") == "true",
+#     raises=TimeoutError,
+#     reason="Kafka timeout awaiting messages to arrive",
+# )  # Allow timeout in GHA CI/CD
+@pytest.mark.skip(reason="Segmentation fault in Github Actions")  # TODO (maffettone): revisit this test
 def test_adjudicator_by_name(temporary_topics, kafka_bootstrap_servers, kafka_producer_config):
     with temporary_topics(topics=["test.adjudicator", "test.data"]) as (adj_topic, bs_topic):
         re_manager = REManagerAPI(http_server_uri=None)
