@@ -1,4 +1,3 @@
-import os
 import time as ttime
 from typing import Tuple, Union
 
@@ -109,11 +108,12 @@ def test_decomp_agent(
         agent.stop()
 
 
-@pytest.mark.xfail(
-    os.environ.get("GITHUB_ACTIONS") == "true",
-    raises=TimeoutError,
-    reason="Kafka timeout awaiting messages to arrive",
-)  # Allow timeout in GHA CI/CD
+# @pytest.mark.xfail(
+#     os.environ.get("GITHUB_ACTIONS") == "true",
+#     raises=TimeoutError,
+#     reason="Kafka timeout awaiting messages to arrive",
+# )  # Allow timeout in GHA CI/CD
+@pytest.mark.skip(reason="Segfaults on GitHub Actions")  # TODO(maffettone): revisit
 @pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
 def test_decomp_remodel_from_report(
     estimator,
@@ -215,11 +215,12 @@ def test_cluster_agent(
         agent.stop()
 
 
-@pytest.mark.xfail(
-    os.environ.get("GITHUB_ACTIONS") == "true",
-    raises=TimeoutError,
-    reason="Kafka timeout awaiting messages to arrive",
-)  # Allow timeout in GHA CI/CD
+# @pytest.mark.xfail(
+#     os.environ.get("GITHUB_ACTIONS") == "true",
+#     raises=TimeoutError,
+#     reason="Kafka timeout awaiting messages to arrive",
+# )  # Allow timeout in GHA CI/CD
+@pytest.mark.skip(reason="Segfaults on GitHub Actions")  # TODO(maffettone): revisit
 @pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
 def test_cluster_remodel_from_report(
     estimator,

@@ -11,23 +11,21 @@ on:
 
 jobs:
   unit-tests:
-
     runs-on: ubuntu-latest
 
     strategy:
-      matrix:
-        python-version: ["3.9"] # TODO: expand versions
+       matrix:
+         python-version: ["3.9", "3.10", "3.11", "3.12"]
 
-      fail-fast: false
+       fail-fast: false
+
     steps:
-
     - uses: actions/checkout@v4
 
-    # TODO (maffettone): Change host after CD into bluesky/bluesky-pods
     - name: Download and build bluesky-pods
       run: |
-        docker pull ghcr.io/maffettone/bluesky-pods-bluesky:latest
-        docker tag ghcr.io/maffettone/bluesky-pods-bluesky:latest bluesky:latest
+        docker pull ghcr.io/bluesky/bluesky-pods-bluesky:main
+        docker tag ghcr.io/bluesky/bluesky-pods-bluesky:main bluesky:latest
 
     - name: Start Bluesky containers
       run: |
@@ -84,10 +82,10 @@ jobs:
         qserver environment open
         qserver permissions reload
 
-
     - name: Test with pytest
       shell: bash -l {0}
       run: |
         set -vxeuo pipefail
-        coverage run -m pytest -s -v
+        coverage run -m pytest -v
         coverage report
+
