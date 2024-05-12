@@ -23,7 +23,6 @@ databroker
 ophyd
 scipy
 pre-commit
-databroker @ git+https://github.com/bluesky/databroker.git@v2.0.0b41#egg=databroker
 # This is required for the `tiled` package to make a Mongo client (some components from tiled[server]).
 tiled[server]
 mongomock
