@@ -2,6 +2,8 @@ import time
 from collections import deque
 from typing import Any, Optional
 
+from bluesky_adaptive.agents.base import Agent
+
 
 class KafkaSmoke:
     """Kafka class to stand in and do nothing for any subscriber or publisher calls"""
@@ -87,3 +89,71 @@ class OfflineProducer(KafkaSmoke):
         For Bluesky docuemnts, this is the document name, document.
         """
         self.topic.append((name, message))
+
+
+class REManagerSmoke:
+    """REManager Class to stand in and do nothing. Should have all methods called by Agent.re_manager"""
+
+    def __init__(self) -> None:
+        self.queue = deque()
+
+    def status(self, *args, **kwargs):
+        return {"items_in_queue": len(self.queue), "worker_environment_exists": False, "manger_state": "idle"}
+
+    def queue_start(self, *args, **kwargs):
+        pass
+
+    def item_add(self, plan, **kwargs):
+        self.queue.append(plan)
+
+    def set_authorization_key(self, *args, **kwargs):
+        pass
+
+
+class TiledSmoke:
+    class v1:
+        def insert(self, *args, **kwargs):
+            pass
+
+    def __getitem__(self, *args, **kwargs):
+        return None
+
+
+class OfflineAgent(Agent):
+    def __init__(
+        self,
+        *,
+        qserver=REManagerSmoke(),
+        kafka_producer=OfflineProducer(),
+        tiled_data_node=TiledSmoke(),
+        tiled_agent_node=TiledSmoke(),
+        loop_consumer_on_start=False,
+        **kwargs
+    ):
+        """Basic async agent for offline activities and testing.
+        Each core communication attribute can be overriden, e.g. using Tiled but no Queue Server or Kafka.
+        The agent.kafka_consumer can start a loop in a thread, or have subscriptions manually triggered.
+
+        Parameters
+        ----------
+        qserver : Optional[bluesky_queueserver_api.api_threads.API_Threads_Mixin]
+            Stand-in object to manage communication with Queue Server, by default REManagerSmoke()
+        kafka_producer :  Optional[Publisher], optional
+            Stand-in Kafka producer for adjudicators, by default OfflineProducer()
+        tiled_data_node :  optional
+            Stand-in tiled container, by default TiledSmoke()
+        tiled_agent_node : optional
+            Stand-in tiled container, by default TiledSmoke()
+        loop_consumer_on_start : bool, optional
+            Whether to have a running thread for the agent's stand-in kafka consumer, or limit to manual trigger.
+            By default False
+        """
+        self.kafka_queue = deque()
+        super().__init__(
+            kafka_consumer=OfflineConsumer(self.kafka_queue, loop_on_start=loop_consumer_on_start),
+            qserver=qserver,
+            kafka_producer=kafka_producer,
+            tiled_agent_node=tiled_agent_node,
+            tiled_data_node=tiled_data_node,
+            **kwargs,
+        )
