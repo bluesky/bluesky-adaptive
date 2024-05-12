@@ -2,7 +2,7 @@ import time
 from collections import deque
 from typing import Any, Optional
 
-from bluesky_adaptive.agents.base import Agent
+from bluesky_adaptive.agents.base import Agent, MonarchSubjectAgent
 
 
 class KafkaSmoke:
@@ -152,6 +152,34 @@ class OfflineAgent(Agent):
         super().__init__(
             kafka_consumer=OfflineConsumer(self.kafka_queue, loop_on_start=loop_consumer_on_start),
             qserver=qserver,
+            kafka_producer=kafka_producer,
+            tiled_agent_node=tiled_agent_node,
+            tiled_data_node=tiled_data_node,
+            **kwargs,
+        )
+
+
+class OfflineMonarchSubject(MonarchSubjectAgent):
+    """Basic async agent for offline activities and testing.
+    Each core communication attribute can be overriden, e.g. using Tiled but no Queue Server or Kafka.
+    The agent.kafka_consumer can start a loop in a thread, or have subscriptions manually triggered."""
+
+    def __init__(
+        self,
+        *,
+        qserver=REManagerSmoke(),
+        subject_queueserver=REManagerSmoke(),
+        kafka_producer=OfflineProducer(),
+        tiled_data_node=TiledSmoke(),
+        tiled_agent_node=TiledSmoke(),
+        loop_consumer_on_start=False,
+        **kwargs
+    ):
+        self.kafka_queue = deque()
+        super().__init__(
+            kafka_consumer=OfflineConsumer(self.kafka_queue, loop_on_start=loop_consumer_on_start),
+            qserver=qserver,
+            subject_qserver=subject_queueserver,
             kafka_producer=kafka_producer,
             tiled_agent_node=tiled_agent_node,
             tiled_data_node=tiled_data_node,
