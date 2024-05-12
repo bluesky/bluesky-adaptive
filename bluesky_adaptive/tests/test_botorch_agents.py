@@ -5,47 +5,13 @@ import torch
 from botorch.acquisition import UpperConfidenceBound
 from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
-from tiled.client import from_profile
 from xarray import Dataset
 
 from bluesky_adaptive.agents.botorch import SingleTaskGPAgentBase
+from bluesky_adaptive.utils.offline import OfflineAgent
 
 
-class OfflineKafka:
-    def set_agent(self, *args, **kwargs):
-        pass
-
-    def subscribe(self, *args, **kwargs):
-        pass
-
-    def start(self, *args, **kwargs):
-        pass
-
-    def flush(self, *args, **kwargs):
-        pass
-
-    def stop(self, *args, **kwargs):
-        pass
-
-
-class OfflineAgentMixin:
-    def __init__(self, tiled_profile, **kwargs):
-        qs = None
-        kafka_consumer = OfflineKafka()
-        kafka_producer = OfflineKafka()
-        tiled_data_node = from_profile(tiled_profile)
-        tiled_agent_node = from_profile(tiled_profile)
-        super().__init__(
-            kafka_consumer=kafka_consumer,
-            kafka_producer=kafka_producer,
-            tiled_agent_node=tiled_agent_node,
-            tiled_data_node=tiled_data_node,
-            qserver=qs,
-            ask_on_tell=False,
-            **kwargs,
-        )
-        self.counter = 0
-
+class GPTestAgent(SingleTaskGPAgentBase, OfflineAgent):
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [1.5], dict()
 
@@ -54,13 +20,10 @@ class OfflineAgentMixin:
         return self.counter, np.random.rand(10)
 
 
-class TestGPAgent(OfflineAgentMixin, SingleTaskGPAgentBase): ...
-
-
-def test_gp_agent(tiled_profile, tiled_node):
-    # Test tell, ask, and report
+def test_gp_agent(catalog):
+    # Test tell, ask, and report; uses Tiled functionality
     bounds = torch.Tensor([(0, 1), (0, 1)])
-    agent = TestGPAgent(tiled_profile, bounds=bounds)
+    agent = GPTestAgent(bounds=bounds, tiled_data_node=catalog, tiled_agent_node=catalog)
     agent.start()
     agent_uid = agent._compose_run_bundle.start_doc["uid"]
     for i in range(5):
@@ -78,7 +41,7 @@ def test_gp_agent(tiled_profile, tiled_node):
     agent._write_event("ask", doc[0])
     agent.stop()
     assert len(query) == 1
-    run = tiled_node[agent_uid]
+    run = catalog[agent_uid]
     xr = run.ask.read()
     assert xr["candidate"].shape == (2, 1, 2)
     assert xr["acquisition_value"].shape == (2,)
@@ -88,9 +51,9 @@ def test_gp_agent(tiled_profile, tiled_node):
     assert isinstance(xr, Dataset)
 
 
-def test_remodel_from_report(tiled_profile, tiled_node):
+def test_remodel_from_report(catalog):
     bounds = torch.Tensor([(0, 1), (0, 1)])
-    agent = TestGPAgent(tiled_profile, bounds=bounds)
+    agent = GPTestAgent(bounds=bounds, tiled_data_node=catalog, tiled_agent_node=catalog)
     agent.start()
     agent_uid = agent._compose_run_bundle.start_doc["uid"]
     for i in range(5):
@@ -104,11 +67,11 @@ def test_remodel_from_report(tiled_profile, tiled_node):
     agent.generate_report()
     agent.stop()
 
-    new_agent = TestGPAgent(
-        tiled_profile, bounds=bounds, partial_acq_function=lambda gp: UpperConfidenceBound(gp, beta=1.5)
+    new_agent = GPTestAgent(
+        bounds=bounds,
+        partial_acq_function=lambda gp: UpperConfidenceBound(gp, beta=1.5),
     )
-    # TODO: Make agent with different acq params to see reset
-    acqf, gp = new_agent.remodel_from_report(tiled_node[agent_uid])
+    acqf, gp = new_agent.remodel_from_report(catalog[agent_uid])
     assert (
         gp.get_parameter("covar_module.base_kernel.raw_lengthscale")
         == agent.surrogate_model.get_parameter("covar_module.base_kernel.raw_lengthscale")
