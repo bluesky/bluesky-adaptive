@@ -35,7 +35,7 @@ class DequeSet:
             self._set.remove(discarded)
 
 
-class AdjudicatorBase(BlueskyConsumer, ABC):
+class AdjudicatorBase(ABC):
     """
     An agent adjudicator that listens to published suggestions by agents.
     This Base approach (as per `process_document`) only retains the most recent suggestions by any named agents.
@@ -43,20 +43,16 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
 
     Parameters
     ----------
-    topics : list of str
-        List of existing_topics as strings such as ["topic-1", "topic-2"]
-    bootstrap_servers : str
-        Comma-delimited list of Kafka server addresses as a string
-        such as ``'broker1:9092,broker2:9092,127.0.0.1:9092'``
-    group_id : str
-        Required string identifier for the consumer's Kafka Consumer group.
+    consumer : BlueskyConsumer
+        Consumer object to listen for suggestions from agents.
     """
 
     _register_method = BaseAgent._register_method
     _register_property = BaseAgent._register_property
 
-    def __init__(self, topics: list[str], bootstrap_servers: str, group_id: str, *args, **kwargs):
-        super().__init__(topics, bootstrap_servers, group_id, *args, **kwargs)
+    def __init__(self, consumer: BlueskyConsumer):
+        self._consumer = consumer
+        self._consumer.process_document = self.process_document
         self._lock = Lock()
         self._thread = None
         self._current_suggestions = {}  # agent_name: AdjudicatorMsg
@@ -70,10 +66,10 @@ class AdjudicatorBase(BlueskyConsumer, ABC):
 
     def start(self, *args, **kwargs):
         self._thread = Thread(
-            target=BlueskyConsumer.start,
+            target=self._consumer.start,
             name="adjudicator-loop",
             daemon=True,
-            args=[self] + list(args),
+            args=list(args),
             kwargs=kwargs,
         )
         self._thread.start()
@@ -195,16 +191,6 @@ class NonredundantAdjudicator(AdjudicatorBase):
 
     Parameters
     ----------
-    topics : list of str
-        List of existing_topics as strings such as ["topic-1", "topic-2"]
-    bootstrap_servers : str
-        Comma-delimited list of Kafka server addresses as a string
-        such as ``'broker1:9092,broker2:9092,127.0.0.1:9092'``
-    group_id : str
-        Required string identifier for the consumer's Kafka Consumer group.
-    qservers :  dict[str, API_Threads_Mixin]
-        Dictionary of objects to manage communication with Queue Server. These should be keyed by the beamline TLA
-        expected in AdjudicatorMsg.suggestions dictionary.
     hash_suggestion : Callable
         Function that takes the tla and Suggestion object, and returns a hashable object as ::
 
@@ -222,15 +208,12 @@ class NonredundantAdjudicator(AdjudicatorBase):
 
     def __init__(
         self,
-        topics: list[str],
-        bootstrap_servers: str,
-        group_id: str,
         *args,
         qservers: dict[str, API_Threads_Mixin],
         hash_suggestion: Callable,
         **kwargs,
     ):
-        super().__init__(topics, bootstrap_servers, group_id, *args, **kwargs)
+        super().__init__(*args, **kwargs)
         self.hash_suggestion = hash_suggestion
         self.suggestion_set = set()
         self._re_managers = qservers

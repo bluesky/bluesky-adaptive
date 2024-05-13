@@ -1,10 +1,19 @@
+import os
+import threading
 import time as ttime
+from collections import deque
 
+import pytest
 from bluesky_kafka import BlueskyConsumer, Publisher, RemoteDispatcher
 
 from bluesky_adaptive.agents.base import AgentConsumer
+from bluesky_adaptive.utils.offline import OfflineConsumer, OfflineProducer
 
 
+@pytest.mark.skipif(
+    condition=os.environ.get("GITHUB_ACTIONS") == "true",
+    reason="Kafka smoke tests only for debugging communication with services.",
+)
 def test_pubsub_smoke(temporary_topics, publisher_factory, consume_documents_from_kafka_until_first_stop_document):
     """Smoke test to make sure bluesky-kafka is performing with helper functions"""
     with temporary_topics(topics=["test.publisher.and.subscriber"]) as (topic,):
@@ -19,6 +28,10 @@ def test_pubsub_smoke(temporary_topics, publisher_factory, consume_documents_fro
         assert len(consumed_bluesky_documents) == 2
 
 
+@pytest.mark.skipif(
+    condition=os.environ.get("GITHUB_ACTIONS") == "true",
+    reason="Kafka smoke tests only for debugging communication with services.",
+)
 def test_pubsub_smoke2(
     temporary_topics,
     kafka_producer_config,
@@ -39,6 +52,10 @@ def test_pubsub_smoke2(
         assert len(consumed_bluesky_documents) == 2
 
 
+@pytest.mark.skipif(
+    condition=os.environ.get("GITHUB_ACTIONS") == "true",
+    reason="Kafka smoke tests only for debugging communication with services.",
+)
 def test_pubsub_smoke3(
     temporary_topics,
     kafka_producer_config,
@@ -82,6 +99,10 @@ def test_pubsub_smoke3(
         assert len(cache) == 1
 
 
+@pytest.mark.skipif(
+    condition=os.environ.get("GITHUB_ACTIONS") == "true",
+    reason="Kafka smoke tests only for debugging communication with services.",
+)
 def test_dispatcher(kafka_bootstrap_servers, kafka_producer_config, temporary_topics):
     """Test RemoteDispatcher and accumulation of docuemnts ."""
 
@@ -247,3 +268,43 @@ def test_agent_interaction(kafka_bootstrap_servers, kafka_producer_config, tempo
         assert len(agent.cache) == 2
         # The result of an AttributeErroor getting translated to a logger error.
         assert "Unavailable action sent to agent" in caplog.text
+
+
+def test_offline_kafka():
+    queue = deque(maxlen=1)
+    storage = []
+
+    def store_name(name, doc):
+        storage.append(name)
+
+    consumer = OfflineConsumer(queue)
+    consumer.subscribe(store_name)
+    producer = OfflineProducer(queue)
+
+    producer("start", {})
+    assert len(queue) == 1
+    consumer.trigger()
+    assert len(queue) == 0
+    assert storage[0] == "start"
+
+
+def test_offline_kafka_threaded():
+    queue = deque(maxlen=1)
+    storage = []
+
+    def store_name(name, doc):
+        storage.append(name)
+
+    consumer = OfflineConsumer(queue, loop_on_start=True)
+    consumer.subscribe(store_name)
+    producer = OfflineProducer(queue)
+
+    kafka_thread = threading.Thread(target=consumer.start, name="proxy-kafka-loop", daemon=True)
+    kafka_thread.start()
+    producer("start", {})
+    start_time = ttime.monotonic()
+    while len(storage) == 0:
+        # This will be fast, but may need to catch up to the loop frequency.
+        if ttime.monotonic() - start_time > 0.5:
+            raise TimeoutError
+    assert storage[0] == "start"

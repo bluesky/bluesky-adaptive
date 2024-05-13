@@ -9,3 +9,5 @@ xkcdpass
 tiled[client]
 numpy
 pydantic
+
+databroker @ git+https://github.com/bluesky/databroker.git@v2.0.0b41#egg=databroker
