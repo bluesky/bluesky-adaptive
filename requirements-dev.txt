@@ -14,15 +14,14 @@ sphinx-copybutton
 sphinx-design
 pydata-sphinx-theme
 myst-parser
-
 fastapi
 caproto
-
-bluesky
-databroker
 ophyd
 scipy
 pre-commit
+intake
 # This is required for the `tiled` package to make a Mongo client (some components from tiled[server]).
 tiled[server]
+humanize
+doct
 mongomock
