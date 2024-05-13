@@ -2,6 +2,9 @@ import time
 from collections import deque
 from typing import Any, Optional
 
+from bluesky_queueserver_api.api_threads import API_Threads_Mixin
+
+from bluesky_adaptive.adjudicators.base import AdjudicatorBase
 from bluesky_adaptive.agents.base import Agent, MonarchSubjectAgent
 
 
@@ -31,7 +34,7 @@ class OfflineConsumer(KafkaSmoke):
 
     def __init__(self, topic: Optional[deque] = None, loop_on_start=False):
         """
-        Offline consumer that uses a queue rather than a topic.
+        Offline consumer (RunRouter) that uses a queue rather than a topic.
         The queue can have only 1 subscriber, as items are popped.
         In practice this queue should be shared with an OfflineProducer.
         Can optionally be started in a thread to loop with sleeps (loop_on_start),
@@ -71,6 +74,20 @@ class OfflineConsumer(KafkaSmoke):
                 sub(name, doc)
 
 
+class OfflineBlueskyConsumer(OfflineConsumer):
+    """Offline BlueskyConsumer class that does not have the expectations of a RunRouter.
+    Primarily used for Adjudicator that does not work with strict document streams.
+    """
+
+    def process_document(self, topic, name, doc):
+        return True
+
+    def trigger(self):
+        if len(self.topic) > 0:
+            name, doc = self.topic.pop()
+            self.process_document("offline_topic", name, doc)
+
+
 class OfflineProducer(KafkaSmoke):
     def __init__(self, topic: Optional[deque] = None):
         """
@@ -91,7 +108,7 @@ class OfflineProducer(KafkaSmoke):
         self.topic.append((name, message))
 
 
-class REManagerSmoke:
+class REManagerSmoke(API_Threads_Mixin):
     """REManager Class to stand in and do nothing. Should have all methods called by Agent.re_manager"""
 
     def __init__(self) -> None:
@@ -185,3 +202,10 @@ class OfflineMonarchSubject(MonarchSubjectAgent):
             tiled_data_node=tiled_data_node,
             **kwargs,
         )
+
+
+class OfflineAdjudicator(AdjudicatorBase):
+    """Example offline adjudicator. Others can be assembled in a similar fashion with OfflineConsumer."""
+
+    def __init__(self, consumer=OfflineBlueskyConsumer(), *args, **kwargs):
+        super().__init__(consumer=consumer, *args, **kwargs)
