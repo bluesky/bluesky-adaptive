@@ -21,7 +21,7 @@ scipy
 pre-commit
 intake
 # This is required for the `tiled` package to make a Mongo client (some components from tiled[server]).
-tiled[server]
+tiled[all]
 humanize
 doct
 mongomock
