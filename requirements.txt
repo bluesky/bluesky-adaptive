@@ -11,4 +11,5 @@ numpy
 pydantic
 
 databroker @ git+https://github.com/bluesky/databroker.git@v2.0.0b56#egg=databroker
+bluesky-tiled-plugins
 json-rpc
