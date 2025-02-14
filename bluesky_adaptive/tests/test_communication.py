@@ -1,4 +1,4 @@
-""""Testing the communication patterns of Bluesky Adatptive Async Agents"""
+"""Testing the communication patterns of Bluesky Adaptive Async Agents"""
 
 from typing import Sequence, Tuple, Union
 

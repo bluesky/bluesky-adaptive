@@ -72,8 +72,10 @@ def test_remodel_from_report(catalog):
         partial_acq_function=lambda gp: UpperConfidenceBound(gp, beta=1.5),
     )
     acqf, gp = new_agent.remodel_from_report(catalog[agent_uid])
-    assert (
-        gp.get_parameter("covar_module.base_kernel.raw_lengthscale")
-        == agent.surrogate_model.get_parameter("covar_module.base_kernel.raw_lengthscale")
-    ).all()
+    try:
+        param = gp.get_parameter("covar_module.base_kernel.raw_lengthscale")
+        assert (param == agent.surrogate_model.get_parameter("covar_module.base_kernel.raw_lengthscale")).all()
+    except AttributeError:
+        param = gp.get_parameter("covar_module.raw_lengthscale")
+        assert (param == agent.surrogate_model.get_parameter("covar_module.raw_lengthscale")).all()
     assert acqf.beta == 0.1
