@@ -7,7 +7,7 @@ DEFAULT_NAME = "agent_suggestions"
 
 
 class Suggestion(BaseModel):
-    ask_uid: str  # UID from the agent ask message
+    suggestion_uid: str  # UID from the agent ask message
     plan_name: str
     plan_args: list = []
     plan_kwargs: dict = {}

@@ -140,7 +140,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             },
         )
 
-    def ask(self, batch_size=1):
+    def suggest(self, batch_size=1):
         """Fit GP, optimize acquisition function, and return next points.
         Document retains candidate, acquisition values, and state dictionary.
         """

@@ -127,7 +127,7 @@ def recommender_factory(
 
     target_keys : List[String]
         Keys passed back to the plan, must be the same length as
-        the return of `adaptive_obj.ask(1)`
+        the return of `adaptive_obj.suggest(1)`
 
     stream_names : Tuple[String], default ("primary",)
         The streams to be offered to the
@@ -140,7 +140,7 @@ def recommender_factory(
         If not given, a new queue will be created.
 
     target_transforms : Dict[String, Callable], optional
-        Transforms to be applied to the values from ask before returning
+        Transforms to be applied to the values from suggestion before returning
         to the run engine.  This can be useful handling trivial coordinate
         transformations.
 
@@ -173,7 +173,7 @@ def recommender_factory(
         adaptive_obj.tell_many(independent, measurement)
         # pull the next point out of the adaptive API
         try:
-            next_point = adaptive_obj.ask(1)
+            next_point = adaptive_obj.suggest(1)
         except NoRecommendation:
             queue.put(None)
         else:

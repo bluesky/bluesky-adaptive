@@ -96,7 +96,7 @@ def recommender_factory(adaptive_obj, independent_keys, dependent_keys, *, max_c
             adaptive_obj.tell_many(independent, measurement)
             # pull the next point out of the adaptive API
             try:
-                next_point = adaptive_obj.ask(1)
+                next_point = adaptive_obj.suggest(1)
             except NoRecommendation:
                 queue.put(None)
             else:

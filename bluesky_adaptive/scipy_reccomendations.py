@@ -37,7 +37,7 @@ class MinimizerReccomender:
                     x = yield self._internal_from_exp.get()
                     while True:
                         # which we that put on the out queue which will be
-                        # picked up by "ask"
+                        # picked up by ``suggest``
                         self._internal_to_exp.put(x)
                         # we then block (the background thread) on getting the
                         # next measurement which will be put in place by the
@@ -60,7 +60,7 @@ class MinimizerReccomender:
         for x, y in zip(xs, ys):
             self.tell(x, y)
 
-    def ask(self, n, tell_pending=True):
+    def suggest(self, n, tell_pending=True):
         if self._minimizer_done.is_set():
             raise NoRecommendation
         try:

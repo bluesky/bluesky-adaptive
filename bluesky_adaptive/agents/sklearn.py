@@ -2,9 +2,9 @@
 Module of mixins for agents that range from the sensible to the useless.
 These mixins act to fufill the abstract methods of blusky_adaptive.agents.Agent that are relevant to
 the decision making, and not the experimental specifics.
-Some of these are passive, and will not implement an ask.
+Some of these are passive, and will not implement an suggest.
     - tell
-    - ask
+    - suggest
     - report (optional)
     - name (optional)
 
@@ -34,7 +34,7 @@ logger = getLogger("bluesky_adaptive.agents")
 class SklearnEstimatorAgentBase(Agent, ABC):
     def __init__(self, *, estimator: sklearn.base.BaseEstimator, **kwargs):
         """Basic functionality for sklearn estimators. Maintains independent and dependent caches.
-        Strictly passive agent with do ask mechanism: will raise NotImplementedError
+        Strictly passive agent with do suggest mechanism: will raise NotImplementedError
 
         Parameters
         ----------
@@ -52,9 +52,6 @@ class SklearnEstimatorAgentBase(Agent, ABC):
         self.independent_cache.append(x)
         self.observable_cache.append(y)
         return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
-
-    def ask(self, batch_size):
-        raise NotImplementedError
 
     def update_model_params(self, params: dict):
         self.model.set_params(**params)

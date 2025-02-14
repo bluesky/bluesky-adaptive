@@ -36,7 +36,7 @@ class StepRecommender:
         for x, y in zip(xs, ys):
             self.tell(x, y)
 
-    def ask(self, n, tell_pending=True):
+    def suggest(self, n, tell_pending=True):
         if n != 1:
             raise NotImplementedError
         if self.next_point is None:
@@ -65,7 +65,7 @@ class SequenceRecommender:
         # we don't care about input, just go through our sequence
         ...
 
-    def ask(self, n, tell_pending=True):
+    def suggest(self, n, tell_pending=True):
         if n != 1:
             raise NotImplementedError
         try:

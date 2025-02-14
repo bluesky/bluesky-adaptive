@@ -22,7 +22,7 @@ class GPTestAgent(SingleTaskGPAgentBase, OfflineAgent):
 
 
 def test_gp_agent(catalog):
-    # Test tell, ask, and report; uses Tiled functionality
+    # Test tell, suggest, and report; uses Tiled functionality
     bounds = torch.Tensor([(0, 1), (0, 1)])
     agent = GPTestAgent(bounds=bounds, tiled_data_node=catalog, tiled_agent_node=catalog)
     agent.start()
@@ -36,14 +36,14 @@ def test_gp_agent(catalog):
         agent._write_event("tell", doc)
         agent.tell_cache.append(uid)
     agent.generate_report()
-    doc, query = agent.ask()
-    agent._write_event("ask", doc[0])
-    doc, query = agent.ask()
-    agent._write_event("ask", doc[0])
+    doc, query = agent.suggest()
+    agent._write_event("suggest", doc[0])
+    doc, query = agent.suggest()
+    agent._write_event("suggest", doc[0])
     agent.stop()
     assert len(query) == 1
     run = catalog[agent_uid]
-    xr = run.ask.read()
+    xr = run.suggest.read()
     assert xr["candidate"].shape == (2, 1, 2)
     assert xr["acquisition_value"].shape == (2,)
     xr = run.report.read()

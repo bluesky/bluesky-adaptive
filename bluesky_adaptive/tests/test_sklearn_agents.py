@@ -18,7 +18,7 @@ from ..typing import BlueskyRunLike
 
 class DummyAgentMixin:
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, ask_on_tell=False, **kwargs)
+        super().__init__(*args, suggest_on_update=False, **kwargs)
         self.counter = 0
 
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:

@@ -38,8 +38,8 @@ def test_seq_recommender(RE, hw):
 class StopSequenceRecommender(SequenceRecommender):
     """Test sequence recommender that aborts if the reccomendation gets too big"""
 
-    def ask(self, *args, **kwargs):
-        next_point = super().ask(*args, **kwargs)
+    def suggest(self, *args, **kwargs):
+        next_point = super().suggest(*args, **kwargs)
         if any([p > 2 for p in next_point]):
             raise RequestStop("Too big!")
         else:
@@ -71,8 +71,8 @@ def test_seq_recommender_stop(RE, hw):
 class AbortSequenceRecommender(SequenceRecommender):
     """Test sequence recommender that aborts if the reccomendation gets too big"""
 
-    def ask(self, *args, **kwargs):
-        next_point = super().ask(*args, **kwargs)
+    def suggest(self, *args, **kwargs):
+        next_point = super().suggest(*args, **kwargs)
         if any([p > 2 for p in next_point]):
             raise RequestAbort("Too big!")
         else:
@@ -104,8 +104,8 @@ def test_seq_recommender_abort(RE, hw):
 class PauseSequenceRecommender(SequenceRecommender):
     """Test sequence recommender that aborts if the reccomendation gets too big"""
 
-    def ask(self, *args, **kwargs):
-        next_point = super().ask(*args, **kwargs)
+    def suggest(self, *args, **kwargs):
+        next_point = super().suggest(*args, **kwargs)
         if any([p > 2 for p in next_point]):
             raise RequestPause("Too big!")
         else:

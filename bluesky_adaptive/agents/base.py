@@ -193,8 +193,8 @@ class Agent(ABC):
     - measurement_plan
     - unpack_run
     Agent specific:
-    - tell
-    - ask
+    - update
+    - suggest
     - report (optional)
     - name (optional)
 
@@ -217,10 +217,9 @@ class Agent(ABC):
         Agent name suffix for the instance, by default generated using 2 hyphen separated words from xkcdpass.
     metadata : Optional[dict], optional
         Optional extra metadata to add to agent start document, by default {}
-    ask_on_tell : bool, optional
-        Whether to ask for new points every time an agent is told about new data.
-        To create a truly passive agent, it is best to implement an ``ask`` as a method that does nothing.
-        To create an agent that only suggests new points periodically or on another trigger, ``ask_on_tell``
+    suggest_on_update : bool, optional
+        Whether to suggest new points every time an agent is updated with new data.
+        To create an agent that only suggests new points periodically or on another trigger, ``suggest_on_update``
         should be set to False.
         By default True
         Can be adjusted using ``enable_continuous_suggesting`` and ``disable_continuous_suggesting``.
@@ -253,7 +252,7 @@ class Agent(ABC):
         kafka_producer: Optional[Publisher],
         agent_run_suffix: Optional[str] = None,
         metadata: Optional[dict] = None,
-        ask_on_tell: Optional[bool] = True,
+        suggest_on_update: Optional[bool] = True,
         direct_to_queue: Optional[bool] = True,
         report_on_tell: Optional[bool] = False,
         default_report_kwargs: Optional[dict] = None,
@@ -282,7 +281,7 @@ class Agent(ABC):
         )
         self.metadata["agent_name"] = self.instance_name
 
-        self._ask_on_tell = ask_on_tell
+        self._suggest_on_update = suggest_on_update
         self._report_on_tell = report_on_tell
         self.default_report_kwargs = {} if default_report_kwargs is None else default_report_kwargs
 
@@ -343,28 +342,30 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def tell(self, x, y) -> Dict[str, ArrayLike]:
+    def update(
+        self, independent_variable: ArrayLike, dependent_variable: Optional[ArrayLike] = None
+    ) -> Dict[str, ArrayLike]:
         """
-        Tell the agent about some new data
+        Update the agent with new data.
+        This method replaces the legacy ``tell`` in the ``ask-tell`` pattern.
+
         Parameters
         ----------
-        x :
+        independent_variable : ArrayLike
             Independent variable for data observed
-        y :
-            Dependent variable for data observed
+        dependent_variable : Optional[ArrayLike], optional
+            Dependent variable for data observed, by default None. In passive or unsupervised settings, the
+            data may be cast as soley an independent variable.
 
         Returns
         -------
-        dict
-            Dictionary to be unpacked or added to a document
-
+        dict: Dictionary to be unpacked or added to a document. This registers what the agent knows about and when.
         """
         ...
 
-    @abstractmethod
-    def ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def suggest(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
-        Ask the agent for a new batch of points to measure.
+        Suggest a new batch of points to measure.
 
         Parameters
         ----------
@@ -374,12 +375,12 @@ class Agent(ABC):
         Returns
         -------
         docs : Sequence[dict]
-            Documents of key metadata from the ask approach for each point in next_points.
+            Documents of key metadata from the suggestion approach for each point in next_points.
             Must be length of batch size.
         next_points : Sequence
             Sequence of independent variables of length batch size
         """
-        ...
+        raise NotImplementedError
 
     def report(self, **kwargs) -> Dict[str, ArrayLike]:
         """
@@ -391,17 +392,19 @@ class Agent(ABC):
 
         raise NotImplementedError
 
-    def tell_many(self, xs, ys) -> Sequence[Dict[str, List]]:
+    def update_many(
+        self, independents: Sequence[ArrayLike], dependents: Optional[Sequence[ArrayLike]]
+    ) -> Sequence[Dict[str, List]]:
         """
-        Tell the agent about some new data. It is likely that there is a more efficient approach to
+        Update the agent with some new data. It is likely that there is a more efficient approach to
         handling multiple observations for an agent. The default behavior is to iterate over all
-        observations and call the ``tell`` method.
+        observations and call the ``update`` method.
 
         Parameters
         ----------
-        xs : list, array
+        independents : Sequence
             Array of independent variables for observations
-        ys : list, array
+        dependents : Sequence
             Array of dependent variables for observations
 
         Returns
@@ -409,10 +412,10 @@ class Agent(ABC):
         list_of_dict
 
         """
-        tell_emits = []
-        for x, y in zip(xs, ys):
-            tell_emits.append(self.tell(x, y))
-        return tell_emits
+        update_emits = []
+        for x, y in zip(independents, dependents):
+            update_emits.append(self.update(x, y))
+        return update_emits
 
     @property
     def queue_add_position(self) -> Union[int, Literal["front", "back"]]:
@@ -433,12 +436,12 @@ class Agent(ABC):
         self.queue_add_position = position
 
     @property
-    def ask_on_tell(self) -> bool:
-        return self._ask_on_tell
+    def suggest_on_update(self) -> bool:
+        return self._suggest_on_update
 
-    @ask_on_tell.setter
-    def ask_on_tell(self, flag: bool):
-        self._ask_on_tell = flag
+    @suggest_on_update.setter
+    def suggest_on_update(self, flag: bool):
+        self._suggest_on_update = flag
 
     @property
     def report_on_tell(self) -> bool:
@@ -458,11 +461,11 @@ class Agent(ABC):
 
     def enable_continuous_suggesting(self):
         """Enable agent to suggest new points to the queue each time it receives data."""
-        self.ask_on_tell = True
+        self.suggest_on_update = True
 
     def disable_continuous_suggesting(self):
         """Disable agent to suggest new points to the queue each time it receives data."""
-        self.ask_on_tell = False
+        self.suggest_on_update = False
 
     def enable_direct_to_queue(self):
         self._direct_to_queue = True
@@ -554,7 +557,7 @@ class Agent(ABC):
             plan_name, args, kwargs = self.measurement_plan(point)
             kwargs.setdefault("md", {})
             kwargs["md"].update(self.default_plan_md)
-            kwargs["md"]["agent_ask_uid"] = uid
+            kwargs["md"]["agent_suggestion_uid"] = uid
             plan = BPlan(
                 plan_name,
                 *args,
@@ -584,21 +587,21 @@ class Agent(ABC):
             self.re_manager.queue_start()
             logger.info("Agent is starting an idle queue with exactly 1 item.")
 
-    def _ask_and_write_events(
-        self, batch_size: int, ask_method: Optional[Callable] = None, stream_name: Optional[str] = "ask"
+    def _suggest_and_write_events(
+        self, batch_size: int, suggest_method: Optional[Callable] = None, stream_name: Optional[str] = "suggest"
     ):
-        """Private ask method for consistency across calls and changes to docs streams.
+        """Private suggest method for consistency across calls and changes to docs streams.
 
         Parameters
         ----------
         batch_size : int
-            Size of batch passed to ask
-        ask_method : Optional[Callable]
-            self.ask, or self.subject_ask, or some target ask function.
-            Defaults to self.ask
+            Size of batch passed to suggest method
+        suggest_method : Optional[Callable]
+            self.suggest, or self.subject_suggest, or some target suggest function.
+            Defaults to self.suggest
         stream_name : Optional[str]
-            Name for ask stream corresponding to `ask_method`. 'ask', 'subject_ask', or other.
-            Defaults to 'ask'
+            Name for stream corresponding to `suggest_method`. 'suggest', 'subject_suggest', or other.
+            Defaults to 'suggest'
 
         Returns
         -------
@@ -606,9 +609,9 @@ class Agent(ABC):
             Next points to be sent to adjudicator or queue
         uid : str
         """
-        if ask_method is None:
-            ask_method = self.ask
-        docs, next_points = ask_method(batch_size)
+        if suggest_method is None:
+            suggest_method = self.suggest
+        docs, next_points = suggest_method(batch_size)
         uid = str(uuid.uuid4())
         for batch_idx, (doc, next_point) in enumerate(zip(docs, next_points)):
             doc["suggestion"] = next_point
@@ -618,11 +621,11 @@ class Agent(ABC):
         return next_points, uid
 
     def add_suggestions_to_queue(self, batch_size: int):
-        """Calls ask, adds suggestions to queue, and writes out events.
+        """Calls suggest, adds suggestions to queue, and writes out events.
         This will create one event for each suggestion.
         """
-        next_points, uid = self._ask_and_write_events(batch_size)
-        logger.info(f"Issued ask and adding to the queue. {uid}")
+        next_points, uid = self._suggest_and_write_events(batch_size)
+        logger.info(f"Issued suggestion and adding to the queue. {uid}")
         self._add_to_queue(next_points, uid)
         self._check_queue_and_start()  # TODO: remove this and encourage updated qserver functionality
 
@@ -635,10 +638,10 @@ class Agent(ABC):
             )
             kwargs.setdefault("md", {})
             kwargs["md"].update(self.default_plan_md)
-            kwargs["md"]["agent_ask_uid"] = uid
+            kwargs["md"]["agent_suggestion_uid"] = uid
             suggestions.append(
                 Suggestion(
-                    ask_uid=uid,
+                    suggestion_uid=uid,
                     plan_name=plan_name,
                     plan_args=args,
                     plan_kwargs=kwargs,
@@ -647,10 +650,10 @@ class Agent(ABC):
         return suggestions
 
     def generate_suggestions_for_adjudicator(self, batch_size: int):
-        """Calls ask, sends suggestions to adjudicator, and writes out events.
+        """Calls suggest, sends suggestions to adjudicator, and writes out events.
         This will create one event for each suggestion."""
-        next_points, uid = self._ask_and_write_events(batch_size)
-        logger.info(f"Issued ask and sending to the adjudicator. {uid}")
+        next_points, uid = self._suggest_and_write_events(batch_size)
+        logger.info(f"Issued suggestion and sending to the adjudicator. {uid}")
         suggestions = self._create_suggestion_list(next_points, uid)
         msg = AdjudicatorMsg(
             agent_name=self.instance_name,
@@ -709,8 +712,8 @@ class Agent(ABC):
         if self.report_on_tell:
             self.generate_report(**self.default_report_kwargs)
 
-        # Ask
-        if self.ask_on_tell:
+        # Suggest
+        if self.suggest_on_update:
             if self._direct_to_queue:
                 self.add_suggestions_to_queue(1)
             else:
@@ -724,20 +727,20 @@ class Agent(ABC):
             logger.info(f"Telling agent about start document{uid}")
             self._tell(uid)
 
-    def start(self, ask_at_start=False):
+    def start(self, suggest_at_start=False):
         """Starts kakfka listener in background thread
 
         Parameters
         ----------
-        ask_at_start : bool, optional
-            Whether to ask for a suggestion immediately, by default False
+        suggest_at_start : bool, optional
+            Whether to suggest new points immediately, by default False
         """
         logger.debug("Issuing Agent start document and starting to listen to Kafka")
         self._compose_run_bundle = compose_run(metadata=self.metadata)
         self.agent_catalog.v1.insert("start", self._compose_run_bundle.start_doc)
         logger.info(f"Agent name={self._compose_run_bundle.start_doc['agent_name']}")
         logger.info(f"Agent start document uuid={self._compose_run_bundle.start_doc['uid']}")
-        if ask_at_start:
+        if suggest_at_start:
             self.add_suggestions_to_queue(1)
         self._kafka_thread = threading.Thread(target=self.kafka_consumer.start, name="agent-loop", daemon=True)
         self._kafka_thread.start()
@@ -839,7 +842,7 @@ class Agent(ABC):
         self._register_method("add_suggestions_to_queue")
         self._register_method("tell_agent_by_uid")
         self._register_property("queue_add_position", pv_type="str")
-        self._register_property("ask_on_tell", pv_type="bool")
+        self._register_property("suggest_on_update", pv_type="bool")
         self._register_property("report_on_tell", pv_type="bool")
 
     @staticmethod
@@ -969,8 +972,8 @@ class MonarchSubjectAgent(Agent, ABC):
         agent maintains the functionality of a regular Agent, and adds plans to the Monarch queue.
 
         By default, the Subject is only directed when manually triggered by the agent server or by
-        a kafka directive. If an automated approach to asking the subject is required,
-        ``subject_ask_condition`` must be overriden. This is commonly done by using a wall-clock interval,
+        a kafka directive. If an automated approach to suggesting the subject is required,
+        ``subject_suggest_condition`` must be overriden. This is commonly done by using a wall-clock interval,
         and/or a model confidence trigger.
 
         Children of MonarchSubjectAgent must implment the following, through direct inheritence or mixin classes:
@@ -980,8 +983,8 @@ class MonarchSubjectAgent(Agent, ABC):
         - subject_measurement_plan
         Agent specific:
         - tell
-        - ask
-        - subject_ask
+        - suggest
+        - subject_suggest
         - report (optional)
         - name (optional)
 
@@ -1026,9 +1029,9 @@ class MonarchSubjectAgent(Agent, ABC):
         ...
 
     @abstractmethod
-    def subject_ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def subjec_suggest(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
-        Ask the agent for a new batch of points to measure on the subject queue.
+        Suggest a new batch of points to measure on the subject queue.
 
         Parameters
         ----------
@@ -1038,7 +1041,7 @@ class MonarchSubjectAgent(Agent, ABC):
         Returns
         -------
         docs : Sequence[dict]
-            Documents of key metadata from the ask approach for each point in next_points.
+            Documents of key metadata from the suggestion approach for each point in next_points.
             Must be length of batch size.
         next_points : Sequence[ArrayLike]
             Sequence of independent variables of length batch size
@@ -1046,7 +1049,7 @@ class MonarchSubjectAgent(Agent, ABC):
         """
         ...
 
-    def subject_ask_condition(self):
+    def subject_suggest_condition(self):
         """Option to build in a trigger method that is run on using the document router subcription.
 
         Returns
@@ -1056,9 +1059,9 @@ class MonarchSubjectAgent(Agent, ABC):
         return False
 
     def add_suggestions_to_subject_queue(self, batch_size: int):
-        """Calls ask, adds suggestions to queue, and writes out event"""
-        next_points, uid = self._ask_and_write_events(batch_size, self.subject_ask, "subject_ask")
-        logger.info("Issued ask to subject and adding to the queue. {uid}")
+        """Calls suggest, adds suggestions to queue, and writes out event"""
+        next_points, uid = self._suggest_and_write_events(batch_size, self.subject_suggest, "subject_suggest")
+        logger.info("Issued suggestion to subject and adding to the queue. {uid}")
         self._add_to_queue(
             next_points,
             uid,
@@ -1072,15 +1075,15 @@ class MonarchSubjectAgent(Agent, ABC):
         if name != "stop":
             return ret
 
-        if self.subject_ask_condition():
+        if self.subject_suggest_condition():
             if self._direct_to_queue:
                 self.add_suggestions_to_subject_queue(1)
             else:
                 raise NotImplementedError
 
     def generate_suggestions_for_adjudicator(self, batch_size: int):
-        next_points, uid = self._ask_and_write_events(batch_size, self.subject_ask, "subject_ask")
-        logger.info(f"Issued subject ask and sending to the adjudicator. {uid}")
+        next_points, uid = self._suggest_and_write_events(batch_size, self.subjec_suggest, "subject_suggest")
+        logger.info(f"Issued subject suggest and sending to the adjudicator. {uid}")
         suggestions = self._create_suggestion_list(next_points, uid, self.subject_measurement_plan)
         msg = AdjudicatorMsg(
             agent_name=self.instance_name,

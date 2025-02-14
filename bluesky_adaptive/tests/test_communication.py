@@ -61,8 +61,11 @@ class BasicCommunicationAgent(Agent):
     def report(self, report_number: int = 0) -> dict:
         return dict(agent_name=self.instance_name, report=f"report_{report_number}")
 
-    def ask(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
-        return ([dict(agent_name=self.instance_name, report=f"ask_{batch_size}")], [0 for _ in range(batch_size)])
+    def suggest(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
+        return (
+            [dict(agent_name=self.instance_name, report=f"suggest_{batch_size}")],
+            [0 for _ in range(batch_size)],
+        )
 
     def tell(self, x, y) -> dict:
         self.count += 1
@@ -115,8 +118,8 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, kafka_produ
     with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub, sub):
         agent = BasicCommunicationAgent(pub, sub, kafka_bootstrap_servers, kafka_producer_config, tiled_profile)
         agent.start()
-        docs, _ = agent.ask(1)
-        ask_uid = agent._write_event("ask", docs[0])
+        docs, _ = agent.suggest(1)
+        suggest_uid = agent._write_event("suggest", docs[0])
         doc = agent.tell(0, 0)
         _ = agent._write_event("tell", doc)
         doc = agent.report()
@@ -127,6 +130,6 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, kafka_produ
         assert documents[1][0] == "descriptor"
         assert documents[2][0] == "event_page"
         assert "report" in cat[-1].metadata["summary"]["stream_names"]
-        assert "ask" in cat[-1].metadata["summary"]["stream_names"]
+        assert "suggest" in cat[-1].metadata["summary"]["stream_names"]
         assert "tell" in cat[-1].metadata["summary"]["stream_names"]
-        assert isinstance(ask_uid, str)
+        assert isinstance(suggest_uid, str)
