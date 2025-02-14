@@ -6,13 +6,14 @@ import numpy as np
 import pytest
 from bluesky import RunEngine
 from bluesky.plans import count
-from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from sklearn.cluster import KMeans
 from sklearn.decomposition import NMF, PCA
 
 from bluesky_adaptive.agents.sklearn import ClusterAgentBase, DecompositionAgentBase
 from bluesky_adaptive.utils.offline import OfflineAgent, OfflineProducer
+
+from ..typing import BlueskyRunLike
 
 
 class DummyAgentMixin:
@@ -23,7 +24,7 @@ class DummyAgentMixin:
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [1.5], dict()
 
-    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         self.counter += 1
         return self.counter, np.random.rand(10)
 

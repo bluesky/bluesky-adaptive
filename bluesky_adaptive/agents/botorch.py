@@ -22,10 +22,11 @@ from botorch import fit_gpytorch_mll
 from botorch.acquisition import AcquisitionFunction, UpperConfidenceBound
 from botorch.models import SingleTaskGP
 from botorch.optim import optimize_acqf
-from databroker.client import BlueskyRun
 from gpytorch.mlls import ExactMarginalLogLikelihood
 
 from bluesky_adaptive.agents.base import Agent
+
+from ..typing import BlueskyRunLike
 
 logger = getLogger("bluesky_adaptive.agents")
 
@@ -172,7 +173,9 @@ class SingleTaskGPAgentBase(Agent, ABC):
             torch.atleast_1d(candidate).detach().cpu().numpy(),
         )
 
-    def remodel_from_report(self, run: BlueskyRun, idx: int = None) -> Tuple[AcquisitionFunction, SingleTaskGP]:
+    def remodel_from_report(
+        self, run: BlueskyRunLike, idx: int = None
+    ) -> Tuple[AcquisitionFunction, SingleTaskGP]:
         idx = -1 if idx is None else idx
         keys = [key for key in run.report["data"].keys() if key.split("-")[0] == "STATEDICT"]
         state_dict = {".".join(key[10:].split(":")): torch.tensor(run.report["data"][key][idx]) for key in keys}

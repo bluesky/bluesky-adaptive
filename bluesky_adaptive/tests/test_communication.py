@@ -1,15 +1,18 @@
 """Testing the communication patterns of Bluesky Adaptive Async Agents"""
 
+import os
 from typing import Sequence, Tuple, Union
 
+import pytest
 from bluesky_kafka import Publisher
 from bluesky_queueserver_api.http import REManagerAPI
-from databroker.client import BlueskyRun
 from event_model import compose_run
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
 
 from bluesky_adaptive.agents.base import Agent, AgentConsumer
+
+from ..typing import BlueskyRunLike
 
 
 class BasicCommunicationAgent(Agent):
@@ -52,7 +55,7 @@ class BasicCommunicationAgent(Agent):
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [1.5], dict()
 
-    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def report(self, report_number: int = 0) -> dict:
@@ -101,6 +104,10 @@ def test_run_plan(temporary_topics, kafka_bootstrap_servers, kafka_producer_conf
         agent.re_manager.queue_start()
 
 
+@pytest.mark.skipif(
+    condition=os.environ.get("GITHUB_ACTIONS") == "true",
+    reason="Comms Test producing seg faults on GHA.",
+)
 def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile):
     """Test the ability to write agent actions as bluesky run and readback in tiled"""
     cat = from_profile(tiled_profile)
