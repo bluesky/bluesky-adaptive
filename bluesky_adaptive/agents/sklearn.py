@@ -170,7 +170,7 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         )
 
     @staticmethod
-    def remodel_from_report(run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+    def remodel_from_report(run: BlueskyRunLike, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
         """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
 
         This enables fixed dimension reports that can be stacked and compared, while also allowing for
