@@ -1,3 +1,4 @@
+import os
 import time as ttime
 from typing import Tuple, Union
 
@@ -5,51 +6,18 @@ import numpy as np
 import pytest
 from bluesky import RunEngine
 from bluesky.plans import count
-from bluesky_kafka import Publisher
-from bluesky_queueserver_api.http import REManagerAPI
 from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from sklearn.cluster import KMeans
 from sklearn.decomposition import NMF, PCA
-from tiled.client import from_profile
 
-from bluesky_adaptive.agents.base import AgentConsumer
 from bluesky_adaptive.agents.sklearn import ClusterAgentBase, DecompositionAgentBase
+from bluesky_adaptive.utils.offline import OfflineAgent, OfflineProducer
 
 
 class DummyAgentMixin:
-    def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
-    ):
-        qs = REManagerAPI(http_server_uri=None)
-        qs.set_authorization_key(api_key="SECRET")
-
-        kafka_consumer = AgentConsumer(
-            topics=[sub_topic],
-            bootstrap_servers=kafka_bootstrap_servers,
-            group_id="test.communication.group",
-            consumer_config={"auto.offset.reset": "earliest"},
-        )
-
-        kafka_producer = Publisher(
-            topic=pub_topic,
-            bootstrap_servers=kafka_bootstrap_servers,
-            key="",
-            producer_config=kafka_producer_config,
-        )
-
-        tiled_data_node = from_profile(tiled_profile)
-        tiled_agent_node = from_profile(tiled_profile)
-
-        super().__init__(
-            kafka_consumer=kafka_consumer,
-            kafka_producer=kafka_producer,
-            tiled_agent_node=tiled_agent_node,
-            tiled_data_node=tiled_data_node,
-            qserver=qs,
-            ask_on_tell=False,
-            **kwargs,
-        )
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, ask_on_tell=False, **kwargs)
         self.counter = 0
 
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
@@ -60,223 +28,146 @@ class DummyAgentMixin:
         return self.counter, np.random.rand(10)
 
 
-class TestDecompAgent(DummyAgentMixin, DecompositionAgentBase): ...
+class DecompTestAgent(DummyAgentMixin, DecompositionAgentBase, OfflineAgent): ...
 
 
-class TestClusterAgent(DummyAgentMixin, ClusterAgentBase): ...
+class ClusterTestAgent(DummyAgentMixin, ClusterAgentBase, OfflineAgent): ...
 
 
 @pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
-def test_decomp_agent(
-    estimator, temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, tiled_node
-):
+def test_decomp_agent(estimator):
     """Tests decomposition agents reporting and readback of reports."""
-    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
-        agent = TestDecompAgent(
-            pub_topic,
-            sub_topic,
-            kafka_bootstrap_servers,
-            kafka_producer_config,
-            tiled_profile,
-            estimator=estimator,
-        )
-        agent.start()
-        for i in range(5):
-            agent.tell(float(i), np.random.rand(10))
-            agent.tell_cache.append(f"uid{i}")  # dummy uid
-        agent.generate_report()
-        xr = tiled_node[-1].report.read()
-        assert xr.components.shape == (1, 2, 10)  # shape after 1 report
-        assert xr.latest_data[-1].data == "uid4"  # most recent uid
+    agent = DecompTestAgent(
+        estimator=estimator,
+    )
+    agent.start()
+    for i in range(5):
+        agent.tell(float(i), np.random.rand(10))
+        agent.tell_cache.append(f"uid{i}")  # dummy uid
+    doc = agent.report()
+    components = doc["components"]
+    assert components.shape == (2, 10)  # shape after 1 report
+    assert doc["latest_data"] == "uid4"  # most recent uid
 
-        for i in range(5, 10):
-            agent.tell(float(i), np.random.rand(10))
-            agent.tell_cache.append(f"uid{i}")  # dummy uid
-        agent.generate_report()
-        assert "report" in tiled_node[-1]
+    for i in range(5, 10):
+        agent.tell(float(i), np.random.rand(10))
+        agent.tell_cache.append(f"uid{i}")  # dummy uid
+    doc = agent.report()
+    components = doc["components"]
+    assert components.shape == (2, 10)  # shape after 1 report
+    assert doc["latest_data"] == "uid9"  # most recent uid
 
-        # Letting mongo catch up then checking for 2 reports
-        now = ttime.monotonic()
-        while len(tiled_node[-1].report.read().time) == 1:
-            ttime.sleep(0.5)
-            if ttime.monotonic() - now > 10:
-                break
-
-        xr = tiled_node[-1].report.read()
-        assert xr.components.shape == (2, 2, 10)
-        assert xr.latest_data[-1].data == "uid9"
-        agent.stop()
+    agent.stop()
 
 
-# @pytest.mark.xfail(
-#     os.environ.get("GITHUB_ACTIONS") == "true",
-#     raises=TimeoutError,
-#     reason="Kafka timeout awaiting messages to arrive",
-# )  # Allow timeout in GHA CI/CD
-@pytest.mark.skip(reason="Segfaults on GitHub Actions")  # TODO(maffettone): revisit
+@pytest.mark.xfail(
+    os.environ.get("GITHUB_ACTIONS") == "true",
+    raises=TimeoutError,
+    reason="Databroker timeout awaiting for documents to write",
+)  # Allow timeout in GHA CI/CD
 @pytest.mark.parametrize("estimator", [PCA(2), NMF(2)], ids=["PCA", "NMF"])
 def test_decomp_remodel_from_report(
     estimator,
-    temporary_topics,
-    kafka_bootstrap_servers,
-    kafka_producer_config,
-    tiled_profile,
-    tiled_node,
+    catalog,
     hw,
 ):
     """Tests the rebuilding of the model from a given report, including the varaible shape pieces."""
-    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
-        agent = TestDecompAgent(
-            pub_topic,
-            sub_topic,
-            kafka_bootstrap_servers,
-            kafka_producer_config,
-            tiled_profile,
-            estimator=estimator,
-        )
-        agent.start()
-        agent_uid = agent._compose_run_bundle.start_doc["uid"]
-        publisher = Publisher(
-            topic=sub_topic,
-            bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=kafka_producer_config,
-            key=f"{sub_topic}.key",
-            flush_on_stop_doc=True,
-        )
-        RE = RunEngine()
-        RE.subscribe(publisher)
-        RE.subscribe(tiled_node.v1.insert)
+    agent = DecompTestAgent(estimator=estimator, tiled_data_node=catalog, tiled_agent_node=catalog)
+    agent.start()
+    agent_uid = agent._compose_run_bundle.start_doc["uid"]
+    publisher = OfflineProducer(agent.kafka_consumer.topic)
 
-        for i in range(5):
-            RE(count([hw.det]))
+    RE = RunEngine()
+    RE.subscribe(publisher)
+    RE.subscribe(catalog.v1.insert)
 
-        # Letting mongo/kafka catch up to start/stop + 7 tells
-        now = ttime.monotonic()
-        while len(list(tiled_node[agent_uid].documents())) != 7:
-            ttime.sleep(0.5)
-            if ttime.monotonic() - now > 60:
-                raise TimeoutError
-        assert "tell" in tiled_node[agent_uid]
-        agent.generate_report()
-        agent.stop()
+    for _ in range(5):
+        RE(count([hw.det]))
+        agent.kafka_consumer.trigger()
 
-        # Letting mongo/kafka catch up to report
-        now = ttime.monotonic()
-        while not ("report" in tiled_node[agent_uid]):
-            ttime.sleep(0.5)
-            if ttime.monotonic() - now > 30:
-                raise TimeoutError
-        model, data = agent.remodel_from_report(tiled_node[agent_uid])
-        assert isinstance(model, type(estimator))
-        assert data["components"].shape[0] == 2
-        assert data["weights"].shape == (5, 2)
-        assert len(data["observables"]) == 5
-        assert len(data["independent_vars"]) == 5
+    assert "tell" in catalog[agent_uid]
+    assert len(catalog[agent_uid].tell.data["time"]) == 5
+    agent.generate_report()
+
+    # Letting databroker catch up to report. Should take little time
+    now = ttime.monotonic()
+    while not ("report" in catalog[agent_uid]):
+        ttime.sleep(0.1)
+        if ttime.monotonic() - now > 3:
+            raise TimeoutError
+    agent.stop()
+    model, data = agent.remodel_from_report(catalog[agent_uid])
+    assert isinstance(model, type(estimator))
+    assert data["components"].shape[0] == 2
+    assert data["weights"].shape == (5, 2)
+    assert len(data["observables"]) == 5
+    assert len(data["independent_vars"]) == 5
 
 
 @pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
-def test_cluster_agent(
-    estimator, temporary_topics, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, tiled_node
-):
-    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
-        agent = TestClusterAgent(
-            pub_topic,
-            sub_topic,
-            kafka_bootstrap_servers,
-            kafka_producer_config,
-            tiled_profile,
-            estimator=estimator,
-        )
-        agent.start()
-        for i in range(5):
-            agent.tell(float(i), np.random.rand(10))
-            agent.tell_cache.append(f"uid{i}")  # dummy uid
-        agent.generate_report()
-        xr = tiled_node[-1].report.read()
-        assert xr.cluster_centers.shape == (1, 2, 10)  # shape after 1 report
-        assert xr.latest_data[-1].data == "uid4"  # most recent uid
+def test_cluster_agent(estimator):
+    agent = ClusterTestAgent(
+        estimator=estimator,
+    )
+    agent.start()
+    for i in range(5):
+        agent.tell(float(i), np.random.rand(10))
+        agent.tell_cache.append(f"uid{i}")  # dummy uid
+    doc = agent.report()
+    cluster_centers = doc["cluster_centers"]
+    assert cluster_centers.shape == (2, 10)  # shape after 1 report
+    assert doc["latest_data"] == "uid4"  # most recent uid
 
-        for i in range(5, 10):
-            agent.tell(float(i), np.random.rand(10))
-            agent.tell_cache.append(f"uid{i}")  # dummy uid
-        agent.generate_report()
-        assert "report" in tiled_node[-1]
-
-        # Letting mongo catch up then checking for 2 reports
-        now = ttime.monotonic()
-        while len(tiled_node[-1].report.read().time) == 1:
-            ttime.sleep(0.5)
-            if ttime.monotonic() - now > 10:
-                break
-
-        xr = tiled_node[-1].report.read()
-        assert xr.cluster_centers.shape == (2, 2, 10)
-        assert xr.latest_data[-1].data == "uid9"
-        agent.stop()
+    for i in range(5, 10):
+        agent.tell(float(i), np.random.rand(10))
+        agent.tell_cache.append(f"uid{i}")  # dummy uid
+    doc = agent.report()
+    cluster_centers = doc["cluster_centers"]
+    assert cluster_centers.shape == (2, 10)  # shape after 2 reports the same
+    assert doc["latest_data"] == "uid9"  # most recent uid
+    agent.stop()
 
 
-# @pytest.mark.xfail(
-#     os.environ.get("GITHUB_ACTIONS") == "true",
-#     raises=TimeoutError,
-#     reason="Kafka timeout awaiting messages to arrive",
-# )  # Allow timeout in GHA CI/CD
-@pytest.mark.skip(reason="Segfaults on GitHub Actions")  # TODO(maffettone): revisit
+@pytest.mark.xfail(
+    os.environ.get("GITHUB_ACTIONS") == "true",
+    raises=TimeoutError,
+    reason="Databroker timeout awaiting for documents to write",
+)  # Allow timeout in GHA CI/CD
 @pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
 def test_cluster_remodel_from_report(
     estimator,
-    temporary_topics,
-    kafka_bootstrap_servers,
-    kafka_producer_config,
-    tiled_profile,
-    tiled_node,
+    catalog,
     hw,
 ):
     """Tests the rebuilding of the model from a given report, including the varaible shape pieces."""
-    with temporary_topics(topics=["test.publisher", "test.subscriber"]) as (pub_topic, sub_topic):
-        agent = TestClusterAgent(
-            pub_topic,
-            sub_topic,
-            kafka_bootstrap_servers,
-            kafka_producer_config,
-            tiled_profile,
-            estimator=estimator,
-        )
-        agent.start()
-        agent_uid = agent._compose_run_bundle.start_doc["uid"]
-        publisher = Publisher(
-            topic=sub_topic,
-            bootstrap_servers=kafka_bootstrap_servers,
-            producer_config=kafka_producer_config,
-            key=f"{sub_topic}.key",
-            flush_on_stop_doc=True,
-        )
-        RE = RunEngine()
-        RE.subscribe(publisher)
-        RE.subscribe(tiled_node.v1.insert)
+    agent = ClusterTestAgent(estimator=estimator, tiled_data_node=catalog, tiled_agent_node=catalog)
+    agent.start()
+    agent_uid = agent._compose_run_bundle.start_doc["uid"]
+    publisher = OfflineProducer(agent.kafka_consumer.topic)
 
-        for i in range(5):
-            RE(count([hw.det]))
+    RE = RunEngine()
+    RE.subscribe(publisher)
+    RE.subscribe(catalog.v1.insert)
 
-        # Letting mongo/kafka catch up to start/stop + 7 tells
-        now = ttime.monotonic()
-        while len(list(tiled_node[agent_uid].documents())) != 7:
-            ttime.sleep(0.5)
-            if ttime.monotonic() - now > 60:
-                raise TimeoutError
-        assert "tell" in tiled_node[agent_uid]
-        agent.generate_report()
-        agent.stop()
+    for _ in range(5):
+        RE(count([hw.det]))
+        agent.kafka_consumer.trigger()
 
-        # Letting mongo/kafka catch up to report
-        now = ttime.monotonic()
-        while not ("report" in tiled_node[agent_uid]):
-            ttime.sleep(0.5)
-            if ttime.monotonic() - now > 30:
-                raise TimeoutError
-        model, data = agent.remodel_from_report(tiled_node[agent_uid])
-        assert isinstance(model, type(estimator))
-        assert data["cluster_centers"].shape[0] == 2
-        assert data["distances"].shape == (5, 2)
-        assert data["clusters"].shape == (5,)
-        assert len(data["observables"]) == 5
-        assert len(data["independent_vars"]) == 5
+    assert "tell" in catalog[agent_uid]
+    assert len(catalog[agent_uid].tell.data["time"]) == 5
+    agent.generate_report()
+
+    # Letting mongo/kafka catch up to report
+    now = ttime.monotonic()
+    while not ("report" in catalog[agent_uid]):
+        ttime.sleep(0.1)
+        if ttime.monotonic() - now > 3:
+            raise TimeoutError
+    agent.stop()
+    model, data = agent.remodel_from_report(catalog[agent_uid])
+    assert isinstance(model, type(estimator))
+    assert data["cluster_centers"].shape[0] == 2
+    assert data["distances"].shape == (5, 2)
+    assert data["clusters"].shape == (5,)
+    assert len(data["observables"]) == 5
+    assert len(data["independent_vars"]) == 5
