@@ -5,13 +5,14 @@ from typing import Callable, Literal, Tuple, Union
 from bluesky_kafka import Publisher
 from bluesky_kafka.utils import create_topics, delete_topics
 from bluesky_queueserver_api.http import REManagerAPI
-from databroker.client import BlueskyRun
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
 
 from bluesky_adaptive.agents.base import AgentConsumer
 from bluesky_adaptive.agents.simple import SequentialAgentBase
 from bluesky_adaptive.server import register_variable, shutdown_decorator, start_task, startup_decorator
+
+from ..typing import BlueskyRunLike
 
 
 class TestSequentialAgent(SequentialAgentBase):
@@ -85,7 +86,7 @@ class TestSequentialAgent(SequentialAgentBase):
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [self._sleep_duration], dict()
 
-    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def operating_mode_setter(self, mode: Literal["sleepy", "awake"]):

@@ -15,7 +15,6 @@ import tiled
 from bluesky_kafka import Publisher, RemoteDispatcher
 from bluesky_queueserver_api import BPlan
 from bluesky_queueserver_api.api_threads import API_Threads_Mixin
-from databroker.client import BlueskyRun
 from event_model import compose_run
 from numpy.typing import ArrayLike
 from xkcdpass import xkcd_password as xp
@@ -23,6 +22,7 @@ from xkcdpass import xkcd_password as xp
 from ..adjudicators.msg import DEFAULT_NAME as ADJUDICATOR_STREAM_NAME
 from ..adjudicators.msg import AdjudicatorMsg, Suggestion
 from ..server import register_variable, start_task
+from ..typing import BlueskyRunLike
 
 logger = getLogger("bluesky_adaptive.agents")
 PASSWORD_LIST = xp.generate_wordlist(wordfile=xp.locate_wordfile(), min_length=3, max_length=6)
@@ -324,7 +324,7 @@ class Agent(ABC):
 
     @staticmethod
     @abstractmethod
-    def unpack_run(run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         """
         Consume a Bluesky run from tiled and emit the relevant x and y for the agent.
 

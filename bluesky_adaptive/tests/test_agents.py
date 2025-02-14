@@ -1,12 +1,13 @@
 from typing import Callable, Literal, Sequence, Tuple, Union
 
 from bluesky_kafka import Publisher
-from databroker.client import BlueskyRun
 from event_model import compose_run
 from numpy.typing import ArrayLike
 
 from bluesky_adaptive.agents.simple import SequentialAgentBase
 from bluesky_adaptive.utils.offline import OfflineAgent, OfflineMonarchSubject, OfflineProducer
+
+from ..typing import BlueskyRunLike
 
 
 class NapAndCountAgent(OfflineAgent):
@@ -20,7 +21,7 @@ class NapAndCountAgent(OfflineAgent):
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [1.5], dict()
 
-    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def report(self, report_number: int = 0) -> dict:
@@ -73,7 +74,7 @@ class SequentialTestAgent(SequentialAgentBase, OfflineAgent):
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [1.5], dict()
 
-    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def server_registrations(self) -> None:
@@ -126,7 +127,7 @@ class MonarchSubjectTestAgent(SequentialAgentBase, OfflineMonarchSubject):
     def subject_ask(self, batch_size: int):
         return [dict()], [0.0 for _ in range(batch_size)]
 
-    def unpack_run(self, run: BlueskyRun):
+    def unpack_run(self, run: BlueskyRunLike):
         return 0, 0
 
     def server_registrations(self) -> None:

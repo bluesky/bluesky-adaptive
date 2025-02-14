@@ -4,12 +4,13 @@ from typing import Sequence, Tuple, Union
 
 from bluesky_kafka import Publisher
 from bluesky_queueserver_api.http import REManagerAPI
-from databroker.client import BlueskyRun
 from event_model import compose_run
 from numpy.typing import ArrayLike
 from tiled.client import from_profile
 
 from bluesky_adaptive.agents.base import Agent, AgentConsumer
+
+from ..typing import BlueskyRunLike
 
 
 class BasicCommunicationAgent(Agent):
@@ -52,7 +53,7 @@ class BasicCommunicationAgent(Agent):
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
         return self.measurement_plan_name, [1.5], dict()
 
-    def unpack_run(self, run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def report(self, report_number: int = 0) -> dict:

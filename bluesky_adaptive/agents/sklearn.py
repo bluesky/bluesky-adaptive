@@ -23,9 +23,10 @@ from typing import Tuple
 
 import numpy as np
 import sklearn
-from databroker.client import BlueskyRun
 
 from bluesky_adaptive.agents.base import Agent
+
+from ..typing import BlueskyRunLike
 
 logger = getLogger("bluesky_adaptive.agents")
 
@@ -95,7 +96,7 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
         )
 
     @staticmethod
-    def remodel_from_report(run: BlueskyRun, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+    def remodel_from_report(run: BlueskyRunLike, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
         """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
 
         This enables fixed dimension reports that can be stacked and compared, while also allowing for
@@ -103,7 +104,7 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
 
         Parameters
         ----------
-        run : BlueskyRun
+        run : BlueskyRunLike
             Agent Run
         idx : int, optional
             Report index, by default most recent
@@ -177,7 +178,7 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
 
         Parameters
         ----------
-        run : BlueskyRun
+        run : BlueskyRunLike
             Agent Run
         idx : int, optional
             Report index, by default most recent
