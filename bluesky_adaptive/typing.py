@@ -1,9 +1,9 @@
-from typing import Any, Iterator, Mapping, Protocol, Tuple, runtime_checkable
+from typing import Any, Iterator, Protocol, Tuple, runtime_checkable
 
 
 # Minimal stub of Container-like behavior, matching how Container inherits from BaseClient, Mapping, etc.
 @runtime_checkable
-class ContainerLike(Mapping, Protocol):
+class ContainerLike(Protocol):
     def __repr__(self) -> str: ...
     @property
     def sorting(self) -> list[tuple[str, int]]: ...
