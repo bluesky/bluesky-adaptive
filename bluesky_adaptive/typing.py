@@ -1,4 +1,4 @@
-from typing import Any, Iterator, Protocol, Tuple, runtime_checkable
+from typing import Any, Iterator, Protocol, Tuple, Union, runtime_checkable
 
 
 # Minimal stub of Container-like behavior, matching how Container inherits from BaseClient, Mapping, etc.
@@ -27,7 +27,7 @@ class BlueskyRunLike(ContainerLike, Protocol):
     def start(self) -> dict[str, Any]: ...
 
     @property
-    def stop(self) -> dict[str, Any] | None: ...
+    def stop(self) -> Union[dict[str, Any], None]: ...
 
     def describe(self, obj: Any) -> dict[str, Any]: ...
 
