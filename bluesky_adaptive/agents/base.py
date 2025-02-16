@@ -673,7 +673,7 @@ class Agent(ABC):
 
     def _ingest_uid(self, uid):
         """Private ingest to encapsulate the processing of a uid.
-        This allows the agent provided injest to just consume an independent and dependent variable.
+        This allows the agent provided ingest to just consume an independent and dependent variable.
 
         Parameters
         ----------
@@ -687,9 +687,9 @@ class Agent(ABC):
             logger.warning(f"Ignoring key error in unpack for data {uid}:\n {e}")
             return
         logger.debug("Agent ingesting  some new data.")
-        doc = self.injest(independent_variable, dependent_variable)
+        doc = self.ingest(independent_variable, dependent_variable)
         doc["exp_uid"] = uid
-        self._write_event("injest", doc)
+        self._write_event("ingest", doc)
         self.known_uid_cache.append(uid)
 
     def _on_stop_router(self, name, doc):
@@ -704,7 +704,7 @@ class Agent(ABC):
             )
             return
 
-        # Injest
+        # Ingest
         logger.info(f"New data detected, agent ingesting this run uid: {uid}")
         self._ingest_uid(uid)
 
@@ -769,7 +769,7 @@ class Agent(ABC):
             This is useful for a clean slate.
         reingest_all : bool, optional
             Resets the cache and the agent ingests all previous data from scratch, by default False.
-            This can be useful if the agent has not retained knowledge from previous injestion.
+            This can be useful if the agent has not retained knowledge from previous ingestion.
         reason : str, optional
             Reason for closing and restarting the agent, to be recorded to logs, by default ""
         """
@@ -842,7 +842,7 @@ class Agent(ABC):
         self._register_method("add_suggestions_to_queue")
         self._register_method("ingest_uids")
         self._register_property("queue_add_position", pv_type="str")
-        self._register_property("suggest_on_injest", pv_type="bool")
+        self._register_property("suggest_on_ingest", pv_type="bool")
         self._register_property("report_on_ingest", pv_type="bool")
 
     @staticmethod
@@ -1029,7 +1029,7 @@ class MonarchSubjectAgent(Agent, ABC):
         ...
 
     @abstractmethod
-    def subjec_suggest(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def subject_suggest(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
         Suggest a new batch of points to measure on the subject queue.
 
@@ -1082,7 +1082,7 @@ class MonarchSubjectAgent(Agent, ABC):
                 raise NotImplementedError
 
     def generate_suggestions_for_adjudicator(self, batch_size: int):
-        next_points, uid = self._suggest_and_write_events(batch_size, self.subjec_suggest, "subject_suggest")
+        next_points, uid = self._suggest_and_write_events(batch_size, self.subject_suggest, "subject_suggest")
         logger.info(f"Issued subject suggest and sending to the adjudicator. {uid}")
         suggestions = self._create_suggestion_list(next_points, uid, self.subject_measurement_plan)
         msg = AdjudicatorMsg(
