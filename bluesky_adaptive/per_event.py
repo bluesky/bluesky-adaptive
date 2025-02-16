@@ -38,7 +38,7 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
     Parameters
     ----------
     recommender : object
-        The recommendation agent object with ask/tell interface
+        The recommendation agent object with ingest/suggest interface
 
     independent_keys : List[str]
         The names of the independent keys in the events
@@ -76,9 +76,9 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
                 return
 
             independent, measurement = extract_event_page(independent_keys, dependent_keys, payload=doc["data"])
-            recommender.tell_many(independent, measurement)
+            recommender.ingest_many(independent, measurement)
             try:
-                next_point = recommender.ask(1)
+                next_point = recommender.suggest(1)
             except NoRecommendation:
                 # no recommendation
                 queue.put(None)

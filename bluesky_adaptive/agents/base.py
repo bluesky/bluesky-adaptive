@@ -186,14 +186,14 @@ class Agent(ABC):
     a catalog to write agent status to, a kafka publisher to write agent documents to,
     and a manager API for the queue-server. Each time a stop document is read,
     the respective BlueskyRun is unpacked by the ``unpack_run`` method into an independent and dependent variable,
-    and told to the agent by the ``tell`` method.
+    and told to the agent by the ``ingest`` method.
 
     Children of Agent should implment the following, through direct inheritence or mixin classes:
     Experiment specific:
     - measurement_plan
     - unpack_run
     Agent specific:
-    - update
+    - ingest
     - suggest
     - report (optional)
     - name (optional)
@@ -202,7 +202,7 @@ class Agent(ABC):
     ----------
     kafka_consumer : AgentConsumer
         Consumer (subscriber) of Kafka Bluesky documents. It should be subcribed to the sources of
-        Bluesky stop documents that will trigger ``tell``.
+        Bluesky stop documents that will trigger ``ingest``.
         AgentConsumer is a child class of bluesky_kafka.RemoteDispatcher that enables
         kafka messages to trigger agent directives.
     kafka_producer : Optional[Publisher]
@@ -217,9 +217,9 @@ class Agent(ABC):
         Agent name suffix for the instance, by default generated using 2 hyphen separated words from xkcdpass.
     metadata : Optional[dict], optional
         Optional extra metadata to add to agent start document, by default {}
-    suggest_on_update : bool, optional
-        Whether to suggest new points every time an agent is updated with new data.
-        To create an agent that only suggests new points periodically or on another trigger, ``suggest_on_update``
+    ssuggest_on_ingest : bool, optional
+        Whether to suggest new points every time an agent ingests new data.
+        To create an agent that only suggests new points periodically or on another trigger, ``suggest_on_ingest``
         should be set to False.
         By default True
         Can be adjusted using ``enable_continuous_suggesting`` and ``disable_continuous_suggesting``.
@@ -228,8 +228,8 @@ class Agent(ABC):
         the suggestions will be sent to a Kafka topic for an Adjudicator to process.
         By default True
         Can be adjusted using ``enable_direct_to_queue`` and ``disable_direct_to_queue``.
-    report_on_tell : bool, optional
-        Whether to create a report every time an agent is told about new data.
+    report_on_ingest : bool, optional
+        Whether to create a report every time an agent ingests new data.
         By default False.
         Can be adjusted using ``enable_continuous_reporting`` and ``disable_continuous_reporting``.
     default_report_kwargs : Optional[dict], optional
@@ -252,9 +252,9 @@ class Agent(ABC):
         kafka_producer: Optional[Publisher],
         agent_run_suffix: Optional[str] = None,
         metadata: Optional[dict] = None,
-        suggest_on_update: Optional[bool] = True,
+        suggest_on_ingest: Optional[bool] = True,
         direct_to_queue: Optional[bool] = True,
-        report_on_tell: Optional[bool] = False,
+        report_on_ingest: Optional[bool] = False,
         default_report_kwargs: Optional[dict] = None,
         queue_add_position: Optional[Union[int, Literal["front", "back"]]] = None,
         endstation_key: Optional[str] = "",
@@ -281,8 +281,8 @@ class Agent(ABC):
         )
         self.metadata["agent_name"] = self.instance_name
 
-        self._suggest_on_update = suggest_on_update
-        self._report_on_tell = report_on_tell
+        self._suggest_on_ingest = suggest_on_ingest
+        self._report_on_ingest = report_on_ingest
         self.default_report_kwargs = {} if default_report_kwargs is None else default_report_kwargs
 
         self._compose_run_bundle = None
@@ -292,7 +292,7 @@ class Agent(ABC):
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
         self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
-        self.tell_cache = list()
+        self.known_uid_cache = list()
         try:
             self.server_registrations()
         except RuntimeError as e:
@@ -342,11 +342,11 @@ class Agent(ABC):
         ...
 
     @abstractmethod
-    def update(
+    def ingest(
         self, independent_variable: ArrayLike, dependent_variable: Optional[ArrayLike] = None
     ) -> Dict[str, ArrayLike]:
         """
-        Update the agent with new data.
+        Agent ingest of new data.
         This method replaces the legacy ``tell`` in the ``ask-tell`` pattern.
 
         Parameters
@@ -392,13 +392,13 @@ class Agent(ABC):
 
         raise NotImplementedError
 
-    def update_many(
+    def ingest_many(
         self, independents: Sequence[ArrayLike], dependents: Optional[Sequence[ArrayLike]]
     ) -> Sequence[Dict[str, List]]:
         """
         Update the agent with some new data. It is likely that there is a more efficient approach to
         handling multiple observations for an agent. The default behavior is to iterate over all
-        observations and call the ``update`` method.
+        observations and call the ``ingest`` method.
 
         Parameters
         ----------
@@ -412,10 +412,10 @@ class Agent(ABC):
         list_of_dict
 
         """
-        update_emits = []
+        ingest_emits = []
         for x, y in zip(independents, dependents):
-            update_emits.append(self.update(x, y))
-        return update_emits
+            ingest_emits.append(self.ingest(x, y))
+        return ingest_emits
 
     @property
     def queue_add_position(self) -> Union[int, Literal["front", "back"]]:
@@ -436,36 +436,36 @@ class Agent(ABC):
         self.queue_add_position = position
 
     @property
-    def suggest_on_update(self) -> bool:
-        return self._suggest_on_update
+    def suggest_on_ingest(self) -> bool:
+        return self._suggest_on_ingest
 
-    @suggest_on_update.setter
-    def suggest_on_update(self, flag: bool):
-        self._suggest_on_update = flag
+    @suggest_on_ingest.setter
+    def suggest_on_ingest(self, flag: bool):
+        self._suggest_on_ingest = flag
 
     @property
-    def report_on_tell(self) -> bool:
-        return self._report_on_tell
+    def report_on_ingest(self) -> bool:
+        return self._report_on_ingest
 
-    @report_on_tell.setter
-    def report_on_tell(self, flag: bool):
-        self._report_on_tell = flag
+    @report_on_ingest.setter
+    def report_on_ingest(self, flag: bool):
+        self._report_on_ingest = flag
 
     def enable_continuous_reporting(self):
         """Enable agent to report each time it receives data."""
-        self.report_on_tell = True
+        self.report_on_ingest = True
 
     def disable_continuous_reporting(self):
         """Disable agent to report each time it receives data."""
-        self.report_on_tell = False
+        self.report_on_ingest = False
 
     def enable_continuous_suggesting(self):
         """Enable agent to suggest new points to the queue each time it receives data."""
-        self.suggest_on_update = True
+        self.suggest_on_ingest = True
 
     def disable_continuous_suggesting(self):
         """Disable agent to suggest new points to the queue each time it receives data."""
-        self.suggest_on_update = False
+        self.suggest_on_ingest = False
 
     def enable_direct_to_queue(self):
         self._direct_to_queue = True
@@ -671,9 +671,9 @@ class Agent(ABC):
     def trigger_condition(uid) -> bool:
         return True
 
-    def _tell(self, uid):
-        """Private tell to encapsulate the processing of a uid.
-        This allows the user tell to just consume an independent and dependent variable.
+    def _ingest_uid(self, uid):
+        """Private ingest to encapsulate the processing of a uid.
+        This allows the agent provided injest to just consume an independent and dependent variable.
 
         Parameters
         ----------
@@ -686,11 +686,11 @@ class Agent(ABC):
         except KeyError as e:
             logger.warning(f"Ignoring key error in unpack for data {uid}:\n {e}")
             return
-        logger.debug("Telling agent about some new data.")
-        doc = self.tell(independent_variable, dependent_variable)
+        logger.debug("Agent ingesting  some new data.")
+        doc = self.injest(independent_variable, dependent_variable)
         doc["exp_uid"] = uid
-        self._write_event("tell", doc)
-        self.tell_cache.append(uid)
+        self._write_event("injest", doc)
+        self.known_uid_cache.append(uid)
 
     def _on_stop_router(self, name, doc):
         """Document router that runs each time a stop document is seen."""
@@ -704,28 +704,28 @@ class Agent(ABC):
             )
             return
 
-        # Tell
-        logger.info(f"New data detected, telling the agent about this start doc: {uid}")
-        self._tell(uid)
+        # Injest
+        logger.info(f"New data detected, agent ingesting this run uid: {uid}")
+        self._ingest_uid(uid)
 
         # Report
-        if self.report_on_tell:
+        if self.report_on_ingest:
             self.generate_report(**self.default_report_kwargs)
 
         # Suggest
-        if self.suggest_on_update:
+        if self.suggest_on_ingest:
             if self._direct_to_queue:
                 self.add_suggestions_to_queue(1)
             else:
                 self.generate_suggestions_for_adjudicator(1)
 
-    def tell_agent_by_uid(self, uids: Iterable):
+    def ingest_uids(self, uids: Iterable):
         """Give an agent an iterable of uids to learn from.
         This is an optional behavior for priming an agent without a complete restart."""
-        logger.info("Telling agent list of uids")
+        logger.info("Agent ingesting list of uids")
         for uid in uids:
-            logger.info(f"Telling agent about start document{uid}")
-            self._tell(uid)
+            logger.info(f"Agent ingesting this run uid: {uid}")
+            self._ingest_uid(uid)
 
     def start(self, suggest_at_start=False):
         """Starts kakfka listener in background thread
@@ -756,7 +756,7 @@ class Agent(ABC):
             f"{(' for reason: ' + reason) if reason else '.'}"
         )
 
-    def close_and_restart(self, *, clear_tell_cache=False, retell_all=False, reason=""):
+    def close_and_restart(self, *, clear_uid_cache=False, reingest_all=False, reason=""):
         """Utility for closing and restarting an agent with the same name.
         This is primarily for methods that change the hyperparameters of an agent on the fly,
         but in doing so may change the shape/nature of the agent document stream. This will
@@ -764,22 +764,22 @@ class Agent(ABC):
 
         Parameters
         ----------
-        clear_tell_cache : bool, optional
+        clear_uid_cache : bool, optional
             Clears the cache of data the agent has been told about, by default False.
             This is useful for a clean slate.
-        retell_all : bool, optional
-            Resets the cache and tells the agent about all previous data, by default False.
-            This can be useful if the agent has not retained knowledge from previous tells.
+        reingest_all : bool, optional
+            Resets the cache and the agent ingests all previous data from scratch, by default False.
+            This can be useful if the agent has not retained knowledge from previous injestion.
         reason : str, optional
             Reason for closing and restarting the agent, to be recorded to logs, by default ""
         """
         self.stop(reason=f"Close and Restart: {reason}")
-        if clear_tell_cache:
-            self.tell_cache = list()
-        elif retell_all:
-            uids = copy.copy(self.tell_cache)
-            self.tell_cache = list()
-            self.tell_agent_by_uid(uids)
+        if clear_uid_cache:
+            self.known_uid_cache = list()
+        elif reingest_all:
+            uids = copy.copy(self.known_uid_cache)
+            self.known_uid_cache = list()
+            self.ingest_uids(uids)
         self.start()
 
     def signal_handler(self, signal, frame):
@@ -840,10 +840,10 @@ class Agent(ABC):
         """
         self._register_method("generate_report")
         self._register_method("add_suggestions_to_queue")
-        self._register_method("tell_agent_by_uid")
+        self._register_method("ingest_uids")
         self._register_property("queue_add_position", pv_type="str")
-        self._register_property("suggest_on_update", pv_type="bool")
-        self._register_property("report_on_tell", pv_type="bool")
+        self._register_property("suggest_on_injest", pv_type="bool")
+        self._register_property("report_on_ingest", pv_type="bool")
 
     @staticmethod
     def qserver_from_host_and_key(host: str, key: str):
@@ -905,7 +905,7 @@ class Agent(ABC):
             Existing topic to publish agent documents to.
         subscripion_topics : List[str]
             List of existing_topics as strings such as ["topic-1", "topic-2"]. These should be
-            the sources of the Bluesky stop documents that trigger ``tell`` and agent directives.
+            the sources of the Bluesky stop documents that trigger ``ingest`` and agent directives.
         data_profile_name : str
             Tiled profile name to serve as source of data (BlueskyRuns) for the agent.
         agent_profile_name : str
@@ -982,7 +982,7 @@ class MonarchSubjectAgent(Agent, ABC):
         - unpack_run
         - subject_measurement_plan
         Agent specific:
-        - tell
+        - ingest
         - suggest
         - subject_suggest
         - report (optional)

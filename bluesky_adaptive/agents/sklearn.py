@@ -3,7 +3,7 @@ Module of mixins for agents that range from the sensible to the useless.
 These mixins act to fufill the abstract methods of blusky_adaptive.agents.Agent that are relevant to
 the decision making, and not the experimental specifics.
 Some of these are passive, and will not implement an suggest.
-    - tell
+    - ingest
     - suggest
     - report (optional)
     - name (optional)
@@ -48,7 +48,7 @@ class SklearnEstimatorAgentBase(Agent, ABC):
         self.observable_cache = []
         self.model = estimator
 
-    def tell(self, x, y):
+    def ingest(self, x, y):
         self.independent_cache.append(x)
         self.observable_cache.append(y)
         return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
@@ -89,7 +89,7 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
         return dict(
             components=components,
             cache_len=len(self.independent_cache),
-            latest_data=self.tell_cache[-1],
+            latest_data=self.known_uid_cache[-1],
         )
 
     @staticmethod
@@ -119,7 +119,9 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
         latest_uid = run.report["data"]["latest_data"][idx]
         independents, observables = [], []
         for ind, obs, uid in zip(
-            run.tell["data"]["independent_variable"], run.tell["data"]["observable"], run.tell["data"]["exp_uid"]
+            run.ingest["data"]["independent_variable"],
+            run.ingest["data"]["observable"],
+            run.ingest["data"]["exp_uid"],
         ):
             independents.append(ind)
             observables.append(obs)
@@ -163,7 +165,7 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         return dict(
             cluster_centers=self.model.cluster_centers_,
             cache_len=len(self.independent_cache),
-            latest_data=self.tell_cache[-1],
+            latest_data=self.known_uid_cache[-1],
         )
 
     @staticmethod
@@ -193,7 +195,9 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         latest_uid = run.report["data"]["latest_data"][idx]
         independents, observables = [], []
         for ind, obs, uid in zip(
-            run.tell["data"]["independent_variable"], run.tell["data"]["observable"], run.tell["data"]["exp_uid"]
+            run.ingest["data"]["independent_variable"],
+            run.ingest["data"]["observable"],
+            run.ingest["data"]["exp_uid"],
         ):
             independents.append(ind)
             observables.append(obs)

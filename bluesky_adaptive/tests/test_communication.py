@@ -67,7 +67,7 @@ class BasicCommunicationAgent(Agent):
             [0 for _ in range(batch_size)],
         )
 
-    def tell(self, x, y) -> dict:
+    def ingest(self, x, y) -> dict:
         self.count += 1
         return dict(x=x, y=y)
 
@@ -120,8 +120,8 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, kafka_produ
         agent.start()
         docs, _ = agent.suggest(1)
         suggest_uid = agent._write_event("suggest", docs[0])
-        doc = agent.tell(0, 0)
-        _ = agent._write_event("tell", doc)
+        doc = agent.ingest(0, 0)
+        _ = agent._write_event("ingest", doc)
         doc = agent.report()
         _ = agent._write_event("report", doc)
 
@@ -131,5 +131,5 @@ def test_agent_doc_stream(temporary_topics, kafka_bootstrap_servers, kafka_produ
         assert documents[2][0] == "event_page"
         assert "report" in cat[-1].metadata["summary"]["stream_names"]
         assert "suggest" in cat[-1].metadata["summary"]["stream_names"]
-        assert "tell" in cat[-1].metadata["summary"]["stream_names"]
+        assert "ingest" in cat[-1].metadata["summary"]["stream_names"]
         assert isinstance(suggest_uid, str)

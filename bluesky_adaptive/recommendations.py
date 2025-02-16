@@ -29,14 +29,14 @@ class StepRecommender:
         self.step = step
         self.next_point = None
 
-    def tell(self, x, y):
+    def ingest(self, x, y):
         self.next_point = x + self.step
 
-    def tell_many(self, xs, ys):
+    def ingest_many(self, xs, ys):
         for x, y in zip(xs, ys):
-            self.tell(x, y)
+            self.ingest(x, y)
 
-    def suggest(self, n, tell_pending=True):
+    def suggest(self, n):
         if n != 1:
             raise NotImplementedError
         if self.next_point is None:
@@ -57,15 +57,15 @@ class SequenceRecommender:
         """
         self.seq_iter = iter(seq)
 
-    def tell(self, x, y):
+    def ingest(self, x, y):
         # we don't care about input, just go through our sequence
         ...
 
-    def tell_many(self, xs, ys):
+    def ingest_many(self, xs, ys):
         # we don't care about input, just go through our sequence
         ...
 
-    def suggest(self, n, tell_pending=True):
+    def suggest(self, n):
         if n != 1:
             raise NotImplementedError
         try:

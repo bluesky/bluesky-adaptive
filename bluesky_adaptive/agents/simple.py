@@ -2,7 +2,7 @@
 Module of mixins for agents that range from the sensible to the useless.
 These mixins act to fufill the abstract methods of blusky_adaptive.agents.Agent that are relevant to
 the decision making, and not the experimental specifics.
-    - tell
+    - ingest
     - suggest
     - report (optional)
     - name (optional)
@@ -95,7 +95,7 @@ class SequentialAgentBase(Agent, ABC):
             else:
                 yield point
 
-    def tell(self, x, y) -> dict:
+    def ingest(self, x, y) -> dict:
         self.independent_cache.append(x)
         self.observable_cache.append(y)
         return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))

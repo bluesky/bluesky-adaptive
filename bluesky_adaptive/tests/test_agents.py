@@ -33,7 +33,7 @@ class NapAndCountAgent(OfflineAgent):
             [0 for _ in range(batch_size)],
         )
 
-    def tell(self, x, y) -> dict:
+    def ingest(self, x, y) -> dict:
         self.count += 1
         return dict(x=x, y=y)
 

@@ -93,7 +93,7 @@ def recommender_factory(adaptive_obj, independent_keys, dependent_keys, *, max_c
             if poisoned:
                 return
             independent, measurement = extract_event_page(independent_keys, dependent_keys, payload=doc["data"])
-            adaptive_obj.tell_many(independent, measurement)
+            adaptive_obj.ingest_many(independent, measurement)
             # pull the next point out of the adaptive API
             try:
                 next_point = adaptive_obj.suggest(1)

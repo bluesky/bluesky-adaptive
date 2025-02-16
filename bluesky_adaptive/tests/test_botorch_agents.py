@@ -22,7 +22,7 @@ class GPTestAgent(SingleTaskGPAgentBase, OfflineAgent):
 
 
 def test_gp_agent(catalog):
-    # Test tell, suggest, and report; uses Tiled functionality
+    # Test ingest, suggest, and report; uses Tiled functionality
     bounds = torch.Tensor([(0, 1), (0, 1)])
     agent = GPTestAgent(bounds=bounds, tiled_data_node=catalog, tiled_agent_node=catalog)
     agent.start()
@@ -31,10 +31,10 @@ def test_gp_agent(catalog):
         uid = f"uid{i}"
         x = np.random.rand(2)
         y = 1 - np.sum(np.sin(x)) + np.random.rand() * 0.01
-        doc = agent.tell(x, y)
+        doc = agent.ingest(x, y)
         doc["exp_uid"] = uid
-        agent._write_event("tell", doc)
-        agent.tell_cache.append(uid)
+        agent._write_event("ingest", doc)
+        agent.known_uid_cache.append(uid)
     agent.generate_report()
     doc, query = agent.suggest()
     agent._write_event("suggest", doc[0])
@@ -48,7 +48,7 @@ def test_gp_agent(catalog):
     assert xr["acquisition_value"].shape == (2,)
     xr = run.report.read()
     assert xr["STATEDICT-beta"].shape == (1,)
-    xr = run.tell.read()
+    xr = run.ingest.read()
     assert isinstance(xr, Dataset)
 
 
@@ -61,10 +61,10 @@ def test_remodel_from_report(catalog):
         uid = f"uid{i}"
         x = np.random.rand(2)
         y = 1 - np.sum(np.sin(x)) + np.random.rand() * 0.01
-        doc = agent.tell(x, y)
+        doc = agent.ingest(x, y)
         doc["exp_uid"] = uid
-        agent._write_event("tell", doc)
-        agent.tell_cache.append(uid)
+        agent._write_event("ingest", doc)
+        agent.known_uid_cache.append(uid)
     agent.generate_report()
     agent.stop()
 
