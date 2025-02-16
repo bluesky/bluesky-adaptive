@@ -27,10 +27,13 @@ class NapAndCountAgent(OfflineAgent):
     def report(self, report_number: int = 0) -> dict:
         return dict(agent_name=self.instance_name, report=f"report_{report_number}")
 
-    def ask(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
-        return ([dict(agent_name=self.instance_name, report=f"ask_{batch_size}")], [0 for _ in range(batch_size)])
+    def suggest(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
+        return (
+            [dict(agent_name=self.instance_name, report=f"suggestion_{batch_size}")],
+            [0 for _ in range(batch_size)],
+        )
 
-    def tell(self, x, y) -> dict:
+    def ingest(self, x, y) -> dict:
         self.count += 1
         return dict(x=x, y=y)
 
@@ -84,7 +87,7 @@ class SequentialTestAgent(SequentialAgentBase, OfflineAgent):
 def test_sequntial_agent():
     agent = SequentialTestAgent(sequence=[1, 2, 3])
     for i in [1, 2, 3]:
-        _, points = agent.ask()
+        _, points = agent.suggest()
         assert len(points) == 1
         assert points[0] == i
 
@@ -93,10 +96,10 @@ def test_sequential_agent_array():
     from itertools import product
 
     agent = SequentialTestAgent(sequence=product([1, 2, 3], [4, 5, 6]))
-    _, points = agent.ask()
+    _, points = agent.suggest()
     assert len(points) == 1
     assert points[0][0] == 1 and points[0][1] == 4
-    _, points = agent.ask(2)
+    _, points = agent.suggest(2)
     assert len(points) == 2
     assert points[0][0] == 1
     assert points[1][1] == 6
@@ -124,7 +127,7 @@ class MonarchSubjectTestAgent(SequentialAgentBase, OfflineMonarchSubject):
     def subject_measurement_plan(self, point: ArrayLike):
         return "agent_driven_nap", [0.7], dict()
 
-    def subject_ask(self, batch_size: int):
+    def subject_suggest(self, batch_size: int):
         return [dict()], [0.0 for _ in range(batch_size)]
 
     def unpack_run(self, run: BlueskyRunLike):

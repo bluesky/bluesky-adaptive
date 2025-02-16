@@ -198,7 +198,7 @@ def test_agent_interaction(kafka_bootstrap_servers, kafka_producer_config, tempo
     """Test AgentConsumer collection of documents with Dummy agent that caches and can interact with kafka"""
 
     class DummyAgent:
-        """Simple agent to test the interactivity of an Agent consumer by using a tell to cache documents
+        """Simple agent to test the interactivity of an Agent consumer by using an ingest to cache documents
         and an internal counter that can be triggered by kafka mesages"""
 
         agent_name = instance_name = "dummy_agent"
@@ -217,7 +217,7 @@ def test_agent_interaction(kafka_bootstrap_servers, kafka_producer_config, tempo
         def increase(self):
             self.counter += 1
 
-        def tell(self, name, doc):
+        def ingest(self, name, doc):
             self.cache.append((name, doc))
 
     def fixed_consumer(topics):
@@ -229,7 +229,7 @@ def test_agent_interaction(kafka_bootstrap_servers, kafka_producer_config, tempo
 
         agent = DummyAgent(topics)
         agent.consumer.subscribe(process_document)
-        agent.consumer.subscribe(agent.tell)
+        agent.consumer.subscribe(agent.ingest)
         start_time = ttime.monotonic()
         sec = 5
 

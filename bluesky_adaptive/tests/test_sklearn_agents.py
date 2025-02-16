@@ -18,7 +18,7 @@ from ..typing import BlueskyRunLike
 
 class DummyAgentMixin:
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, ask_on_tell=False, **kwargs)
+        super().__init__(*args, suggest_on_ingest=False, **kwargs)
         self.counter = 0
 
     def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
@@ -43,16 +43,16 @@ def test_decomp_agent(estimator):
     )
     agent.start()
     for i in range(5):
-        agent.tell(float(i), np.random.rand(10))
-        agent.tell_cache.append(f"uid{i}")  # dummy uid
+        agent.ingest(float(i), np.random.rand(10))
+        agent.known_uid_cache.append(f"uid{i}")  # dummy uid
     doc = agent.report()
     components = doc["components"]
     assert components.shape == (2, 10)  # shape after 1 report
     assert doc["latest_data"] == "uid4"  # most recent uid
 
     for i in range(5, 10):
-        agent.tell(float(i), np.random.rand(10))
-        agent.tell_cache.append(f"uid{i}")  # dummy uid
+        agent.ingest(float(i), np.random.rand(10))
+        agent.known_uid_cache.append(f"uid{i}")  # dummy uid
     doc = agent.report()
     components = doc["components"]
     assert components.shape == (2, 10)  # shape after 1 report
@@ -86,8 +86,8 @@ def test_decomp_remodel_from_report(
         RE(count([hw.det]))
         agent.kafka_consumer.trigger()
 
-    assert "tell" in catalog[agent_uid]
-    assert len(catalog[agent_uid].tell.data["time"]) == 5
+    assert "ingest" in catalog[agent_uid]
+    assert len(catalog[agent_uid].ingest.data["time"]) == 5
     agent.generate_report()
 
     # Letting databroker catch up to report. Should take little time
@@ -112,16 +112,16 @@ def test_cluster_agent(estimator):
     )
     agent.start()
     for i in range(5):
-        agent.tell(float(i), np.random.rand(10))
-        agent.tell_cache.append(f"uid{i}")  # dummy uid
+        agent.ingest(float(i), np.random.rand(10))
+        agent.known_uid_cache.append(f"uid{i}")  # dummy uid
     doc = agent.report()
     cluster_centers = doc["cluster_centers"]
     assert cluster_centers.shape == (2, 10)  # shape after 1 report
     assert doc["latest_data"] == "uid4"  # most recent uid
 
     for i in range(5, 10):
-        agent.tell(float(i), np.random.rand(10))
-        agent.tell_cache.append(f"uid{i}")  # dummy uid
+        agent.ingest(float(i), np.random.rand(10))
+        agent.known_uid_cache.append(f"uid{i}")  # dummy uid
     doc = agent.report()
     cluster_centers = doc["cluster_centers"]
     assert cluster_centers.shape == (2, 10)  # shape after 2 reports the same
@@ -154,8 +154,8 @@ def test_cluster_remodel_from_report(
         RE(count([hw.det]))
         agent.kafka_consumer.trigger()
 
-    assert "tell" in catalog[agent_uid]
-    assert len(catalog[agent_uid].tell.data["time"]) == 5
+    assert "ingest" in catalog[agent_uid]
+    assert len(catalog[agent_uid].ingest.data["time"]) == 5
     agent.generate_report()
 
     # Letting mongo/kafka catch up to report

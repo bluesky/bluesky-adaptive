@@ -96,7 +96,7 @@ def test_adjudicator_by_name():
     adjudicator._add_suggestion_to_queue(
         re_manager,
         "good",
-        Suggestion(ask_uid="test", plan_name="agent_driven_nap", plan_args=[1.5], plan_kwargs={}),
+        Suggestion(suggestion_uid="test", plan_name="agent_driven_nap", plan_args=[1.5], plan_kwargs={}),
     )
     assert re_manager.status()["items_in_queue"] == 1
 

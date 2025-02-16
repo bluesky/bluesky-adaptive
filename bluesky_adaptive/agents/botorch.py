@@ -113,7 +113,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
         self.metadata.update(_md)
         super().start(*args, **kwargs)
 
-    def tell(self, x, y):
+    def ingest(self, x, y):
         if self.inputs is None:
             self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device))
             self.targets = torch.atleast_1d(torch.tensor(y, device=self.device))
@@ -132,7 +132,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
         fit_gpytorch_mll(self.mll)
         acqf = self._partial_acqf(self.surrogate_model)
         return dict(
-            latest_data=self.tell_cache[-1],
+            latest_data=self.known_uid_cache[-1],
             cache_len=self.inputs.shape[0],
             **{
                 "STATEDICT-" + ":".join(key.split(".")): val.detach().cpu().numpy()
@@ -140,7 +140,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             },
         )
 
-    def ask(self, batch_size=1):
+    def suggest(self, batch_size=1):
         """Fit GP, optimize acquisition function, and return next points.
         Document retains candidate, acquisition values, and state dictionary.
         """
@@ -162,7 +162,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
                 dict(
                     candidate=candidate.detach().cpu().numpy(),
                     acquisition_value=acq_value.detach().cpu().numpy(),
-                    latest_data=self.tell_cache[-1],
+                    latest_data=self.known_uid_cache[-1],
                     cache_len=self.inputs.shape[0],
                     **{
                         "STATEDICT-" + ":".join(key.split(".")): val.detach().cpu().numpy()

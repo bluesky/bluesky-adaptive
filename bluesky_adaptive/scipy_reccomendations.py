@@ -24,7 +24,7 @@ class MinimizerReccomender:
         self.result = None
         self._thread = None
 
-    def tell(self, x, y):
+    def ingest(self, x, y):
         self._internal_from_exp.put(y * self._scale)
         if self._thread is None:
 
@@ -37,11 +37,11 @@ class MinimizerReccomender:
                     x = yield self._internal_from_exp.get()
                     while True:
                         # which we that put on the out queue which will be
-                        # picked up by "ask"
+                        # picked up by ``suggest``
                         self._internal_to_exp.put(x)
                         # we then block (the background thread) on getting the
                         # next measurement which will be put in place by the
-                        # next call to tell
+                        # next call to ingest
                         x = yield self._internal_from_exp.get()
 
                 gen = inner_gen()
@@ -56,11 +56,11 @@ class MinimizerReccomender:
             self._thread = Thread(target=minimize_worker, args=(x,))
             self._thread.start()
 
-    def tell_many(self, xs, ys):
+    def ingest_many(self, xs, ys):
         for x, y in zip(xs, ys):
-            self.tell(x, y)
+            self.ingest(x, y)
 
-    def ask(self, n, tell_pending=True):
+    def suggest(self, n):
         if self._minimizer_done.is_set():
             raise NoRecommendation
         try:

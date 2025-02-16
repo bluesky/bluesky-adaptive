@@ -127,7 +127,7 @@ def recommender_factory(
 
     target_keys : List[String]
         Keys passed back to the plan, must be the same length as
-        the return of `adaptive_obj.ask(1)`
+        the return of `adaptive_obj.suggest(1)`
 
     stream_names : Tuple[String], default ("primary",)
         The streams to be offered to the
@@ -140,7 +140,7 @@ def recommender_factory(
         If not given, a new queue will be created.
 
     target_transforms : Dict[String, Callable], optional
-        Transforms to be applied to the values from ask before returning
+        Transforms to be applied to the values from suggestion before returning
         to the run engine.  This can be useful handling trivial coordinate
         transformations.
 
@@ -162,7 +162,7 @@ def recommender_factory(
     if target_transforms is None:
         target_transforms = {}
 
-    def tell_recommender(event):
+    def ingest_recommender(event):
         run = event.run
 
         independent_map = call_or_eval({j: val for j, val in enumerate(independent_keys)}, run, stream_names)
@@ -170,10 +170,10 @@ def recommender_factory(
 
         independent = tuple(independent_map[j] for j in range(len(independent_keys)))
         measurement = tuple(dependent_map[j] for j in range(len(dependent_keys)))
-        adaptive_obj.tell_many(independent, measurement)
+        adaptive_obj.ingest_many(independent, measurement)
         # pull the next point out of the adaptive API
         try:
-            next_point = adaptive_obj.ask(1)
+            next_point = adaptive_obj.suggest(1)
         except NoRecommendation:
             queue.put(None)
         else:
@@ -182,7 +182,7 @@ def recommender_factory(
             else:
                 queue.put({k: target_transforms.get(k, lambda x: x)(v) for k, v in zip(target_keys, next_point)})
 
-    def tell_recommender_on_completion(run):
-        run.events.completed.connect(tell_recommender)
+    def ingest_recommender_on_completion(run):
+        run.events.completed.connect(ingest_recommender)
 
-    return stream_documents_into_runs(tell_recommender_on_completion), queue
+    return stream_documents_into_runs(ingest_recommender_on_completion), queue
