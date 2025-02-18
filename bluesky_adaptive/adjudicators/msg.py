@@ -15,7 +15,7 @@ class Suggestion(BaseModel):
 
 class AdjudicatorMsg(BaseModel):
     agent_name: str
-    suggestions_uid: str
+    uid: str
     suggestions: Dict[str, List[Suggestion]]  # TLA: list
 
 
@@ -37,10 +37,10 @@ if __name__ == "__main__":
     """Example main to show serializing capabilities"""
     import msgpack
 
-    suggestion = Suggestion(ask_uid="123", plan_name="test_plan", plan_args=[1, 3], plan_kwargs={"md": {}})
+    suggestion = Suggestion(suggestion_uid="123", plan_name="test_plan", plan_args=[1, 3], plan_kwargs={"md": {}})
     msg = AdjudicatorMsg(
         agent_name="aardvark",
-        suggestions_uid="456",
+        uid="456",
         suggestions={
             "pdf": [
                 suggestion,

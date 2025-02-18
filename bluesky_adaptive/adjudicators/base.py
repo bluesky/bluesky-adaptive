@@ -78,7 +78,7 @@ class AdjudicatorBase(ABC):
         if name != DEFAULT_NAME:
             return True
         with self._lock:
-            logger.info(f"{doc['agent_name']=}, {doc['suggestions_uid']=}")
+            logger.info(f"{doc['agent_name']=}, {doc['uid']=}")
             self._current_suggestions[doc["agent_name"]] = AdjudicatorMsg(**doc)
 
         if self.prompt_judgment:

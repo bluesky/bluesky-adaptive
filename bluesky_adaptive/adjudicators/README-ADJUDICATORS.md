@@ -13,22 +13,24 @@ Adjustable properties can be incorperated by the server, allowing for web and ca
 
 `make_judgments` can be called promptly after every new document, or only on user command.
 
-
 ## Use Case: Avoiding redundancy
+
 One challenge of having many agents who can write to the queue is they don't know what other agents are suggesting. This can cause multiple agents to have the same idea about the next experiment, and lead an autonomous experiment to run the same plans redundantly. For example, if I had two Bayesian optimization agents that were minimizing their surrogate model uncertainty, they may have a similar idea for the next best area to measure.
 An adjudicator can ensure that only one measurement gets scheduled, but both agents will still recive the data.
 
 ## Use Case: Meta-analysis of many similar agents
+
 You may want to filter down the number of plans comming from multiple agents that are using the same underlying technique.
 This mechanism for increasing diversity could be applied to a suite of exploitative optimizers, or maybe complementary decomposition approaches (NMF/PCA/Kmeans) that are suggesting regions near their primary components.
 An adjudicator that is conducting analysis of many agents will take careful thought and should be tuned to the set of agents it is attending to.
 
 ## Pydantic Message API Enables multi-experiment, multi-beamline suggestions
+
 ```python
-suggestion = Suggestion(ask_uid="123", plan_name="test_plan", plan_args=[1, 3], plan_kwargs={"md": {}})
+suggestion = Suggestion(suggestion_uid="123", plan_name="test_plan", plan_args=[1, 3], plan_kwargs={"md": {}})
 msg = AdjudicatorMsg(
     agent_name="aardvark",
-    suggestions_uid="456",
+    uid="456",
     suggestions={
         "pdf": [
             suggestion,

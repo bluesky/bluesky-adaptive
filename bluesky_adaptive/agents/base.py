@@ -657,7 +657,7 @@ class Agent(ABC):
         suggestions = self._create_suggestion_list(next_points, uid)
         msg = AdjudicatorMsg(
             agent_name=self.instance_name,
-            suggestions_uid=str(uuid.uuid4()),
+            uid=str(uuid.uuid4()),
             suggestions={self.endstation_key: suggestions},
         )
         self.kafka_producer(ADJUDICATOR_STREAM_NAME, msg.dict())
@@ -1087,7 +1087,7 @@ class MonarchSubjectAgent(Agent, ABC):
         suggestions = self._create_suggestion_list(next_points, uid, self.subject_measurement_plan)
         msg = AdjudicatorMsg(
             agent_name=self.instance_name,
-            suggestions_uid=str(uuid.uuid4()),
+            uid=str(uuid.uuid4()),
             suggestions={self.subject_endstation_key: suggestions},
         )
         self.subject_kafka_producer(ADJUDICATOR_STREAM_NAME, msg.dict())
