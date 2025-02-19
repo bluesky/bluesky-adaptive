@@ -186,7 +186,7 @@ class Agent(ABC):
     a catalog to write agent status to, a kafka publisher to write agent documents to,
     and a manager API for the queue-server. Each time a stop document is read,
     the respective BlueskyRun is unpacked by the ``unpack_run`` method into an independent and dependent variable,
-    and told to the agent by the ``ingest`` method.
+    and piped to the agent through the ``ingest`` method.
 
     Children of Agent should implment the following, through direct inheritence or mixin classes:
     Experiment specific:
@@ -765,7 +765,7 @@ class Agent(ABC):
         Parameters
         ----------
         clear_uid_cache : bool, optional
-            Clears the cache of data the agent has been told about, by default False.
+            Clears the cache of uids the agent has ingested, by default False.
             This is useful for a clean slate.
         reingest_all : bool, optional
             Resets the cache and the agent ingests all previous data from scratch, by default False.

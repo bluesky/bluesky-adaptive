@@ -2,6 +2,7 @@
 
 This tutorial depends on starting the Bluesky stack in a pod as shown in [Getting Started Tutorial](getting-started.md).
 The tutorial covers:
+
 - [Lockstep Agent Tutorial](#lockstep-agent-tutorial)
   - [Start BSUI](#start-bsui)
   - [Explore the devices available](#explore-the-devices-available)
@@ -10,9 +11,9 @@ The tutorial covers:
   - [Building a Lockstep Agent](#building-a-lockstep-agent)
   - [Adding comlpexity with multiple signals](#adding-comlpexity-with-multiple-signals)
 
-
 ## Start BSUI
-Firstly, we need to start an ipython session in the same environment as our experiment stack. 
+
+Firstly, we need to start an ipython session in the same environment as our experiment stack.
 Assuming you have cloned the bluesky-pods repository and started the pod as shown in the [Getting Started Tutorial](getting-started.md), we can start the BSUI by running the following command in the same terminal as the pod:
 
 ```bash
@@ -21,12 +22,15 @@ bash launch_bluesky.sh
 ```
 
 ## Explore the devices available
+
 ```python
 get_ipython().user_ns.keys()
 ```
+
 Will list a set of python objects that are available in the current session.
 Some of these are directly from the Bluesky tutorials, such as `RE`, `motor`, `random_walk`.
 We can inspect the devices of interest by just typing their name in the ipython session.
+
 ```python
 In [1]: RE
 Out[1]: <bluesky.run_engine.RunEngine at 0xffff95c10200>
@@ -58,12 +62,14 @@ ab_det = ABDetector(name="ab_det")
 ab_det.read() # To get a feeling for the signals available
 RE(scan([ab_det], motor, -1, 1, 10))
 ```
+
 If you have X11 forwarding enabled, you should see a plot of the random data produced by the scan. (The "ab_det_a" data against the motor value since only the "a" signal is "hinted").
 
 ## Inspecting the data model
+
 A lockstep agent needs to be aware of the keys that it will be receiving from the detector.
-Without diving into the bluesky document model, we can infer this information from the data at storage time. 
-Let's run a fresh scan inspect our most recent `BlueskyRun`. 
+Without diving into the bluesky document model, we can infer this information from the data at storage time.
+Let's run a fresh scan inspect our most recent `BlueskyRun`.
 
 ```python
 RE(scan([ab_det], motor, -1, 1, 10))
@@ -85,6 +91,7 @@ Assuming our independent variable is our motor position, we can see it is keyed 
 Let's use the 'a' signal of our detector as our dependent variable, keyed by `'ab_det_a'`.
 
 ## Building a Lockstep Agent
+
 Now we can build a reccomendation agent that will suggest the next motor position based on the most recent data.
 For this initial application we will build a per-event agent that suggests either -1 or 1 based on the most recent data.
 Since our detector is random, we will move to -1 if the most recent detector signal was less than 0.5, and to 1 otherwise.
@@ -94,14 +101,14 @@ class Agent:
     def __init__(self):
         self.last_value = None
     
-    def tell(self, x, y):
+    def ingest(self, x, y):
         self.last_value = y
 
-    def tell_many(self, xs, ys):
+    def ingest_many(self, xs, ys):
         for x, y in zip(xs, ys):
-            self.tell(x, y)
+            self.ingest(x, y)
 
-    def ask(self, batch_size=1):
+    def suggest(self, batch_size=1):
         if self.last_value is None:
             return 0
         return [-1] if self.last_value < 0.5 else [1]
@@ -118,16 +125,15 @@ RE(plan)
 ```
 
 Your terminal output should be a LiveTable that shows the motor position and the 'a' signal of the detector.
-If the previous value of 'a' was less than 0.5, the motor should move to -1 in the next step, and to 1 otherwise. 
+If the previous value of 'a' was less than 0.5, the motor should move to -1 in the next step, and to 1 otherwise.
 The LivePlot should hold a series of zig-zags as the motor moves back and forth between -1 and 1.
-
 
 ## Adding comlpexity with multiple signals
 
 This agent is very simple, and only uses the 'a' signal of the detector.
 Let's add another independent variable, and another dependent variable to our agent.
-First we can do a deterministic scan over the `motor` and `motor3` (using `motor3` for the Hinted ophyd object). 
-We'll also make the `ab_det_b` signal hinted so it shows up in our plots and tables. 
+First we can do a deterministic scan over the `motor` and `motor3` (using `motor3` for the Hinted ophyd object).
+We'll also make the `ab_det_b` signal hinted so it shows up in our plots and tables.
 
 ```python
 from bluesky.plans import grid_scan
@@ -146,14 +152,14 @@ class Agent2D:
     def __init__(self):
         self.last_values = None
     
-    def tell(self, x, y):
+    def ingest(self, x, y):
         self.last_values = y
 
-    def tell_many(self, xs, ys):
+    def ingest_many(self, xs, ys):
         for x, y in zip(xs, ys):
-            self.tell(x, y)
+            self.ingest(x, y)
 
-    def ask(self, batch_size=1):
+    def suggest(self, batch_size=1):
         if self.last_values is None:
             raise RuntimeError("Agent should be primed with first plan")   
         if self.last_values[0] > self.last_values[1]:
@@ -173,5 +179,4 @@ plan = adaptive_plan([ab_det], {motor: -1.0, motor3: -1.0}, to_recommender=recom
 RE(plan)
 ```
 
-This should give a LiveTable with strictly positive or negative motor positions, and a LivePlot that shows the motor positions in the upper right and lower left quadrants. 
-
+This should give a LiveTable with strictly positive or negative motor positions, and a LivePlot that shows the motor positions in the upper right and lower left quadrants.

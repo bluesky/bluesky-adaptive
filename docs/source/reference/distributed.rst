@@ -17,8 +17,8 @@ they check if the run is relevant to their decision making (*via* ``trigger_cond
 then load the Bluesky Run through Tiled.
 The run is then processed, and unpacked into the relevant independent and dependent variables
 (*via* ``unpack_run``).
-The agent then call's its ``tell`` method on the independent and dependent variables. In this case
-The ``unpack_run`` might pull out some motor coordinates, and a 2-d detector image; and the ``tell``
+The agent then call's its ``ingest`` method on the independent and dependent variables. In this case
+The ``unpack_run`` might pull out some motor coordinates, and a 2-d detector image; and the ``ingest``
 might cache those as relative coordinates and some post-processing of the image.
 
 Agents should subclass the `blusky_adaptive.agents.base.agent` and are responsible for implementing the
@@ -33,8 +33,8 @@ Experiment specific
 Agent 'brains' specific
 -----------------------
 
-
-.. automethod:: bluesky_adaptive.agents.base.Agent.ask
+.. automethod:: bluesky_adaptive.agents.base.Agent.ingest
+.. automethod:: bluesky_adaptive.agents.base.Agent.suggest
 .. automethod:: bluesky_adaptive.agents.base.Agent.report
 .. autoproperty:: bluesky_adaptive.agents.base.Agent.name
 
@@ -75,7 +75,7 @@ as well as the qserver API using some common configuration keys. Both are demons
     from numpy.typing import ArrayLike
 
     class SequentialAgentBase(Agent, ABC):
-        """Agent Mixin to take a pre-defined sequence and walk through it on ``ask``.
+        """Agent Mixin to take a pre-defined sequence and walk through it on ``suggest``.
 
         Parameters
         ----------
@@ -94,7 +94,7 @@ as well as the qserver API using some common configuration keys. Both are demons
             Sequence of points to be queried
         relative_bounds : Tuple[Union[float, ArrayLike]], optional
             Relative bounds for the members of the sequence to follow, by default None
-        ask_count : int
+        suggest_count : int
             Number of queries this agent has made
         """
 
@@ -112,7 +112,7 @@ as well as the qserver API using some common configuration keys. Both are demons
             self.observable_cache = []
             self.sequence = sequence
             self.relative_bounds = relative_bounds
-            self.ask_count = 0
+            self.suggest_count = 0
             self._position_generator = self._create_position_generator()
 
         def _create_position_generator(self) -> Generator:
@@ -142,22 +142,22 @@ as well as the qserver API using some common configuration keys. Both are demons
                 else:
                     yield point
 
-        def tell(self, x, y) -> dict:
+        def ingest(self, x, y) -> dict:
             self.independent_cache.append(x)
             self.observable_cache.append(y)
             return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
 
-        def ask(self, batch_size: int = 1) -> Tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
+        def suggest(self, batch_size: int = 1) -> Tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
             docs = []
             proposals = []
             for _ in range(batch_size):
-                self.ask_count += 1
+                self.suggest_count += 1
                 proposals.append(next(self._position_generator))
-                docs.append(dict(proposal=proposals[-1], ask_count=self.ask_count))
+                docs.append(dict(proposal=proposals[-1], suggest_count=self.suggest_count))
             return docs, proposals
 
         def report(self, **kwargs) -> dict:
-            return dict(percent_completion=self.ask_count / len(self.sequence))
+            return dict(percent_completion=self.suggest_count / len(self.sequence))
 
     class CMSBaseAgent:
 

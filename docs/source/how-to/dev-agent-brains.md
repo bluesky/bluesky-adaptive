@@ -1,44 +1,44 @@
 # Developing Agent/Recommender Algorithms
 
-Implementing your own agent or recommender algorithm in the Bluesky Adaptive framework involves developing a class that follows the `ask`, `tell`, and optionally, `report` method pattern.
+Implementing your own agent or recommender algorithm in the Bluesky Adaptive framework involves developing a class that follows the `ingest`, `suggest`, and optionally, `report` method pattern.
 These methods form the core logic of how your agent interacts with experimental data, makes decisions, and potentially provides insights into its decision-making process.
 
 When experimenting with new agent logic, it's recommended to start with a simple agent that can be easily tested and debugged. As you gain confidence in your agent's performance, you can gradually introduce more complex decision-making logic.
-All that is reccomended to begin development is a mechanism for generating data to pass the agent via the `tell` method.
-This can be done by a simple simulation or by iteratting over historical data. 
+All that is reccomended to begin development is a mechanism for generating data to pass the agent via the `ingest` method.
+This can be done by a simple simulation or by iteratting over historical data.
 
-## The `tell` Method
+## The `ingest` Method
 
-The `tell` method is where the agent is informed about new experimental data. This is where you can update the agent's internal state based on the outcomes of past experiments. It's crucial that this method executes quickly to not delay the experimental process.
+The `ingest` method is where the agent is informed about new experimental data. This is where you can update the agent's internal state based on the outcomes of past experiments. It's crucial that this method executes quickly to not delay the experimental process.
 
 ```python
-def tell(self, x, y) -> dict:
+def ingest(self, x, y) -> dict:
     # Example logic to update the agent's state
     self.update_internal_state(x, y)
     return {"x": x, "y": y}
 ```
 
-The `tell_many` method is exactly like the tell method, but for multiple entries at a time. For instance, if your `BlueskyRun` actually collects several points in your experiment space. This is not required for the async agents that build off the base class, but the default implementation is a simple loop over the `tell` method.
+The `ingest_many` method is exactly like the ingest method, but for multiple entries at a time. For instance, if your `BlueskyRun` actually collects several points in your experiment space. This is not required for the async agents that build off the base class, but the default implementation is a simple loop over the `ingest` method.
 Therefore, it is advised to implement this method if vectorized operations are possible.
 
 ```python
-def tell_many(self, xs, ys) -> List[dict]:
+def ingest_many(self, xs, ys) -> List[dict]:
     self.vetorized_update_internal_state(xs, ys)
     return [{"x": x, "y": y} for x, y in zip(xs, ys)]
 ```
 
-## The `ask` Method
+## The `suggest` Method
 
-The `ask` method is called to query your agent for its next recommendation on what experiment should be conducted next.
+The `suggest` method is called to query your agent for its next recommendation on what experiment should be conducted next.
 This method should return the parameters for the next step in the experiment based on the current state of the agent.
 This can include the next set of conditions to test or the next location to sample.
 It should also return a dictionary whos contents will be stored as an event document in the Bluesky document model.
 This dictionary gives you the opportunity to record any additional information about the agent's decision-making process, the reasoning behind the decision, or any other relevant details that you may want to analyze later.
-Specifically, the `ask` method should return a tuple of two sequences: a sequence of dictionaries and a sequence of arrays.
+Specifically, the `suggest` method should return a tuple of two sequences: a sequence of dictionaries and a sequence of arrays.
 Even if you are only returning one step, it should be in a list.
 
 ```python
-def ask(self, batch_size) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+def suggest(self, batch_size) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
     # Example logic to determine the next step
     next_steps = [self.calculate_next_step() for _ in range(batch_size)]
     return ([{"next_step": next_step, "reasoning":..., "other_info":...} for next_step in next_steps], 
@@ -67,16 +67,16 @@ Document values should be arrays or scalars that do not change shape throughout 
 For more information see [the reference api](../reference/agent-api).
 ```
 
-The `tell` document, like the `tell` method should be lightweight. Downstream it is stored with timestamps, so it is not necessary to include that information in the document.
+The `ingest` document, like the `ingest` method should be lightweight. Downstream it is stored with timestamps, so it is not necessary to include that information in the document.
 These timestamps can make it useful for queries such as, "Given this report at this time, what was the most recent data the agent had seen?".
 
-The `ask` document should include any information that you would like to be able to query later. This could be the reasoning behind the decision, the agent's internal state, or any other information that you think would be useful to have in the future.
+The `suggest` document should include any information that you would like to be able to query later. This could be the reasoning behind the decision, the agent's internal state, or any other information that you think would be useful to have in the future.
 Particularly, if you are developing a new agent, it is useful to include the reasoning behind the decision, as this can help you debug the agent's behavior later.
 This also enables user trust in the agent's decision-making process.
-A more lengthy example of an `ask` document can be found in the reference implementation of a BoTorch agent. It stores everything the needed to recreate the exact model state at the time of the decision.
+A more lengthy example of an `suggest` document can be found in the reference implementation of a BoTorch agent. It stores everything the needed to recreate the exact model state at the time of the decision.
 
 ```python
-def ask(self, batch_size=1):
+def suggest(self, batch_size=1):
     """Fit GP, optimize acquisition function, and return next points.
     Document retains candidate, acquisition values, and state dictionary.
     """
@@ -98,7 +98,7 @@ def ask(self, batch_size=1):
             dict(
                 candidate=candidate.detach().cpu().numpy(),
                 acquisition_value=acq_value.detach().cpu().numpy(),
-                latest_data=self.tell_cache[-1],
+                latest_data=self.known_uid_cache[-1],
                 cache_len=self.inputs.shape[0],
                 **{
                     "STATEDICT-" + ":".join(key.split(".")): val.detach().cpu().numpy()
@@ -123,7 +123,7 @@ def report(self):
         "model": self.model.state_dict(),
         "optimizer": self.optimizer.state_dict(),
         "scheduler": self.scheduler.state_dict(),
-        "latest_data": self.tell_cache[-1],
+        "latest_data": self.known_uid_cache[-1],
         "cache_len": self.inputs.shape[0],
     }
 ```
