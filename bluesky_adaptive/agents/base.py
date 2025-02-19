@@ -4,7 +4,7 @@ import sys
 import threading
 import time as ttime
 import uuid
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from logging import getLogger
 from typing import Callable, Dict, Iterable, List, Literal, Optional, Sequence, Tuple, TypedDict, Union
@@ -177,7 +177,26 @@ def infer_data_keys(doc: dict) -> DataKeys:
     return data_keys
 
 
-class Agent(ABC):
+class BackwardCompatMeta(ABCMeta):
+    def __new__(cls, name, bases, dct):
+        if "tell" in dct and "ingest" not in dct:
+            dct["ingest"] = dct["tell"]
+            logger.warning(
+                "Agent subclass has a tell method. "
+                "This is deprecated and will be removed prior to a major release. "
+                "Please use ingest instead. Setting `ingest` to implemented `tell`."
+            )
+        if "ask" in dct and "suggest" not in dct:
+            dct["suggest"] = dct["ask"]
+            logger.warning(
+                "Agent subclass has an ask method. "
+                "This is deprecated and will be removed prior to a major release. "
+                "Please use suggest instead. Setting suggest to implemeneted ask."
+            )
+        return super().__new__(cls, name, bases, dct)
+
+
+class Agent(ABC, metaclass=BackwardCompatMeta):
     """Abstract base class for a single plan agent. These agents should consume data, decide where to measure next,
     and execute a single type of plan (something akin to move and count).
     Alternatively, these agents can be used for soley reporting.
