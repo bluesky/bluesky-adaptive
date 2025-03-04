@@ -2,7 +2,7 @@
 Module of mixins for agents that range from the sensible to the useless.
 These mixins act to fufill the abstract methods of blusky_adaptive.agents.Agent that are relevant to
 the decision making, and not the experimental specifics.
-Some of these are passive, and will not implement an suggest.
+Some of these are passive, and will not implement a suggest.
     - ingest
     - suggest
     - report (optional)
