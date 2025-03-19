@@ -6,34 +6,37 @@ These can be effectively combined with beamline/experiment specific base classes
 
 An agent can be broken down into these three methods:
 
-- `tell`: in which we tell the agent about some new data
-- `ask`: in which we ask the agent what data to acquire next
-- `report`: in which we have the agent report about its current thinking
+- `ingest`: in which the agent ingests some new data
+- `suggest`: in which the agent suggests what data to acquire next
+- `report`: in which the agent reports about its current thinking
 
 These three methods are the core of the agent API, that works for both the lock-step reccomendation engines, and the asynchronous agents that can be run as services.
 Critically, each of the three methods will return documents that are stored as unique streams in the event model. This enables us to look back at what an agent saw and was thinking as an experimental campaign progressed. As such, it is important that the shape of each field in these docs remain consistent throughout the experiment.
 A simple, but sufficiently complex example is provided in `bluesky_adaptive.agents.botorch.SingleTaskGPAgentBase`.
 
 ## A Note on Documents
+
 ```{note}
 In the lockstep API the agent methods below are not expected to return documents (as of 0.3.1). 
 In the asynchronous API, the agent methods below are expected to return documents.
 These documents are treated like detectors in the event model, and are stored in the event model as a unique stream.
 Because of this, it is critical for the agent to return documents that are consistent in shape and content.
 ```
+
 This allows the Databroker, or Tiled, to slice the output of the agent and reconstruct the full dataset that informed the agent's decision making.
 For example, we may want to look at a particular component of a decompositio over time, or a subset of weights in a neural network. 
 If the agent has registered methdos that will change the shape fo the document stream, it should be closed and restarted. 
 This can be accomplished automatically using `self.close_and_restart()` after the modification.
 Detailed use of this can be found in the [sklearn example agents](../reference/example-agents.md), as a common need for decomposition and clustering agents is to change the number of components or clusters as more data is gathered. 
 
-## Tell 
-The `tell` method converts the (x,y) pair into pytorch tensors and manages any GPU/CPU needs. It returns a document that holds the independent and dependent pair, as well as the current cache length. 
-This operation occurs every time the triggering document is received, therefore it should be fast. 
-This enables an agent to be loaded in Tiled, and the data it's been made aware of to be sliced, e.g., ```node[agent_uid].tell.data['observable'][-10:]```.
+## Ingest
+
+The `ingest` method converts the (x,y) pair into pytorch tensors and manages any GPU/CPU needs. It returns a document that holds the independent and dependent pair, as well as the current cache length.
+This operation occurs every time the triggering document is received, therefore it should be implemented for speed.
+This enables an agent to be loaded in Tiled, and the data it's been made aware of to be sliced, e.g., ```node[agent_uid].ingest.data['observable'][-10:]```.
 
 ```python
-def tell(self, x, y):
+def ingest(self, x, y):
     if self.inputs is None:
         self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device))
         self.targets = torch.atleast_1d(torch.tensor(y, device=self.device))
@@ -46,15 +49,16 @@ def tell(self, x, y):
     return dict(independent_variable=x, observable=y, cache_len=len(self.targets))
 ```
 
-## Ask
-The `ask` method returns a list of documents and corresponding list of points to query/acquire.
+## Suggest
+
+The `suggest` method returns a list of documents and corresponding list of points to query/acquire.
 In the BoTorch case, the agent fits a GP and optimizes and acquisition function get suggested points.
 The returned documents retain one suggestion per document, along with its acquisition value, and the full state dictionary of the model for retrospective inspection.
-It also highlights the most recent uid the agent was told about, and amount of data the agent knows about. In this way, it is possible to reconstruct the full dataset that informed this decision WITHOUT placing the full dataset in the document (through the use of the tell stream and queries).
+It also highlights the most recent uid the agent ingested, and amount of data the agent knows about. In this way, it is possible to reconstruct the full dataset that informed this decision WITHOUT placing the full dataset in the document (through the use of the tell stream and queries).
 Because the event model is more compatible with numpy arrays, we also take the step of converting the data here from (possibly GPU based) tensors into numpy arrays.
 
 ```python
-def ask(self, batch_size=1):
+def suggest(self, batch_size=1):
     """Fit GP, optimize acquisition function, and return next points.
     Document retains candidate, acquisition values, and state dictionary.
     """
@@ -90,7 +94,8 @@ def ask(self, batch_size=1):
 
 ## Report
 
-The `report` for this agent is nearly identical to the `ask` method, except it does not suggest points, and only returns one document.
+The `report` for _this_ agent is nearly identical to the `suggest` method, except it does not suggest points, and only returns one document. Other agents may have more complex reports, such as a decomposition of a dataset, or a summary of the agent's internal confidence.
+
 ```python
 def report(self):
         """Fit GP, and construct acquisition function.
@@ -111,13 +116,14 @@ def report(self):
 ## Beamline and experiment specific methods
 
 ### Lock-step Agents
-In the case of lock-step agents, the agent follows a functional approach and assembles information directly from the document model. 
+
+In the case of lock-step agents, the agent follows a functional approach and assembles information directly from the document model.
 In the examples provided in [the accompanying docs](lock-step), the agent retreives its data using `independent_keys` and `dependent_keys` arguments to process the relevant documents.
 There is no need for a trigger condition, and the measurement plan is passed as an argument to the adaptive plans assuming that the only "independent variable" changes are motor movements.
-For increased flexibility, these plans and factories can be used as boilerplate chaning the inner plans to suite the experiment needs. 
-
+For increased flexibility, these plans and factories can be used as boilerplate chaning the inner plans to suite the experiment needs.
 
 ### Distrubted Asynchronous Agents
+
 In the case of distributed asynchronous agents, the agent follows an object oriented approach and requires a few additional methods.
 These methods include `unpack_run`, `measurement_plan`, and optionally `trigger_condition`. When an agent detects a stop document via Kafka they check if the run is relevant to their decision making using `trigger_condition(uid)`, then load the Bluesky Run through Tiled.
 The run is unpacked into independent and dependent variables. When it is time for an agent to make a decision and add something to the queue, it selects a new value(s) for the independent variable and generates a measurement plan.

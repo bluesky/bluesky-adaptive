@@ -56,7 +56,7 @@ class AdjudicatorBase(ABC):
         self._lock = Lock()
         self._thread = None
         self._current_suggestions = {}  # agent_name: AdjudicatorMsg
-        self._ask_uids = DequeSet()
+        self._suggestion_uids = DequeSet()
         self._prompt = True
 
         try:
@@ -78,7 +78,7 @@ class AdjudicatorBase(ABC):
         if name != DEFAULT_NAME:
             return True
         with self._lock:
-            logger.info(f"{doc['agent_name']=}, {doc['suggestions_uid']=}")
+            logger.info(f"{doc['agent_name']=}, {doc['uid']=}")
             self._current_suggestions[doc["agent_name"]] = AdjudicatorMsg(**doc)
 
         if self.prompt_judgment:
@@ -106,14 +106,17 @@ class AdjudicatorBase(ABC):
         self._prompt = flag
 
     def _add_suggestion_to_queue(self, re_manager: API_Threads_Mixin, agent_name: str, suggestion: Suggestion):
-        if suggestion.ask_uid in self._ask_uids:
-            logger.debug(f"Ask uid {suggestion.ask_uid} has already been seen. Not adding anything to the queue.")
+        if suggestion.suggestion_uid in self._suggestion_uids:
+            logger.debug(
+                f"Suggestion uid {suggestion.suggestion_uid} has already been seen."
+                "Not adding anything to the queue."
+            )
             return
         else:
-            self._ask_uids.append(suggestion.ask_uid)
+            self._suggestion_uids.append(suggestion.suggestion_uid)
         kwargs = suggestion.plan_kwargs
         kwargs.setdefault("md", {})
-        kwargs["md"]["agent_ask_uid"] = suggestion.ask_uid
+        kwargs["md"]["agent_suggest_uid"] = suggestion.suggestion_uid
         kwargs["md"]["agent_name"] = agent_name
         plan = BPlan(suggestion.plan_name, *suggestion.plan_args, **kwargs)
         r = re_manager.item_add(plan, pos="back")

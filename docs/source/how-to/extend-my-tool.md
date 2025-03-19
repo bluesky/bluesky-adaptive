@@ -12,8 +12,8 @@ While there are fewer moving parts in this approach, it requires tighter integra
 
 ### Steps to Integrate Using Lockstep Approach
 
-1. **Identify the Decision Rate**: Determine how frequently your tool needs to analyze data and make decisions. 
-This will help you decide where to insert your tool's functionality in the workflow. 
+1. **Identify the Decision Rate**: Determine how frequently your tool needs to analyze data and make decisions.
+This will help you decide where to insert your tool's functionality in the workflow.
 Some of this depends on how the experimental plans are structured. There is [reference material](../reference/lock-step.rst) describing the distinctions between
 per-event and per-run decision making.
 
@@ -23,12 +23,12 @@ The "reccomender factories" take arguments that specify the independent and depe
 3. **Identify the plan to take a reading**: The adaptive plans need to know how to take a reading.
 This is done by specifying a plan that takes a reading and the detectors to be read.
 
-4. **Define Agent Methods**: Your object requires some notion of `ask` and `tell` methods. `report` is optional and not implemented in the lockstep case.
+4. **Define Agent Methods**: Your object requires some notion of `ingest` and `suggest` methods. `report` is not implemented in the lockstep case, where all agents are active.
 These methods are used by the `reccomender_factory` to interact with your agent.
 Currently, there is no abstract base class to enforce these methods, because there are only two methods to implement.
-The `tell` method should be fast, and is often a caching operation, e.g., updating the arrays your agent uses to make decisions.
-For lockstep agents, a `tell_many` method is also provided, which is called with a list of x and y values. This is necessary for event_pages, with a simple default shown below. 
-The `ask` method can then be used to trigger your existing logic to make a decision and return the next points to measure (in independent variable space from step 2).
+The `ingest` method should be fast, and is often a caching operation, e.g., updating the arrays your agent uses to make decisions.
+For lockstep agents, a `ingest_many` method is also provided, which is called with a list of x and y values. This is necessary for event_pages, with a simple default shown below.
+The `suggest` method can then be used to trigger your existing logic to make a decision and return the next points to measure (in independent variable space from step 2).
 This method consumes a batch size, but for lockstep agents, the batchsize is necessarily 1.  It should return a list of values corresponding to the list of independent keys. (Even if there is only one independent key, it should return a list of length 1.)
 Unlike the asynchronous case, in the lockstep case, neither of these methods currently return documents, but this may change in the future.
 
@@ -38,23 +38,23 @@ Unlike the asynchronous case, in the lockstep case, neither of these methods cur
             # Initialization code for your tool
             pass
 
-        def tell(self, x: ArrayLike, y: ArrayLike):
+        def ingest(self, x: ArrayLike, y: ArrayLike):
             # Process new data
             pass
 
-        def tell_many(self, xs: ArrayLike, ys: ArrayLike):
+        def ingest_many(self, xs: ArrayLike, ys: ArrayLike):
             # Process multiple new data points
             for x, y in zip(xs, ys):
-                self.tell(x, y)
+                self.ingest(x, y)
 
-        def ask(self, batch_size=1) -> Sequence[ArrayLike]:
+        def suggest(self, batch_size=1) -> Sequence[ArrayLike]:
             # Decide on the next experiment step
             # Here you should call your tools pre-existing logic to make a choice.
             next_step = self.your_existing_logic()
             return np.atleast_1d(next_step)
     ```
 
-1. **Execute with RunEngine**: Execute your custom adaptive measurement plan with the Bluesky RunEngine, ensuring real-time data analysis and adaptive decision-making.
+5. **Execute with RunEngine**: Execute your custom adaptive measurement plan with the Bluesky RunEngine, ensuring real-time data analysis and adaptive decision-making.
 
     ```python
     RE = RunEngine({})
@@ -71,13 +71,11 @@ It does involve more moving parts, which may require additional infrastructure t
 
 ### Steps to Integrate Using Asynchronous Approach
 
-1. **Inherit from Base Agent Class**: Your tool should inherit from `bluesky_adaptive.agents.base.Agent`, implementing the required methods such as `ask`, `tell`, and `report`. 
-An abstract base class like `base.Agent` will protect you at runtime from missing any of the required methods.
+1. **Inherit from Base Agent Class**: Your tool should inherit from `bluesky_adaptive.agents.base.Agent`, implementing the logic specific methods such as `ingest`, `report`, and `suggest`. Only `ingest` is strictly required, whereas `report` is necessary for Passive agents, and `suggest` is necessary for Active agents.
 This allows your tool to receive data, make decisions, and suggest future actions.
 The instructions here are the same as above, but the agent specific methods should also return a dictionary that is stored as an event document in the Bluesky document model. The values of this dictionary should be arrays or scalars that do not change shape throughout the experiment, and the keys should be strings.
-Again, the `tell` method should be fast, as this happens every time a new event is emitted. `tell_many` does not need to be implemented here, as the ABC holds a default, but if vectorized operations are possible, it is recommended to implement it.
-The `ask` and `report` have no obligation to be quick, as they are not necessarily called in the same tight loop.
-
+Again, the `ingest` method should be fast, as this happens every time a new event is emitted. `ingest_many` does not need to be implemented here, as the ABC holds a default, but if vectorized operations are possible, it is recommended to implement it.
+The `suggest` and `report` have no obligation to be quick, as they are not necessarily called in the same tight loop.
 
     ```python
     class YourAsyncAgent(Agent):
@@ -85,11 +83,11 @@ The `ask` and `report` have no obligation to be quick, as they are not necessari
             super().__init__(*args, **kwargs)
             # Initialization code for your tool
 
-        def tell(self, x: ArrayLike, y: ArrayLike) -> dict:
+        def ingest(self, x: ArrayLike, y: ArrayLike) -> dict:
             # Process new data
             return {}
 
-        def ask(self, batch_size=1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+        def suggest(self, batch_size=1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
             # Decide on the next experiment step
             return [{...} for next_step in next_steps], [np.atleast_1d(next_step) for next_step in next_steps]
 
@@ -99,9 +97,9 @@ The `ask` and `report` have no obligation to be quick, as they are not necessari
     ```
 
 2. **Define experiment specific methods**: The other methods detailed in [the reference section](../reference/agent-api.md) solve the same problems as declaring independent and dependent "keys" in the lockstep case.
-These allow for more sophisticated interactions between the agent, data, and orchestration. 
+These allow for more sophisticated interactions between the agent, data, and orchestration.
 Required methods here are:
-   - `unpack_run`: Which extracts the independent and dependent variables from a `BlueskyRun` read from Tiled. 
+   - `unpack_run`: Which extracts the independent and dependent variables from a `BlueskyRun` read from Tiled.
    - `measurement_plan`: Consumes the next point (independent variable) provided by the agent decision making, and converts this into a plan name, arguments, and keyword arguments. This returns a `string` (plan name), `list` (args), and `dict` (kwargs).
    - `trigger_condition`: Which determines whether or not a `BlueskyRun` is relevant to agent. This is useful in settings where some measurements are background, or ancilary from an agent's perspective. If not imlpemented, the agent will be triggered by all runs.
 
@@ -132,10 +130,12 @@ Required methods here are:
 
     ```python
     agent = YourAsyncAgent()
-    agent.tell(x, y)
-    next_step, report = agent.ask()
+    agent.ingest(x, y)
+    next_step, report = agent.suggest()
     ```
+
     You can also start the agent in a separate process to ensure it can communicate via Kafka messages. This will start a Kafka subscriber and block the process until the agent is stopped.
+
     ```python
     agent.start()
     ```

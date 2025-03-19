@@ -1,6 +1,7 @@
 .. warning::
 
    This is package is currently under rapid development, and the API may changing rapidly prior to a major release.
+   A noteable API change was moving from a tell/ask interface to an ingest/suggest interface.
 
 Bluesky Adaptive
 ----------------

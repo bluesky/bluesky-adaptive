@@ -352,9 +352,9 @@ Per-start
                # This is the extracted measurements
                measurement = np.asarray([payload[k][-1] for k in dependent_keys])
                # push into the adaptive API
-               adaptive_obj.tell(independent, measurement)
+               adaptive_obj.ingest(independent, measurement)
                # pull the next point out of the adaptive API
-               next_point = adaptive_obj.ask(1)
+               next_point = adaptive_obj.suggest(1)
                queue.put({k: v for k, v in zip(independent_keys, next_point)})
 
        rr = RunRouter([lambda name, doc: ([callback], [])])
