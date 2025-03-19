@@ -71,7 +71,7 @@ It does involve more moving parts, which may require additional infrastructure t
 
 ### Steps to Integrate Using Asynchronous Approach
 
-1. **Inherit from Base Agent Class**: Your tool should inherit from `bluesky_adaptive.agents.base.Agent`, implementing the logic specific methods such as `ingest`, `report`, and `suggest`. Only `ingest` is strictly required, where `report` is necessary for Passive agents, and `suggest` is necessary for Active agents.
+1. **Inherit from Base Agent Class**: Your tool should inherit from `bluesky_adaptive.agents.base.Agent`, implementing the logic specific methods such as `ingest`, `report`, and `suggest`. Only `ingest` is strictly required, whereas `report` is necessary for Passive agents, and `suggest` is necessary for Active agents.
 This allows your tool to receive data, make decisions, and suggest future actions.
 The instructions here are the same as above, but the agent specific methods should also return a dictionary that is stored as an event document in the Bluesky document model. The values of this dictionary should be arrays or scalars that do not change shape throughout the experiment, and the keys should be strings.
 Again, the `ingest` method should be fast, as this happens every time a new event is emitted. `ingest_many` does not need to be implemented here, as the ABC holds a default, but if vectorized operations are possible, it is recommended to implement it.

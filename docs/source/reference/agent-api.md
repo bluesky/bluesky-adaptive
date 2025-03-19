@@ -8,7 +8,7 @@ An agent can be broken down into these three methods:
 
 - `ingest`: in which the agent ingests some new data
 - `suggest`: in which the agent suggests what data to acquire next
-- `report`: in which we the agent reports about its current thinking
+- `report`: in which the agent reports about its current thinking
 
 These three methods are the core of the agent API, that works for both the lock-step reccomendation engines, and the asynchronous agents that can be run as services.
 Critically, each of the three methods will return documents that are stored as unique streams in the event model. This enables us to look back at what an agent saw and was thinking as an experimental campaign progressed. As such, it is important that the shape of each field in these docs remain consistent throughout the experiment.
@@ -32,7 +32,7 @@ Detailed use of this can be found in the [sklearn example agents](../reference/e
 ## Ingest
 
 The `ingest` method converts the (x,y) pair into pytorch tensors and manages any GPU/CPU needs. It returns a document that holds the independent and dependent pair, as well as the current cache length.
-This operation occurs every time the triggering document is received, therefore it should be fast.
+This operation occurs every time the triggering document is received, therefore it should be implemented for speed.
 This enables an agent to be loaded in Tiled, and the data it's been made aware of to be sliced, e.g., ```node[agent_uid].ingest.data['observable'][-10:]```.
 
 ```python
@@ -94,7 +94,7 @@ def suggest(self, batch_size=1):
 
 ## Report
 
-The `report` for **this** agent is nearly identical to the `suggest` method, except it does not suggest points, and only returns one document. Other agents may have more complex reports, such as a decomposition of a dataset, or a summary of the agent's internal confidence.
+The `report` for _this_ agent is nearly identical to the `suggest` method, except it does not suggest points, and only returns one document. Other agents may have more complex reports, such as a decomposition of a dataset, or a summary of the agent's internal confidence.
 
 ```python
 def report(self):

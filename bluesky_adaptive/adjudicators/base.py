@@ -108,7 +108,7 @@ class AdjudicatorBase(ABC):
     def _add_suggestion_to_queue(self, re_manager: API_Threads_Mixin, agent_name: str, suggestion: Suggestion):
         if suggestion.suggestion_uid in self._suggestion_uids:
             logger.debug(
-                f"Suggestion uid {suggestion.suggestion_uid} has already been seen. "
+                f"Suggestion uid {suggestion.suggestion_uid} has already been seen."
                 "Not adding anything to the queue."
             )
             return
