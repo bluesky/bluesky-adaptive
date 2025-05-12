@@ -15,7 +15,7 @@ sphinx-design
 pydata-sphinx-theme
 myst-parser
 fastapi
-caproto
+caproto < 1.2.0
 ophyd
 scipy
 pre-commit
