@@ -48,7 +48,7 @@ def read_requirements(filename):
 requirements = read_requirements("requirements.txt")
 categorized_requirements = {
     key: read_requirements(f"requirements-{key}.txt")
-    for key in ("agents", "dev")
+    for key in ("agents", "dev", "tsuchinoko")
 }
 
 extras_require = categorized_requirements.copy()
