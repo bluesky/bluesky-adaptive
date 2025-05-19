@@ -15,7 +15,7 @@ sphinx-design
 pydata-sphinx-theme
 myst-parser
 fastapi
-caproto
+caproto < 1.2.0
 ophyd
 scipy
 pre-commit
@@ -25,5 +25,5 @@ tiled[server]
 humanize
 doct
 mongomock
-databroker @ git+https://github.com/bluesky/databroker.git@v2.0.0b56#egg=databroker
+databroker @ git+https://github.com/bluesky/databroker.git@v2.0.0b62#egg=databroker
 bluesky-tiled-plugins
