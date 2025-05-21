@@ -63,15 +63,14 @@ class TsuchinokoBase(ABC):
                 logger.info(f'Connected to tcp://{self.host}:{self.port}.')
                 break
 
-    def tell(self, x, y, v):
+    def ingest(self, x, yv):
         """
         Send measurement to BlueskyAdaptiveEngine
         """
-        yv = (y, v)
         payload = {'target_measured': (x, yv)}
         self.send_payload(payload)
 
-    def ask(self, batch_size: int) -> Sequence[ArrayLike]:
+    def suggest(self, batch_size: int=1) -> Sequence[ArrayLike]:
         """
         Wait until at least one target is received, also exhaust the queue of received targets, overwriting old ones
         """
@@ -86,9 +85,9 @@ class TsuchinokoBase(ABC):
                     time.sleep(SLEEP_FOR_TSUCHINOKO_TIME)
                     if time.time() > self.last_targets_received + FORCE_KICKSTART_TIME:
                         self.kickstart()
-        assert 'targets' in payload
+        assert 'candidate' in payload
         self.last_targets_received = time.time()
-        return payload['targets']
+        return payload
 
     def send_payload(self, payload: dict):
         logger.info(f'message: {payload}')
@@ -113,15 +112,16 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
         super().__init__(*args, **kwargs)
         self._targets_shape = None
 
-    def tell(self, x, y, v) -> Dict[str, ArrayLike]:
-        super().tell(x, y, v)
-        return self.get_tell_document(x, y, v)
+    def ingest(self, x, yv) -> Dict[str, ArrayLike]:
+        super().ingest(x, yv)
+        return self.get_ingest_document(x, yv)
 
-    def ask(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
-        targets = super().ask(batch_size)
-        return self.get_ask_documents(targets), targets
+    def suggest(self, batch_size: int=1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+        targets = super().suggest(batch_size)
+        optimizer_state = targets.pop('optimizer')
+        return self.get_suggest_documents(targets, optimizer_state), targets
 
-    def get_tell_document(self, x, y, v) -> Dict[str, ArrayLike]:
+    def get_ingest_document(self, x, yv) -> Dict[str, ArrayLike]:
         """
         Return any single document corresponding to 'tell'-ing Tsuchinoko about the newly measured `x`, `y` data
 
@@ -129,23 +129,20 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
         ----------
         x :
             Independent variable for data observed
-        y :
-            Dependent variable for data observed
-        v :
-            Variance for measurement of y
-
+        yv :
+            Dependent variable for data observed, concatenated with variance
         Returns
         -------
         dict
             Dictionary to be unpacked or added to a document
 
         """
-
+        y, v = yv
         return dict(independent=np.asarray(x),
                     observable=np.asarray(y),
                     variance=np.asarray(v))
 
-    def get_ask_documents(self, targets: Sequence[ArrayLike]) -> Sequence[Dict[str, ArrayLike]]:
+    def get_suggest_documents(self, targets: Sequence[ArrayLike], optimizer_state: Dict) -> Sequence[Dict[str, ArrayLike]]:
         """
         Ask the agent for a new batch of points to measure.
 
@@ -153,6 +150,8 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
         ----------
         targets : List[Tuple]
             The new target positions to be measured received during this `ask`.
+        optimizer_state: Dict
+            The serialized state of a GPOptimizer instance
 
         Returns
         -------
@@ -169,22 +168,4 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
             warnings.warn('The length of the target queue has changed. A new databroker run will be generated')
             self.close_and_restart()
 
-        return dict(targets=np.asarray(targets))
-
-
-class GPCamTsuchinokoAgent(TsuchinokoAgent, ABC):
-    def __init__(self, gp_optimizer, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.gp_optimizer = gp_optimizer
-
-    def get_ask_documents(self, targets: Sequence[ArrayLike]) -> Sequence[Dict[str, ArrayLike]]:
-        blacklist = ["x_data",
-                     "y_data",
-                     "noise_variances"]  # keys with ragged state
-        gpcam_state = self.gp_optimizer.__getstate__()
-        sanitized_gpcam_state = dict(**{key if key not in blacklist else f"STATEDICT-{key}": np.asarray(val)
-                                        for key, val in gpcam_state.items()
-                                        if key in blacklist})
-        target_state = super().get_ask_documents(targets)
-
-        return target_state | sanitized_gpcam_state
+        return [targets | optimizer_state]
