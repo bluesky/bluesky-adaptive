@@ -2,8 +2,8 @@ import pickle
 import time
 import warnings
 from abc import ABC
-from typing import Sequence, Dict, Tuple
 from logging import getLogger
+from typing import Dict, Sequence, Tuple
 
 import numpy as np
 import zmq

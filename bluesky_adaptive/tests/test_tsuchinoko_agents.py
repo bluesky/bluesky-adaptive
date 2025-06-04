@@ -12,6 +12,7 @@ from xarray import Dataset
 from bluesky_adaptive.agents.tsuchinoko import TsuchinokoAgent
 from bluesky_adaptive.typing import BlueskyRunLike
 from bluesky_adaptive.utils.offline import OfflineAgent
+
 from .conftest import catalog
 
 
