@@ -13,13 +13,13 @@ from .base import Agent
 
 logger = getLogger("bluesky_adaptive.agents")
 
-SLEEP_FOR_AGENT_TIME = .1
-SLEEP_FOR_TSUCHINOKO_TIME = .1
+SLEEP_FOR_AGENT_TIME = 0.1
+SLEEP_FOR_TSUCHINOKO_TIME = 0.1
 FORCE_KICKSTART_TIME = 5
 
 
 class TsuchinokoBase(ABC):
-    def __init__(self, *args, host: str = '127.0.0.1', port: int = 5557, **kwargs):
+    def __init__(self, *args, host: str = "127.0.0.1", port: int = 5557, **kwargs):
         """
 
         Parameters
@@ -45,7 +45,7 @@ class TsuchinokoBase(ABC):
         self.kickstart()
 
     def kickstart(self):
-        self.send_payload({'send_targets': True})  # kickstart to recover from shutdowns
+        self.send_payload({"send_targets": True})  # kickstart to recover from shutdowns
         self.last_targets_received = time.time()  # forgive lack of response until now
 
     def setup_socket(self):
@@ -57,20 +57,20 @@ class TsuchinokoBase(ABC):
             try:
                 self.socket.connect(f"tcp://{self.host}:{self.port}")
             except zmq.ZMQError:
-                logger.info(f'Unable to connect to tcp://{self.host}:{self.port}. Retrying in 1 second...')
+                logger.info(f"Unable to connect to tcp://{self.host}:{self.port}. Retrying in 1 second...")
                 time.sleep(1)
             else:
-                logger.info(f'Connected to tcp://{self.host}:{self.port}.')
+                logger.info(f"Connected to tcp://{self.host}:{self.port}.")
                 break
 
     def ingest(self, x, yv):
         """
         Send measurement to BlueskyAdaptiveEngine
         """
-        payload = {'target_measured': (x, yv)}
+        payload = {"target_measured": (x, yv)}
         self.send_payload(payload)
 
-    def suggest(self, batch_size: int=1) -> Sequence[ArrayLike]:
+    def suggest(self, batch_size: int = 1) -> Sequence[ArrayLike]:
         """
         Wait until at least one target is received, also exhaust the queue of received targets, overwriting old ones
         """
@@ -85,17 +85,17 @@ class TsuchinokoBase(ABC):
                     time.sleep(SLEEP_FOR_TSUCHINOKO_TIME)
                     if time.time() > self.last_targets_received + FORCE_KICKSTART_TIME:
                         self.kickstart()
-        assert 'candidate' in payload
+        assert "candidate" in payload
         self.last_targets_received = time.time()
         return payload
 
     def send_payload(self, payload: dict):
-        logger.info(f'message: {payload}')
+        logger.info(f"message: {payload}")
         self.socket.send(pickle.dumps(payload))
 
     def recv_payload(self, flags=0) -> dict:
         payload_response = pickle.loads(self.socket.recv(flags=flags))
-        logger.info(f'response: {payload_response}')
+        logger.info(f"response: {payload_response}")
         return payload_response
 
 
@@ -116,9 +116,9 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
         super().ingest(x, yv)
         return self.get_ingest_document(x, yv)
 
-    def suggest(self, batch_size: int=1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def suggest(self, batch_size: int = 1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
         targets = super().suggest(batch_size)
-        optimizer_state = targets.pop('optimizer')
+        optimizer_state = targets.pop("optimizer")
         return self.get_suggest_documents(targets, optimizer_state), targets
 
     def get_ingest_document(self, x, yv) -> Dict[str, ArrayLike]:
@@ -138,11 +138,11 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
 
         """
         y, v = yv
-        return dict(independent=np.asarray(x),
-                    observable=np.asarray(y),
-                    variance=np.asarray(v))
+        return dict(independent=np.asarray(x), observable=np.asarray(y), variance=np.asarray(v))
 
-    def get_suggest_documents(self, targets: Sequence[ArrayLike], optimizer_state: Dict) -> Sequence[Dict[str, ArrayLike]]:
+    def get_suggest_documents(
+        self, targets: Sequence[ArrayLike], optimizer_state: Dict
+    ) -> Sequence[Dict[str, ArrayLike]]:
         """
         Ask the agent for a new batch of points to measure.
 
@@ -165,7 +165,7 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
         if not self._targets_shape:
             self._targets_shape = len(targets)
         if self._targets_shape != len(targets):
-            warnings.warn('The length of the target queue has changed. A new databroker run will be generated')
+            warnings.warn("The length of the target queue has changed. A new databroker run will be generated")
             self.close_and_restart()
 
         return [targets | optimizer_state]

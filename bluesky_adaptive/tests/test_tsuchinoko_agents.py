@@ -23,13 +23,12 @@ from .conftest import catalog
 @fixture
 def gpcam_engine():
     # Define a gpCAM adaptive engine with initial parameters
-    adaptive = GPCAMInProcessEngine(dimensionality=2,
-                                    parameter_bounds=[(0, 1),
-                                                      (0, 1)],
-                                    hyperparameters=[255, 100, 100],
-                                    hyperparameter_bounds=[(0, 1e5),
-                                                           (0, 1e5),
-                                                           (0, 1e5)])
+    adaptive = GPCAMInProcessEngine(
+        dimensionality=2,
+        parameter_bounds=[(0, 1), (0, 1)],
+        hyperparameters=[255, 100, 100],
+        hyperparameter_bounds=[(0, 1e5), (0, 1e5), (0, 1e5)],
+    )
     return adaptive
 
 
@@ -41,7 +40,7 @@ def execution_engine(gpcam_engine):
 
 @fixture
 def core(gpcam_engine, execution_engine):
-    print('starting setup')
+    print("starting setup")
     assert gpcam_engine is execution_engine.adaptive_engine
     core = ZMQCore()
     core.set_adaptive_engine(gpcam_engine)
@@ -59,18 +58,19 @@ def core(gpcam_engine, execution_engine):
                 self.error = ex
                 print(ex)
                 print("The above error occurred in the tsuchinoko core thread.")
+
     server_thread = ErrorThread(target=core.main)
     server_thread.start()
     core.state = CoreState.Starting
-    print('setup complete')
+    print("setup complete")
 
     yield core
 
     core.exit()
     server_thread.join()
-    print('teardown complete')
+    print("teardown complete")
     if server_thread.error:
-        raise server_thread.error # most likely a test would have already failed by this point
+        raise server_thread.error  # most likely a test would have already failed by this point
 
 
 class GPTestAgent(TsuchinokoAgent, OfflineAgent):
@@ -80,7 +80,7 @@ class GPTestAgent(TsuchinokoAgent, OfflineAgent):
     def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         self.counter += 1
         y = np.random.rand(10)
-        v = .1
+        v = 0.1
         return self.counter, (y, v)
 
 
@@ -93,7 +93,7 @@ def test_gp_agent(catalog, core):
         uid = f"uid{i}"
         x = np.random.rand(2)
         y = 1 - np.sum(np.sin(x)) + np.random.rand() * 0.01
-        v = .1
+        v = 0.1
         yv = y, v
         doc = agent.ingest(x, yv)
         doc["exp_uid"] = uid
