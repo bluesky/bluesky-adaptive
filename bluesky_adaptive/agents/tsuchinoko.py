@@ -72,7 +72,8 @@ class TsuchinokoBase(ABC):
 
     def suggest(self, batch_size: int = 1) -> Sequence[ArrayLike]:
         """
-        Wait until at least one target is received, also exhaust the queue of received targets, overwriting old ones
+        Wait until at least one target is received, also exhaust the queue of
+        received targets, overwriting old ones
         """
         payload = None
         while True:
@@ -101,11 +102,12 @@ class TsuchinokoBase(ABC):
 
 class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
     """
-    A Bluesky-Adaptive 'Agent'. This Agent communicates with Tsuchinoko over zmq to request new targets and report back
-    measurements. This is an abstract class that must be subclassed.
+    A Bluesky-Adaptive 'Agent'. This Agent communicates with Tsuchinoko over zmq
+    to request new targets and report back measurements. This is an abstract
+    class that must be subclassed.
 
-    A `tsuchinoko.execution.bluesky_adaptive.BlueskyAdaptiveEngine` is required for the Tsuchinoko server to complement
-    one of these `TsuchinokoAgent`.
+    A `tsuchinoko.execution.bluesky_adaptive.BlueskyAdaptiveEngine` is required
+    for the Tsuchinoko server to complement one of these `TsuchinokoAgent`.
     """
 
     def __init__(self, *args, **kwargs):
