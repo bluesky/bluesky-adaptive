@@ -25,7 +25,7 @@ jobs:
       - name: Install Docker Compose
         run: |
           sudo apt-get update
-          sudo apt-get install -y docker-compose
+          sudo apt-get install -y docker-compose freeglut3-dev
 
       - name: Download and build bluesky-pods
         run: |
