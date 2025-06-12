@@ -25,5 +25,5 @@ tiled[server]
 humanize
 doct
 mongomock
-databroker @ git+https://github.com/bluesky/databroker.git@v2.0.0b62#egg=databroker
+databroker[all]>=2.0.0b1,<3.0.0
 bluesky-tiled-plugins
