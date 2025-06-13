@@ -21,7 +21,7 @@ def process_exceptions():
         logger.exception(ex)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=f"Failed to process the request: {ex}"
-        )
+        ) from ex
 
 
 @router.get("/")
@@ -75,7 +75,7 @@ async def get_variable_handler(name: str):
 
 
 @router.post("/variable/{name}")
-async def set_variable_handler(name: str, payload: dict = {}):
+async def set_variable_handler(name: str, payload: dict = None):
     """
     Sets the value of a server variable. The item name (``name``) is specified as part
     of the URL. The API call is successful as long as ``payload`` dictionary contains an element
@@ -93,10 +93,9 @@ async def set_variable_handler(name: str, payload: dict = {}):
     dict
        A dictionary that contains a single item. The dictionary maps item name to item value.
     """
+    payload = payload or {}
     if "value" not in payload:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Required parameter ('value') is missing."
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Required parameter ('value') is missing.")
 
     try:
         value = payload["value"]

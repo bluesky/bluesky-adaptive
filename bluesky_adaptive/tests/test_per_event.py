@@ -40,7 +40,7 @@ class StopSequenceRecommender(SequenceRecommender):
 
     def suggest(self, *args, **kwargs):
         next_point = super().suggest(*args, **kwargs)
-        if any([p > 2 for p in next_point]):
+        if any(p > 2 for p in next_point):
             raise RequestStop("Too big!")
         else:
             return next_point
@@ -73,7 +73,7 @@ class AbortSequenceRecommender(SequenceRecommender):
 
     def suggest(self, *args, **kwargs):
         next_point = super().suggest(*args, **kwargs)
-        if any([p > 2 for p in next_point]):
+        if any(p > 2 for p in next_point):
             raise RequestAbort("Too big!")
         else:
             return next_point
@@ -106,7 +106,7 @@ class PauseSequenceRecommender(SequenceRecommender):
 
     def suggest(self, *args, **kwargs):
         next_point = super().suggest(*args, **kwargs)
-        if any([p > 2 for p in next_point]):
+        if any(p > 2 for p in next_point):
             raise RequestPause("Too big!")
         else:
             return next_point

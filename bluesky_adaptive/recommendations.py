@@ -71,4 +71,4 @@ class SequenceRecommender:
         try:
             return next(self.seq_iter)
         except StopIteration:
-            raise NoRecommendation
+            raise NoRecommendation from None

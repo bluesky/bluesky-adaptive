@@ -1,6 +1,6 @@
 # flake8: noqa
 import threading
-from typing import Callable, Literal, Tuple, Union
+from typing import Callable, Literal, tuple, Union
 
 from bluesky_kafka import Publisher
 from bluesky_kafka.utils import create_topics, delete_topics
@@ -18,9 +18,7 @@ from ..typing import BlueskyRunLike
 class TestSequentialAgent(SequentialAgentBase):
     measurement_plan_name = "agent_driven_nap"
 
-    def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
-    ):
+    def __init__(self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
 
@@ -83,10 +81,10 @@ class TestSequentialAgent(SequentialAgentBase):
         self._register_method("add_suggestions_to_queue_inner", "add_suggestions_to_queue")
         self._register_property("queue_add_position")
 
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
-        return self.measurement_plan_name, [self._sleep_duration], dict()
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
+        return self.measurement_plan_name, [self._sleep_duration], {}
 
-    def unpack_run(self, run: BlueskyLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def operating_mode_setter(self, mode: Literal["sleepy", "awake"]):
@@ -185,8 +183,8 @@ def generate_report(args_kwargs):
 
     Parameters
     ----------
-    args_kwargs : Tuple[List, dict]
-        Tuple of args and kwargs passed to the API `POST` as a `value`
+    args_kwargs : tuple[List, dict]
+        tuple of args and kwargs passed to the API `POST` as a `value`
     """
     _, kwargs = args_kwargs
     start_task(agent.generate_report, **kwargs)

@@ -100,7 +100,7 @@ source = ["bluesky_adaptive"]
 [tool.ruff]
 src = ["bluesky_adaptive"]
 line-length = 120
-exclude = ["docs/source/conf.py"]
+exclude = ["docs/source/conf.py", "_version.py"]
 
 [tool.ruff.lint]
 select = [

@@ -6,8 +6,9 @@ import time as ttime
 import uuid
 from abc import ABC, ABCMeta, abstractmethod
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
+from collections.abc import Iterable, Sequence
 from logging import getLogger
-from typing import Callable, Dict, Iterable, List, Literal, Optional, Sequence, Tuple, TypedDict, Union
+from typing import Callable, Literal, Optional, TypedDict, Union
 
 import msgpack
 import numpy as np
@@ -94,9 +95,7 @@ class AgentConsumer(RemoteDispatcher):
         try:
             getattr(self._agent, action)(*args, **kwargs)
         except AttributeError as e:
-            logger.error(
-                f"Unavailable action sent to agent {self._agent.instance_name} on topic: {topic}\n" f"{e}"
-            )
+            logger.error(f"Unavailable action sent to agent {self._agent.instance_name} on topic: {topic}\n{e}")
         except TypeError as e:
             logger.error(
                 f"Type error for {action} sent to agent {self._agent.instance_name} on topic: {topic}\n"
@@ -147,7 +146,7 @@ class DataKeys(TypedDict):
 
 
 def infer_data_keys(doc: dict) -> DataKeys:
-    data_keys = dict()
+    data_keys = {}
     _bad_iterables = (str, bytes, dict)
     _type_map = {
         "number": (float, np.floating, complex),
@@ -167,13 +166,13 @@ def infer_data_keys(doc: dict) -> DataKeys:
                 raise TypeError()
         arr_val = np.asanyarray(val)
         arr_dtype = arr_val.dtype
-        data_keys[key] = dict(
-            dtype=dtype,
-            dtype_str=arr_dtype.str,
-            dtype_descr=arr_dtype.descr,
-            shape=list(arr_val.shape),
-            source="agent",
-        )
+        data_keys[key] = {
+            "dtype": dtype,
+            "dtype_str": arr_dtype.str,
+            "dtype_descr": arr_dtype.descr,
+            "shape": list(arr_val.shape),
+            "source": "agent",
+        }
     return data_keys
 
 
@@ -305,13 +304,13 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
         self.default_report_kwargs = {} if default_report_kwargs is None else default_report_kwargs
 
         self._compose_run_bundle = None
-        self._compose_descriptor_bundles = dict()
+        self._compose_descriptor_bundles = {}
         self.re_manager = qserver
         self.endstation_key = endstation_key
         self._queue_add_position = "back" if queue_add_position is None else queue_add_position
         self._direct_to_queue = direct_to_queue
-        self.default_plan_md = dict(agent_name=self.instance_name, agent_class=str(type(self)))
-        self.known_uid_cache = list()
+        self.default_plan_md = {"agent_name": self.instance_name, "agent_class": str(type(self))}
+        self.known_uid_cache = []
         try:
             self.server_registrations()
         except RuntimeError as e:
@@ -319,7 +318,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
         self._kafka_thread = None
 
     @abstractmethod
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
         """Fetch the string name of a registered plan, as well as the positional and keyword
         arguments to pass that plan.
 
@@ -343,7 +342,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
 
     @staticmethod
     @abstractmethod
-    def unpack_run(run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(run: BlueskyRunLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         """
         Consume a Bluesky run from tiled and emit the relevant x and y for the agent.
 
@@ -363,7 +362,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
     @abstractmethod
     def ingest(
         self, independent_variable: ArrayLike, dependent_variable: Optional[ArrayLike] = None
-    ) -> Dict[str, ArrayLike]:
+    ) -> dict[str, ArrayLike]:
         """
         Agent ingest of new data.
         This method replaces the legacy ``tell`` in the ``ask-tell`` pattern.
@@ -382,7 +381,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
         """
         ...
 
-    def suggest(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def suggest(self, batch_size: int) -> tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
         Suggest a new batch of points to measure.
 
@@ -401,7 +400,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
         """
         raise NotImplementedError
 
-    def report(self, **kwargs) -> Dict[str, ArrayLike]:
+    def report(self, **kwargs) -> dict[str, ArrayLike]:
         """
         Create a report given the data observed by the agent.
         This could be potentially implemented in the base class to write document stream.
@@ -413,7 +412,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
 
     def ingest_many(
         self, independents: Sequence[ArrayLike], dependents: Optional[Sequence[ArrayLike]]
-    ) -> Sequence[Dict[str, List]]:
+    ) -> Sequence[dict[str, list]]:
         """
         Update the agent with some new data. It is likely that there is a more efficient approach to
         handling multiple observations for an agent. The default behavior is to iterate over all
@@ -536,7 +535,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
 
         t = ttime.time()
         event_doc = self._compose_descriptor_bundles[stream].compose_event(
-            data=doc, timestamps={k: t for k in doc}, uid=uid
+            data=doc, timestamps=dict.fromkeys(doc, t), uid=uid
         )
         self.agent_catalog.v1.insert("event", event_doc)
 
@@ -585,7 +584,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
             if re_manager is None:
                 re_manager = self.re_manager
             r = re_manager.item_add(plan, pos=self.queue_add_position if position is None else position)
-            logger.debug(f"Sent http-server request for point {point}\n." f"Received reponse: {r}")
+            logger.debug(f"Sent http-server request for point {point}\n.Received reponse: {r}")
         return
 
     def _check_queue_and_start(self):
@@ -771,8 +770,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
         self.kafka_producer.flush()
         self.kafka_consumer.stop()
         logger.info(
-            f"Stopped agent with exit status {exit_status.upper()}"
-            f"{(' for reason: ' + reason) if reason else '.'}"
+            f"Stopped agent with exit status {exit_status.upper()}{(' for reason: ' + reason) if reason else '.'}"
         )
 
     def close_and_restart(self, *, clear_uid_cache=False, reingest_all=False, reason=""):
@@ -794,10 +792,10 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
         """
         self.stop(reason=f"Close and Restart: {reason}")
         if clear_uid_cache:
-            self.known_uid_cache = list()
+            self.known_uid_cache = []
         elif reingest_all:
             uids = copy.copy(self.known_uid_cache)
-            self.known_uid_cache = list()
+            self.known_uid_cache = []
             self.ingest_uids(uids)
         self.start()
 
@@ -896,7 +894,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
         kafka_consumer_config: dict,
         kafka_producer_config: dict,
         publisher_topic: str,
-        subscripion_topics: List[str],
+        subscripion_topics: list[str],
         data_profile_name: str,
         agent_profile_name: str,
         qserver_host: str,
@@ -959,7 +957,7 @@ class Agent(ABC, metaclass=BackwardCompatMeta):
 
         if "metadata" in kwargs:
             kwargs["metadata"].update(
-                dict(tiled_data_profile=data_profile_name, tiled_agent_profile=agent_profile_name)
+                {"tiled_data_profile": data_profile_name, "tiled_agent_profile": agent_profile_name}
             )
 
         return cls.__init__(
@@ -1024,7 +1022,7 @@ class MonarchSubjectAgent(Agent, ABC):
         self.subject_endstation_key = subject_endstation_key
 
     @abstractmethod
-    def subject_measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]:
+    def subject_measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
         """Details for subject plan.
         Fetch the string name of a registered plan, as well as the positional and keyword
         arguments to pass that plan.
@@ -1048,7 +1046,7 @@ class MonarchSubjectAgent(Agent, ABC):
         ...
 
     @abstractmethod
-    def subject_suggest(self, batch_size: int) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def subject_suggest(self, batch_size: int) -> tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
         """
         Suggest a new batch of points to measure on the subject queue.
 

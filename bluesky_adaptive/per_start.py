@@ -100,7 +100,7 @@ def recommender_factory(adaptive_obj, independent_keys, dependent_keys, *, max_c
             except NoRecommendation:
                 queue.put(None)
             else:
-                queue.put({k: v for k, v in zip(independent_keys, next_point)})
+                queue.put(dict(zip(independent_keys, next_point)))
 
     rr = RunRouter([lambda name, doc: ([callback], [])])
     return rr, queue

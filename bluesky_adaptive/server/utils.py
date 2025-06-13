@@ -98,9 +98,7 @@ def start_task(target, *args, run_in_background=True, task_uid=None, **kwargs):
     )
 
 
-def register_variable(
-    name, obj=None, attr_or_key=None, *, getter=None, setter=None, pv_type=None, pv_max_length=None
-):
+def register_variable(name, obj=None, attr_or_key=None, *, getter=None, setter=None, pv_type=None, pv_max_length=None):
     """
     Register variable to make it accessible by external API. All registered variables are accessible with
     REST API. Variables with defined ``pv_type`` are also accessible as PVs of the IOC. If ``pv_max_length`` is
@@ -283,7 +281,7 @@ def load_startup_script(script_path, *, enable_local_imports=True):
     try:
         nspace = {}
         if not os.path.isfile(script_path):
-            raise IOError(f"Startup file {script_path!r} was not found")
+            raise OSError(f"Startup file {script_path!r} was not found")
 
         # Set '__file__' and '__name__' variables
         patch = f"__file__ = '{script_path}'; __name__ = 'startup_script'\n"

@@ -208,7 +208,7 @@ class WorkerProcess(Process):
                 th = threading.Thread(target=target_func, name=thread_name, daemon=True)
                 th.start()
             else:
-                self._execution_queue.put((parameters))
+                self._execution_queue.put(parameters)
 
         except RejectedError as ex:
             status, msg = "rejected", f"Task {name!r} was rejected by RE Worker process: {ex}"
@@ -286,9 +286,7 @@ class WorkerProcess(Process):
         return status
 
     def _variables_handler(self):
-        vars = {
-            k: {"pv_type": v["pv_type"], "pv_max_length": v["pv_max_length"]} for k, v in self._variables.items()
-        }
+        vars = {k: {"pv_type": v["pv_type"], "pv_max_length": v["pv_max_length"]} for k, v in self._variables.items()}
         return {"success": True, "msg": "", "variables": vars}
 
     def _variable_get_handler(self, *, name):

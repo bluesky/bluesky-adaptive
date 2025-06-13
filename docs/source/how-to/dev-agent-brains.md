@@ -38,7 +38,7 @@ Specifically, the `suggest` method should return a tuple of two sequences: a seq
 Even if you are only returning one step, it should be in a list.
 
 ```python
-def suggest(self, batch_size) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+def suggest(self, batch_size) -> tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
     # Example logic to determine the next step
     next_steps = [self.calculate_next_step() for _ in range(batch_size)]
     return ([{"next_step": next_step, "reasoning":..., "other_info":...} for next_step in next_steps], 

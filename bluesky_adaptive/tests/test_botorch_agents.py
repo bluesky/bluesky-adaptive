@@ -1,4 +1,4 @@
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import torch
@@ -13,10 +13,10 @@ from ..typing import BlueskyRunLike
 
 
 class GPTestAgent(SingleTaskGPAgentBase, OfflineAgent):
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
-        return self.measurement_plan_name, [1.5], dict()
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], {}
 
-    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         self.counter += 1
         return self.counter, np.random.rand(10)
 

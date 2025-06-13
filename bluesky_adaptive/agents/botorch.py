@@ -15,7 +15,7 @@ Experiment specific:
 import importlib
 from abc import ABC
 from logging import getLogger
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 
 import torch
 from botorch import fit_gpytorch_mll
@@ -72,14 +72,13 @@ class SingleTaskGPAgentBase(Agent, ABC):
         self.targets = None
 
         self.device = (
-            torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            if device is None
-            else torch.device(device)
+            torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else torch.device(device)
         )
         self.bounds = torch.tensor(bounds, device=self.device).view(2, -1)
         if gp is None:
-            dummy_x, dummy_y = torch.randn(2, self.bounds.shape[-1], device=self.device), torch.randn(
-                2, out_dim, device=self.device
+            dummy_x, dummy_y = (
+                torch.randn(2, self.bounds.shape[-1], device=self.device),
+                torch.randn(2, out_dim, device=self.device),
             )
             gp = SingleTaskGP(dummy_x, dummy_y)
 
@@ -109,7 +108,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
         self.close_and_restart()
 
     def start(self, *args, **kwargs):
-        _md = dict(acqf_name=self.acqf_name)
+        _md = {"acqf_name": self.acqf_name}
         self.metadata.update(_md)
         super().start(*args, **kwargs)
 
@@ -123,7 +122,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             self.inputs.to(self.device)
             self.targets.to(self.device)
         self.surrogate_model.set_train_data(self.inputs, self.targets, strict=False)
-        return dict(independent_variable=x, observable=y, cache_len=len(self.targets))
+        return {"independent_variable": x, "observable": y, "cache_len": len(self.targets)}
 
     def report(self):
         """Fit GP, and construct acquisition function.
@@ -173,9 +172,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             torch.atleast_1d(candidate).detach().cpu().numpy(),
         )
 
-    def remodel_from_report(
-        self, run: BlueskyRunLike, idx: int = None
-    ) -> Tuple[AcquisitionFunction, SingleTaskGP]:
+    def remodel_from_report(self, run: BlueskyRunLike, idx: int = None) -> tuple[AcquisitionFunction, SingleTaskGP]:
         idx = -1 if idx is None else idx
         keys = [key for key in run.report["data"].keys() if key.split("-")[0] == "STATEDICT"]
         state_dict = {".".join(key[10:].split(":")): torch.tensor(run.report["data"][key][idx]) for key in keys}

@@ -1,4 +1,5 @@
-from typing import Callable, Literal, Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Callable, Literal, Union
 
 from bluesky_kafka import Publisher
 from event_model import compose_run
@@ -18,24 +19,24 @@ class NapAndCountAgent(OfflineAgent):
         super().__init__(**kwargs)
         self.count = 0
 
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
-        return self.measurement_plan_name, [1.5], dict()
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], {}
 
-    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def report(self, report_number: int = 0) -> dict:
-        return dict(agent_name=self.instance_name, report=f"report_{report_number}")
+        return {"agent_name": self.instance_name, "report": f"report_{report_number}"}
 
-    def suggest(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
+    def suggest(self, batch_size: int = 1) -> tuple[dict, Sequence]:
         return (
-            [dict(agent_name=self.instance_name, report=f"suggestion_{batch_size}")],
+            [{"agent_name": self.instance_name, "report": f"suggestion_{batch_size}"}],
             [0 for _ in range(batch_size)],
         )
 
     def ingest(self, x, y) -> dict:
         self.count += 1
-        return dict(x=x, y=y)
+        return {"x": x, "y": y}
 
     def server_registrations(self) -> None:
         return None
@@ -74,10 +75,10 @@ class SequentialTestAgent(SequentialAgentBase, OfflineAgent):
         super().__init__(**kwargs)
         self.count = 0
 
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
-        return self.measurement_plan_name, [1.5], dict()
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], {}
 
-    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def server_registrations(self) -> None:
@@ -120,15 +121,14 @@ def test_close_and_restart(tiled_node):
 
 
 class MonarchSubjectTestAgent(SequentialAgentBase, OfflineMonarchSubject):
-
     def measurement_plan(self, point: ArrayLike):
-        return "agent_driven_nap", [0.5], dict()
+        return "agent_driven_nap", [0.5], {}
 
     def subject_measurement_plan(self, point: ArrayLike):
-        return "agent_driven_nap", [0.7], dict()
+        return "agent_driven_nap", [0.7], {}
 
     def subject_suggest(self, batch_size: int):
-        return [dict()], [0.0 for _ in range(batch_size)]
+        return [{}], [0.0 for _ in range(batch_size)]
 
     def unpack_run(self, run: BlueskyRunLike):
         return 0, 0

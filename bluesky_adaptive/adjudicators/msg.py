@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from bluesky_queueserver_api.api_threads import API_Threads_Mixin
 from pydantic import BaseModel
 
@@ -16,7 +14,7 @@ class Suggestion(BaseModel):
 class AdjudicatorMsg(BaseModel):
     agent_name: str
     uid: str
-    suggestions: Dict[str, List[Suggestion]]  # TLA: list
+    suggestions: dict[str, list[Suggestion]]  # TLA: list
 
 
 class Judgment(BaseModel):

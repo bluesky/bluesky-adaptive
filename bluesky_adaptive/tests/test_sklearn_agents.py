@@ -1,6 +1,6 @@
 import os
 import time as ttime
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 import pytest
@@ -21,10 +21,10 @@ class DummyAgentMixin:
         super().__init__(*args, suggest_on_ingest=False, **kwargs)
         self.counter = 0
 
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
-        return self.measurement_plan_name, [1.5], dict()
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], {}
 
-    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         self.counter += 1
         return self.counter, np.random.rand(10)
 
@@ -92,7 +92,7 @@ def test_decomp_remodel_from_report(
 
     # Letting databroker catch up to report. Should take little time
     now = ttime.monotonic()
-    while not ("report" in catalog[agent_uid]):
+    while "report" not in catalog[agent_uid]:
         ttime.sleep(0.1)
         if ttime.monotonic() - now > 3:
             raise TimeoutError
@@ -160,7 +160,7 @@ def test_cluster_remodel_from_report(
 
     # Letting mongo/kafka catch up to report
     now = ttime.monotonic()
-    while not ("report" in catalog[agent_uid]):
+    while "report" not in catalog[agent_uid]:
         ttime.sleep(0.1)
         if ttime.monotonic() - now > 3:
             raise TimeoutError

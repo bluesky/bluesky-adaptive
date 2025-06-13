@@ -31,7 +31,6 @@ class KafkaSmoke:
 
 
 class OfflineConsumer(KafkaSmoke):
-
     def __init__(self, topic: Optional[deque] = None, loop_on_start=False):
         """
         Offline consumer (RunRouter) that uses a queue rather than a topic.
@@ -140,12 +139,12 @@ class OfflineAgent(Agent):
     def __init__(
         self,
         *,
-        qserver=REManagerSmoke(),
-        kafka_producer=OfflineProducer(),
-        tiled_data_node=TiledSmoke(),
-        tiled_agent_node=TiledSmoke(),
+        qserver=None,
+        kafka_producer=None,
+        tiled_data_node=None,
+        tiled_agent_node=None,
         loop_consumer_on_start=False,
-        **kwargs
+        **kwargs,
     ):
         """Basic async agent for offline activities and testing.
         Each core communication attribute can be overriden, e.g. using Tiled but no Queue Server or Kafka.
@@ -168,10 +167,10 @@ class OfflineAgent(Agent):
         self.kafka_queue = deque()
         super().__init__(
             kafka_consumer=OfflineConsumer(self.kafka_queue, loop_on_start=loop_consumer_on_start),
-            qserver=qserver,
-            kafka_producer=kafka_producer,
-            tiled_agent_node=tiled_agent_node,
-            tiled_data_node=tiled_data_node,
+            qserver=qserver or REManagerSmoke(),
+            kafka_producer=kafka_producer or OfflineProducer(),
+            tiled_agent_node=tiled_agent_node or TiledSmoke(),
+            tiled_data_node=tiled_data_node or TiledSmoke(),
             **kwargs,
         )
 
@@ -184,22 +183,22 @@ class OfflineMonarchSubject(MonarchSubjectAgent):
     def __init__(
         self,
         *,
-        qserver=REManagerSmoke(),
-        subject_queueserver=REManagerSmoke(),
-        kafka_producer=OfflineProducer(),
-        tiled_data_node=TiledSmoke(),
-        tiled_agent_node=TiledSmoke(),
+        qserver=None,
+        subject_queueserver=None,
+        kafka_producer=None,
+        tiled_data_node=None,
+        tiled_agent_node=None,
         loop_consumer_on_start=False,
-        **kwargs
+        **kwargs,
     ):
         self.kafka_queue = deque()
         super().__init__(
             kafka_consumer=OfflineConsumer(self.kafka_queue, loop_on_start=loop_consumer_on_start),
-            qserver=qserver,
-            subject_qserver=subject_queueserver,
-            kafka_producer=kafka_producer,
-            tiled_agent_node=tiled_agent_node,
-            tiled_data_node=tiled_data_node,
+            qserver=qserver or REManagerSmoke(),
+            subject_qserver=subject_queueserver or REManagerSmoke(),
+            kafka_producer=kafka_producer or OfflineProducer(),
+            tiled_agent_node=tiled_agent_node or TiledSmoke(),
+            tiled_data_node=tiled_data_node or TiledSmoke(),
             **kwargs,
         )
 
@@ -207,5 +206,5 @@ class OfflineMonarchSubject(MonarchSubjectAgent):
 class OfflineAdjudicator(AdjudicatorBase):
     """Example offline adjudicator. Others can be assembled in a similar fashion with OfflineConsumer."""
 
-    def __init__(self, consumer=OfflineBlueskyConsumer(), *args, **kwargs):
-        super().__init__(consumer=consumer, *args, **kwargs)
+    def __init__(self, consumer=None, **kwargs):
+        super().__init__(consumer=consumer or OfflineBlueskyConsumer(), **kwargs)

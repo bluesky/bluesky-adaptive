@@ -16,8 +16,8 @@ class NoTiled:
 
 
 class AccumulateAdjudicator(AgentByNameAdjudicator):
-    def __init__(self, consumer=OfflineConsumer(), *args, qservers, **kwargs):
-        super().__init__(consumer, *args, qservers=qservers, **kwargs)
+    def __init__(self, consumer=None, *args, qservers, **kwargs):
+        super().__init__(consumer or OfflineConsumer(), *args, qservers=qservers, **kwargs)
         self.consumed_documents = []
 
     def process_document(self, topic, name, doc):
@@ -133,9 +133,7 @@ def test_nonredundant_adjudicator(temporary_topics, kafka_bootstrap_servers, kaf
     adjudicator.start()
 
     producer = OfflineProducer(topic=consumer.topic)
-    agent = NapAndCountAgent(
-        direct_to_queue=False, kafka_producer=producer, endstation_key="tst", qserver=re_manager
-    )
+    agent = NapAndCountAgent(direct_to_queue=False, kafka_producer=producer, endstation_key="tst", qserver=re_manager)
     agent.start()
 
     # Assure 5 suggestions that are the same only land as 1 judgement

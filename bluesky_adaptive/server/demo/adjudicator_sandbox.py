@@ -1,11 +1,10 @@
 # BS_AGENT_STARTUP_SCRIPT_PATH=./bluesky_adaptive/server/demo/adjudicator_sandbox.py \
 # uvicorn bluesky_adaptive.server:app
-from bluesky_kafka.utils import create_topics, delete_topics
-from bluesky_queueserver_api.http import REManagerAPI
-
 from bluesky_adaptive.adjudicators.base import NonredundantAdjudicator
 from bluesky_adaptive.adjudicators.msg import Suggestion
 from bluesky_adaptive.server import shutdown_decorator, startup_decorator
+from bluesky_kafka.utils import create_topics, delete_topics
+from bluesky_queueserver_api.http import REManagerAPI
 
 kafka_producer_config = {
     "acks": 1,
