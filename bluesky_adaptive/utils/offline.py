@@ -170,7 +170,7 @@ class OfflineAgent(Agent):
             qserver=REManagerSmoke() if qserver is None else qserver,
             kafka_producer=OfflineProducer() if kafka_producer is None else kafka_producer,
             tiled_agent_node=TiledSmoke() if tiled_agent_node is None else tiled_agent_node,
-            tiled_data_node=TiledSmoke if tiled_data_node is None else tiled_data_node,
+            tiled_data_node=TiledSmoke() if tiled_data_node is None else tiled_data_node,
             **kwargs,
         )
 
