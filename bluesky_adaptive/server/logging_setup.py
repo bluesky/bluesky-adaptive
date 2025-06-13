@@ -20,11 +20,7 @@ def setup_loggers(*, log_level, name="bluesky_adaptive"):
     """
     log_stream_handler = logging.StreamHandler(sys.stdout)
     log_stream_handler.setLevel(log_level)
-    if (
-        (log_level == logging.DEBUG)
-        or (log_level == "DEBUG")
-        or (isinstance(log_level, int) and (log_level <= 10))
-    ):
+    if (log_level == logging.DEBUG) or (log_level == "DEBUG") or (isinstance(log_level, int) and (log_level <= 10)):
         log_stream_format = "[%(levelname)1.1s %(asctime)s.%(msecs)03d %(name)s %(module)s:%(lineno)d] %(message)s"
     else:
         log_stream_format = "[%(levelname)1.1s %(asctime)s %(name)s] %(message)s"

@@ -90,7 +90,7 @@ def recommender_factory(
     stream_names=("primary",),
     max_count=10,
     queue=None,
-    target_transforms=None
+    target_transforms=None,
 ):
     """
     Generate the callback and queue for an Adaptive API backed reccomender.
@@ -129,7 +129,7 @@ def recommender_factory(
         Keys passed back to the plan, must be the same length as
         the return of `adaptive_obj.suggest(1)`
 
-    stream_names : Tuple[String], default ("primary",)
+    stream_names : tuple[String], default ("primary",)
         The streams to be offered to the
 
     max_count : int, optional
@@ -165,8 +165,8 @@ def recommender_factory(
     def ingest_recommender(event):
         run = event.run
 
-        independent_map = call_or_eval({j: val for j, val in enumerate(independent_keys)}, run, stream_names)
-        dependent_map = call_or_eval({j: val for j, val in enumerate(dependent_keys)}, run, stream_names)
+        independent_map = call_or_eval(dict(enumerate(independent_keys)), run, stream_names)
+        dependent_map = call_or_eval(dict(enumerate(dependent_keys)), run, stream_names)
 
         independent = tuple(independent_map[j] for j in range(len(independent_keys)))
         measurement = tuple(dependent_map[j] for j in range(len(dependent_keys)))

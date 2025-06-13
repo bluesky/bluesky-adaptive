@@ -16,8 +16,9 @@ Experiment specific:
 """
 
 from abc import ABC
+from collections.abc import Generator, Sequence
 from logging import getLogger
-from typing import Generator, Sequence, Tuple, Union
+from typing import Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -34,7 +35,7 @@ class SequentialAgentBase(Agent, ABC):
     ----------
     sequence : Sequence[Union[float, ArrayLike]]
         Sequence of points to be queried
-    relative_bounds : Tuple[Union[float, ArrayLike]], optional
+    relative_bounds : tuple[Union[float, ArrayLike]], optional
         Relative bounds for the members of the sequence to follow, by default None
 
     Attributes
@@ -45,7 +46,7 @@ class SequentialAgentBase(Agent, ABC):
         List of all observables corresponding to the points in the independent_cache
     sequence : Sequence[Union[float, ArrayLike]]
         Sequence of points to be queried
-    relative_bounds : Tuple[Union[float, ArrayLike]], optional
+    relative_bounds : tuple[Union[float, ArrayLike]], optional
         Relative bounds for the members of the sequence to follow, by default None
     suggest_count : int
         Number of queries this agent has made
@@ -57,7 +58,7 @@ class SequentialAgentBase(Agent, ABC):
         self,
         *,
         sequence: Sequence[Union[float, ArrayLike]],
-        relative_bounds: Tuple[Union[float, ArrayLike]] = None,
+        relative_bounds: tuple[Union[float, ArrayLike]] = None,
         **kwargs,
     ) -> None:
         super().__init__(**kwargs)
@@ -98,9 +99,9 @@ class SequentialAgentBase(Agent, ABC):
     def ingest(self, x, y) -> dict:
         self.independent_cache.append(x)
         self.observable_cache.append(y)
-        return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
+        return {"independent_variable": x, "observable": y, "cache_len": len(self.independent_cache)}
 
-    def suggest(self, batch_size: int = 1) -> Tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def suggest(self, batch_size: int = 1) -> tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
         docs = []
         proposals = []
         for _ in range(batch_size):
@@ -110,8 +111,8 @@ class SequentialAgentBase(Agent, ABC):
             except StopIteration:
                 logger.warning("StopIteration met. Stopping sequential agent thread.")
                 self.stop()
-            docs.append(dict(proposal=proposals[-1], suggestion_count=self.suggest_count))
+            docs.append({"proposal": proposals[-1], "suggestion_count": self.suggest_count})
         return docs, proposals
 
     def report(self, **kwargs) -> dict:
-        return dict(percent_completion=self.suggest_count / len(self.sequence))
+        return {"percent_completion": self.suggest_count / len(self.sequence)}

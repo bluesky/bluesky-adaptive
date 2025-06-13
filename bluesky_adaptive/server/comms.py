@@ -213,9 +213,7 @@ class PipeJsonRpcReceive:
                 except EOFError:
                     pass
                 except Exception as ex:
-                    logger.exception(
-                        "Exception occurred while waiting for a message or receiving a message: %s", ex
-                    )
+                    logger.exception("Exception occurred while waiting for a message or receiving a message: %s", ex)
                     break
             if not self._thread_running:  # Exit thread
                 break
@@ -429,25 +427,23 @@ class PipeJsonRpcSendAsync:
                             # Server Error (issue with execution of the method)
                             err_type = response["error"]["data"]["type"]
                             # Message: "Server error: <message text>"
-                            err_msg = f'{response["error"]["message"]}: {response["error"]["data"]["message"]}'
+                            err_msg = f"{response['error']['message']}: {response['error']['data']['message']}"
                         else:
                             # Other json-rpc errors
                             err_type = "CommJsonRpcError"
                             err_msg = response["error"]["message"]
                         raise CommJsonRpcError(err_msg, error_code=err_code, error_type=err_type)
                     else:
-                        err_msg = (
-                            f"Message {ppfl(msg)}\n" f"resulted in response with unknown format: {ppfl(response)}"
-                        )
+                        err_msg = f"Message {ppfl(msg)}\nresulted in response with unknown format: {ppfl(response)}"
                         raise RuntimeError(err_msg)
                 else:
                     response = None
                 return response
 
             except asyncio.TimeoutError:
-                raise CommTimeoutError(f"Timeout while waiting for response to message: \n{ppfl(msg)}")
+                raise CommTimeoutError(f"Timeout while waiting for response to message: \n{ppfl(msg)}") from None
             except queue.Full:
-                raise CommTimeoutError(f"The outgoing message buffer is full: \n{ppfl(msg)}")
+                raise CommTimeoutError(f"The outgoing message buffer is full: \n{ppfl(msg)}") from None
             finally:
                 # Clear the 'send' buffer
                 while not self._msg_send_buffer.empty():

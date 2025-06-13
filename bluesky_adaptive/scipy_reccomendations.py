@@ -66,6 +66,6 @@ class MinimizerReccomender:
         try:
             ret = self._internal_to_exp.get(timeout=1)
         except Empty:
-            raise NoRecommendation
+            raise NoRecommendation from None
         else:
             return ret
