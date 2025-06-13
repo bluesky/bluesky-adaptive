@@ -78,7 +78,6 @@ def build_app():
 
     @app.on_event("shutdown")
     async def shutdown_event():
-        global worker_process, ioc_server, worker_shutdown_timeout
         logger.info("Shutting down the server ...")
 
         if ioc_server:
