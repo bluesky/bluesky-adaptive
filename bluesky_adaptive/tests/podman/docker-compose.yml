@@ -1,13 +1,13 @@
-version: '3.2'
+version: "3.2"
 
 services:
   kafka:
-    image: 'docker.io/bitnami/kafka:latest'
+    image: "docker.io/bitnami/kafka:latest"
     ports:
-      - '9092:9092'
-      - '29092:29092'
+      - "9092:9092"
+      - "29092:29092"
     volumes:
-      - 'kafka_data:/bitnami'
+      - "kafka_data:/bitnami"
     environment:
       - KAFKA_CFG_KRAFT_MODE_ENABLED=true
       - KAFKA_CFG_PROCESS_ROLES=controller,broker
@@ -37,10 +37,10 @@ services:
     image: bluesky
     command: start-re-manager --redis-addr redis:6379
     volumes:
+      - ./16-plans.py:/usr/local/lib/python3.13/site-packages/bluesky_queueserver/profile_collection_sim/16-plans.py
       - ./16-plans.py:/usr/local/lib/python3.12/site-packages/bluesky_queueserver/profile_collection_sim/16-plans.py
       - ./16-plans.py:/usr/local/lib/python3.11/site-packages/bluesky_queueserver/profile_collection_sim/16-plans.py
       - ./16-plans.py:/usr/local/lib/python3.10/site-packages/bluesky_queueserver/profile_collection_sim/16-plans.py
-      - ./16-plans.py:/usr/local/lib/python3.9/site-packages/bluesky_queueserver/profile_collection_sim/16-plans.py
     networks:
       - re_manager
     ports:
