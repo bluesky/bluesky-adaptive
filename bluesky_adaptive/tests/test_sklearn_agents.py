@@ -105,7 +105,7 @@ def test_decomp_remodel_from_report(
     assert len(data["independent_vars"]) == 5
 
 
-@pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
+@pytest.mark.parametrize("estimator", [KMeans(2, n_init="auto")], ids=["KMeans"])
 def test_cluster_agent(estimator):
     agent = ClusterTestAgent(
         estimator=estimator,
@@ -134,7 +134,7 @@ def test_cluster_agent(estimator):
     raises=TimeoutError,
     reason="Databroker timeout awaiting for documents to write",
 )  # Allow timeout in GHA CI/CD
-@pytest.mark.parametrize("estimator", [KMeans(2)], ids=["KMeans"])
+@pytest.mark.parametrize("estimator", [KMeans(2, n_init="auto")], ids=["KMeans"])
 def test_cluster_remodel_from_report(
     estimator,
     catalog,

@@ -167,10 +167,10 @@ class OfflineAgent(Agent):
         self.kafka_queue = deque()
         super().__init__(
             kafka_consumer=OfflineConsumer(self.kafka_queue, loop_on_start=loop_consumer_on_start),
-            qserver=qserver or REManagerSmoke(),
-            kafka_producer=kafka_producer or OfflineProducer(),
-            tiled_agent_node=tiled_agent_node or TiledSmoke(),
-            tiled_data_node=tiled_data_node or TiledSmoke(),
+            qserver=REManagerSmoke() if qserver is None else qserver,
+            kafka_producer=OfflineProducer() if kafka_producer is None else kafka_producer,
+            tiled_agent_node=TiledSmoke() if tiled_agent_node is None else tiled_agent_node,
+            tiled_data_node=TiledSmoke if tiled_data_node is None else tiled_data_node,
             **kwargs,
         )
 
@@ -194,11 +194,11 @@ class OfflineMonarchSubject(MonarchSubjectAgent):
         self.kafka_queue = deque()
         super().__init__(
             kafka_consumer=OfflineConsumer(self.kafka_queue, loop_on_start=loop_consumer_on_start),
-            qserver=qserver or REManagerSmoke(),
-            subject_qserver=subject_queueserver or REManagerSmoke(),
-            kafka_producer=kafka_producer or OfflineProducer(),
-            tiled_agent_node=tiled_agent_node or TiledSmoke(),
-            tiled_data_node=tiled_data_node or TiledSmoke(),
+            qserver=REManagerSmoke() if qserver is None else qserver,
+            subject_qserver=REManagerSmoke() if subject_queueserver is None else subject_queueserver,
+            kafka_producer=OfflineProducer() if kafka_producer is None else kafka_producer,
+            tiled_agent_node=TiledSmoke() if tiled_agent_node is None else tiled_agent_node,
+            tiled_data_node=TiledSmoke() if tiled_data_node is None else tiled_data_node,
             **kwargs,
         )
 
