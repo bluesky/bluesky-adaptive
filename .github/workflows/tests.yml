@@ -29,8 +29,8 @@ jobs:
 
       - name: Download and build bluesky-pods
         run: |
-          docker pull ghcr.io/bluesky/bluesky-pods-bluesky:main
-          docker tag ghcr.io/bluesky/bluesky-pods-bluesky:main bluesky:latest
+          docker pull ghcr.io/bluesky/bluesky-pods-bluesky:latest
+          docker tag ghcr.io/bluesky/bluesky-pods-bluesky:latest bluesky:latest
 
       - name: Start Bluesky containers
         run: |
