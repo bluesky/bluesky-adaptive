@@ -31,6 +31,13 @@ from ..typing import BlueskyRunLike
 logger = getLogger("bluesky_adaptive.agents")
 
 
+def min_max_scale(x: torch.Tensor) -> torch.Tensor:
+    """Stateless min-max scaling of a tensor."""
+    x_min = x.min(dim=0, keepdim=True).values
+    x_max = x.max(dim=0, keepdim=True).values
+    return (x - x_min) / (x_max - x_min + 1e-9)  # small epsilon to avoid division by zero
+
+
 class SingleTaskGPAgentBase(Agent, ABC):
     def __init__(
         self,
@@ -77,8 +84,8 @@ class SingleTaskGPAgentBase(Agent, ABC):
         self.bounds = torch.tensor(bounds, device=self.device).view(2, -1)
         if gp is None:
             dummy_x, dummy_y = (
-                torch.randn(2, self.bounds.shape[-1], device=self.device),
-                torch.randn(2, out_dim, device=self.device),
+                min_max_scale(torch.randn(2, self.bounds.shape[-1], device=self.device, dtype=torch.double)),
+                min_max_scale(torch.randn(2, out_dim, device=self.device, dtype=torch.double)),
             )
             gp = SingleTaskGP(dummy_x, dummy_y)
 
@@ -114,11 +121,15 @@ class SingleTaskGPAgentBase(Agent, ABC):
 
     def ingest(self, x, y):
         if self.inputs is None:
-            self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device))
-            self.targets = torch.atleast_1d(torch.tensor(y, device=self.device))
+            self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device, dtype=torch.double))
+            self.targets = torch.atleast_1d(torch.tensor(y, device=self.device, dtype=torch.double))
         else:
-            self.inputs = torch.cat([self.inputs, torch.atleast_2d(torch.tensor(x, device=self.device))], dim=0)
-            self.targets = torch.cat([self.targets, torch.atleast_1d(torch.tensor(y, device=self.device))], dim=0)
+            self.inputs = torch.cat(
+                [self.inputs, torch.atleast_2d(torch.tensor(x, device=self.device, dtype=torch.double))], dim=0
+            )
+            self.targets = torch.cat(
+                [self.targets, torch.atleast_1d(torch.tensor(y, device=self.device, dtype=torch.double))], dim=0
+            )
             self.inputs.to(self.device)
             self.targets.to(self.device)
         self.surrogate_model.set_train_data(self.inputs, self.targets, strict=False)

@@ -1,6 +1,7 @@
 from typing import Union
 
 import numpy as np
+import pytest
 import torch
 from botorch.acquisition import UpperConfidenceBound
 from numpy.typing import ArrayLike
@@ -21,6 +22,10 @@ class GPTestAgent(SingleTaskGPAgentBase, OfflineAgent):
         return self.counter, np.random.rand(10)
 
 
+@pytest.mark.filterwarnings(
+    "ignore:.*All acquisition values*:botorch.exceptions.warnings.BadInitialCandidatesWarning",
+    "ignore:.*Optimization failed*:RuntimeWarning",
+)
 def test_gp_agent(catalog):
     # Test ingest, suggest, and report; uses Tiled functionality
     bounds = torch.Tensor([(0, 1), (0, 1)])
