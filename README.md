@@ -7,11 +7,11 @@ It provides a flexible API that supports a wide range of adaptive algorithms, fr
 The package is designed to provide a framework and set of harnesses for "bring-your-own-agent" development.  
 It has no opinions on the algorithms that underpin your adaptivity, and it is designed to be agnostic to the specifics of the domain in which it is used.
 
-| Resource        | Link         |
-|----------------|--------------|
+| Resource        | Link                      |
+| --- | --- |
 | **PyPI**        | `pip install bluesky-adaptive` |
-| **Source Code** | [GitHub][]   |
-| **Docs**        | [Documentation][] |
+| **Source Code** | [GitHub][]                |
+| **Docs**        | [Documentation][]         |
 
 ## Features
 
