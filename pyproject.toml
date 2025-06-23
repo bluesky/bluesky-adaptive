@@ -64,6 +64,7 @@ dev = [
   "databroker[all]>=2.0.0b1,<3.0.0",
   "bluesky-tiled-plugins",
 ]
+tsuchinoko = ["tsuchinoko"]
 
 [project.urls]
 GitHub = "https://github.com/bluesky/bluesky-adaptive"
