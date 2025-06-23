@@ -1,5 +1,5 @@
 from threading import Thread
-from typing import Tuple, Union
+from typing import Union
 
 import numpy as np
 from numpy.typing import ArrayLike
@@ -13,7 +13,7 @@ from bluesky_adaptive.agents.tsuchinoko import TsuchinokoAgent
 from bluesky_adaptive.typing import BlueskyRunLike
 from bluesky_adaptive.utils.offline import OfflineAgent
 
-from .conftest import catalog
+from .conftest import catalog  # noqa: F401
 
 
 @fixture
@@ -70,17 +70,17 @@ def core(gpcam_engine, execution_engine):
 
 
 class GPTestAgent(TsuchinokoAgent, OfflineAgent):
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
-        return self.measurement_plan_name, [1.5], dict()
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], {}
 
-    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         self.counter += 1
         y = np.random.rand(10)
         v = 0.1
         return self.counter, (y, v)
 
 
-def test_gp_agent(catalog, core):
+def test_gp_agent(catalog, core):  # noqa: F811
     # Test ingest, suggest, and report; uses Tiled functionality
     agent = GPTestAgent(tiled_data_node=catalog, tiled_agent_node=catalog)
     agent.start()

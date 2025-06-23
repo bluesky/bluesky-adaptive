@@ -2,8 +2,8 @@ import pickle
 import time
 import warnings
 from abc import ABC
+from collections.abc import Sequence
 from logging import getLogger
-from typing import Dict, Sequence, Tuple
 
 import numpy as np
 import zmq
@@ -18,7 +18,7 @@ SLEEP_FOR_TSUCHINOKO_TIME = 0.1
 FORCE_KICKSTART_TIME = 5
 
 
-class TsuchinokoBase(ABC):
+class TsuchinokoBase:
     def __init__(self, *args, host: str = "127.0.0.1", port: int = 5557, **kwargs):
         """
 
@@ -114,16 +114,16 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
         super().__init__(*args, **kwargs)
         self._targets_shape = None
 
-    def ingest(self, x, yv) -> Dict[str, ArrayLike]:
+    def ingest(self, x, yv) -> dict[str, ArrayLike]:
         super().ingest(x, yv)
         return self.get_ingest_document(x, yv)
 
-    def suggest(self, batch_size: int = 1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+    def suggest(self, batch_size: int = 1) -> tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
         targets = super().suggest(batch_size)
         optimizer_state = targets.pop("optimizer")
         return self.get_suggest_documents(targets, optimizer_state), targets
 
-    def get_ingest_document(self, x, yv) -> Dict[str, ArrayLike]:
+    def get_ingest_document(self, x, yv) -> dict[str, ArrayLike]:
         """
         Return any single document corresponding to 'tell'-ing Tsuchinoko about the newly measured `x`, `y` data
 
@@ -140,11 +140,11 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
 
         """
         y, v = yv
-        return dict(independent=np.asarray(x), observable=np.asarray(y), variance=np.asarray(v))
+        return {"independent": np.asarray(x), "observable": np.asarray(y), "variance": np.asarray(v)}
 
     def get_suggest_documents(
-        self, targets: Sequence[ArrayLike], optimizer_state: Dict
-    ) -> Sequence[Dict[str, ArrayLike]]:
+        self, targets: Sequence[ArrayLike], optimizer_state: dict
+    ) -> Sequence[dict[str, ArrayLike]]:
         """
         Ask the agent for a new batch of points to measure.
 
@@ -167,7 +167,9 @@ class TsuchinokoAgent(TsuchinokoBase, Agent, ABC):
         if not self._targets_shape:
             self._targets_shape = len(targets)
         if self._targets_shape != len(targets):
-            warnings.warn("The length of the target queue has changed. A new databroker run will be generated")
+            warnings.warn(
+                "The length of the target queue has changed. A new databroker run will be generated", stacklevel=2
+            )
             self.close_and_restart()
 
         return [targets | optimizer_state]
