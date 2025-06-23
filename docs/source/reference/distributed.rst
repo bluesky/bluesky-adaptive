@@ -69,7 +69,7 @@ as well as the qserver API using some common configuration keys. Both are demons
 
     from bluesky_queueserver_api.http import REManagerAPI
     import uuid
-    from typing import Sequence, Tuple, Union
+    from typing import Sequence, tuple, Union
 
     import nslsii.kafka_utils
     from numpy.typing import ArrayLike
@@ -81,7 +81,7 @@ as well as the qserver API using some common configuration keys. Both are demons
         ----------
         sequence : Sequence[Union[float, ArrayLike]]
             Sequence of points to be queried
-        relative_bounds : Tuple[Union[float, ArrayLike]], optional
+        relative_bounds : tuple[Union[float, ArrayLike]], optional
             Relative bounds for the members of the sequence to follow, by default None
 
         Attributes
@@ -92,7 +92,7 @@ as well as the qserver API using some common configuration keys. Both are demons
             List of all observables corresponding to the points in the independent_cache
         sequence : Sequence[Union[float, ArrayLike]]
             Sequence of points to be queried
-        relative_bounds : Tuple[Union[float, ArrayLike]], optional
+        relative_bounds : tuple[Union[float, ArrayLike]], optional
             Relative bounds for the members of the sequence to follow, by default None
         suggest_count : int
             Number of queries this agent has made
@@ -104,7 +104,7 @@ as well as the qserver API using some common configuration keys. Both are demons
             self,
             *,
             sequence: Sequence[Union[float, ArrayLike]],
-            relative_bounds: Tuple[Union[float, ArrayLike]] = None,
+            relative_bounds: tuple[Union[float, ArrayLike]] = None,
             **kwargs,
         ) -> None:
             super().__init__(**kwargs)
@@ -147,7 +147,7 @@ as well as the qserver API using some common configuration keys. Both are demons
             self.observable_cache.append(y)
             return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
 
-        def suggest(self, batch_size: int = 1) -> Tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
+        def suggest(self, batch_size: int = 1) -> tuple[Sequence[dict[str, ArrayLike]], Sequence[ArrayLike]]:
             docs = []
             proposals = []
             for _ in range(batch_size):
@@ -164,7 +164,7 @@ as well as the qserver API using some common configuration keys. Both are demons
         def measurement_plan(self, point):
             return "simple_scan", point, {}
 
-        def unpack_run(run: BlueskyRun) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+        def unpack_run(run: BlueskyRun) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
             return run.start["experiment_state"], run.primary.data["detector"]
 
         @staticmethod
@@ -227,7 +227,7 @@ as well as the qserver API using some common configuration keys. Both are demons
             self,
             *,
             sequence: Sequence[Union[float, ArrayLike]],
-            relative_bounds: Tuple[Union[float, ArrayLike]] = None,
+            relative_bounds: tuple[Union[float, ArrayLike]] = None,
             **kwargs,
         ):
             _default_kwargs = self.get_beamline_objects()
@@ -237,7 +237,7 @@ as well as the qserver API using some common configuration keys. Both are demons
         @classmethod
         def from_config_kwargs(cls, *,
             sequence: Sequence[Union[float, ArrayLike]],
-            relative_bounds: Tuple[Union[float, ArrayLike]] = None,
+            relative_bounds: tuple[Union[float, ArrayLike]] = None,
             **kwargs,):
             _default_kwargs = self.get_beamline_kwargs()
             _default_kwargs.update(kwargs)

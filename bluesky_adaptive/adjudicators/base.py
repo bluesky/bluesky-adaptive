@@ -1,9 +1,10 @@
 import logging
 from abc import ABC, abstractmethod
 from collections import deque
+from collections.abc import Sequence
 from copy import deepcopy
 from threading import Lock, Thread
-from typing import Callable, Sequence, Tuple
+from typing import Callable
 
 from bluesky_kafka import BlueskyConsumer
 from bluesky_queueserver_api import BPlan
@@ -108,8 +109,7 @@ class AdjudicatorBase(ABC):
     def _add_suggestion_to_queue(self, re_manager: API_Threads_Mixin, agent_name: str, suggestion: Suggestion):
         if suggestion.suggestion_uid in self._suggestion_uids:
             logger.debug(
-                f"Suggestion uid {suggestion.suggestion_uid} has already been seen."
-                "Not adding anything to the queue."
+                f"Suggestion uid {suggestion.suggestion_uid} has already been seen.Not adding anything to the queue."
             )
             return
         else:
@@ -120,7 +120,7 @@ class AdjudicatorBase(ABC):
         kwargs["md"]["agent_name"] = agent_name
         plan = BPlan(suggestion.plan_name, *suggestion.plan_args, **kwargs)
         r = re_manager.item_add(plan, pos="back")
-        logger.debug(f"Sent http-server request by adjudicator\n." f"Received reponse: {r}")
+        logger.debug(f"Sent http-server request by adjudicator\n.Received reponse: {r}")
 
     def server_registrations(self) -> None:
         """
@@ -140,7 +140,7 @@ class AdjudicatorBase(ABC):
             self._add_suggestion_to_queue(judgment.re_manager, judgment.agent_name, judgment.suggestion)
 
     @abstractmethod
-    def make_judgments(self) -> Sequence[Tuple[API_Threads_Mixin, str, Suggestion]]:
+    def make_judgments(self) -> Sequence[tuple[API_Threads_Mixin, str, Suggestion]]:
         """Instance method to make judgements based on current suggestions.
         The returned tuples will be deconstructed to add suggestions to the queue.
         """
@@ -173,7 +173,7 @@ class AgentByNameAdjudicator(AdjudicatorBase):
         self._register_property("priamry_agent")
         super().server_registrations()
 
-    def make_judgments(self) -> Sequence[Tuple[API_Threads_Mixin, str, Suggestion]]:
+    def make_judgments(self) -> Sequence[tuple[API_Threads_Mixin, str, Suggestion]]:
         judgments = []
 
         if self.primary_agent not in self.agent_names:
@@ -183,9 +183,7 @@ class AgentByNameAdjudicator(AdjudicatorBase):
             for key, manager in self._re_managers.items():
                 suggestions = adjudicator_msg.suggestions.get(key, [])
                 for suggestion in suggestions:
-                    judgments.append(
-                        Judgment(re_manager=manager, agent_name=self.primary_agent, suggestion=suggestion)
-                    )
+                    judgments.append(Judgment(re_manager=manager, agent_name=self.primary_agent, suggestion=suggestion))
         return judgments
 
 
@@ -221,7 +219,7 @@ class NonredundantAdjudicator(AdjudicatorBase):
         self.suggestion_set = set()
         self._re_managers = qservers
 
-    def make_judgments(self) -> Sequence[Tuple[API_Threads_Mixin, str, Suggestion]]:
+    def make_judgments(self) -> Sequence[tuple[API_Threads_Mixin, str, Suggestion]]:
         """Loop over all recieved adjudicator mesages, and their suggested plans by beamline,
         seeking redundancy."""
         passing_judgements = []

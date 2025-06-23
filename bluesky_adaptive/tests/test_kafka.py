@@ -253,9 +253,9 @@ def test_agent_interaction(kafka_bootstrap_servers, kafka_producer_config, tempo
         )
 
         # Will call the agent.increase method
-        publisher("dummy_agent", dict(action="increase", args=[], kwargs={}))
+        publisher("dummy_agent", {"action": "increase", "args": [], "kwargs": {}})
         # Will cause a logger.error
-        publisher("dummy_agent", dict(action="decrease", args=[], kwargs={}))
+        publisher("dummy_agent", {"action": "decrease", "args": [], "kwargs": {}})
         # Bluesky docs will get retained by scoped consumed list and agent cache
         publisher("start", {"uid": "123"})
         publisher("stop", {"start": "123"})

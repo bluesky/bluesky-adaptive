@@ -144,7 +144,7 @@ def unpack_run(self, run):
     return run.baseline.data["xafs_x"][0], y
 ```
 
-Lastly, the `measurement_plan` consumes the next point (independent variable) provided by the agent decision making, and converts this into a plan name, arguments, and keyword arguments (`measurement_plan(self, point: ArrayLike) -> Tuple[str, List, dict]`).
+Lastly, the `measurement_plan` consumes the next point (independent variable) provided by the agent decision making, and converts this into a plan name, arguments, and keyword arguments (`measurement_plan(self, point: ArrayLike) -> tuple[str, List, dict]`).
 Ideally this should use a plan already in the scope of regular beamline operations, but can also use some agent specific plans that are developed for the particular task. For example, if an agent is trying to explore position, it may have a custom plan like `agent_change_position_and_scan`.
 
 ### Name 

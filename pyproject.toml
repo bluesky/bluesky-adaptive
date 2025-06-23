@@ -1,25 +1,114 @@
-[tool.black]
-line-length = 115
-include = '\.pyi?$'
-exclude = '''
-(
-  /(
-      \.eggs         # exclude a few common directories in the
-    | \.git          # root of the project
-    | \.hg
-    | \.mypy_cache
-    | \.tox
-    | \.venv
-    | \.pytest_cache
-    | _build
-    | build
-    | buck-out
-    | build
-    | dist
-    | docs
-    | blib2to3
-    | tests/data
-  )/
-  | versioneer.py
-)
-'''
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bluesky-adaptive"
+classifiers = [
+  "Development Status :: 3 - Alpha",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
+description = "Tools for writing adaptive plans and building adaptive agents."
+readme = "README.md"
+license = "BSD-3-Clause"
+license-files = ["LICENSE"]
+dynamic = ["version"]
+authors = [
+  { name = "Phillip Maffettone", email = "pmaffetto@bnl.gov" },
+  { name = "Dmitri Gavrilov", email = "dgavrilov@bnl.gov" },
+  { name = "Thomas Caswell", email = "tacasewell@bnl.gov" },
+]
+maintainers = [{ name = "Phillip Maffettone", email = "pmaffetto@bnl.gov" }]
+requires-python = ">=3.9"
+dependencies = [
+  "bluesky",
+  "bluesky-live",
+  "bluesky-widgets",
+  "bluesky-kafka",
+  "bluesky-queueserver-api",
+  "xkcdpass",
+  "tiled[client]",
+  "numpy",
+  "pydantic",
+  "json-rpc",
+]
+
+[project.optional-dependencies]
+agents = ["scikit-learn", "scipy", "botorch"]
+dev = [
+  "ruff",
+  "coverage",
+  "pytest",
+  "sphinx",
+  "ipython",
+  "matplotlib",
+  "numpydoc",
+  "sphinx-copybutton",
+  "sphinx-design",
+  "pydata-sphinx-theme",
+  "myst-parser",
+  "fastapi",
+  "caproto != 1.2.0",
+  "ophyd",
+  "scipy",
+  "pre-commit",
+  "intake",
+  "tiled[client, server]",
+  "humanize",
+  "doct",
+  "mongomock",
+  "databroker[all]>=2.0.0b1,<3.0.0",
+  "bluesky-tiled-plugins",
+]
+
+[project.urls]
+GitHub = "https://github.com/bluesky/bluesky-adaptive"
+Documentation = "https://blueskyproject.io/bluesky-adaptive"
+
+[tool.setuptools_scm]
+version_file = "bluesky_adaptive/_version.py"
+
+[tool.pytest.ini_options]
+# Run pytest with all our checkers, and don't spam us with massive tracebacks on error
+# Don't collect the interactive directory which is intended for manual execution
+addopts = """
+    --tb=native -vv --doctest-modules --doctest-glob="*.rst"
+    """
+# https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
+filterwarnings = [
+  "error",
+  "ignore::PendingDeprecationWarning",
+  "ignore::UserWarning",
+  "ignore::DeprecationWarning",
+]
+testpaths = "bluesky_adaptive/tests"
+
+[tool.coverage.run]
+data_file = "/tmp/bluesky.coverage"
+
+[tool.coverage.report]
+exclude_lines = ["if __name__ == '__main__':"]
+omit = ["*version*", "*/python?.?/*"]
+
+[tool.coverage.paths]
+source = ["bluesky_adaptive"]
+
+[tool.ruff]
+src = ["bluesky_adaptive"]
+line-length = 120
+exclude = ["docs/source/conf.py", "_version.py"]
+
+[tool.ruff.lint]
+select = [
+  "B",  # flake8-bugbear - https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+  "C4", # flake8-comprehensions - https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
+  "E",  # pycodestyle errors - https://docs.astral.sh/ruff/rules/#error-e
+  "F",  # pyflakes rules - https://docs.astral.sh/ruff/rules/#pyflakes-f
+  "W",  # pycodestyle warnings - https://docs.astral.sh/ruff/rules/#warning-w
+  "I",  # isort - https://docs.astral.sh/ruff/rules/#isort-i
+  "UP", # pyupgrade - https://docs.astral.sh/ruff/rules/#pyupgrade-up
+]

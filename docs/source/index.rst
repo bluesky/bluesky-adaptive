@@ -56,4 +56,4 @@ For detailed release notes and version history, see the :doc:`reference/release-
    reference/index
 
 
-.. include:: ../../README.rst
+.. include:: ../../README.md

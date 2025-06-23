@@ -89,7 +89,7 @@ def recommender_factory(recommender, independent_keys, dependent_keys, *, max_co
                 # Some other exception will be raised by the plan
                 queue.put(e)
             else:
-                queue.put({k: v for k, v in zip(independent_keys, next_point)})
+                queue.put(dict(zip(independent_keys, next_point)))
 
     rr = RunRouter([lambda name, doc: ([callback], [])])
     return rr, queue

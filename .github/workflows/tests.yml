@@ -15,7 +15,7 @@ jobs:
 
     strategy:
       matrix:
-        python-version: ["3.9", "3.10", "3.11", "3.12"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
 
       fail-fast: false
 
@@ -29,8 +29,8 @@ jobs:
 
       - name: Download and build bluesky-pods
         run: |
-          docker pull ghcr.io/bluesky/bluesky-pods-bluesky:main
-          docker tag ghcr.io/bluesky/bluesky-pods-bluesky:main bluesky:latest
+          docker pull ghcr.io/bluesky/bluesky-pods-bluesky:latest
+          docker tag ghcr.io/bluesky/bluesky-pods-bluesky:latest bluesky:latest
 
       - name: Start Bluesky containers
         run: |
@@ -48,10 +48,7 @@ jobs:
         run: |
           set -vxeuo pipefail
           pip install --upgrade pip wheel
-          pip install .
-          pip install -r requirements-dev.txt
-          pip install -r requirements-agents.txt
-          pip install -r requirements-tsuchinoko.txt
+          pip install .[dev,agents,tsuchinoko]
           mkdir -p /home/runner/.config/tiled/profiles
           cp ./bluesky_adaptive/tests/podman/tiled_client_config.yml /home/runner/.config/tiled/profiles/tiled_client_config.yml
           pip list

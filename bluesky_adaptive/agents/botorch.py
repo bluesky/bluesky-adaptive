@@ -15,7 +15,7 @@ Experiment specific:
 import importlib
 from abc import ABC
 from logging import getLogger
-from typing import Callable, Optional, Tuple
+from typing import Callable, Optional
 
 import torch
 from botorch import fit_gpytorch_mll
@@ -29,6 +29,13 @@ from bluesky_adaptive.agents.base import Agent
 from ..typing import BlueskyRunLike
 
 logger = getLogger("bluesky_adaptive.agents")
+
+
+def min_max_scale(x: torch.Tensor) -> torch.Tensor:
+    """Stateless min-max scaling of a tensor."""
+    x_min = x.min(dim=0, keepdim=True).values
+    x_max = x.max(dim=0, keepdim=True).values
+    return (x - x_min) / (x_max - x_min + 1e-9)  # small epsilon to avoid division by zero
 
 
 class SingleTaskGPAgentBase(Agent, ABC):
@@ -72,14 +79,13 @@ class SingleTaskGPAgentBase(Agent, ABC):
         self.targets = None
 
         self.device = (
-            torch.device("cuda" if torch.cuda.is_available() else "cpu")
-            if device is None
-            else torch.device(device)
+            torch.device("cuda" if torch.cuda.is_available() else "cpu") if device is None else torch.device(device)
         )
         self.bounds = torch.tensor(bounds, device=self.device).view(2, -1)
         if gp is None:
-            dummy_x, dummy_y = torch.randn(2, self.bounds.shape[-1], device=self.device), torch.randn(
-                2, out_dim, device=self.device
+            dummy_x, dummy_y = (
+                min_max_scale(torch.randn(2, self.bounds.shape[-1], device=self.device, dtype=torch.double)),
+                min_max_scale(torch.randn(2, out_dim, device=self.device, dtype=torch.double)),
             )
             gp = SingleTaskGP(dummy_x, dummy_y)
 
@@ -109,21 +115,25 @@ class SingleTaskGPAgentBase(Agent, ABC):
         self.close_and_restart()
 
     def start(self, *args, **kwargs):
-        _md = dict(acqf_name=self.acqf_name)
+        _md = {"acqf_name": self.acqf_name}
         self.metadata.update(_md)
         super().start(*args, **kwargs)
 
     def ingest(self, x, y):
         if self.inputs is None:
-            self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device))
-            self.targets = torch.atleast_1d(torch.tensor(y, device=self.device))
+            self.inputs = torch.atleast_2d(torch.tensor(x, device=self.device, dtype=torch.double))
+            self.targets = torch.atleast_1d(torch.tensor(y, device=self.device, dtype=torch.double))
         else:
-            self.inputs = torch.cat([self.inputs, torch.atleast_2d(torch.tensor(x, device=self.device))], dim=0)
-            self.targets = torch.cat([self.targets, torch.atleast_1d(torch.tensor(y, device=self.device))], dim=0)
+            self.inputs = torch.cat(
+                [self.inputs, torch.atleast_2d(torch.tensor(x, device=self.device, dtype=torch.double))], dim=0
+            )
+            self.targets = torch.cat(
+                [self.targets, torch.atleast_1d(torch.tensor(y, device=self.device, dtype=torch.double))], dim=0
+            )
             self.inputs.to(self.device)
             self.targets.to(self.device)
         self.surrogate_model.set_train_data(self.inputs, self.targets, strict=False)
-        return dict(independent_variable=x, observable=y, cache_len=len(self.targets))
+        return {"independent_variable": x, "observable": y, "cache_len": len(self.targets)}
 
     def report(self):
         """Fit GP, and construct acquisition function.
@@ -173,9 +183,7 @@ class SingleTaskGPAgentBase(Agent, ABC):
             torch.atleast_1d(candidate).detach().cpu().numpy(),
         )
 
-    def remodel_from_report(
-        self, run: BlueskyRunLike, idx: int = None
-    ) -> Tuple[AcquisitionFunction, SingleTaskGP]:
+    def remodel_from_report(self, run: BlueskyRunLike, idx: int = None) -> tuple[AcquisitionFunction, SingleTaskGP]:
         idx = -1 if idx is None else idx
         keys = [key for key in run.report["data"].keys() if key.split("-")[0] == "STATEDICT"]
         state_dict = {".".join(key[10:].split(":")): torch.tensor(run.report["data"][key][idx]) for key in keys}

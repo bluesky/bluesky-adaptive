@@ -19,7 +19,6 @@ Experiment specific:
 import importlib
 from abc import ABC
 from logging import getLogger
-from typing import Tuple
 
 import numpy as np
 import sklearn
@@ -51,7 +50,7 @@ class SklearnEstimatorAgentBase(Agent, ABC):
     def ingest(self, x, y):
         self.independent_cache.append(x)
         self.observable_cache.append(y)
-        return dict(independent_variable=x, observable=y, cache_len=len(self.independent_cache))
+        return {"independent_variable": x, "observable": y, "cache_len": len(self.independent_cache)}
 
     def update_model_params(self, params: dict):
         self.model.set_params(**params)
@@ -76,7 +75,7 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
         super().__init__(estimator=estimator, **kwargs)
 
     def start(self, *args, **kwargs):
-        _md = dict(model_type=str(self.model).split("(")[0], model_params=self.model.get_params())
+        _md = {"model_type": str(self.model).split("(")[0], "model_params": self.model.get_params()}
         self.metadata.update(_md)
         super().start(*args, **kwargs)
 
@@ -86,14 +85,14 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
             components = self.model.components_
         except AttributeError:
             components = []
-        return dict(
-            components=components,
-            cache_len=len(self.independent_cache),
-            latest_data=self.known_uid_cache[-1],
-        )
+        return {
+            "components": components,
+            "cache_len": len(self.independent_cache),
+            "latest_data": self.known_uid_cache[-1],
+        }
 
     @staticmethod
-    def remodel_from_report(run: BlueskyRunLike, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+    def remodel_from_report(run: BlueskyRunLike, idx: int = None) -> tuple[sklearn.base.TransformerMixin, dict]:
         """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
 
         This enables fixed dimension reports that can be stacked and compared, while also allowing for
@@ -135,9 +134,12 @@ class DecompositionAgentBase(SklearnEstimatorAgentBase, ABC):
             model.fit(arr)
             model.components_ = run.report["data"]["components"][idx]
             weights = model.transform(arr)
-        return model, dict(
-            components=model.components_, weights=weights, independent_vars=independents, observables=observables
-        )
+        return model, {
+            "components": model.components_,
+            "weights": weights,
+            "independent_vars": independents,
+            "observables": observables,
+        }
 
 
 class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
@@ -154,7 +156,7 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         super().__init__(estimator=estimator, **kwargs)
 
     def start(self, *args, **kwargs):
-        _md = dict(model_type=str(self.model).split("(")[0], model_params=self.model.get_params())
+        _md = {"model_type": str(self.model).split("(")[0], "model_params": self.model.get_params()}
         self.metadata.update(_md)
         super().start(*args, **kwargs)
 
@@ -162,14 +164,14 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
         arr = np.array([x for _, x in sorted(zip(self.independent_cache, self.observable_cache))])
         self.model.fit(arr)
 
-        return dict(
-            cluster_centers=self.model.cluster_centers_,
-            cache_len=len(self.independent_cache),
-            latest_data=self.known_uid_cache[-1],
-        )
+        return {
+            "cluster_centers": self.model.cluster_centers_,
+            "cache_len": len(self.independent_cache),
+            "latest_data": self.known_uid_cache[-1],
+        }
 
     @staticmethod
-    def remodel_from_report(run: BlueskyRunLike, idx: int = None) -> Tuple[sklearn.base.TransformerMixin, dict]:
+    def remodel_from_report(run: BlueskyRunLike, idx: int = None) -> tuple[sklearn.base.TransformerMixin, dict]:
         """Grabs specified (or most recent) report document and rebuilds modelling of dataset at that point.
 
         This enables fixed dimension reports that can be stacked and compared, while also allowing for
@@ -213,10 +215,10 @@ class ClusterAgentBase(SklearnEstimatorAgentBase, ABC):
             model.cluster_centers_ = run.report["data"]["cluster_centers"][idx]
             clusters = model.predict(arr)
             distances = model.transform(arr)
-        return model, dict(
-            clusters=clusters,
-            distances=distances,
-            cluster_centers=model.cluster_centers_,
-            independent_vars=independents,
-            observables=observables,
-        )
+        return model, {
+            "clusters": clusters,
+            "distances": distances,
+            "cluster_centers": model.cluster_centers_,
+            "independent_vars": independents,
+            "observables": observables,
+        }

@@ -87,7 +87,7 @@ The `suggest` and `report` have no obligation to be quick, as they are not neces
             # Process new data
             return {}
 
-        def suggest(self, batch_size=1) -> Tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
+        def suggest(self, batch_size=1) -> tuple[Sequence[Dict[str, ArrayLike]], Sequence[ArrayLike]]:
             # Decide on the next experiment step
             return [{...} for next_step in next_steps], [np.atleast_1d(next_step) for next_step in next_steps]
 
@@ -105,12 +105,12 @@ Required methods here are:
 
     ```python
     class YourAsyncAgent(Agent):
-        def unpack_run(self, run: BlueskyRun) -> Tuple[ArrayLike, ArrayLike]:
+        def unpack_run(self, run: BlueskyRun) -> tuple[ArrayLike, ArrayLike]:
             # Extract independent and dependent variables from the run
             ...
             return x, y
         
-        def measurement_plan(self, next_step: ArrayLike) -> Tuple[str, list, dict]:
+        def measurement_plan(self, next_step: ArrayLike) -> tuple[str, list, dict]:
             # Convert the next step into a plan name, args, and kwargs
             ...
             return plan_name, args, kwargs

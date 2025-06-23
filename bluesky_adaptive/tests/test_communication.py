@@ -1,7 +1,8 @@
 """Testing the communication patterns of Bluesky Adaptive Async Agents"""
 
 import os
-from typing import Sequence, Tuple, Union
+from collections.abc import Sequence
+from typing import Union
 
 import pytest
 from bluesky_kafka import Publisher
@@ -19,9 +20,7 @@ class BasicCommunicationAgent(Agent):
     measurement_plan_name = "agent_driven_nap"
     instance_name = "bob"
 
-    def __init__(
-        self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs
-    ):
+    def __init__(self, pub_topic, sub_topic, kafka_bootstrap_servers, kafka_producer_config, tiled_profile, **kwargs):
         qs = REManagerAPI(http_server_uri=None)
         qs.set_authorization_key(api_key="SECRET")
 
@@ -52,24 +51,24 @@ class BasicCommunicationAgent(Agent):
         )
         self.count = 0
 
-    def measurement_plan(self, point: ArrayLike) -> Tuple[str, list, dict]:
-        return self.measurement_plan_name, [1.5], dict()
+    def measurement_plan(self, point: ArrayLike) -> tuple[str, list, dict]:
+        return self.measurement_plan_name, [1.5], {}
 
-    def unpack_run(self, run: BlueskyRunLike) -> Tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
+    def unpack_run(self, run: BlueskyRunLike) -> tuple[Union[float, ArrayLike], Union[float, ArrayLike]]:
         return 0, 0
 
     def report(self, report_number: int = 0) -> dict:
-        return dict(agent_name=self.instance_name, report=f"report_{report_number}")
+        return {"agent_name": self.instance_name, "report": f"report_{report_number}"}
 
-    def suggest(self, batch_size: int = 1) -> Tuple[dict, Sequence]:
+    def suggest(self, batch_size: int = 1) -> tuple[dict, Sequence]:
         return (
-            [dict(agent_name=self.instance_name, report=f"suggest_{batch_size}")],
+            [{"agent_name": self.instance_name, "report": f"suggest_{batch_size}"}],
             [0 for _ in range(batch_size)],
         )
 
     def ingest(self, x, y) -> dict:
         self.count += 1
-        return dict(x=x, y=y)
+        return {"x": x, "y": y}
 
     def start(self):
         """Start without kafka consumer start"""
