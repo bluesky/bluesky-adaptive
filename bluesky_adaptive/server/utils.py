@@ -230,7 +230,10 @@ def register_method(
 ):
     """
     Register a method to make it accessible by external API. All registered methods are accessible with
-    REST API.
+    REST API. If input_schea is not specified, the input schema is inferred from the method annotations.
+    If output_type is not specified, the output type is inferred from the method annotations.
+    The input schema will be cast into a Pydantic model, which is used to  validate input parameters (error on fail).
+    The output type is used to validate output parameters, with failures resulting in a warning.
 
     Parameters
     ----------
