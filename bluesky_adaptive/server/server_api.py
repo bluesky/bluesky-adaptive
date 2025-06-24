@@ -29,7 +29,11 @@ async def root_handler():
     """
     This is the response for the root URL (e.g. http://localhost)
     """
-    return {"message": "The HTTP server is alive!!!"}
+    try:
+        status = await SR.worker_get_status()
+    except Exception:
+        process_exceptions()
+    return {"message": "The HTTP server is alive!!!", "status": status}
 
 
 @router.get("/variables/names")

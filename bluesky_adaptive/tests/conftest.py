@@ -48,7 +48,7 @@ def fastapi_client():
     """
     with TestClient(app) as client:
         then = time.monotonic()
-        while not client.get("/api/variables/names").status_code == 200:
+        while not client.get("/api/").status_code == 200:
             # Wait for the FastAPI server to start, and Worker to be initialized
             if time.monotonic() - then > 5:
                 raise TimeoutError("The FastAPI server did not start in time.")

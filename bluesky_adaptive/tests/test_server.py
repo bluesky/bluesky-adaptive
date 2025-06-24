@@ -4,7 +4,7 @@ def test_server_status(fastapi_client):
     """
     response = fastapi_client.get("/api")
     assert response.status_code == 200
-    assert response.json() == {"message": "The HTTP server is alive!!!"}
+    assert response.json()["message"] == "The HTTP server is alive!!!"
 
 
 def test_variables_names(fastapi_client):
