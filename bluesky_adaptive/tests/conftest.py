@@ -41,7 +41,7 @@ def catalog():
     return temp().v2
 
 
-@pytest.fixture(scope="module")
+@pytest.fixture(scope="function")
 def fastapi_client():
     """
     Create a FastAPI test client for the bluesky_adaptive server.
