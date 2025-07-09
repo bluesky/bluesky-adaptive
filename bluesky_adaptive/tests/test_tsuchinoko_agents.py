@@ -1,8 +1,10 @@
+import sys
 from threading import Thread
 from typing import Union
 
 import numpy as np
 from numpy.typing import ArrayLike
+import pytest
 from pytest import fixture
 from tsuchinoko.adaptive.gpCAM_in_process import GPCAMInProcessEngine
 from tsuchinoko.core import CoreState, ZMQCore
@@ -80,6 +82,7 @@ class GPTestAgent(TsuchinokoAgent, OfflineAgent):
         return self.counter, (y, v)
 
 
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="GPCam Requires Python 3.11 or higher")
 def test_gp_agent(catalog, core):  # noqa: F811
     # Test ingest, suggest, and report; uses Tiled functionality
     agent = GPTestAgent(tiled_data_node=catalog, tiled_agent_node=catalog)
