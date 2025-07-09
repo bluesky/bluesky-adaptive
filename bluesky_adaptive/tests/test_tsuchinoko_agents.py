@@ -3,8 +3,8 @@ from threading import Thread
 from typing import Union
 
 import numpy as np
-from numpy.typing import ArrayLike
 import pytest
+from numpy.typing import ArrayLike
 from pytest import fixture
 from tsuchinoko.adaptive.gpCAM_in_process import GPCAMInProcessEngine
 from tsuchinoko.core import CoreState, ZMQCore
