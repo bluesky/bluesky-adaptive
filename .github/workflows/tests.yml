@@ -25,7 +25,7 @@ jobs:
       - name: Install Docker Compose
         run: |
           sudo apt-get update
-          sudo apt-get install -y docker-compose
+          sudo apt-get install -y docker-compose freeglut3-dev libopenblas-dev
 
       - name: Download and build bluesky-pods
         run: |
@@ -48,7 +48,7 @@ jobs:
         run: |
           set -vxeuo pipefail
           pip install --upgrade pip wheel
-          pip install .[dev,agents]
+          pip install .[dev,agents,tsuchinoko]
           mkdir -p /home/runner/.config/tiled/profiles
           cp ./bluesky_adaptive/tests/podman/tiled_client_config.yml /home/runner/.config/tiled/profiles/tiled_client_config.yml
           pip list
@@ -90,4 +90,4 @@ jobs:
         run: |
           set -vxeuo pipefail
           coverage run -m pytest -v
-          coverage report
+          coverage report -i
