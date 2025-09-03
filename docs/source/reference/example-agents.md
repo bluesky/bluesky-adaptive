@@ -59,3 +59,30 @@ Specifically, it uses a single task GP, with a default UCB acquisition function,
 
 These example agents provided by Bluesky Adaptive offer a starting point for integrating intelligent, data-driven decision-making into your experimental setups.
 Whether your experiments require simple sequential steps, data analysis through machine learning models, or sophisticated optimization strategies, these agents serve as both a practical tool and a source of inspiration for developing your custom agents.
+
+## Tsuchinoko Agent
+
+The Tsuchinoko agent enables using both the [gpCAM](https://gpcam.readthedocs.io/en/stable/) suggestion engine and the 
+[Tsuchinoko](https://tsuchinoko.readthedocs.io/en/latest/) graphical user interface.
+
+### Key Features of Tsuchinoko Agent
+
+- **Bayesian Optimization**: Utilizes a GP-based surrogate model for decision-making.
+- **Highly Customizable**: Modular flexibility of the suggestion algorithm with acquisition, kernel, noise, prior mean, and cost functions.
+- **High Performance**: Fast training and prediction with options to support distributed processing on HPC.
+- **Feedback and Control**: Visualization and live control of the agent from the Tsuchinoko desktop application keeps the user _in the loop_.
+
+```{eval-rst}
+.. autoclass:: bluesky_adaptive.agents.tsuchinoko.TsuchinokoAgent
+```
+
+To utilize the Tsuchinoko agent, as with other agent classes, the `measurement_plan` and `unpack_run` abstract methods
+must be defined in a subclass.
+
+To run the Tsuchinoko agent, you would need:
+- An installation of `bluesky_adaptive` with the optional `tsuchinoko` dependencies installed.
+- A running `TsuchinokoAgent`
+- A running `tsuchinoko` instance with a `BlueskyAdaptiveEngine` as its execution engine and a `GPCAMInProcessEngine` as
+  its adaptive engine.
+
+See `tests/test_tsuchinoko_agents.py` for refenece.
