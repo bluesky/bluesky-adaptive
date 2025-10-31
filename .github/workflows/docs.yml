@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - ci-add-docs-publishing-workflow  # for testing
     paths:
       - 'docs/**'
       - 'bluesky_adaptive/**'
