@@ -6,6 +6,7 @@ on:
       - main
       - ci-add-docs-publishing-workflow  # for testing
     paths:
+      - '.github/workflows/docs.yml'  # for testing
       - 'docs/**'
       - 'bluesky_adaptive/**'
       - 'pyproject.toml'
