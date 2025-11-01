@@ -22,7 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Get disk space
+      - name: Get disk space before cleanup
         run: |
           df -h
 
@@ -32,7 +32,7 @@ jobs:
           sudo docker image prune --all --force
           sudo docker builder prune -a
 
-      - name: Get disk space
+      - name: Get disk space after cleanup
         run: |
           df -h
 
@@ -67,7 +67,7 @@ jobs:
           cp ./bluesky_adaptive/tests/podman/tiled_client_config.yml /home/runner/.config/tiled/profiles/tiled_client_config.yml
           pip list
 
-      - name: Get disk space
+      - name: Get disk space after tests
         if: always()
         run: |
           df -h
