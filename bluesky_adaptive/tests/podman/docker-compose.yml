@@ -2,7 +2,7 @@ version: "3.2"
 
 services:
   kafka:
-    image: "docker.io/bitnami/kafka:latest"
+    image: "docker.io/bitnamilegacy/kafka:latest"
     ports:
       - "9092:9092"
       - "29092:29092"
