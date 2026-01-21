@@ -5,6 +5,12 @@ import logging
 import os
 import sys
 import traceback
+from inspect import signature
+from typing import Any, Callable, get_type_hints
+
+from pydantic import BaseModel, create_model
+
+from bluesky_adaptive.server.types import MethodRegistration, RegisteredMethod
 
 logger = logging.getLogger(__name__)
 
@@ -15,6 +21,7 @@ class _WorkerResources:
         self._agent_server_vars = None
         self._startup_tasks = []
         self._shutdown_tasks = []
+        self._agent_server_methods: dict[str, RegisteredMethod] = {}
 
     def _check_initialization(self):
         if (self._worker_obj is None) or (self._agent_server_vars is None):
@@ -29,6 +36,15 @@ class _WorkerResources:
     def agent_server_vars(self):
         self._check_initialization()
         return self._agent_server_vars
+
+    @property
+    def agent_server_methods(self):
+        """
+        Returns the reference to the dictionary of registered methods (not the copy).
+        The dictionary contains all methods registered with the ``register_method`` function.
+        """
+        self._check_initialization()
+        return self._agent_server_methods
 
     @property
     def startup_tasks(self):
@@ -46,15 +62,25 @@ class _WorkerResources:
 
     def set_worker_obj(self, worker_obj):
         """
-        This method should not be called by user code.
+        This method should not be called by user code. Creates a reference to the worker object.
         """
         self._worker_obj = worker_obj
 
     def set_agent_server_vars(self, agent_server_vars):
         """
-        This method should not be called by user code.
+        This method should not be called by user code. Creates a reference to the dictionary of
+        agent server variables. The dictionary contains all variables registered with the
+        ``register_variable`` function. Used by the WorkerProcess object.
         """
         self._agent_server_vars = agent_server_vars
+
+    def set_agent_server_methods(self, agent_server_methods):
+        """
+        This method should not be called by user code. Creates a reference to the dictionary of
+        agent server methods. The dictionary contains all methods registered with the
+        ``register_method`` function. Used by the WorkerProcess object.
+        """
+        self._agent_server_methods = agent_server_methods
 
     def add_startup_task(self, func):
         self._startup_tasks.append(func)
@@ -171,6 +197,103 @@ def register_variable(name, obj=None, attr_or_key=None, *, getter=None, setter=N
         "getter": getter,
         "setter": setter,
     }
+
+
+def create_input_model(func: Callable) -> type[BaseModel]:
+    """Generate a Pydantic model from callable's type annotations"""
+    hints = get_type_hints(func)
+    sig = signature(func)
+
+    # Create field definitions for the dynamic model
+    fields = {}
+    for param_name, param in sig.parameters.items():
+        if param_name in hints:
+            param_type = hints[param_name]
+            # If parameter has default, make it optional
+            if param.default is param.empty:
+                fields[param_name] = (param_type, ...)  # ... means required
+            else:
+                fields[param_name] = (param_type, param.default)
+
+    # Create and return dynamic model
+    return create_model(f"{func.__name__}_input", **fields)
+
+
+def register_method(
+    name: str,
+    obj: Any,
+    method_name: str,
+    *,
+    description: str = "",
+    input_schema: dict[str, tuple[type, Any]] = None,
+    output_type: type = None,
+):
+    """
+    Register a method to make it accessible by external API. All registered methods are accessible with
+    REST API. If input_schea is not specified, the input schema is inferred from the method annotations.
+    If output_type is not specified, the output type is inferred from the method annotations.
+    The input schema will be cast into a Pydantic model, which is used to  validate input parameters (error on fail).
+    The output type is used to validate output parameters, with failures resulting in a warning.
+
+    Parameters
+    ----------
+    name: str
+        Name by which the method is accessible through the REST API.
+    obj: Object
+        Reference to a Python class that contains the method.
+    method_name: str
+        Name of the method in the class.
+    description: str
+        Description of the method.
+    input_schema: dict
+        Input schema for the method. The schema is used to validate input parameters.
+        If not specified, the input schema is inferred from the method annotations.
+        This is cast into a Pydantic model, which is used to validate input parameters.
+        The schema is a dictionary where keys are parameter names and values are tuples
+        containing the type and default value (if any) of the parameter.
+        Example: `{"param1": (int, ...), "param2": (str, "default_value")}`
+        If the parameter is required, use `...` as the default value or contain it as single item in tuple.
+        If the parameter is optional, specify the default value (e.g., `None`).
+    output_type: type
+        Output type of the method. The type is used to validate output parameters.
+        If not specified, the output type is inferred from the method annotations.
+    """
+    if not isinstance(name, str):
+        raise TypeError(f"Method name must be a string: name={name!r}")
+    if not isinstance(method_name, str):
+        raise TypeError(f"Method name must be a string: method_name={method_name!r}")
+    if not isinstance(description, str):
+        raise TypeError(f"Description must be a string: description={description!r}")
+    if not isinstance(input_schema, (dict, type(None))):
+        raise TypeError(f"Input schema must be a dictionary or None: input_schema={input_schema!r}")
+
+    if not hasattr(obj, method_name):
+        raise AttributeError(f"Object {obj!r} does not have a method named '{method_name}'")
+    if not callable(getattr(obj, method_name)):
+        raise TypeError(f"Object {obj!r} has an attribute '{method_name}' that is not callable")
+
+    # Attempt to infer the description from the method docstring if not provided
+    if not description:
+        method = getattr(obj, method_name)
+        if callable(method) and method.__doc__:
+            description = method.__doc__.strip().split("\n")[0]
+
+    # Attempt to infer input and output schemas from the method annotations if not provided
+    method = getattr(obj, method_name)
+    if input_schema is None:
+        input_model = create_input_model(method)
+    else:
+        input_model = create_model(f"{method_name}_input", **input_schema)
+    if output_type is None:
+        hints = get_type_hints(method)
+        output_type = hints.get("return", None)
+
+    WR.agent_server_methods[name] = RegisteredMethod(
+        callable=method,
+        registration=MethodRegistration(
+            name=name, description=description, input_model=input_model, output_type=output_type
+        ),
+    )
 
 
 def startup_decorator(func):

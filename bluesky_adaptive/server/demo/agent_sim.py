@@ -1,6 +1,18 @@
+"""
+Run with
+BS_AGENT_STARTUP_SCRIPT_PATH=./bluesky_adaptive/server/demo/agent_sim.py \
+uvicorn bluesky_adaptive.server:app
+"""
+
 import sys
 
-from bluesky_adaptive.server import register_variable, shutdown_decorator, start_task, startup_decorator
+from bluesky_adaptive.server import (
+    register_method,
+    register_variable,
+    shutdown_decorator,
+    start_task,
+    startup_decorator,
+)
 
 print("The script implementing the simulated agent ...")
 
@@ -9,6 +21,10 @@ class AA:
     def __init__(self):
         self._depth = 10
         self._width = 60
+
+    def foo(self, desc: str = "default description"):
+        print(f"This is a {desc} method of class AA")
+        return self._depth + self._width
 
 
 aa = AA()
@@ -67,3 +83,4 @@ register_variable("x", bb, "x", pv_type="int", pv_max_length=1000)
 register_variable("y", bb, "y", pv_type="int")
 register_variable("v", globals(), "_v", pv_type="int")
 register_variable("no_pv", globals(), "_no_pv")
+register_method("foo", aa, "foo")
