@@ -12,25 +12,34 @@ python = ">=3.10.0,<3.14"
 
 [feature.dev.pypi-dependencies]
 blop = { path = ".", editable = true, extras = ["dev"] }
-fastapi = "<0.132.0"
+blop-sim = { path = "sim", editable = true }
 
 # CPU-only variant of dev feature
 [feature.dev-cpu.dependencies]
 
 [feature.dev-cpu.pypi-dependencies]
 blop = { path = ".", editable = true, extras = ["dev", "cpu"] }
-fastapi = "<0.132.0"
+blop-sim = { path = "sim", editable = true }
 
 [feature.dev-cpu.tasks]
 check = "pre-commit run --all-files"
-integration-tests = "pytest src/blop/tests/integration"
-unit-tests = "pytest src/blop/tests/unit"
+tests = "pytest src/blop/tests"
 
 [feature.docs.dependencies]
 
 [feature.docs.pypi-dependencies]
-blop = { path = ".", editable = true, extras = ["docs", "cpu"] }
-fastapi = "<0.132.0"
+blop = { path = ".", editable = true, extras = ["cpu"] }
+blop-sim = { path = "sim", editable = true }
+numpydoc = "*"
+sphinx-copybutton = "*"
+myst-nb = "*"
+furo = "*"
+jupytext = "*"
+pydata-sphinx-theme = "*"
+tiled = { version = ">=0.2.0", extras = ["all"] }
+bluesky-tiled-plugins = "*"
+ophyd-async = "*"
+fastapi = "<0.132.0" # TODO: Remove when Tiled is fixed
 
 [feature.py310.dependencies]
 python = "3.10.*"
@@ -46,8 +55,7 @@ python = "3.13.*"
 
 [feature.dev.tasks]
 check = "pre-commit run --all-files"
-integration-tests = "pytest src/blop/tests/integration"
-unit-tests = "pytest src/blop/tests/unit"
+tests = "pytest src/blop/tests"
 
 [feature.docs.tasks]
 build-docs = "make -C docs/ html"

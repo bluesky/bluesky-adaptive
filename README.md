@@ -10,6 +10,18 @@
 * Documentation: <https://NSLS-II.github.io/blop>.
 
 
+## Installation
+
+```bash
+pip install blop
+```
+
+or with conda:
+
+```bash
+conda install -c conda-forge blop
+```
+
 ## Citation
 
 If you use this package in your work, please cite the following paper:
