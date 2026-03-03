@@ -15,10 +15,12 @@ pip install -e sim/
 The package uses a component-based architecture with individual devices:
 
 - **Backends**: Global singletons that handle beam physics
+
   - `SimpleBackend`: Mathematical Gaussian beam simulation
   - `XRTBackend`: Full ray-tracing simulation using XRT
-  
+
 - **Devices**: Individual ophyd-async devices
+
   - Backend-agnostic:
     - `DetectorDevice`: Generates beam images (from the backend API)
     - `SlitDevice`: Four-blade aperture slit
