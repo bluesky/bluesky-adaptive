@@ -2,6 +2,8 @@ from collections.abc import Sequence
 from typing import Any
 
 from ax import ChoiceParameterConfig, Client, RangeParameterConfig
+from ax.core.parameter import ChoiceParameter, RangeParameter
+from ax.core.types import TParamValue
 
 from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer
 
@@ -100,10 +102,11 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions):
         if not fixed_parameters:
             self._fixed_parameters = None
             return
-        unknown_parameter_names = set(fixed_parameters) - set(self._parameter_names)
+
+        unknown_parameter_names = fixed_parameters.keys() - set(self._parameter_names)
         if unknown_parameter_names:
             raise KeyError(
-                f"Unknown fixed parameter(s): {sorted(unknown_parameter_names)}, expected: {sorted(self._parameter_names)}"
+                f"Unknown parameter(s): {sorted(unknown_parameter_names)}, expected: {sorted(self._parameter_names)}"
             )
         self._fixed_parameters = dict(fixed_parameters)
 
@@ -214,3 +217,68 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions):
         if not self.checkpoint_path:
             raise ValueError("Checkpoint path is not set. Please set a checkpoint path when initializing the optimizer.")
         self._client.save_to_json_file(self.checkpoint_path)
+
+    def _apply_parameter_update(
+        self,
+        parameter_name: str,
+        value: tuple[float, float] | list[TParamValue],
+        original_range_values: dict[str, tuple[float, float]],
+        original_choice_values: dict[str, list[TParamValue]],
+    ) -> None:
+        """
+        Validate and apply a single parameter update, storing the original value for rollback in case of failure.
+
+        Raises
+        ------
+        TypeError
+            If the provided value does not match the expected type for the parameter.
+        """
+        parameter = self._client._experiment.parameters[parameter_name]
+        if isinstance(parameter, RangeParameter):
+            if not isinstance(value, tuple):
+                raise TypeError(f"{RangeParameter.__name__} only accepts tuples of length 2, but got: {value}")
+            original_range_values[parameter_name] = (parameter.lower, parameter.upper)
+            parameter.update_range(*value)
+        elif isinstance(parameter, ChoiceParameter):
+            if not isinstance(value, list):
+                raise TypeError(f"{ChoiceParameter.__name__} only accepts list of items, but got: {value}")
+            original_choice_values[parameter_name] = parameter.values
+            parameter.set_values(value)
+        else:
+            raise TypeError(f"Expected RangeParameter or ChoiceParameter, but got {parameter}")
+
+    def _rollback_parameter_updates(
+        self,
+        original_range_values: dict[str, tuple[float, float]],
+        original_choice_values: dict[str, list[TParamValue]],
+    ) -> None:
+        """
+        Rollback original parameter state after a failed update
+        """
+        for parameter_name, value in original_range_values.items():
+            parameter = self._client._experiment.parameters[parameter_name]
+            if isinstance(parameter, RangeParameter):
+                parameter.update_range(*value)
+        for parameter_name, value in original_choice_values.items():
+            parameter = self._client._experiment.parameters[parameter_name]
+            if isinstance(parameter, ChoiceParameter):
+                parameter.set_values(value)
+
+    def reconfigure_search_space(self, parameter_mappings: dict[str, tuple[float, float] | list[TParamValue]]) -> None:
+        """
+        Update the bounds or values of existing parameters in the underlying experiment
+
+        Parameters
+        ----------
+        parameter_mappings : dict[str, tuple[float, float] | list[TParamValue]]
+            Mapping of parameter names to (lower, upper) bounds or a list of values depending on the parameter type.
+
+        """
+        original_range_values = {}
+        original_choice_values = {}
+        try:
+            for parameter_name, value in parameter_mappings.items():
+                self._apply_parameter_update(parameter_name, value, original_range_values, original_choice_values)
+        except Exception as e:
+            self._rollback_parameter_updates(original_range_values, original_choice_values)
+            raise e

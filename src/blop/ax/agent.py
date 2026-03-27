@@ -1,10 +1,11 @@
 import importlib.util
 import logging
 from collections.abc import Sequence
-from typing import Any, TypeGuard, cast
+from typing import Any, cast
 
 from ax import Client
 from ax.analysis import ContourPlot
+from ax.core.types import TParamValue
 
 # ===============================
 # TODO: Remove when Python 3.10 is no longer supported
@@ -34,14 +35,6 @@ from .optimizer import AxOptimizer
 logger = logging.getLogger(__name__)
 
 
-def _has_str_keys(d: dict[DOF, Any] | dict[str, Any]) -> TypeGuard[dict[str, Any]]:
-    return all(isinstance(key, str) for key in d.keys())
-
-
-def _has_dof_keys(d: dict[DOF, Any] | dict[str, Any]) -> TypeGuard[dict[DOF, Any]]:
-    return all(isinstance(key, DOF) for key in d.keys())
-
-
 class _AxAgentMixin:
     """
     Mixin providing Ax-related functionality shared by agents.
@@ -63,7 +56,7 @@ class _AxAgentMixin:
         return self._optimizer.fixed_parameters
 
     @fixed_dofs.setter
-    def fixed_dofs(self, fixed_dofs: dict[DOF, Any] | dict[str, Any] | None) -> None:
+    def fixed_dofs(self, fixed_dofs: dict[DOF, Any] | None) -> None:
         """
         Fix degrees of freedom to a certain value for future optimizations.
 
@@ -77,14 +70,7 @@ class _AxAgentMixin:
             self._optimizer.fixed_parameters = None
             return
 
-        if _has_str_keys(fixed_dofs):
-            self._optimizer.fixed_parameters = fixed_dofs
-        elif _has_dof_keys(fixed_dofs):
-            self._optimizer.fixed_parameters = {dof.parameter_name: value for dof, value in fixed_dofs.items()}
-        else:
-            raise ValueError(
-                f"Keys must all be either {type(DOF)} or {type(str)}, but got {type(list(fixed_dofs.keys())[0])}"
-            )
+        self._optimizer.fixed_parameters = {dof.parameter_name: value for dof, value in fixed_dofs.items()}
 
     def suggest(self, num_points: int = 1) -> list[dict]:
         """
@@ -180,6 +166,18 @@ class _AxAgentMixin:
         Save the agent's state to a JSON file.
         """
         self._optimizer.checkpoint()
+
+    def reconfigure_search_space(self, dof_mappings: dict[DOF, tuple[float, float] | list[TParamValue]]) -> None:
+        """
+        Update bounds or values of existing DOFs for future optimizations.
+
+        Parameters
+        ----------
+        dof_mappings : dict[DOF, tuple[float, float] | list[float] | list[int] | list[str] | list[bool]]
+            Mapping of DOFs to their new search space.
+        """
+
+        self._optimizer.reconfigure_search_space({dof.parameter_name: update for dof, update in dof_mappings.items()})
 
 
 class Agent(_AxAgentMixin):

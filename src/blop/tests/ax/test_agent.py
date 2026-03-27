@@ -153,8 +153,11 @@ def test_agent_suggest_fixed_dofs(mock_evaluation_function):
         objectives=[objective],
         evaluation_function=mock_evaluation_function,
     )
-    with pytest.raises(ValueError):
-        agent.fixed_dofs = {"test_movable1": 3, dof2: 4}
+    # Keys must be a DOF object
+    with pytest.raises(AttributeError):
+        agent.fixed_dofs = {"test_movable1": 3}
+
+    # Valid updates should fix the DOF
     agent.fixed_dofs = {dof2: 4}
     parameterizations = agent.suggest(5)
     for i in range(5):
@@ -217,6 +220,29 @@ def test_ingest_baseline(mock_evaluation_function):
     summary_df = agent.ax_client.summarize()
     assert len(summary_df) == 1
     assert summary_df["arm_name"].values[0] == "baseline"
+
+
+def test_reconfigure_search_space(mock_evaluation_function):
+    movable1 = MovableSignal(name="test_movable1")
+    movable2 = MovableSignal(name="test_movable2")
+    dof1 = RangeDOF(actuator=movable1, bounds=(0, 10), parameter_type="float")
+    dof2 = RangeDOF(actuator=movable2, bounds=(0, 10), parameter_type="float")
+    objective = Objective(name="test_objective", minimize=False)
+    agent = Agent(
+        sensors=[],
+        dofs=[dof1, dof2],
+        objectives=[objective],
+        evaluation_function=mock_evaluation_function,
+    )
+    # Keys must be DOF objects, not parameter names
+    with pytest.raises(AttributeError):
+        agent.reconfigure_search_space({"test_movable1": (3, 6)})
+
+    # Valid update should restrict the search space
+    agent.reconfigure_search_space({dof1: (3, 6)})
+    parameterizations = agent.suggest(10)
+    for i in range(10):
+        assert 3 <= parameterizations[i]["test_movable1"] <= 6
 
 
 def test_agent_init_actuator_string_raises(mock_evaluation_function):
