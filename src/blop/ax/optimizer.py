@@ -5,10 +5,10 @@ from ax import ChoiceParameterConfig, Client, RangeParameterConfig
 from ax.core.parameter import ChoiceParameter, RangeParameter
 from ax.core.types import TParamValue
 
-from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer
+from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer, TrialFaultAware
 
 
-class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions):
+class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultAware):
     """
     An optimizer that uses Ax as the backend for optimization and experiment tracking.
 
@@ -209,6 +209,21 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions):
             registered.append({ID_KEY: trial_idx, **parameters})
 
         return registered
+
+    def register_failures(self, suggestions) -> None:
+        """
+        Register suggestions as failures
+
+        Inherited from the trialfaultaware class to make sure either the Ax optimizer knows to
+        either retry the trial or end the optimization context
+
+        Parameters
+        ----------
+        suggestions : list[dict]
+            the trial id key must be present to pass back to the optimizer
+        """
+        for s in suggestions:
+            self._client.mark_trial_failed(s[ID_KEY])
 
     def checkpoint(self) -> None:
         """
