@@ -67,8 +67,8 @@ class _AxAgentMixin:
 
         Parameters
         ----------
-        fixed_dofs : dict[DOF, Any] | dict[str, Any] | None
-            A mapping of DOFs or DOF names to the values they should be fixed to.
+        fixed_dofs : dict[DOF, Any] | None
+            A mapping of DOFs to the values they should be fixed to.
 
         """
         if not fixed_dofs:

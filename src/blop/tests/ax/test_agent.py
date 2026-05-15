@@ -7,7 +7,7 @@ from bluesky.callbacks import CallbackBase
 from bluesky_queueserver_api.zmq import REManagerAPI
 
 from blop.ax.agent import Agent, QueueserverAgent
-from blop.ax.dof import DOFConstraint, RangeDOF
+from blop.ax.dof import ChoiceDOF, DOFConstraint, RangeDOF
 from blop.ax.objective import Objective, ScalarizedObjective
 from blop.ax.optimizer import AxOptimizer
 from blop.callbacks.logger import OptimizationLogger
@@ -146,12 +146,14 @@ def test_agent_suggest_multiple(mock_evaluation_function):
 def test_agent_suggest_fixed_dofs(mock_evaluation_function):
     movable1 = MovableSignal(name="test_movable1")
     movable2 = MovableSignal(name="test_movable2")
+    movable3 = MovableSignal(name="test_movable3")
     dof1 = RangeDOF(actuator=movable1, bounds=(0, 10), parameter_type="float")
     dof2 = RangeDOF(actuator=movable2, bounds=(0, 10), parameter_type="float")
+    dof3 = ChoiceDOF(actuator=movable3, values=["A", "B", "C", "D", "E"], parameter_type="str")
     objective = Objective(name="test_objective", minimize=False)
     agent = Agent(
         sensors=[],
-        dofs=[dof1, dof2],
+        dofs=[dof1, dof2, dof3],
         objectives=[objective],
         evaluation_function=mock_evaluation_function,
     )
@@ -160,12 +162,13 @@ def test_agent_suggest_fixed_dofs(mock_evaluation_function):
         agent.fixed_dofs = {"test_movable1": 3}
 
     # Valid updates should fix the DOF
-    agent.fixed_dofs = {dof2: 4}
-    parameterizations = agent.suggest(5)
-    for i in range(5):
+    agent.fixed_dofs = {dof2: 4, dof3: "B"}
+    parameterizations = agent.suggest(10)
+    for i in range(10):
         assert "test_movable2" in parameterizations[i]
         if i != 0:  # first trial will default to CenterOfSearchSpace and override any fixed parameters
             assert parameterizations[i]["test_movable2"] == 4
+            assert parameterizations[i]["test_movable3"] == "B"
 
 
 def test_agent_ingest(mock_evaluation_function):
@@ -227,12 +230,14 @@ def test_ingest_baseline(mock_evaluation_function):
 def test_reconfigure_search_space(mock_evaluation_function):
     movable1 = MovableSignal(name="test_movable1")
     movable2 = MovableSignal(name="test_movable2")
+    movable3 = MovableSignal(name="test_movable3")
     dof1 = RangeDOF(actuator=movable1, bounds=(0, 10), parameter_type="float")
     dof2 = RangeDOF(actuator=movable2, bounds=(0, 10), parameter_type="float")
+    dof3 = ChoiceDOF(actuator=movable3, values=["A", "B", "C", "D", "E"], parameter_type="str")
     objective = Objective(name="test_objective", minimize=False)
     agent = Agent(
         sensors=[],
-        dofs=[dof1, dof2],
+        dofs=[dof1, dof2, dof3],
         objectives=[objective],
         evaluation_function=mock_evaluation_function,
     )
@@ -241,10 +246,11 @@ def test_reconfigure_search_space(mock_evaluation_function):
         agent.reconfigure_search_space({"test_movable1": (3, 6)})
 
     # Valid update should restrict the search space
-    agent.reconfigure_search_space({dof1: (3, 6)})
+    agent.reconfigure_search_space({dof1: (3, 6), dof3: ["A", "B"]})
     parameterizations = agent.suggest(10)
     for i in range(10):
         assert 3 <= parameterizations[i]["test_movable1"] <= 6
+        assert parameterizations[i]["test_movable3"] in {"A", "B"}
 
 
 def test_agent_init_actuator_string_raises(mock_evaluation_function):
@@ -254,6 +260,20 @@ def test_agent_init_actuator_string_raises(mock_evaluation_function):
 
     with pytest.raises(ValueError, match="not strings"):
         Agent(sensors=[], dofs=[dof1, dof2], objectives=[objective], evaluation_function=mock_evaluation_function)
+
+
+def test_agent_init_duplicate_dof_names(mock_evaluation_function):
+    dof1 = RangeDOF(name="test_same_name", bounds=(0, 10), parameter_type="float")
+    dof2 = ChoiceDOF(name="test_same_name", values=["A, B"], parameter_type="str")
+    objective = Objective(name="test_objective", minimize=True)
+
+    # Ax raises ValueError when two or more parameters have the same name
+    with pytest.raises(ValueError, match="names must be unique"):
+        Agent(sensors=[], dofs=[dof1, dof2], objectives=[objective], evaluation_function=mock_evaluation_function)
+
+    # Same setup, unique name for dof3, no error
+    dof3 = ChoiceDOF(name="test_different_name", values=["A, B"], parameter_type="str")
+    Agent(sensors=[], dofs=[dof1, dof3], objectives=[objective], evaluation_function=mock_evaluation_function)
 
 
 def test_agent_scalarized_objective(mock_evaluation_function):

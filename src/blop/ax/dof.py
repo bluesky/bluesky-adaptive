@@ -62,7 +62,7 @@ class DOF(ABC):
     def to_ax_parameter_config(self) -> RangeParameterConfig | ChoiceParameterConfig: ...
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True, eq=False)
 class RangeDOF(DOF):
     """
     A degree of freedom that is a continuous range.
@@ -119,7 +119,7 @@ class RangeDOF(DOF):
         )
 
 
-@dataclass(frozen=True, kw_only=True)
+@dataclass(frozen=True, kw_only=True, eq=False)
 class ChoiceDOF(DOF):
     """
     A degree of freedom that is a discrete choice.
