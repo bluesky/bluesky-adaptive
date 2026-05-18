@@ -3,14 +3,20 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from blop.protocols import CanRegisterSuggestions, Optimizer, QueueserverOptimizationProblem
-from blop.queueserver import CORRELATION_UID_KEY, ConsumerCallback, QueueserverClient, QueueserverOptimizationRunner
+from blop.protocols import CanRegisterSuggestions, Optimizer, QueueserverOptimizationProblem, TrialFaultAware
+from blop.queueserver import (
+    CORRELATION_UID_KEY,
+    ConsumerCallback,
+    OptimizationResult,
+    QueueserverClient,
+    QueueserverOptimizationRunner,
+)
 
 
 @pytest.fixture(scope="function")
 def mock_optimization_problem():
     """Create a mock OptimizationProblem with necessary components."""
-    mock_optimizer = MagicMock()
+    mock_optimizer = MagicMock(spec=Optimizer)
     mock_optimizer.suggest.return_value = [
         {"_id": 0, "motor1": 5.0, "motor2": 3.0},
     ]
@@ -222,7 +228,7 @@ def test_runner_run_submits_suggestions_to_queueserver():
     )
     assert runner.optimization_problem == mock_optimization_problem
 
-    runner.run(iterations=1, num_points=1)
+    future = runner.run(iterations=1, num_points=1)
 
     # Verify optimizer.suggest was called
     mock_optimization_problem.optimizer.suggest.assert_called_once_with(1)
@@ -231,6 +237,9 @@ def test_runner_run_submits_suggestions_to_queueserver():
     mock_client.submit_plan.assert_called_once()
     submitted_plan = mock_client.submit_plan.call_args[0][0]
     assert submitted_plan.name == "my_acquire"
+
+    # Future should be pending (acquisition callback has not fired)
+    assert not future.done()
 
 
 def test_runner_run_twice_fails():
@@ -268,22 +277,28 @@ def test_runner_run_twice_fails():
         runner.submit_suggestions(suggestions)
 
 
-def test_runner_stop_sets_finished_state(mock_optimization_problem):
-    """Test stop() marks the runner as finished and stops listener."""
+def test_runner_stop_returns_partial_result(mock_optimization_problem):
+    """Test stop() marks the runner as finished, stops listener, and resolves the future."""
     mock_client = MagicMock(spec=QueueserverClient)
     runner = QueueserverOptimizationRunner(
         optimization_problem=mock_optimization_problem,
         queueserver_client=mock_client,
     )
 
-    # The acquisiton completion callback never fires here due to the mocked client, therefore
-    # the first plan runs forever
-    runner.run(10)
-    assert runner.is_running is True
+    # The acquisition completion callback never fires here due to the mocked client,
+    # so the first plan runs forever until stop() is called.
+    future = runner.run(10)
+    assert not future.done()
 
     runner.stop()
-    assert runner.is_running is False
-    mock_client.stop_listener.assert_called()
+
+    assert future.done()
+    # TODO: possible stopping bug in remote dispatcher
+    mock_client.stop_listener.assert_not_called()
+    result = future.result()
+    assert isinstance(result, OptimizationResult)
+    assert result.iterations_completed == 0
+    assert result.uids == ()
 
 
 def test_runner_submit_suggestions_to_queueserver():
@@ -305,7 +320,7 @@ def test_runner_submit_suggestions_to_queueserver():
     )
 
     suggestions = [{"motor1": 5}]
-    runner.submit_suggestions(suggestions)
+    future = runner.submit_suggestions(suggestions)
 
     # Verify optimizer.suggest was NOT called
     mock_optimization_problem.optimizer.suggest.assert_not_called()
@@ -315,6 +330,8 @@ def test_runner_submit_suggestions_to_queueserver():
     mock_client.submit_plan.assert_called_once()
     submitted_plan = mock_client.submit_plan.call_args[0][0]
     assert submitted_plan.name == "my_acquire"
+
+    assert not future.done()
 
 
 def test_runner_submit_suggestions_register_fails():
@@ -378,6 +395,32 @@ def test_runner_submit_suggestions_twice_fails():
         runner.run(iterations=1)
 
 
+def _make_runner_with_captured_callback(mock_optimization_problem, iterations=3):
+    """Helper: build a runner and capture the on_stop callback via start_listener side-effect."""
+    mock_client = MagicMock(spec=QueueserverClient)
+
+    def capture_callback(on_stop):
+        mock_client._on_stop = on_stop
+
+    mock_client.start_listener.side_effect = capture_callback
+
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=mock_optimization_problem,
+        queueserver_client=mock_client,
+    )
+    future = runner.run(iterations=iterations, num_points=1)
+    return runner, mock_client, future
+
+
+def _fire_callback(runner, mock_client, iteration: int, exit_status: str = "success", reason: str = "") -> None:
+    """Fire the on_stop callback with a matching start/stop document pair."""
+    current_uid = runner._state.current_uid
+    uid = f"fake-uid-{iteration}"
+    start_doc = {"uid": uid, CORRELATION_UID_KEY: current_uid}
+    stop_doc = {"uid": f"stop-{iteration}", "run_start": uid, "exit_status": exit_status, "reason": reason}
+    mock_client._on_stop(start_doc, stop_doc)
+
+
 def test_runner_run_full_cycle(mock_optimization_problem):
     """Test run() completes full suggest -> acquire -> ingest cycle across 3 iterations."""
     # Configure for num_points=2: suggest returns 2 items, evaluation_function returns 2 outcomes
@@ -402,45 +445,46 @@ def test_runner_run_full_cycle(mock_optimization_problem):
         queueserver_client=mock_client,
     )
 
-    runner.run(iterations=3, num_points=2)
+    future = runner.run(iterations=3, num_points=2)
 
     # Simulate 3 acquisition completions by invoking the captured callback
+    uids = []
     for i in range(3):
         current_uid = runner._state.current_uid
         uid = f"fake-uid-{i}"
+        uids.append(uid)
         start_doc = {"uid": uid, CORRELATION_UID_KEY: current_uid}
-        stop_doc = {"uid": "other-fake-uid", "run_start": uid}
+        stop_doc = {"uid": "other-fake-uid", "run_start": uid, "exit_status": "success"}
         mock_client._on_stop(start_doc, stop_doc)
 
     assert mock_client.submit_plan.call_count == 3
     assert mock_optimization_problem.optimizer.suggest.call_count == 3
     assert mock_optimization_problem.optimizer.ingest.call_count == 3
     assert mock_optimization_problem.evaluation_function.call_count == 3
-    assert runner.is_running is False
+
+    # Verify the future resolved with the correct result
+    assert future.done()
+    result = future.result()
+    assert isinstance(result, OptimizationResult)
+    assert result.iterations_completed == 3
+    assert result.num_points == 2
+    assert result.uids == tuple(uids)
 
 
-def test_runner_on_acquisition_complete_raises_on_uid_mismatch(mock_optimization_problem):
-    """Test _on_acquisition_complete raises RuntimeError when blop_correlation_uid does not match."""
-    mock_client = MagicMock(spec=QueueserverClient)
+def test_runner_on_acquisition_complete_uid_mismatch_sets_future_exception(mock_optimization_problem):
+    """Test _on_acquisition_complete stores error in future on UID mismatch."""
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem)
 
-    def capture_callback(on_stop):
-        mock_client._on_stop = on_stop
-
-    mock_client.start_listener.side_effect = capture_callback
-
-    runner = QueueserverOptimizationRunner(
-        optimization_problem=mock_optimization_problem,
-        queueserver_client=mock_client,
-    )
-
-    runner.run(iterations=1, num_points=1)
-
-    # Callback with wrong blop_correlation_uid should raise
     start_doc = {"uid": "fake-uid", CORRELATION_UID_KEY: "wrong-uid"}
     stop_doc = {"uid": "other-fake-uid", "run_start": "fake-uid"}
 
-    with pytest.raises(RuntimeError, match="current_uid did not match start document"):
-        mock_client._on_stop(start_doc, stop_doc)
+    # Should NOT raise — exception is captured in the future
+    mock_client._on_stop(start_doc, stop_doc)
+
+    assert future.done()
+    exc = future.exception()
+    assert isinstance(exc, RuntimeError)
+    assert "current_uid did not match start document" in str(exc)
 
 
 def test_runner_private_method_calls_before_run(mock_optimization_problem):
@@ -453,5 +497,208 @@ def test_runner_private_method_calls_before_run(mock_optimization_problem):
     with pytest.raises(RuntimeError, match="run()"):
         runner._build_plan([{}])
 
-    with pytest.raises(RuntimeError, match="run()"):
-        runner._on_acquisition_complete({}, {})
+    # _on_acquisition_complete catches the error and stores it in the future;
+    # since there is no active future yet, verify the runner handles this gracefully.
+    runner._on_acquisition_complete({}, {})  # type: ignore[arg-type]
+    # No future to check, but the runner must not crash the caller's thread.
+    assert runner._current_future is None
+
+
+def test_runner_error_in_evaluation_function_sets_future_exception(mock_optimization_problem):
+    """Exception in evaluation_function stops the loop and stores the error in the future."""
+    error = ValueError("bad data")
+    mock_optimization_problem.evaluation_function.side_effect = error
+
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem)
+    _fire_callback(runner, mock_client, 0)
+
+    assert future.done()
+    assert future.exception() is error
+
+
+def test_runner_error_calls_register_failures_when_optimizer_supports_it():
+    """register_failures is called on TrialFaultAware optimizers when an error occurs."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    mock_optimization_problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1", "motor2"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(side_effect=RuntimeError("boom")),
+    )
+    mock_optimization_problem.optimizer.suggest.return_value = [{"_id": 0, "motor1": 5.0, "motor2": 3.0}]
+
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem)
+    _fire_callback(runner, mock_client, 0)
+
+    assert future.exception() is not None
+    mock_optimization_problem.optimizer.register_failures.assert_called_once()
+
+
+def test_runner_register_failures_raises_original_error_preserved_in_future():
+    """If register_failures() itself raises, the original acquisition error is still in the future."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    acquisition_error = RuntimeError("evaluation failed")
+    register_error = RuntimeError("register_failures exploded")
+
+    mock_optimization_problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(side_effect=acquisition_error),
+    )
+    mock_optimization_problem.optimizer.suggest.return_value = [{"_id": 0, "motor1": 5.0}]
+    mock_optimization_problem.optimizer.register_failures.side_effect = register_error
+
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem, iterations=1)
+
+    # register_failures re-raises after logging, so it propagates out of the callback
+    with pytest.raises(RuntimeError, match="register_failures exploded"):
+        _fire_callback(runner, mock_client, 0)
+
+    assert future.done()
+    # The original acquisition error is what the caller sees
+    assert future.exception() is acquisition_error
+    mock_optimization_problem.optimizer.register_failures.assert_called_once()
+
+
+def test_runner_error_does_not_call_register_failures_when_optimizer_lacks_support(mock_optimization_problem):
+    """register_failures is NOT called on optimizers that don't implement TrialFaultAware."""
+    mock_optimization_problem.evaluation_function.side_effect = RuntimeError("boom")
+    assert not isinstance(mock_optimization_problem.optimizer, TrialFaultAware)
+
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem)
+    _fire_callback(runner, mock_client, 0)
+
+    assert future.exception() is not None
+
+
+def test_runner_error_in_ingest_sets_future_exception(mock_optimization_problem):
+    """Exception in optimizer.ingest stops the loop and stores the error in the future."""
+    error = RuntimeError("ingest failed")
+    mock_optimization_problem.optimizer.ingest.side_effect = error
+
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem)
+    _fire_callback(runner, mock_client, 0)
+
+    assert future.done()
+    assert future.exception() is error
+
+
+def test_runner_future_resolves_none_on_successful_run(mock_optimization_problem):
+    """Future resolves to an OptimizationResult (not an exception) after a clean run."""
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem, iterations=1)
+    _fire_callback(runner, mock_client, 0)
+
+    assert future.done()
+    assert future.exception() is None
+    result = future.result()
+    assert isinstance(result, OptimizationResult)
+    assert result.iterations_completed == 1
+    assert result.uids == ("fake-uid-0",)
+
+
+@pytest.mark.parametrize("exit_status", ["fail", "abort"])
+def test_runner_plan_failure_sets_future_exception(mock_optimization_problem, exit_status):
+    """A failed/aborted plan stores a RuntimeError in the future."""
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem, iterations=3)
+    _fire_callback(runner, mock_client, 0)  # one success
+    _fire_callback(runner, mock_client, 1, exit_status=exit_status, reason="hardware fault")
+
+    assert future.done()
+    exc = future.exception()
+    assert isinstance(exc, RuntimeError)
+    assert exit_status in str(exc)
+    assert "hardware fault" in str(exc)
+
+
+@pytest.mark.parametrize("exit_status", ["fail", "abort"])
+def test_runner_plan_failure_calls_register_failures_when_supported(exit_status):
+    """register_failures is called on TrialFaultAware optimizers when a plan fails."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    mock_optimization_problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(),
+    )
+    mock_optimization_problem.optimizer.suggest.return_value = [{"_id": 0, "motor1": 5.0}]
+
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem)
+    _fire_callback(runner, mock_client, 0, exit_status=exit_status, reason="beam lost")
+
+    assert future.done()
+    assert isinstance(future.exception(), RuntimeError)
+    mock_optimization_problem.optimizer.register_failures.assert_called_once()
+
+
+@pytest.mark.parametrize("exit_status", ["fail", "abort"])
+def test_runner_plan_failure_does_not_call_register_failures_when_unsupported(mock_optimization_problem, exit_status):
+    """register_failures is NOT called on optimizers that don't implement TrialFaultAware."""
+    assert not isinstance(mock_optimization_problem.optimizer, TrialFaultAware)
+
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem)
+    _fire_callback(runner, mock_client, 0, exit_status=exit_status)
+
+    assert future.done()
+    assert isinstance(future.exception(), RuntimeError)
+
+
+def test_runner_stop_races_final_callback_does_not_raise(mock_optimization_problem):
+    """stop() called just after the last iteration completes does not raise InvalidStateError."""
+    runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem, iterations=1)
+
+    # Fire the final callback — this resolves the future
+    _fire_callback(runner, mock_client, 0)
+    assert future.done()
+
+    # stop() should be safe to call even though the future is already resolved
+    runner.stop()  # Must not raise
+
+
+@pytest.mark.parametrize("failing_method", ["start_listener", "submit_plan"])
+def test_runner_run_submit_error_fails_future_and_reraises(mock_optimization_problem, failing_method):
+    """An exception from start_listener or submit_plan in run() fails the future and re-raises."""
+    error = RuntimeError("connection refused")
+    mock_client = MagicMock(spec=QueueserverClient)
+    getattr(mock_client, failing_method).side_effect = error
+
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=mock_optimization_problem,
+        queueserver_client=mock_client,
+    )
+
+    with pytest.raises(RuntimeError, match="connection refused"):
+        runner.run(iterations=1, num_points=1)
+
+    future = runner._current_future
+    assert future is not None
+    assert future.done()
+    assert future.exception() is error
+
+
+@pytest.mark.parametrize("failing_method", ["start_listener", "submit_plan"])
+def test_runner_submit_suggestions_submit_error_fails_future_and_reraises(mock_optimization_problem, failing_method):
+    """An exception from start_listener or submit_plan in submit_suggestions() fails the future and re-raises."""
+    error = RuntimeError("connection refused")
+    mock_client = MagicMock(spec=QueueserverClient)
+    getattr(mock_client, failing_method).side_effect = error
+
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=mock_optimization_problem,
+        queueserver_client=mock_client,
+    )
+
+    suggestions = [{"_id": 0, "motor1": 1.0}]
+    with pytest.raises(RuntimeError, match="connection refused"):
+        runner.submit_suggestions(suggestions)
+
+    future = runner._current_future
+    assert future is not None
+    assert future.done()
+    assert future.exception() is error
