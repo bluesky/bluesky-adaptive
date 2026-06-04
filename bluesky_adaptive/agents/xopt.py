@@ -5,7 +5,7 @@ from collections.abc import Mapping, Sequence
 from copy import deepcopy
 from logging import getLogger
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 
 import numpy as np
 import yaml
@@ -70,7 +70,7 @@ class XoptGeneratorAgentBase(Agent, ABC):
         return list(names)
 
     @classmethod
-    def from_generator_yaml(cls, yaml_file: Union[str, Path], **kwargs):
+    def from_generator_yaml(cls, yaml_file: str | Path, **kwargs):
         """Build the agent from generator-only YAML.
 
         Accepted formats:
@@ -132,16 +132,13 @@ class XoptGeneratorAgentBase(Agent, ABC):
         }
         present_forbidden = sorted(forbidden.intersection(config.keys()))
         if present_forbidden:
-            raise ValueError(
-                "Only generator YAML is supported. "
-                f"Disallowed keys found: {present_forbidden}"
-            )
+            raise ValueError(f"Only generator YAML is supported. Disallowed keys found: {present_forbidden}")
 
         return config
 
     def _coerce_named_values(
         self,
-        values: Union[ArrayLike, Mapping[str, Any], None],
+        values: ArrayLike | Mapping[str, Any] | None,
         names: Sequence[str],
         *,
         label: str,
