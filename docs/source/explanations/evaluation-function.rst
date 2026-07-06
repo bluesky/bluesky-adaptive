@@ -5,7 +5,7 @@ The evaluation function is the primary interface between **blop** and your exper
 experimental data, performing any required post-processing, and computing the objective values returned to the optimizer.
 
 Rather than prescribing a particular processing framework or directly managing data, **blop** adopts a UID-driven workflow that mirrors the event-based processing patterns
-commonly used at beamlines (such as prefect workflows). This design allows existing data handling and analysis code to be reused with minimal modification, reducing the need to
+commonly used at beamlines. This design allows existing data handling and analysis code to be reused with minimal modification, reducing the need to
 reimplement processing logic specifically for optimization.
 
 .. note::
