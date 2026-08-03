@@ -17,6 +17,7 @@ from .protocols import (
     CanRegisterSuggestions,
     OptimizationProblem,
     Sensor,
+    StoppingConditions,
     TrialFaultAware,
 )
 from .utils import InferredReadable, _maybe_checkpoint, collect_optimization_metadata, route_suggestions
@@ -217,6 +218,13 @@ def optimize(
         for i in range(iterations):
             # Perform a single step of the optimization
             uid, suggestions, outcomes = yield from optimize_step(optimization_problem, n_points, **kwargs)
+
+            if isinstance(optimization_problem.optimizer, StoppingConditions):
+                stop_now, stop_reason = optimization_problem.optimizer.should_stop()
+                if stop_now:
+                    reason = stop_reason if stop_reason is not None else "No reason provided"
+                    logger.info(f"Global stopping triggered at iteration {i + 1}: {reason}")
+                    return
 
             # Read the optimization step into the Bluesky and emit events for each suggestion and outcome
             yield from read_step(uid, suggestions, outcomes, n_points, readable_cache)
