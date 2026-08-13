@@ -9,6 +9,7 @@ from ax import Client, TOutcome, TParameterization
 from ax.analysis.plotly.surface.contour import ContourPlot
 from ax.core.analysis_card import AnalysisCardBase
 from ax.core.types import TParamValue
+from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
 from bluesky.callbacks import CallbackBase
 from bluesky.utils import MsgGenerator
 
@@ -227,6 +228,8 @@ class Agent(_AxAgentMixin):
         Constraints on outcomes to be satisfied during optimization.
     checkpoint_path : str | None, optional
         The path to the checkpoint file to save the optimizer's state to.
+    stopping_strategy : BaseGlobalStoppingStrategy | None, optional
+        A stopping strategy that decides when/if optimization should halt early.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -257,6 +260,7 @@ class Agent(_AxAgentMixin):
         dof_constraints: Sequence[DOFConstraint] | None = None,
         outcome_constraints: Sequence[OutcomeConstraint] | None = None,
         checkpoint_path: str | None = None,
+        stopping_strategy: BaseGlobalStoppingStrategy | None = None,
         **kwargs: Any,
     ):
         if any(isinstance(dof.actuator, str) for dof in dofs):
@@ -276,6 +280,7 @@ class Agent(_AxAgentMixin):
             if outcome_constraints
             else None,
             checkpoint_path=checkpoint_path,
+            stopping_strategy=stopping_strategy,
             **kwargs,
         )
         self._readable_cache: dict[str, InferredReadable] = {}

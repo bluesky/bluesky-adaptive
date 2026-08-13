@@ -1,9 +1,10 @@
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 import numpy as np
 import pytest
 from ax import ChoiceParameterConfig, RangeParameterConfig
 from ax.exceptions.core import UnsupportedError
+from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
 
 from blop.ax.optimizer import AxOptimizer
 
@@ -379,3 +380,70 @@ def test_ax_optimizer_get_best_points_multi_objective():
         assert "x1" in params
         assert "y1" in metrics
         assert "y2" in metrics
+
+
+def test_ax_optimizer_should_stop_no_strategy():
+    """should_stop returns (False, None) when no stopping strategy is provided."""
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+    )
+
+    should_stop, reason = optimizer.should_stop()
+
+    assert should_stop is False
+    assert reason is None
+
+
+def test_ax_optimizer_should_stop_with_callable_strategy():
+    """should_stop calls a callable stopping strategy and returns its result."""
+    stopping_strategy = MagicMock(return_value=(True, "test stop reason"))
+
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+        stopping_strategy=stopping_strategy,
+    )
+
+    should_stop, reason = optimizer.should_stop()
+
+    assert should_stop is True
+    assert reason == "test stop reason"
+    stopping_strategy.assert_called_once()
+
+
+def test_ax_optimizer_should_stop_with_base_global_strategy():
+    """should_stop testing if it is an instance of BaseGlobalStoppingStrategy."""
+
+    class TestStoppingStrategy(BaseGlobalStoppingStrategy):
+        def __init__(self, min_trials: int = 1, inactive_when_pending_trials: bool = True) -> None:
+            super().__init__(min_trials=min_trials, inactive_when_pending_trials=inactive_when_pending_trials)
+
+        def _should_stop_optimization(self, experiment):
+            if len(experiment.trials) >= 2:
+                return (True, f"Reached {len(experiment.trials)} trials")
+            return (False, None)
+
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+        stopping_strategy=TestStoppingStrategy(),
+    )
+
+    # should not stop
+    optimizer.ingest([{"x1": 0.5, "y1": 1.0}])
+    should_stop, reason = optimizer.should_stop()
+    assert should_stop is False
+    assert reason is None
+
+    # should stop
+    optimizer.ingest([{"x1": 0.6, "y1": 2.0}])
+    should_stop, reason = optimizer.should_stop()
+    assert should_stop is True
+    assert "2 trials" in reason

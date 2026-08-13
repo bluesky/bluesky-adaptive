@@ -7,11 +7,12 @@ from ax import ChoiceParameterConfig, Client, RangeParameterConfig, TOutcome, TP
 from ax.core import MultiObjectiveOptimizationConfig
 from ax.core.parameter import ChoiceParameter, RangeParameter
 from ax.core.types import TParamValue
+from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
 
-from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer, TrialFaultAware
+from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer, SupportsStoppingCriteria, TrialFaultAware
 
 
-class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultAware):
+class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultAware, SupportsStoppingCriteria):
     """
     An optimizer that uses Ax as the backend for optimization and experiment tracking.
 
@@ -29,6 +30,8 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultA
         The outcome constraints to apply to the optimization.
     checkpoint_path : str | None, optional
         The path to the checkpoint file to save the optimizer's state to.
+    stopping_strategy : BaseGlobalStoppingStrategy | None, optional
+        A stopping strategy that decides when/if optimization should halt early.
     client_kwargs : dict[str, Any] | None, optional
         Additional keyword arguments to configure the Ax client.
     **kwargs : Any
@@ -47,11 +50,13 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultA
         parameter_constraints: Sequence[str] | None = None,
         outcome_constraints: Sequence[str] | None = None,
         checkpoint_path: str | None = None,
+        stopping_strategy: BaseGlobalStoppingStrategy | None = None,
         client_kwargs: dict[str, Any] | None = None,
         **kwargs: Any,
     ):
         self._parameter_names = [parameter.name for parameter in parameters]
         self._checkpoint_path = checkpoint_path
+        self._stopping_strategy = stopping_strategy
         self._client = Client(**(client_kwargs or {}))
         self._client.configure_experiment(
             parameters=parameters,
@@ -63,6 +68,24 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultA
             outcome_constraints=outcome_constraints,
         )
         self._fixed_parameters = None
+
+    def should_stop(self) -> tuple[bool, str | None]:
+        """
+        Evaluate whether optimization should terminate early.
+
+        Returns ``(False, None)`` as default when no stopping strategy was provided.
+
+        Returns
+        -------
+        tuple[bool, str | None]
+            ``(stop_now, reason)``. If ``stop_now`` is ``True``, optimization halts.
+            ``reason`` is logged when provided.
+        """
+        if self._stopping_strategy is None:
+            return False, None
+        if isinstance(self._stopping_strategy, BaseGlobalStoppingStrategy):
+            return self._stopping_strategy.should_stop_optimization(experiment=self._client._experiment)
+        return self._stopping_strategy()
 
     @classmethod
     def from_checkpoint(cls, checkpoint_path: str) -> "AxOptimizer":
