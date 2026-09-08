@@ -54,6 +54,7 @@ For detailed release notes and version history, see the :doc:`reference/release-
    how-to/index
    tutorials/index
    reference/index
+   rfcs/index
 
 
 .. include:: ../../README.md
