@@ -2,6 +2,8 @@
 
 [![Build Status]][Actions] [![PyPI Version]][PyPI] [![License Badge]][License]
 
+> **Project update:** Bluesky Adaptive is preparing for a substantial redesign, and its scope and public interfaces may change as the next generation of the project takes shape.
+
 **Bluesky Adaptive** is a component of the Bluesky ecosystem designed to introduce adaptivity and intelligent decision-making into experimental workflows.  
 It provides a flexible API that supports a wide range of adaptive algorithms, from simple rule-based adjustments to sophisticated artificial intelligence and machine learning models.  
 The package is designed to provide a framework and set of harnesses for "bring-your-own-agent" development.  
