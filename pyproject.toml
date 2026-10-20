@@ -70,6 +70,10 @@ tsuchinoko = ["tsuchinoko>=1.1.23"]
 GitHub = "https://github.com/bluesky/bluesky-adaptive"
 Documentation = "https://blueskyproject.io/bluesky-adaptive"
 
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["bluesky_adaptive*"]
+
 [tool.setuptools_scm]
 version_file = "bluesky_adaptive/_version.py"
 
