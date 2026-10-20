@@ -4,7 +4,8 @@ Release History
 
 v0.4.0 (2026-10-20)
 -------------------
-+ Final 0.x release; bluesky-adaptive 1.0+ is the former blop with a different API.
++ Final 0.x release; starting with 1.0, bluesky-adaptive adopts the blop codebase and continues
+  its development under the bluesky-adaptive name. The 1.0+ API differs from 0.x.
 + Add the Tsuchinoko agent and ``tsuchinoko`` extra (#49, #57).
 + Maintain pyproject.toml and ruff configuration (#53).
 + Update tests for the new bluesky-pods (#52).
