@@ -1,6 +1,13 @@
 .. warning::
 
-   Bluesky Adaptive is preparing for a substantial redesign, and its scope and public interfaces may change as the next generation of the project takes shape.
+   bluesky-adaptive 0.x is discontinued. Starting with 1.0, bluesky-adaptive adopts the
+   `blop <https://github.com/bluesky/blop>`_ codebase and continues its development under the
+   bluesky-adaptive name at `bluesky-adaptive <https://github.com/bluesky/bluesky-adaptive>`_.
+   The 1.0+ API differs from 0.x: the Kafka/Tiled Agent base, adjudicators,
+   server, and lockstep recommenders are not carried forward. Pin
+   ``bluesky-adaptive<1`` to keep this package.
+
+   0.4.0 is the final 0.x release.
 
 Bluesky Adaptive
 ----------------
