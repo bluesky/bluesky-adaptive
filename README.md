@@ -2,7 +2,14 @@
 
 [![Build Status]][Actions] [![PyPI Version]][PyPI] [![License Badge]][License]
 
-> **Project update:** Bluesky Adaptive is preparing for a substantial redesign, and its scope and public interfaces may change as the next generation of the project takes shape.
+> bluesky-adaptive 0.x is discontinued. bluesky-adaptive>=1.0 is a different codebase (the
+> former [blop](https://github.com/bluesky/blop)) with a different API; the Kafka/Tiled Agent
+> base, adjudicators, server, and lockstep recommenders are not carried forward. Pin
+> `bluesky-adaptive<1` to keep this package. See
+> [https://github.com/bluesky/bluesky-adaptive](https://github.com/bluesky/bluesky-adaptive)
+> for the migration summary.
+>
+> 0.4.0 is the final 0.x release.
 
 **Bluesky Adaptive** is a component of the Bluesky ecosystem designed to introduce adaptivity and intelligent decision-making into experimental workflows.  
 It provides a flexible API that supports a wide range of adaptive algorithms, from simple rule-based adjustments to sophisticated artificial intelligence and machine learning models.  
