@@ -2,7 +2,7 @@
 Release History
 ===============
 
-v0.4.0 (unreleased)
+v0.4.0 (2026-10-20)
 -------------------
 + Final 0.x release; bluesky-adaptive 1.0+ is the former blop with a different API.
 + Add the Tsuchinoko agent and ``tsuchinoko`` extra (#49, #57).
