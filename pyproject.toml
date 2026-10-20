@@ -1,11 +1,11 @@
 [build-system]
-requires = ["setuptools>=61.0"]
+requires = ["setuptools>=61.0", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "bluesky-adaptive"
 classifiers = [
-  "Development Status :: 3 - Alpha",
+  "Development Status :: 7 - Inactive",
   "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
@@ -82,6 +82,7 @@ addopts = """
 # https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
 filterwarnings = [
   "error",
+  "ignore:bluesky-adaptive 0.x is discontinued:FutureWarning",
   "ignore::PendingDeprecationWarning",
   "ignore::UserWarning",
   "ignore::DeprecationWarning",
