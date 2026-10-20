@@ -1,6 +1,6 @@
 import warnings
 
-from ._version import __version__
+from ._version import __version__ as __version__
 
 warnings.warn(
     "bluesky-adaptive 0.x is discontinued. bluesky-adaptive>=1.0 is a different codebase "
