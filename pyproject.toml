@@ -38,7 +38,7 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-agents = ["scikit-learn", "scipy", "botorch"]
+agents = ["scikit-learn", "scipy", "botorch", "xopt"]
 dev = [
   "ruff",
   "coverage",
