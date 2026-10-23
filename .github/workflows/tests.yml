@@ -38,20 +38,21 @@ jobs:
           docker-compose up -d
           popd
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+      # uv version comes from [tool.uv] required-version in pyproject.toml.
+      - name: Set up uv and Python ${{ matrix.python-version }}
+        uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
         with:
           python-version: ${{ matrix.python-version }}
+          activate-environment: true
 
       - name: Install
         shell: bash -l {0}
         run: |
           set -vxeuo pipefail
-          pip install --upgrade pip wheel
-          pip install .[dev,agents,tsuchinoko]
+          uv pip install ".[dev,agents,tsuchinoko]"
           mkdir -p /home/runner/.config/tiled/profiles
           cp ./bluesky_adaptive/tests/podman/tiled_client_config.yml /home/runner/.config/tiled/profiles/tiled_client_config.yml
-          pip list
+          uv pip list
 
       - name: Reload Permissions for QServer (Ensures plans are available)
         shell: bash -l {0}
