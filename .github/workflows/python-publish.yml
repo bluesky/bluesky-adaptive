@@ -19,5 +19,4 @@ jobs:
       - name: Build distributions
         run: uv build
       - name: Publish distributions to PyPI
-        # v1.14.3 ships certifi/sigstore without the compromised emSign CAs (GHSA-5xjx-3w67-w9x9).
         uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3

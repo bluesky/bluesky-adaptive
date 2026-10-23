@@ -40,7 +40,6 @@ dependencies = [
 [project.optional-dependencies]
 agents = ["scikit-learn", "scipy", "botorch"]
 dev = [
-  # emSign CA removal (GHSA-6q48-6c7w-9gw2); 2026.10.19 keeps the unaffected emSign roots
   "certifi>=2026.10.19",
   "ruff",
   "coverage",
