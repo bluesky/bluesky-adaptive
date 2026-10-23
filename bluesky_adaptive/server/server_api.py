@@ -29,7 +29,11 @@ async def root_handler():
     """
     This is the response for the root URL (e.g. http://localhost)
     """
-    return {"message": "The HTTP server is alive!!!"}
+    try:
+        status = await SR.worker_get_status()
+    except Exception:
+        process_exceptions()
+    return {"message": "The HTTP server is alive!!!", "status": status}
 
 
 @router.get("/variables/names")
@@ -100,5 +104,66 @@ async def set_variable_handler(name: str, payload: dict = None):
     try:
         value = payload["value"]
         return await SR.worker_set_variable(name=name, value=value)
+    except Exception:
+        process_exceptions()
+
+
+@router.get("/methods")
+async def get_methods_handler():
+    """
+    Returns descriptions of all methods registered in the worker process.
+
+    Returns
+    -------
+    dict
+        Dictionary with the following keys: ``methods`` - list of method descriptions.
+    """
+    try:
+        return await SR.worker_get_method_descriptions()
+    except Exception:
+        process_exceptions()
+
+
+@router.get("/method/{name}")
+async def get_method_handler(name: str):
+    """
+    Returns description of a method registered in the worker process.
+
+    Parameters
+    ----------
+    name: str
+        Name of the method to get description for.
+
+    Returns
+    -------
+    dict
+        Description of the method.
+    """
+    try:
+        return await SR.worker_get_method_description(name=name)
+    except Exception:
+        process_exceptions()
+
+
+@router.post("/method/{name}")
+async def execute_method_handler(name: str, payload: dict = None):
+    """
+    Executes a method in the worker process.
+
+    Parameters
+    ----------
+    name: str
+        Name of the method to execute.
+    payload: dict, optional
+        Parameters to pass to the method.
+
+    Returns
+    -------
+    dict
+        Result of the method execution.
+    """
+    payload = payload or {}
+    try:
+        return await SR.worker_execute_method(name=name, params=payload)
     except Exception:
         process_exceptions()

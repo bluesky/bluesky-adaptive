@@ -9,6 +9,10 @@ import uuid
 from collections.abc import Mapping
 from multiprocessing import Process
 
+from pydantic import ValidationError
+
+from bluesky_adaptive.server.types import RegisteredMethod
+
 from .comms import PipeJsonRpcReceive
 from .logging_setup import setup_loggers
 from .utils import WR, get_path_to_simulated_agent, load_worker_startup_code
@@ -71,6 +75,7 @@ class WorkerProcess(Process):
 
         self._ns = {}  # Namespace
         self._variables = {}  # Descriptions of variables
+        self._registered_methods: dict[str, RegisteredMethod] = {}  # Registered methods
 
     # ------------------------------------------------------------
 
@@ -345,6 +350,96 @@ class WorkerProcess(Process):
 
         return {"success": success, "msg": msg, "name": name, "value": value}
 
+    def _methods_handler(self):
+        """
+        Returns a list of registered methods in the worker namespace.
+        Each method is represented by its name and description.
+        """
+        try:
+            methods = {
+                name: {
+                    "description": reg.registration.description,
+                    "input_model": reg.registration.input_model.model_json_schema()
+                    if reg.registration.input_model
+                    else None,
+                    "output_type": str(reg.registration.output_type) if reg.registration.output_type else None,
+                }
+                for name, reg in self._registered_methods.items()
+            }
+        except Exception as ex:
+            logger.error("Failed to get registered methods: %s", ex)
+            return {"success": False, "msg": str(ex), "methods": {}}
+        return {"success": True, "msg": "", "methods": methods}
+
+    def _method_get_handler(self, *, name):
+        """
+        Returns the metadata of a registered method by its name.
+
+        Parameters
+        ----------
+        name: str
+            Name of the method to get metadata for.
+
+        Returns
+        -------
+        dict
+            Metadata of the method, including description and schemas.
+        """
+        if name not in self._registered_methods:
+            raise Exception(f"Method {name!r} is not registered")
+
+        reg = self._registered_methods[name].registration
+        return {
+            "success": True,
+            "msg": "",
+            "name": name,
+            "description": reg.description,
+            "input_schema": reg.input_model.model_json_schema() if reg.input_model else None,
+            "output_type": str(reg.output_type) if reg.output_type else None,
+        }
+
+    def _method_execute_handler(self, *, name, params=None):
+        """
+        Execute a method by name with parameters. The method should be registered
+        in the worker namespace.
+
+        Parameters
+        ----------
+        name: str
+            Name of the method to execute.
+        params: dict
+            Parameters to pass to the method.
+
+        Returns
+        -------
+        dict
+            Result of the method execution.
+        """
+        success, msg = True, ""
+        try:
+            if name not in self._registered_methods:
+                raise Exception(f"Method {name!r} is not registered")
+            callable = self._registered_methods[name].callable
+            method_registration = self._registered_methods[name].registration
+            # Validate parameters against the method registration schema
+            if method_registration.input_model:
+                try:
+                    method_registration.input_model(**params)
+                except ValidationError as ve:
+                    raise ValueError(f"Invalid parameters for method {name!r}: {ve}") from ve
+            # Execute the method
+            result = callable(**params) if params else callable()
+            # Validate result against the method output schema with warning
+            if method_registration.output_type:
+                try:
+                    method_registration.output_type(result)
+                except ValidationError as ve:
+                    logger.warning(f"Method {name!r} returned a result that does not match the output schema: {ve}")
+        except Exception as ex:
+            success, msg = False, str(ex)
+
+        return {"success": success, "msg": msg, "name": name, "result": result if success else None}
+
     def _stop_worker_handler(self):
         print("STOPPING THE WORKER .........................")
         self._exit_event.set()
@@ -364,6 +459,7 @@ class WorkerProcess(Process):
         success = True
         WR.set_worker_obj(self)
         WR.set_agent_server_vars(self._variables)
+        WR.set_agent_server_methods(self._registered_methods)
 
         self._exit_event = threading.Event()
         self._execution_queue = queue.Queue()
@@ -376,6 +472,9 @@ class WorkerProcess(Process):
         self._comm_to_manager.add_method(self._variables_handler, "variables")
         self._comm_to_manager.add_method(self._variable_get_handler, "variable_get")
         self._comm_to_manager.add_method(self._variable_set_handler, "variable_set")
+        self._comm_to_manager.add_method(self._methods_handler, "methods")
+        self._comm_to_manager.add_method(self._method_get_handler, "method_get")
+        self._comm_to_manager.add_method(self._method_execute_handler, "method_execute")
         self._comm_to_manager.add_method(self._stop_worker_handler, "stop_worker")
 
         self._comm_to_manager.start()
