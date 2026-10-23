@@ -40,6 +40,8 @@ dependencies = [
 [project.optional-dependencies]
 agents = ["scikit-learn", "scipy", "botorch"]
 dev = [
+  # emSign CA removal (GHSA-6q48-6c7w-9gw2); 2026.10.19 keeps the unaffected emSign roots
+  "certifi>=2026.10.19",
   "ruff",
   "coverage",
   "pytest",
@@ -56,6 +58,7 @@ dev = [
   "ophyd",
   "scipy",
   "pre-commit",
+  "pre-commit-hooks",
   "intake",
   "tiled[client, server]",
   "humanize",
@@ -76,6 +79,10 @@ include = ["bluesky_adaptive*"]
 
 [tool.setuptools_scm]
 version_file = "bluesky_adaptive/_version.py"
+
+[tool.uv]
+# uv < 0.13.4 trusts the compromised eMudhra/emSign CAs (GHSA-hq85-5cpj-mr62); setup-uv in CI reads this too
+required-version = ">=0.13.4"
 
 [tool.pytest.ini_options]
 # Run pytest with all our checkers, and don't spam us with massive tracebacks on error

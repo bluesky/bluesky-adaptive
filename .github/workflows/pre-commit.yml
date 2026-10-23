@@ -12,10 +12,11 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v4
+      # uv version comes from [tool.uv] required-version in pyproject.toml.
+      - uses: astral-sh/setup-uv@07a047e608db84b3d8c06cd9a7c7dcc9c355c18e # v10.3.2
+        with:
+          activate-environment: true
       - name: Install Dependencies
-        run: |
-          python -m pip install --upgrade pip ruff pre-commit
-          pip install pre-commit
+        run: uv pip install ".[dev]"
       - name: Run Pre-Commit
         run: pre-commit run --all-files --show-diff-on-failure

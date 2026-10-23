@@ -1,13 +1,27 @@
+# All hooks run tools from the `dev` extra (`uv pip install -e ".[dev]"`). Keep them `local` with
+# `language: system` so pre-commit never builds hook virtualenvs, whose seeded pip may predate the
+# eMudhra/emSign CA removal.
 repos:
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
-    hooks:
-      - id: check-added-large-files
-      - id: check-yaml
-      - id: check-merge-conflict
-
   - repo: local
     hooks:
+      - id: check-added-large-files
+        name: check for added large files
+        language: system
+        entry: check-added-large-files
+        stages: [pre-commit, pre-push, manual]
+
+      - id: check-yaml
+        name: check yaml
+        language: system
+        entry: check-yaml
+        types: [yaml]
+
+      - id: check-merge-conflict
+        name: check for merge conflicts
+        language: system
+        entry: check-merge-conflict
+        types: [text]
+
       - id: ruff
         name: lint with ruff
         language: system
