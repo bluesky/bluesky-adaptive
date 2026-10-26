@@ -1092,7 +1092,7 @@ Worker environment exists: True
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/bluesky-adaptive/bluesky-adaptive/.pixi/envs/docs/lib/python3.13/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
   warnings.warn(
-[INFO 10-26 21:33:23] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.0.55
+[INFO 10-26 21:33:36] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.0.55
 </pre></div>
 </div>
 </div>
@@ -1208,8 +1208,8 @@ message prefix.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 10-26 21:33:23] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
-[INFO 10-26 21:33:23] ax.api.client: Generated new trial 0 with parameters {'motor1': 0.0, 'motor2': 0.0} using GenerationNode CenterOfSearchSpace.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 10-26 21:33:36] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
+[INFO 10-26 21:33:36] ax.api.client: Generated new trial 0 with parameters {'motor1': 0.0, 'motor2': 0.0} using GenerationNode CenterOfSearchSpace.
 </pre></div>
 </div>
 </div>
@@ -1234,37 +1234,37 @@ message prefix.</p>
 Points per iteration : 1
 Total acquisitions   : 10
 Run UIDs:
-  2310c969-7ab3-49ea-bfb3-814cbb1e71f0
-  9a6dfba0-9d51-4955-b6ed-f6ddae63d531
-  5dcdd41e-7a6c-482c-9b59-ec1432fe20d2
-  d0c21efe-79bc-4627-951d-6c47ffacf621
-  81cd5d57-790b-4619-8b4f-945ce343de9c
-  968b2f5e-3b74-4f0a-ae41-1d2cedffa158
-  5b9565e2-0c46-4ba1-906e-85a1fe6b31b2
-  5cc54c62-16ea-4bd1-bba8-44a34f834dfe
-  e9d293dd-2c1c-4b58-9f00-0a85a8cbe746
-  1877a12f-2b50-4188-8d04-528fc08097f9
+  caa3397d-ae4b-4d1f-8c55-a729bb88cd86
+  3bb27b74-dcea-4326-a584-4f6ea97f6de4
+  f22236b1-9e6b-4729-ba8f-ff5298a242db
+  71bf9599-83f0-4854-b391-ab6f066f733d
+  f89890e8-35f1-477a-8ab9-c3f8532f7c2a
+  3a625348-11fd-4a0c-8252-c277b2f4cd23
+  63bda638-cd7a-4cf3-acee-85fbf5491649
+  7d700409-cae3-49b5-a7dd-7b11fd1dd6a6
+  81b59a57-be71-4822-a2e4-00bec9ac253e
+  bcfebf90-1709-4cf8-9d45-14d5910f6bfe
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 10-26 21:33:25] ax.api.client: Trial 0 marked COMPLETED.
-[INFO 10-26 21:33:25] ax.api.client: Generated new trial 1 with parameters {'motor1': -2.013377, 'motor2': 2.927762} using GenerationNode Sobol.
-[INFO 10-26 21:33:25] ax.api.client: Trial 1 marked COMPLETED.
-[INFO 10-26 21:33:25] ax.api.client: Generated new trial 2 with parameters {'motor1': 1.533517, 'motor2': -3.838151} using GenerationNode Sobol.
-[INFO 10-26 21:33:26] ax.api.client: Trial 2 marked COMPLETED.
-[INFO 10-26 21:33:26] ax.api.client: Generated new trial 3 with parameters {'motor1': 4.42669, 'motor2': 0.908762} using GenerationNode Sobol.
-[INFO 10-26 21:33:27] ax.api.client: Trial 3 marked COMPLETED.
-[INFO 10-26 21:33:27] ax.api.client: Generated new trial 4 with parameters {'motor1': -3.968821, 'motor2': -2.497786} using GenerationNode Sobol.
-[INFO 10-26 21:33:27] ax.api.client: Trial 4 marked COMPLETED.
-[INFO 10-26 21:33:28] ax.api.client: Generated new trial 5 with parameters {'motor1': -3.360872, 'motor2': 5.0} using GenerationNode MBM.
-[INFO 10-26 21:33:29] ax.api.client: Trial 5 marked COMPLETED.
-[INFO 10-26 21:33:30] ax.api.client: Generated new trial 6 with parameters {'motor1': -0.70265, 'motor2': 2.525422} using GenerationNode MBM.
-[INFO 10-26 21:33:30] ax.api.client: Trial 6 marked COMPLETED.
-[INFO 10-26 21:33:31] ax.api.client: Generated new trial 7 with parameters {'motor1': -3.774633, 'motor2': 2.664509} using GenerationNode MBM.
-[INFO 10-26 21:33:32] ax.api.client: Trial 7 marked COMPLETED.
-[INFO 10-26 21:33:33] ax.api.client: Generated new trial 8 with parameters {'motor1': -5.0, 'motor2': 3.344689} using GenerationNode MBM.
-[INFO 10-26 21:33:34] ax.api.client: Trial 8 marked COMPLETED.
-[INFO 10-26 21:33:35] ax.api.client: Generated new trial 9 with parameters {'motor1': -4.042698, 'motor2': 5.0} using GenerationNode MBM.
-[INFO 10-26 21:33:36] ax.api.client: Trial 9 marked COMPLETED.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 10-26 21:33:38] ax.api.client: Trial 0 marked COMPLETED.
+[INFO 10-26 21:33:38] ax.api.client: Generated new trial 1 with parameters {'motor1': 3.166381, 'motor2': -0.294635} using GenerationNode Sobol.
+[INFO 10-26 21:33:38] ax.api.client: Trial 1 marked COMPLETED.
+[INFO 10-26 21:33:38] ax.api.client: Generated new trial 2 with parameters {'motor1': -4.63674, 'motor2': 2.257734} using GenerationNode Sobol.
+[INFO 10-26 21:33:39] ax.api.client: Trial 2 marked COMPLETED.
+[INFO 10-26 21:33:39] ax.api.client: Generated new trial 3 with parameters {'motor1': -0.029876, 'motor2': -3.835164} using GenerationNode Sobol.
+[INFO 10-26 21:33:40] ax.api.client: Trial 3 marked COMPLETED.
+[INFO 10-26 21:33:40] ax.api.client: Generated new trial 4 with parameters {'motor1': 1.542919, 'motor2': 3.609699} using GenerationNode Sobol.
+[INFO 10-26 21:33:40] ax.api.client: Trial 4 marked COMPLETED.
+[INFO 10-26 21:33:41] ax.api.client: Generated new trial 5 with parameters {'motor1': 4.073685, 'motor2': 1.452457} using GenerationNode MBM.
+[INFO 10-26 21:33:42] ax.api.client: Trial 5 marked COMPLETED.
+[INFO 10-26 21:33:42] ax.api.client: Generated new trial 6 with parameters {'motor1': 4.315297, 'motor2': -2.565216} using GenerationNode MBM.
+[INFO 10-26 21:33:43] ax.api.client: Trial 6 marked COMPLETED.
+[INFO 10-26 21:33:44] ax.api.client: Generated new trial 7 with parameters {'motor1': 3.657153, 'motor2': -0.706041} using GenerationNode MBM.
+[INFO 10-26 21:33:44] ax.api.client: Trial 7 marked COMPLETED.
+[INFO 10-26 21:33:45] ax.api.client: Generated new trial 8 with parameters {'motor1': 3.3034, 'motor2': -1.507599} using GenerationNode MBM.
+[INFO 10-26 21:33:46] ax.api.client: Trial 8 marked COMPLETED.
+[INFO 10-26 21:33:46] ax.api.client: Generated new trial 9 with parameters {'motor1': 3.35044, 'motor2': -4.932066} using GenerationNode MBM.
+[INFO 10-26 21:33:47] ax.api.client: Trial 9 marked COMPLETED.
 </pre></div>
 </div>
 </div>
@@ -1324,9 +1324,9 @@ Run UIDs:
       <td>1_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>16.343759</td>
-      <td>-2.013377</td>
-      <td>2.927762</td>
+      <td>15.648104</td>
+      <td>3.166381</td>
+      <td>-0.294635</td>
     </tr>
     <tr>
       <th>2</th>
@@ -1334,9 +1334,9 @@ Run UIDs:
       <td>2_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>241.750837</td>
-      <td>1.533517</td>
-      <td>-3.838151</td>
+      <td>205.506863</td>
+      <td>-4.636740</td>
+      <td>2.257734</td>
     </tr>
     <tr>
       <th>3</th>
@@ -1344,9 +1344,9 @@ Run UIDs:
       <td>3_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>93.386288</td>
-      <td>4.426690</td>
-      <td>0.908762</td>
+      <td>279.016576</td>
+      <td>-0.029876</td>
+      <td>-3.835164</td>
     </tr>
     <tr>
       <th>4</th>
@@ -1354,9 +1354,9 @@ Run UIDs:
       <td>4_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>27.451266</td>
-      <td>-3.968821</td>
-      <td>-2.497786</td>
+      <td>82.445104</td>
+      <td>1.542919</td>
+      <td>3.609699</td>
     </tr>
     <tr>
       <th>5</th>
@@ -1364,9 +1364,9 @@ Run UIDs:
       <td>5_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>242.345985</td>
-      <td>-3.360872</td>
-      <td>5.000000</td>
+      <td>50.332300</td>
+      <td>4.073685</td>
+      <td>1.452457</td>
     </tr>
     <tr>
       <th>6</th>
@@ -1374,9 +1374,9 @@ Run UIDs:
       <td>6_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>65.449499</td>
-      <td>-0.702650</td>
-      <td>2.525422</td>
+      <td>40.744818</td>
+      <td>4.315297</td>
+      <td>-2.565216</td>
     </tr>
     <tr>
       <th>7</th>
@@ -1384,9 +1384,9 @@ Run UIDs:
       <td>7_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>48.461884</td>
-      <td>-3.774633</td>
-      <td>2.664509</td>
+      <td>10.874991</td>
+      <td>3.657153</td>
+      <td>-0.706041</td>
     </tr>
     <tr>
       <th>8</th>
@@ -1394,9 +1394,9 @@ Run UIDs:
       <td>8_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>301.499288</td>
-      <td>-5.000000</td>
-      <td>3.344689</td>
+      <td>4.571545</td>
+      <td>3.303400</td>
+      <td>-1.507599</td>
     </tr>
     <tr>
       <th>9</th>
@@ -1404,9 +1404,9 @@ Run UIDs:
       <td>9_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>301.792410</td>
-      <td>-4.042698</td>
-      <td>5.000000</td>
+      <td>449.637375</td>
+      <td>3.350440</td>
+      <td>-4.932066</td>
     </tr>
   </tbody>
 </table>
