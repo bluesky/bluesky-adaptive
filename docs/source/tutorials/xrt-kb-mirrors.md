@@ -13,7 +13,7 @@ kernelspec:
 
 # Optimizing KB Mirrors with Bayesian Optimization
 
-In this tutorial, you will learn how to use Blop to optimize a Kirkpatrick-Baez (KB) mirror system. By the end, you will understand:
+In this tutorial, you will learn how to use Bluesky Adaptive to optimize a Kirkpatrick-Baez (KB) mirror system. By the end, you will understand:
 
 - How **degrees of freedom (DOFs)** represent the parameters you can adjust in an experiment
 - How **objectives** define what you're trying to optimize
@@ -34,7 +34,7 @@ The image below shows our simulated setup: a beam from a geometric source propag
 
 ## Setting Up the Environment
 
-Before we can optimize, we need to set up the data infrastructure. Blop uses [Bluesky](https://blueskyproject.io/) to run experiments and [Tiled](https://blueskyproject.io/tiled/) to store and retrieve data.
+Before we can optimize, we need to set up the data infrastructure. Bluesky Adaptive uses [Bluesky](https://blueskyproject.io/) to run experiments and [Tiled](https://blueskyproject.io/tiled/) to store and retrieve data.
 
 ```{code-cell} ipython3
 import logging
@@ -52,9 +52,9 @@ from tiled.client import from_uri  # type: ignore[import-untyped]
 from tiled.client.container import Container
 from tiled.server import SimpleTiledServer
 
-from blop.ax import Agent, Objective, RangeDOF
-from blop.ax.objective import OutcomeConstraint
-from blop.protocols import EvaluationFunction
+from bluesky_adaptive.ax import Agent, Objective, RangeDOF
+from bluesky_adaptive.ax.objective import OutcomeConstraint
+from bluesky_adaptive.protocols import EvaluationFunction
 
 # Import simulation devices (requires: pip install -e sim/)
 from blop_sim.backends.models.xrt_kb_model import KBBackend
@@ -68,7 +68,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # Enable interactive plotting
 plt.ion()
 
-DETECTOR_STORAGE = "/tmp/blop/sim"
+DETECTOR_STORAGE = "/tmp/bluesky-adaptive/sim"
 ```
 
 Next, we create a local Tiled server. The `TiledWriter` callback will save experimental data to this server, and our evaluation function will read from it.
@@ -271,8 +271,8 @@ agent = Agent(
     objectives=objectives,
     evaluation_function=DetectorEvaluation(tiled_client),
     outcome_constraints=outcome_constraints,
-    name="xrt-blop-demo",
-    description="A demo of the Blop agent with XRT simulated beamline",
+    name="xrt-bluesky-adaptive-demo",
+    description="A demo of the Bluesky Adaptive agent with XRT simulated beamline",
 )
 
 # Register intensity as a tracking metric (monitored but not optimized)
@@ -354,7 +354,7 @@ plt.show()
 
 ## Solving the Same Problem with XoptOptimizer
 
-Blop also supports Xopt through `XoptOptimizer`, which plugs directly into the
+Bluesky Adaptive also supports Xopt through `XoptOptimizer`, which plugs directly into the
 same `optimize` plan used throughout the package. This gives you a lower-level
 optimization interface while reusing the same devices, acquisition flow, and
 evaluation function from above.
@@ -368,9 +368,9 @@ For this section, we keep the exact same objective and constraint:
 from xopt.generators.bayesian import ExpectedImprovementGenerator
 from xopt.vocs import VOCS
 
-from blop.plans import optimize
-from blop.protocols import OptimizationProblem
-from blop.xopt.optimizer import XoptOptimizer
+from bluesky_adaptive.plans import optimize
+from bluesky_adaptive.protocols import OptimizationProblem
+from bluesky_adaptive.xopt.optimizer import XoptOptimizer
 ```
 
 Define the Xopt search space (`VOCS`) from the same mirror bounds and outcome names used earlier:
@@ -449,4 +449,4 @@ These same components apply to any optimization problem: swap the simulated devi
 
 ## See Also
 
-- [`blop_sim` package](https://github.com/bluesky/blop/tree/main/sim/blop_sim) for XRT simulated beamline control
+- [`blop_sim` package](https://github.com/bluesky/bluesky-adaptive/tree/main/sim/blop_sim) for XRT simulated beamline control

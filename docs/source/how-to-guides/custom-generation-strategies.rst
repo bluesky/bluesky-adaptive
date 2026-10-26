@@ -90,7 +90,7 @@
 Using custom generation strategies
 ==================================
 
-This guide will show you how to use custom generation strategies with BoTorch, Blop, and Ax.
+This guide will show you how to use custom generation strategies with BoTorch, Bluesky Adaptive, and Ax.
 
 Configure an agent
 ------------------
@@ -99,7 +99,7 @@ Configure an agent
 
     from collections.abc import Mapping, Sequence
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
 
     dofs = [
         RangeDOF(actuator=movable1, bounds=(-5.0, 5.0), parameter_type="float"),
@@ -150,7 +150,7 @@ For more information on generation strategies, see the `Ax documentation <https:
     from ax.generators.torch.botorch_modular.utils import ModelConfig
     from botorch.acquisition.logei import qLogNoisyExpectedImprovement
 
-    from blop.bayesian.models import LatentGP
+    from bluesky_adaptive.bayesian.models import LatentGP
 
 
     generation_strategy = GenerationStrategy(

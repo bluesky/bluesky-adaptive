@@ -101,7 +101,7 @@ Here we configure an agent with three DOFs and two objectives. The second object
 
     from collections.abc import Mapping, Sequence
 
-    from blop.ax import Agent, RangeDOF, Objective, OutcomeConstraint
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective, OutcomeConstraint
 
     dofs = [
         RangeDOF(actuator=movable1, bounds=(-5.0, 5.0), parameter_type="float"),

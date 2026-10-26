@@ -4,7 +4,7 @@ Ax Degree of Freedom (DOF)
 DOF
 ---
 
-.. autoclass:: blop.ax.dof.DOF
+.. autoclass:: bluesky_adaptive.ax.dof.DOF
    :members:
    :undoc-members:
    :show-inheritance:
@@ -13,7 +13,7 @@ DOF
 RangeDOF
 --------
 
-.. autoclass:: blop.ax.dof.RangeDOF
+.. autoclass:: bluesky_adaptive.ax.dof.RangeDOF
    :members:
    :undoc-members:
    :show-inheritance:
@@ -22,7 +22,7 @@ RangeDOF
 ChoiceDOF
 ---------
 
-.. autoclass:: blop.ax.dof.ChoiceDOF
+.. autoclass:: bluesky_adaptive.ax.dof.ChoiceDOF
    :members:
    :undoc-members:
    :show-inheritance:

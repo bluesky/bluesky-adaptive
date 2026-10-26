@@ -96,7 +96,7 @@ To evaluate manually-specified points, use the ``sample_suggestions`` method wit
 
 .. testcode::
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
     
     # Configure agent
     agent = Agent(
@@ -132,7 +132,7 @@ You can combine optimizer suggestions with manual points throughout your optimiz
 
 .. testcode::
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
     
     agent = Agent(
         sensors=[sensor],
@@ -168,7 +168,7 @@ You can review optimizer suggestions before running them by using ``suggest()`` 
 
 .. testcode::
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
     
     agent = Agent(
         sensors=[sensor],
@@ -213,7 +213,7 @@ A common pattern is to alternate between automated optimization and targeted man
 
 .. testcode::
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
     
     agent = Agent(
         sensors=[sensor],
@@ -249,7 +249,7 @@ A common pattern is to alternate between automated optimization and targeted man
 See Also
 --------
 
-- :meth:`blop.ax.Agent.suggest` - Get optimizer suggestions without running
-- :meth:`blop.ax.Agent.sample_suggestions` - Evaluate specific suggestions
-- :meth:`blop.ax.Agent.optimize` - Run full optimization loop
-- :class:`blop.protocols.CanRegisterSuggestions` - Protocol for manual trial support
+- :meth:`bluesky_adaptive.ax.Agent.suggest` - Get optimizer suggestions without running
+- :meth:`bluesky_adaptive.ax.Agent.sample_suggestions` - Evaluate specific suggestions
+- :meth:`bluesky_adaptive.ax.Agent.optimize` - Run full optimization loop
+- :class:`bluesky_adaptive.protocols.CanRegisterSuggestions` - Protocol for manual trial support

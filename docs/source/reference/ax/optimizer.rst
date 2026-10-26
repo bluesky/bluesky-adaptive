@@ -1,7 +1,7 @@
 Ax Optimizer
 ============
 
-.. autoclass:: blop.ax.optimizer.AxOptimizer
+.. autoclass:: bluesky_adaptive.ax.optimizer.AxOptimizer
    :members:
    :undoc-members:
    :show-inheritance:

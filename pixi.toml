@@ -4,7 +4,7 @@ authors = [
   "Thomas Hopkins <thopkins1@bnl.gov>",
 ]
 channels = ["conda-forge"]
-name = "blop"
+name = "bluesky-adaptive"
 platforms = ["linux-64", "osx-arm64"]
 version = "1.0.0"
 requires-pixi = ">=0.82.1"
@@ -16,19 +16,19 @@ python = ">=3.11.0,<3.14"
 [feature.dev.dependencies]
 
 [feature.dev.pypi-dependencies]
-blop = { path = ".", editable = true, extras = ["dev"] }
+bluesky-adaptive = { path = ".", editable = true, extras = ["dev"] }
 blop-sim = { path = "sim", editable = true }
 
 # CPU-only variant of dev feature
 [feature.dev-cpu.dependencies]
 
 [feature.dev-cpu.pypi-dependencies]
-blop = { path = ".", editable = true, extras = ["dev", "cpu"] }
+bluesky-adaptive = { path = ".", editable = true, extras = ["dev", "cpu"] }
 blop-sim = { path = "sim", editable = true }
 
 [feature.dev-cpu.tasks]
 check = "pre-commit run --all-files"
-tests = "pytest src/blop/tests --ignore=src/blop/tests/integration -m 'not integration'"
+tests = "pytest src/bluesky_adaptive/tests --ignore=src/bluesky_adaptive/tests/integration -m 'not integration'"
 
 [feature.docs.dependencies]
 graphviz = ">=14.1.2,<15"
@@ -59,7 +59,7 @@ python = "3.12.*"
 python = "3.13.*"
 
 [feature.integration.tasks]
-integration-tests = "pytest src/blop/tests/integration -m integration"
+integration-tests = "pytest src/bluesky_adaptive/tests/integration -m integration"
 
 [feature.docs.tasks]
 start-queueserver = "docker compose -f docs/source/tutorials/queueserver/docker-compose.yml up -d --build --wait"
@@ -69,7 +69,7 @@ build-docs = { cmd = "make -C docs/ html; EXIT_CODE=$?; docker compose -f docs/s
   "doc-tests",
 ] }
 clean-docs = "make -C docs/ clean"
-build-docs-no-exec = { cmd = "BLOP_DOCS_NO_EXEC=1 make -C docs/ html" }
+build-docs-no-exec = { cmd = "BLUESKY_ADAPTIVE_DOCS_NO_EXEC=1 make -C docs/ html" }
 doc-tests = { cmd = "make -C docs/ test", depends-on = ["start-queueserver"] }
 convert-tutorials-to-ipynb = "jupytext --to notebook docs/source/tutorials/*.md"
 

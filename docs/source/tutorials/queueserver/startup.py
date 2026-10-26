@@ -1,10 +1,10 @@
 """
-Queueserver startup script for the Blop tutorial.
+Queueserver startup script for the Bluesky Adaptive tutorial.
 
 This script runs inside the RE Manager process. It sets up:
 - A RunEngine with ZMQ document publishing
 - Simulated motors and a Himmelblau detector
-- The default_acquire plan from Blop
+- The default_acquire plan from Bluesky Adaptive
 """
 
 from bluesky import RunEngine
@@ -55,7 +55,7 @@ def default_acquire(suggestions, actuators, sensors, *, md=None):
     """
     Acquire data by moving actuators to suggested positions and reading sensors.
 
-    This is a simplified version of blop.plans.default_acquire without complex
+    This is a simplified version of bluesky_adaptive.plans.default_acquire without complex
     type annotations that would cause pydantic validation issues in queueserver.
     """
     # Build list_scan args: [motor1, [val1, ...], motor2, [val2, ...], ...]

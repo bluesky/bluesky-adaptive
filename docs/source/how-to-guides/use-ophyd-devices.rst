@@ -1,18 +1,18 @@
 How to optimize with ophyd and ophyd-async devices
 ==================================================
 
-This guide will walk you through the process of setting up Blop to optimize with `ophyd <https://blueskyproject.io/ophyd/>`_ and `ophyd-async <https://blueskyproject.io/ophyd-async/>`_ devices.
+This guide will walk you through the process of setting up Bluesky Adaptive to optimize with `ophyd <https://blueskyproject.io/ophyd/>`_ and `ophyd-async <https://blueskyproject.io/ophyd-async/>`_ devices.
 
 Ophyd devices
 -------------
 
-Ophyd's :class:`ophyd.Signal` class implements both the :class:`blop.protocols.Sensor` and :class:`blop.protocols.Actuator` protocols, so they can be used directly with Blop. You can also use the :class:`ophyd.SignalRO` class which only implements the :class:`blop.protocols.Sensor` protocol if you want to capture this data at each step of the experiment.
+Ophyd's :class:`ophyd.Signal` class implements both the :class:`bluesky_adaptive.protocols.Sensor` and :class:`bluesky_adaptive.protocols.Actuator` protocols, so they can be used directly with Bluesky Adaptive. You can also use the :class:`ophyd.SignalRO` class which only implements the :class:`bluesky_adaptive.protocols.Sensor` protocol if you want to capture this data at each step of the experiment.
 
-The ``name`` attribute of the signal will be used as the name of the :class:`blop.ax.DOF` on the backend.
+The ``name`` attribute of the signal will be used as the name of the :class:`bluesky_adaptive.ax.DOF` on the backend.
 
 .. testcode::
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
     from ophyd import Signal, SignalRO
 
     some_control_signal = Signal(name="some_control_signal")
@@ -29,15 +29,15 @@ The ``name`` attribute of the signal will be used as the name of the :class:`blo
 Ophyd-async devices
 -------------------
 
-Ophyd-async's :class:`ophyd_async.core.SignalW` class implements the :class:`blop.protocols.Actuator` protocol, so they can also be used directly with Blop. The :class:`ophyd_async.core.SignalR` class implements the :class:`blop.protocols.Sensor` protocol. And the :class:`ophyd_async.core.SignalRW` class implements both.
+Ophyd-async's :class:`ophyd_async.core.SignalW` class implements the :class:`bluesky_adaptive.protocols.Actuator` protocol, so they can also be used directly with Bluesky Adaptive. The :class:`ophyd_async.core.SignalR` class implements the :class:`bluesky_adaptive.protocols.Sensor` protocol. And the :class:`ophyd_async.core.SignalRW` class implements both.
 
 Below we create *soft* signals that return instances of the above classes.
 
-Once again, the ``name`` attribute of the signal will be used as the name of the :class:`blop.ax.DOF` on the backend.
+Once again, the ``name`` attribute of the signal will be used as the name of the :class:`bluesky_adaptive.ax.DOF` on the backend.
 
 .. testcode::
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
     from ophyd_async.core import soft_signal_rw, soft_signal_r_and_setter
 
     some_control_signal = soft_signal_rw(float, name="some_control_signal")
@@ -54,7 +54,7 @@ Once again, the ``name`` attribute of the signal will be used as the name of the
 Using your devices in custom acquisition plans
 ----------------------------------------------
 
-If you use a custom acquisition plan by implementing the :class:`blop.protocols.AcquisitionPlan` protocol, you can use the ``actuators`` and/or ``sensors`` arguments to access the ophyd or ophyd-async devices you configured as DOFs.
+If you use a custom acquisition plan by implementing the :class:`bluesky_adaptive.protocols.AcquisitionPlan` protocol, you can use the ``actuators`` and/or ``sensors`` arguments to access the ophyd or ophyd-async devices you configured as DOFs.
 
 .. testcode::
 
@@ -66,8 +66,8 @@ If you use a custom acquisition plan by implementing the :class:`blop.protocols.
     from bluesky.run_engine import RunEngine
     from ophyd_async.core import soft_signal_rw
 
-    from blop.ax import Agent, RangeDOF, Objective
-    from blop.protocols import AcquisitionPlan, Actuator, Sensor
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.protocols import AcquisitionPlan, Actuator, Sensor
 
     def custom_acquire(
         suggestions: Sequence[Mapping],

@@ -25,7 +25,7 @@ association between optimizer suggestions and the acquired data within the
 chosen storage or event system, for example by storing suggestion IDs in
 actual acquisition order in the run metadata.
 
-The plan must return a uid. Blop passes that value unchanged to the evaluation
+The plan must return a uid. Bluesky Adaptive passes that value unchanged to the evaluation
 function. A Bluesky run UID is the usual value for run-owning acquisitions. The
 in-run default returns suggestion IDs in the order they were executed, but
 custom plans may return any concrete uid type their matching evaluation

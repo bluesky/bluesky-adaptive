@@ -106,7 +106,7 @@ The ``DOF`` and ``Objective`` names must match the keys in the data dictionaries
 
     from collections.abc import Mapping, Sequence
 
-    from blop.ax import Agent, RangeDOF, Objective
+    from bluesky_adaptive.ax import Agent, RangeDOF, Objective
 
     dofs = [
         RangeDOF(actuator=movable1, bounds=(-5.0, 5.0), parameter_type="float"),

@@ -1,4 +1,4 @@
-x-blop-service: &blop-service
+x-bluesky-adaptive-service: &bluesky-adaptive-service
   build:
     context: .
     dockerfile: Dockerfile
@@ -15,14 +15,14 @@ services:
       retries: 5
 
   zmq-proxy:
-    <<: *blop-service
+    <<: *bluesky-adaptive-service
     command: bluesky-0MQ-proxy 5577 5578
     ports:
       - "5577:5577"
       - "5578:5578"
 
   tiled:
-    <<: *blop-service
+    <<: *bluesky-adaptive-service
     command: tiled serve catalog --temp --host 0.0.0.0 --port 8000 --api-key tutorialkey
     ports:
       - "8000:8000"
@@ -33,7 +33,7 @@ services:
       retries: 10
 
   re-manager:
-    <<: *blop-service
+    <<: *bluesky-adaptive-service
     command: start-re-manager --startup-dir=/app/startup --zmq-publish-console OFF --redis-addr redis:6379
     depends_on:
       redis:
@@ -49,7 +49,7 @@ services:
       - ./user_group_permissions.yaml:/app/startup/user_group_permissions.yaml:ro
 
   zmq-tiled-bridge:
-    <<: *blop-service
+    <<: *bluesky-adaptive-service
     command: python -u /app/zmq_tiled_bridge.py
     depends_on:
       zmq-proxy:

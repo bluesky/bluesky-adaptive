@@ -11,9 +11,9 @@ kernelspec:
   name: python3
 ---
 
-# Your first Scipy optimization with Blop
+# Your first Scipy optimization with Bluesky Adaptive
 
-In this tutorial, you will learn the three core concepts of Blop: **DOFs** (the parameters you can adjust), **objectives** (what you want to optimize), and the **Agent** (which coordinates the optimization). We'll optimize a simple mathematical function using simulated devices—the same patterns apply to real hardware.
+In this tutorial, you will learn the three core concepts of Bluesky Adaptive: **DOFs** (the parameters you can adjust), **objectives** (what you want to optimize), and the **Agent** (which coordinates the optimization). We'll optimize a simple mathematical function using simulated devices—the same patterns apply to real hardware.
 
 ## Setup
 
@@ -31,7 +31,7 @@ from tiled.client import from_uri
 from tiled.client.container import Container
 from tiled.server import SimpleTiledServer
 
-from blop.scipy import SCP, ScipyCFG, Objective, RangeDOF, Scipy
+from bluesky_adaptive.scipy import SCP, ScipyCFG, Objective, RangeDOF, Scipy
 
 # Suppress noisy logs from httpx 
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -123,7 +123,7 @@ sensors = []
 
 ## Writing the evaluation function
 
-The **evaluation function** computes objective values from experimental data. Blop passes it the uid returned by the acquisition plan and the suggestions that were tried. This tutorial uses the default acquisition plan, so the uid is a Bluesky run UID and `blop_acquisition_order` associates measurements with outcomes.
+The **evaluation function** computes objective values from experimental data. Bluesky Adaptive passes it the uid returned by the acquisition plan and the suggestions that were tried. This tutorial uses the default acquisition plan, so the uid is a Bluesky run UID and `blop_acquisition_order` associates measurements with outcomes.
 
 ```{code-cell} ipython3
 from collections.abc import Mapping, Sequence
@@ -216,7 +216,7 @@ The Himmelblau function has four global minima (all with value 0). The `summariz
 
 ## What you learned
 
-You now understand the three core concepts of Blop:
+You now understand the three core concepts of Bluesky Adaptive:
 
 - **DOFs**: The parameters the optimizer adjusts (here, `x1` and `x2` with bounds)
 - **Objectives**: What you're optimizing (here, minimizing the Himmelblau function)

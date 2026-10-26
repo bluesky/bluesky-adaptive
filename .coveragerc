@@ -1,6 +1,6 @@
 [run]
 source =
-    blop
+    bluesky_adaptive
 [report]
 omit =
     */python?.?/*
@@ -9,8 +9,8 @@ omit =
     .*version.*
     *_version.py
     # ignore test modules
-    src/blop/tests/**
-    */blop/tests/**
+    src/bluesky_adaptive/tests/**
+    */bluesky_adaptive/tests/**
 
 exclude_lines =
     if __name__ == '__main__':

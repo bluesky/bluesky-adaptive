@@ -19,7 +19,7 @@ may change in future releases without a deprecation period. It is not
 recommended for production use.
 ```
 
-In this tutorial, you will learn how to run Blop optimization against a remote [Bluesky Queueserver](https://blueskyproject.io/bluesky-queueserver/). This architecture is used when:
+In this tutorial, you will learn how to run Bluesky Adaptive optimization against a remote [Bluesky Queueserver](https://blueskyproject.io/bluesky-queueserver/). This architecture is used when:
 
 - The experiment hardware is controlled by a shared instrument server
 - You want the optimizer to run in a separate process from the RunEngine
@@ -46,7 +46,7 @@ flowchart
         bridge -->|writes| tiled
     end
 
-    agent["Blop QueueserverAgent<br/>(suggests points, listens for completions, evaluates data)"]
+    agent["Bluesky Adaptive QueueserverAgent<br/>(suggests points, listens for completions, evaluates data)"]
 
     agent -->|submit plans via REManagerAPI| rem
     zmqp -->|document stream| agent
@@ -66,8 +66,8 @@ flowchart
 ## Prerequisites
 
 - Docker and Docker Compose installed
-- The `blop` Python package installed (with `bluesky-queueserver-api` and `tiled`)
-- The `blop` GitHub repository cloned (for the service definitions under `docs/source/tutorials/queueserver/`)
+- The `bluesky-adaptive` Python package installed (with `bluesky-queueserver-api` and `tiled`)
+- The `bluesky-adaptive` GitHub repository cloned (for the service definitions under `docs/source/tutorials/queueserver/`)
 
 ## Starting the Infrastructure
 
@@ -187,8 +187,8 @@ tiled_client = from_uri("http://localhost:8000", api_key="tutorialkey")
 Just as in the simple experiment tutorial, we define **DOFs** and **objectives**. The key difference: since devices exist only in the remote queueserver environment, DOFs reference device names as strings (no `actuator` objects).
 
 ```{code-cell} ipython3
-from blop.ax import RangeDOF, Objective
-from blop.ax.queueserver_agent import QueueserverAgent
+from bluesky_adaptive.ax import RangeDOF, Objective
+from bluesky_adaptive.ax.queueserver_agent import QueueserverAgent
 
 dofs = [
     RangeDOF(actuator="motor1", bounds=(-5.0, 5.0), parameter_type="float"),

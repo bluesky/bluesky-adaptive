@@ -61,9 +61,9 @@
     motor_x = MovableSignal(name="motor_x")
 
 
-Tiled with Blop
+Tiled with Bluesky Adaptive
 ================================
-This guide explains how we can use Tiled for data storage and retrieval with Blop.
+This guide explains how we can use Tiled for data storage and retrieval with Bluesky Adaptive.
 
 Setting Up Data Access
 -----------------------
@@ -86,10 +86,10 @@ To access the data for optimization, you have to connect to a Tiled server insta
     RE.subscribe(tiled_writer)
 
 
-Data Storage with Blop's Default Plans
----------------------------------------
+Data Storage with Bluesky Adaptive's Default Plans
+--------------------------------------------------
 
-Blop provides a default acquisition plan (:func:`blop.plans.default_acquire`) that handles data acquisition. This plan:
+Bluesky Adaptive provides a default acquisition plan (:func:`bluesky_adaptive.plans.default_acquire`) that handles data acquisition. This plan:
 
 - Uses the **"primary" stream** to store all acquired data
 - Includes **blop_acquisition_order** metadata containing suggestion IDs in actual acquired-row order
@@ -143,7 +143,7 @@ Configure an agent
 
 .. testcode::
 
-    from blop.ax import RangeDOF, Agent, Objective
+    from bluesky_adaptive.ax import RangeDOF, Agent, Objective
 
     dof1 = RangeDOF(actuator=motor_x, bounds=(0, 1000), parameter_type="float")
 

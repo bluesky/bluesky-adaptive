@@ -1,7 +1,7 @@
 Deployments
 ===========
 
-This page highlights examples of where Blop is being used or developed. It is
+This page highlights examples of where Bluesky Adaptive is being used or developed. It is
 not intended to be a complete deployment registry.
 
 .. list-table::

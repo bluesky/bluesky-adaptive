@@ -86,7 +86,7 @@ Create DOFs and multiple objectives
 
     from collections.abc import Mapping, Sequence
 
-    from blop.ax import RangeDOF, Objective
+    from bluesky_adaptive.ax import RangeDOF, Objective
 
     motor_x = MovableSignal(name="motor_x")
     motor_y = MovableSignal(name="motor_y")
@@ -124,7 +124,7 @@ Since this is a multi-objective optimization, we can set a preference for the fi
 
 .. testcode::
 
-    from blop.ax import OutcomeConstraint
+    from bluesky_adaptive.ax import OutcomeConstraint
 
     constraint = OutcomeConstraint("x >= 0.5", x=objectives[0])
 
@@ -134,7 +134,7 @@ Configure an agent with outcome constraints
 
 .. testcode::
 
-    from blop.ax import Agent
+    from bluesky_adaptive.ax import Agent
 
     agent = Agent(
         sensors=[],

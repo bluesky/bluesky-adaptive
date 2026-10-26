@@ -1,7 +1,7 @@
 Ax Outcome Constraint
 =====================
 
-.. autoclass:: blop.ax.objective.OutcomeConstraint
+.. autoclass:: bluesky_adaptive.ax.objective.OutcomeConstraint
    :members:
    :undoc-members:
    :show-inheritance:

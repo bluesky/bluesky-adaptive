@@ -2,8 +2,20 @@
 Release History
 ===============
 
-v1.2.0 (2026-10-23)
--------------------
+Unreleased
+----------
+
+Breaking Changes
+................
+* The package is renamed: replace ``pip install blop[...]`` with ``pip install bluesky-adaptive[...]`` and
+  ``import blop`` with ``import bluesky_adaptive``.
+* Extra names (``ax``, ``queueserver``, ``scipy``, ``xopt``, ``all``, ``cpu``, ``dev``) and the run metadata keys
+  (``blop_suggestions``, ``blop_acquisition_order``, ``blop_correlation_uid``) are unchanged.
+* The bluesky-adaptive 0.x APIs (agents, adjudicators, server, and lock-step recommenders) are removed. Pin
+  ``bluesky-adaptive<1`` to keep them.
+
+blop v1.2.0 (2026-10-23)
+------------------------
 
 This is the final feature release of Blop. Development continues in
 `bluesky-adaptive <https://github.com/bluesky/bluesky-adaptive>`_ 1.0.
@@ -47,8 +59,8 @@ Dependency Changes
 
 `Full Changelog <https://github.com/bluesky/blop/compare/v1.1.0...v1.2.0>`__
 
-v1.1.0 (2026-08-26)
--------------------
+blop v1.1.0 (2026-08-26)
+------------------------
 
 Features
 ........
@@ -109,8 +121,8 @@ Documentation and Development
 
 `Full Changelog <https://github.com/bluesky/blop/compare/v1.0.0...v1.1.0>`__
 
-v1.0.0 (2026-07-16)
--------------------
+blop v1.0.0 (2026-07-16)
+------------------------
 
 Features
 ........
@@ -188,8 +200,8 @@ Documentation
 
 `Full Changelog <https://github.com/bluesky/blop/compare/v1.0.0b1...v1.0.0>`__
 
-v1.0.0b1 (2026-04-17)
----------------------
+blop v1.0.0b1 (2026-04-17)
+--------------------------
 
 Features
 ........
@@ -248,8 +260,8 @@ Documentation
 
 `Full Changelog <https://github.com/NSLS-II/blop/compare/v0.9.0...v1.0.0b1>`__
 
-v0.9.0 (2025-12-08)
--------------------
+blop v0.9.0 (2025-12-08)
+------------------------
 
 What's Changed
 ..............
@@ -273,8 +285,8 @@ What's Changed
 
 `Full Changelog <https://github.com/NSLS-II/blop/compare/v0.8.1...v0.9.0>`__
 
-v0.8.1 (2025-11-06)
--------------------
+blop v0.8.1 (2025-11-06)
+------------------------
 
 What's Changed
 ..............
@@ -290,8 +302,8 @@ What's Changed
 
 `Full Changelog <https://github.com/NSLS-II/blop/compare/v0.8.0...v0.8.1>`__
 
-v0.8.0 (2025-10-13)
--------------------
+blop v0.8.0 (2025-10-13)
+------------------------
 
 What's Changed
 ..............
@@ -318,8 +330,8 @@ New Contributors
 
 `Full Changelog <https://github.com/NSLS-II/blop/compare/v0.7.5...v0.8.0>`__
 
-v0.7.5 (2025-06-18)
--------------------
+blop v0.7.5 (2025-06-18)
+------------------------
 
 What's Changed
 ..............
@@ -337,13 +349,13 @@ New Contributors
 
 `Full Changelog <https://github.com/NSLS-II/blop/compare/v0.7.4...v0.7.5>`__
 
-v0.7.4 (2025-03-04)
--------------------
+blop v0.7.4 (2025-03-04)
+------------------------
 * Add missing files for documentation
 * Fix trigger condition for releases on PyPI and documentation
 
-v0.7.3 (2025-03-04)
--------------------
+blop v0.7.3 (2025-03-04)
+------------------------
 What's Changed
 ..............
 * Fix documentation CI error by `@jennmald <https://github.com/jennmald>`_ in https://github.com/NSLS-II/blop/pull/84
@@ -362,35 +374,35 @@ New Contributors
 
 `Full Changelog <https://github.com/NSLS-II/blop/compare/v0.7.2...v0.7.3>`__
 
-v0.7.2 (2025-01-31)
--------------------
+blop v0.7.2 (2025-01-31)
+------------------------
 - Renamed package in PyPI to `blop <https://pypi.org/project/blop/>`_.
 - `bloptools <https://pypi.org/project/bloptools/>`_ is still avaliable on PyPI.
 
-v0.7.1 (2024-09-26)
--------------------
+blop v0.7.1 (2024-09-26)
+------------------------
 - Add simulated hardware.
 - Added a method to prune bad data.
 
-v0.7.0 (2024-05-13)
--------------------
+blop v0.7.0 (2024-05-13)
+------------------------
 - Added functionality for Pareto optimization.
 - Support for discrete degrees of freedom.
 
-v0.6.0 (2024-02-01)
--------------------
+blop v0.6.0 (2024-02-01)
+------------------------
 - More sophisticated targeting capabilities for different objectives.
 - More user-friendly agent controls.
 
-v0.5.0 (2023-11-09)
--------------------
+blop v0.5.0 (2023-11-09)
+------------------------
 - Added hypervolume acquisition and constraints.
 - Better specification of latent dimensions.
 - Implemented Monte Carlo acquisition functions.
 - Added classes for DOFs and objectives.
 
-v0.4.0 (2023-08-11)
--------------------
+blop v0.4.0 (2023-08-11)
+------------------------
 
 - Easier-to-use syntax when building the agent.
 - Modular and stateful agent design for better usability.
@@ -401,24 +413,24 @@ v0.4.0 (2023-08-11)
 - Updated the Sphinx documentation theme to `furo <https://github.com/pradyunsg/furo>`_.
 
 
-v0.3.0 (2023-06-17)
--------------------
+blop v0.3.0 (2023-06-17)
+------------------------
 
 - Implemented multi-task optimization.
 - Simplified the syntax on initializing the agent.
 - Resolved issues discovered at NSLS-II ISS.
 
 
-v0.2.0 (2023-04-25)
--------------------
+blop v0.2.0 (2023-04-25)
+------------------------
 
 - Rebased the Bayesian optimization models to be compatible with ``botorch`` code.
 - Optimization objectives can be customized with ``experiment`` modules.
 - Added optimization test functions for quicker testing and development.
 
 
-v0.1.0 (2023-03-10)
--------------------
+blop v0.1.0 (2023-03-10)
+------------------------
 
 - Changed from using ``SafeConfigParser`` to ``ConfigParser``.
 - Implemented the initial version of the GP optimizer.
@@ -426,14 +438,14 @@ v0.1.0 (2023-03-10)
 - Added tests to the CI.
 
 
-v0.0.2 (2021-05-14)
--------------------
+blop v0.0.2 (2021-05-14)
+------------------------
 
 Fixed ``_run_flyers()`` for sirepo optimization.
 
 
-v0.0.1 - Initial Release (2020-09-01)
--------------------------------------
+blop v0.0.1 - Initial Release (2020-09-01)
+------------------------------------------
 
 Initial release of the Beamline Optimization library.
 

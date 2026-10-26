@@ -1,6 +1,6 @@
-# Contributing to Blop
+# Contributing to Bluesky Adaptive
 
-Thanks for contributing to Blop. We aim to keep the process lightweight, practical, and focused on correct,
+Thanks for contributing to Bluesky Adaptive. We aim to keep the process lightweight, practical, and focused on correct,
 tested changes.
 
 ## Review and Merge Policy

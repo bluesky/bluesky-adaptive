@@ -1,11 +1,11 @@
 The Evaluation Function
 =======================
 
-The evaluation function is the primary interface between **blop** and your experimental data analysis pipeline. It is responsible for retrieving
+The evaluation function is the primary interface between **Bluesky Adaptive** and your experimental data analysis pipeline. It is responsible for retrieving
 experimental data, performing any required post-processing, and computing the objective values returned to the optimizer.
 
-Rather than prescribing a particular processing framework or directly managing data, **blop** uses a uid-driven workflow. The acquisition
-plan returns a uid, and Blop passes that same value to the evaluation function. The uid must uniquely identify the acquisition.
+Rather than prescribing a particular processing framework or directly managing data, **Bluesky Adaptive** uses a uid-driven workflow. The acquisition
+plan returns a uid, and Bluesky Adaptive passes that same value to the evaluation function. The uid must uniquely identify the acquisition.
 
 
 Anatomy of an Evaluation Function
@@ -19,7 +19,7 @@ A run-owning acquisition plan usually returns a string run UID:
 
     from collections.abc import Mapping, Sequence
 
-    from blop.protocols import EvaluationFunction
+    from bluesky_adaptive.protocols import EvaluationFunction
 
     class RunUidEvaluation(EvaluationFunction[str]):
         """Evaluator for acquisition plans that return Bluesky run UID strings."""

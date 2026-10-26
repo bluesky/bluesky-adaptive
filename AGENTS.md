@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Beamline optimization with machine learning (`blop`). Python package using
+Bluesky Adaptive: beamline optimization with machine learning (`bluesky_adaptive`). Python package using
 `pixi` for environment/task management, `ruff` for lint/format, `pyright` for
 type checking, and `pytest` for tests.
 
@@ -13,7 +13,7 @@ type checking, and `pytest` for tests.
   manually. Re-sync with `pixi install -e dev-cpu` if dependencies change.
 - `pyproject.toml` is the single source of truth for runtime/dev
   dependencies. `pixi.toml` should pull them in via the editable install
-  (`blop = { path = ".", editable = true, extras = [...] }`) rather than
+  (`bluesky-adaptive = { path = ".", editable = true, extras = [...] }`) rather than
   redeclare them; only platform-specific binary deps (e.g. `graphviz`)
   belong directly in `pixi.toml`.
 
@@ -26,23 +26,23 @@ type checking, and `pytest` for tests.
 - Lint only (with autofix): `pixi run -e dev ruff check --fix`
 - Type check: `pixi run -e dev pyright`
 - Run full test suite: `pixi run -e dev tests`
-  (alias for `pytest src/blop/tests`).
-- Run a single test file: `pixi run -e dev pytest src/blop/tests/test_utils.py`
+  (alias for `pytest src/bluesky_adaptive/tests`).
+- Run a single test file: `pixi run -e dev pytest src/bluesky_adaptive/tests/test_utils.py`
 - Run a single test by node id:
-  `pixi run -e dev pytest src/blop/tests/test_utils.py::test_name`
+  `pixi run -e dev pytest src/bluesky_adaptive/tests/test_utils.py::test_name`
 - Run tests matching a keyword: `pixi run -e dev pytest -k "queueserver"`
 - Run tests by marker (defined in `pytest.ini`: `shadow`, `srw`, `test_func`):
   `pixi run -e dev pytest -m test_func`
-- Coverage (config in `.coveragerc`): `pixi run -e dev pytest --cov=blop`
+- Coverage (config in `.coveragerc`): `pixi run -e dev pytest --cov=bluesky_adaptive`
 - Build docs: `pixi run -e docs build-docs` (or `build-docs-no-exec` to skip
   notebook execution). Tutorials live under `docs/source/tutorials/`.
 
 ## Repository layout
 
-- `src/blop/` — library code. Submodules: `ax/`, `bayesian/`, `callbacks/`,
+- `src/bluesky_adaptive/` — library code. Submodules: `ax/`, `bayesian/`, `callbacks/`,
   plus `plans.py`, `plan_stubs.py`, `protocols.py`, `queueserver.py`,
   `utils.py`.
-- `src/blop/tests/` — pytest tests, mirrors package layout. `conftest.py`
+- `src/bluesky_adaptive/tests/` — pytest tests, mirrors package layout. `conftest.py`
   holds shared fixtures.
 - `sim/` — separate `blop-sim` editable package used by tests/docs.
 - `docs/`, `examples/` — Sphinx docs and example scripts/notebooks.
@@ -56,13 +56,13 @@ Enforced by `ruff` (config in `pyproject.toml [tool.ruff]`) and `pyright`.
 - Line length: **125** chars. Indent with 4 spaces. Use double quotes
   (ruff format default).
 - Imports: sorted by ruff `I` (isort). Order: stdlib, third-party, first-party.
-  Use **relative imports within `blop`** (e.g. `from .protocols import ...`,
-  as in `src/blop/utils.py`). Avoid private/underscore imports across modules
+  Use **relative imports within `bluesky_adaptive`** (e.g. `from .protocols import ...`,
+  as in `src/bluesky_adaptive/utils.py`). Avoid private/underscore imports across modules
   (`PLC2701` enabled in preview).
 - Active rule sets: `B`, `C4`, `E`, `F`, `W`, `I`, `UP`, `SLF`, `PLC2701`,
   `LOG015`, `S101`, `D` (numpy convention). Currently ignored repo-wide:
   `D` (docstring rules — still write numpy-style docstrings on new public
-  APIs), `SLF001`, `B901`. In `src/blop/tests/**` `S101`, `SLF001`, `D` are
+  APIs), `SLF001`, `B901`. In `src/bluesky_adaptive/tests/**` `S101`, `SLF001`, `D` are
   ignored — `assert` is fine in tests but not in library code.
 - Logging: never call the root logger (`LOG015`). Use a module logger:
   `logger = logging.getLogger(__name__)`.
@@ -73,18 +73,18 @@ Enforced by `ruff` (config in `pyproject.toml [tool.ruff]`) and `pyright`.
   runs in pre-commit; do not introduce new type errors.
 - Prefer concrete types from `numpy.typing` (`ArrayLike`, `NDArray`),
   `collections.abc` (`Sequence`, `Iterable`, `Mapping`), and project
-  protocols in `src/blop/protocols.py`. Use `Any` only as a last resort.
+  protocols in `src/bluesky_adaptive/protocols.py`. Use `Any` only as a last resort.
 - Use `from __future__ import annotations` only when needed for forward
   references; existing code generally does not.
 - Excluded from pyright (do not introduce new code there without cleaning up
-  types if possible): `sim/`, `src/blop/tests/`, `src/blop/bayesian/`,
-  `src/blop/ax/qserver_agent.py`.
+  types if possible): `sim/`, `src/bluesky_adaptive/tests/`, `src/bluesky_adaptive/bayesian/`,
+  `src/bluesky_adaptive/ax/qserver_agent.py`.
 
 ## Naming
 
 - `snake_case` for functions, methods, variables, modules.
 - `PascalCase` for classes and `Enum` types (e.g. `Source(str, Enum)` in
-  `src/blop/utils.py`).
+  `src/bluesky_adaptive/utils.py`).
 - `UPPER_SNAKE_CASE` for module-level constants (e.g. `ID_KEY`).
 - Leading underscore (`_name`) for module-private and internal attributes.
   Don't access `_private` members across module boundaries.
@@ -93,7 +93,7 @@ Enforced by `ruff` (config in `pyproject.toml [tool.ruff]`) and `pyright`.
 ## Docstrings & comments
 
 - Numpy-style docstrings (`[tool.ruff.lint.pydocstyle] convention = "numpy"`).
-  See `InferredReadable` in `src/blop/utils.py` for a canonical example
+  See `InferredReadable` in `src/bluesky_adaptive/utils.py` for a canonical example
   (Parameters section with `name : type` lines).
 - Public classes, functions, and modules should have a one-line summary plus
   Parameters / Returns / Raises sections where applicable. Keep comments
@@ -112,16 +112,16 @@ Enforced by `ruff` (config in `pyproject.toml [tool.ruff]`) and `pyright`.
 
 ## Tests
 
-- Framework: `pytest`. Place new tests under `src/blop/tests/` mirroring the
-  module they cover. Reuse fixtures from `src/blop/tests/conftest.py`.
+- Framework: `pytest`. Place new tests under `src/bluesky_adaptive/tests/` mirroring the
+  module they cover. Reuse fixtures from `src/bluesky_adaptive/tests/conftest.py`.
 - Tests may use `assert` and access private members (`S101`, `SLF001`
-  ignored under `src/blop/tests/**`).
+  ignored under `src/bluesky_adaptive/tests/**`).
 - Keep tests deterministic: seed RNGs (`numpy`, `torch`) explicitly.
 - **Tests must run fast.** Avoid real I/O, network calls, hardware, long
   Bayesian-optimization loops, or heavy `torch` training in unit tests. Mock
   expensive collaborators using `unittest.mock` (`MagicMock`, `patch`,
   `AsyncMock`); reuse the mock fixtures already
-  defined in `src/blop/tests/conftest.py` and submodule `conftest.py` files
+  defined in `src/bluesky_adaptive/tests/conftest.py` and submodule `conftest.py` files
   before adding new ones.
 
 ## Git / PR workflow

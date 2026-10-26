@@ -79,7 +79,7 @@ Create DOFs and an objective
 
     from collections.abc import Mapping, Sequence
 
-    from blop.ax import RangeDOF, Objective
+    from bluesky_adaptive.ax import RangeDOF, Objective
 
     motor_x = MovableSignal(name="motor_x")
     motor_y = MovableSignal(name="motor_y")
@@ -110,7 +110,7 @@ Constraints are specified as strings that are templated and evaluated for you.
 
 .. testcode::
 
-    from blop.ax import DOFConstraint
+    from bluesky_adaptive.ax import DOFConstraint
 
     constraint = DOFConstraint("5 * x1 + 2 * x2 <= 4 * x3", x1=dof1, x2=dof2, x3=dof3)
 
@@ -120,7 +120,7 @@ Configure an agent with DOF constraints
 
 .. testcode::
 
-    from blop.ax import Agent
+    from bluesky_adaptive.ax import Agent
 
     agent = Agent(
         sensors=[],

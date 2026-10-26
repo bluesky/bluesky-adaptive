@@ -1,7 +1,7 @@
 Xopt Optimizer
 ==============
 
-.. autoclass:: blop.xopt.optimizer.XoptOptimizer
+.. autoclass:: bluesky_adaptive.xopt.optimizer.XoptOptimizer
    :members:
    :undoc-members:
    :show-inheritance:

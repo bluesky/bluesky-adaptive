@@ -4,22 +4,22 @@ Protocols
 MovableHasName
 --------------
 
-.. autoclass:: blop.protocols.MovableHasName
+.. autoclass:: bluesky_adaptive.protocols.MovableHasName
 
 Actuator
 --------
 
-.. autoclass:: blop.protocols.Actuator
+.. autoclass:: bluesky_adaptive.protocols.Actuator
 
 Sensor
 ------
 
-.. autoclass:: blop.protocols.Sensor
+.. autoclass:: bluesky_adaptive.protocols.Sensor
 
 AcquisitionPlan
 ---------------
 
-.. autoclass:: blop.protocols.AcquisitionPlan
+.. autoclass:: bluesky_adaptive.protocols.AcquisitionPlan
    :members:
    :undoc-members:
    :show-inheritance:
@@ -29,7 +29,7 @@ AcquisitionPlan
 EvaluationFunction
 ------------------
 
-.. autoclass:: blop.protocols.EvaluationFunction
+.. autoclass:: bluesky_adaptive.protocols.EvaluationFunction
    :members:
    :undoc-members:
    :show-inheritance:
@@ -38,7 +38,7 @@ EvaluationFunction
 Optimizer
 ---------
 
-.. autoclass:: blop.protocols.Optimizer
+.. autoclass:: bluesky_adaptive.protocols.Optimizer
    :members:
    :undoc-members:
    :show-inheritance:
@@ -47,7 +47,7 @@ Optimizer
 BaseOptimizationProblem
 -----------------------
 
-.. autoclass:: blop.protocols.BaseOptimizationProblem
+.. autoclass:: bluesky_adaptive.protocols.BaseOptimizationProblem
    :members:
    :undoc-members:
    :show-inheritance:
@@ -56,7 +56,7 @@ BaseOptimizationProblem
 OptimizationProblem
 -------------------
 
-.. autoclass:: blop.protocols.OptimizationProblem
+.. autoclass:: bluesky_adaptive.protocols.OptimizationProblem
    :members:
    :undoc-members:
    :show-inheritance:
@@ -65,7 +65,7 @@ OptimizationProblem
 QueueserverOptimizationProblem
 ------------------------------
 
-.. autoclass:: blop.protocols.QueueserverOptimizationProblem
+.. autoclass:: bluesky_adaptive.protocols.QueueserverOptimizationProblem
    :members:
    :undoc-members:
    :show-inheritance:
@@ -74,7 +74,7 @@ QueueserverOptimizationProblem
 CanRegisterSuggestions
 ----------------------
 
-.. autoclass:: blop.protocols.CanRegisterSuggestions
+.. autoclass:: bluesky_adaptive.protocols.CanRegisterSuggestions
    :members:
    :undoc-members:
    :show-inheritance:
@@ -83,7 +83,7 @@ CanRegisterSuggestions
 TrialFaultAware
 ---------------
 
-.. autoclass:: blop.protocols.TrialFaultAware
+.. autoclass:: bluesky_adaptive.protocols.TrialFaultAware
    :members:
    :undoc-members:
    :show-inheritance:
@@ -92,7 +92,7 @@ TrialFaultAware
 Checkpointable
 --------------
 
-.. autoclass:: blop.protocols.Checkpointable
+.. autoclass:: bluesky_adaptive.protocols.Checkpointable
    :members:
    :undoc-members:
    :show-inheritance:

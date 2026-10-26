@@ -5,12 +5,12 @@ build-backend = "hatchling.build"
 [project]
 name = "blop-sim"
 version = "0.0.0"
-description = "Example simulations and benchmarks for blop (not published to PyPI)"
+description = "Example simulations and benchmarks for bluesky-adaptive (not published to PyPI)"
 readme = "README.md"
 authors = [{ name = "Thomas Hopkins", email = "thopkins1@bnl.gov" }]
 requires-python = ">=3.11"
 dependencies = [
-  "blop",
+  "bluesky-adaptive",
   "ophyd-async<0.17",
   "h5py",
   "area-detector-handlers",

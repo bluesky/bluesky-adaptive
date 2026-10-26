@@ -1,5 +1,5 @@
-Blop
-====
+Bluesky Adaptive
+================
 
 .. toctree::
     :maxdepth: 2
@@ -16,14 +16,14 @@ Blop
 
 .. raw:: html
 
-    <p class="index-subtitle">a BLuesky Optimization Package</p>
+    <p class="index-subtitle">a Bluesky optimization package</p>
     <div class="index-about-grid">
     <div>
 
-What is Blop?
--------------
+What is Bluesky Adaptive?
+-------------------------
 
-Blop is a Python library for performing optimization for `Bluesky <https://blueskyproject.io/bluesky/main/index.html>`_
+Bluesky Adaptive is a Python library for performing optimization for `Bluesky <https://blueskyproject.io/bluesky/main/index.html>`_
 experiments. It is designed to integrate nicely with the Bluesky 
 ecosystem and primarily targets rapid data acquisition
 and control.
@@ -36,7 +36,7 @@ optimization interface for Bluesky-driven experimentation.
     </div>
         <div class="about-viz">
             <div class="about-viz-inner">
-                <img src="_static/blop-alignment-image.png" alt="Image of beamline optimization done through blop">      
+                <img src="_static/blop-alignment-image.png" alt="Image of beamline optimization done through Bluesky Adaptive">      
             </div>
             <p class="viz-caption">Autonomous alignment visualization using Bayesian optimization.</p>
         </div>
@@ -120,7 +120,7 @@ Learn More!
 
     .. container:: learn-more-card-desc
 
-        Step-by-step guides to get started with Blop fundamentals and basic workflows.
+        Step-by-step guides to get started with Bluesky Adaptive fundamentals and basic workflows.
 
 .. container:: learn-more-item
 

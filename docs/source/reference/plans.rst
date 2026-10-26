@@ -1,14 +1,14 @@
 Plans
 =====
 
-.. autofunction:: blop.plans.optimize
+.. autofunction:: bluesky_adaptive.plans.optimize
 
-.. autofunction:: blop.plans.optimize_in_run
+.. autofunction:: bluesky_adaptive.plans.optimize_in_run
 
-.. autofunction:: blop.plans.optimize_step
+.. autofunction:: bluesky_adaptive.plans.optimize_step
 
-.. autofunction:: blop.plans.default_acquire
+.. autofunction:: bluesky_adaptive.plans.default_acquire
 
-.. autofunction:: blop.plans.acquire_baseline
+.. autofunction:: bluesky_adaptive.plans.acquire_baseline
 
-.. autofunction:: blop.plans.sample_suggestions
+.. autofunction:: bluesky_adaptive.plans.sample_suggestions

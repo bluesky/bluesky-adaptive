@@ -15,8 +15,8 @@ kernelspec:
 
 In this tutorial we'll show a simulation optimization workflow by loading arbitrary XRT setups using xml/json.
 By the end, you should be able to go to XRT qook/glow and build your beamline from there to export and drop in
-to blop. Or if you are lucky enough for an XRT model to be already built for you, export to xml and load in
-blop.
+to Bluesky Adaptive. Or if you are lucky enough for an XRT model to be already built for you, export to xml and load in
+Bluesky Adaptive.
 
 ## Some Environment Setup
 
@@ -38,8 +38,8 @@ from tiled.client import from_uri  # type: ignore[import-untyped]
 from tiled.client.container import Container
 from tiled.server import SimpleTiledServer
 
-from blop.ax import Agent, Objective, RangeDOF
-from blop.protocols import EvaluationFunction
+from bluesky_adaptive.ax import Agent, Objective, RangeDOF
+from bluesky_adaptive.protocols import EvaluationFunction
 from blop_sim.backends import XRTBackend
 from blop_sim.devices.xrt import infer_detectors, infer_variables
 
@@ -50,7 +50,7 @@ warnings.filterwarnings("ignore", category=FutureWarning)
 # Enable interactive plotting
 plt.ion()
 
-DETECTOR_STORAGE = "/tmp/blop/sim"
+DETECTOR_STORAGE = "/tmp/bluesky-adaptive/sim"
 ```
 
 ```{code-cell} ipython3
@@ -222,8 +222,8 @@ agent = Agent(
     dofs=dofs,
     objectives=objectives,
     evaluation_function=DetectorEvaluation(tiled_client),
-    name="xrt-blop-demo",
-    description="A demo of the Blop agent with XRT simulated beamline",
+    name="xrt-bluesky-adaptive-demo",
+    description="A demo of the Bluesky Adaptive agent with XRT simulated beamline",
 )
 ```
 

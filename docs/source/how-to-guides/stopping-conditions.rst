@@ -42,7 +42,7 @@ Adding Stopping Conditions to the Agent
 The Agent can then be configured with an additional parameter, `stopping_strategy`, to use the custom stopping condition.
 
 To run until the stopping condition is met, pass ``iterations=None`` to
-:meth:`blop.ax.Agent.optimize`. Only use an unbounded run when the agent has a
+:meth:`bluesky_adaptive.ax.Agent.optimize`. Only use an unbounded run when the agent has a
 stopping strategy configured; otherwise the optimization has no termination
 condition.
 

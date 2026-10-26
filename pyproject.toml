@@ -4,13 +4,16 @@ requires = ["hatchling", "hatch-vcs"]
 build-backend = "hatchling.build"
 
 [project]
-name = "blop"
+name = "bluesky-adaptive"
 description = "Beamline optimization with machine learning"
 readme = { file = "README.md", content-type = "text/markdown" }
 authors = [
   { name = "Max Rakitin", email = "mrakitin@bnl.gov" },
   { name = "Thomas Morris", email = "tmorris@bnl.gov" },
   { name = "Thomas Hopkins", email = "thopkins1@bnl.gov" },
+  { name = "Phillip Maffettone", email = "pmaffetto@bnl.gov" },
+  { name = "Dmitri Gavrilov", email = "dgavrilov@bnl.gov" },
+  { name = "Thomas Caswell", email = "tacasewell@bnl.gov" },
 ]
 maintainers = [
   { name = "Max Rakitin", email = "mrakitin@bnl.gov" },
@@ -38,7 +41,7 @@ ax = ["ax-platform>=1.3.0,<1.4", "botorch>=0.18.0,<0.19.0", "gpytorch", "torch"]
 queueserver = ["bluesky-queueserver-api"]
 scipy = ["scipy>=1.2.0"]
 xopt = ["xopt>3.0.0"]
-all = ["blop[ax,queueserver,scipy,xopt]"]
+all = ["bluesky-adaptive[ax,queueserver,scipy,xopt]"]
 dev = [
   "pip>=26.2.2",
   "pytest",
@@ -51,28 +54,28 @@ dev = [
   "pyright",
   "uv>=0.13.4",
   "virtualenv>=21.14.12",
-  "blop[all]",
+  "bluesky-adaptive[all]",
 ]
 cpu = [
   # Empty extra - the source configuration below routes to CPU-only index
 ]
 
 [project.urls]
-Homepage = "https://github.com/bluesky/blop"
-Documentation = "https://blueskyproject.io/blop"
-"Bug Reports" = "https://github.com/bluesky/blop/issues"
+Homepage = "https://github.com/bluesky/bluesky-adaptive"
+Documentation = "https://blueskyproject.io/bluesky-adaptive"
+"Bug Reports" = "https://github.com/bluesky/bluesky-adaptive/issues"
 
 [tool.hatch]
 version.source = "vcs"
 
 [tool.hatch.build]
-artifacts = ["src/blop/_version.py"]
+artifacts = ["src/bluesky_adaptive/_version.py"]
 
 [tool.hatch.build.targets.wheel]
 sources = ["src"]
 
 [tool.hatch.build.hooks.vcs]
-version-file = "src/blop/_version.py"
+version-file = "src/bluesky_adaptive/_version.py"
 
 [tool.hatch.version.raw-options]
 local_scheme = "no-local-version"
@@ -104,7 +107,7 @@ lint.preview = true # so that preview mode PLC2701, and LOG015 is enabled
 convention = "numpy"
 
 [tool.ruff.lint.per-file-ignores]
-"src/blop/tests/**/*" = ["S101", "SLF001", "D"]
+"src/bluesky_adaptive/tests/**/*" = ["S101", "SLF001", "D"]
 "sim/**/*" = ["D"]
 # Ignore F821: undefined name '...' since the ipython profiles are dynamically loaded into the namespace
 "docs/**/*" = ["F821", "D"]
@@ -113,9 +116,9 @@ convention = "numpy"
 [tool.pyright]
 ignore = [
   "sim/",
-  "src/blop/tests/",
-  "src/blop/bayesian/",           # TODO: Remove this and fix type errors
-  "src/blop/ax/qserver_agent.py", # TODO: Remove this and fix type errors
+  "src/bluesky_adaptive/tests/",
+  "src/bluesky_adaptive/bayesian/",           # TODO: Remove this and fix type errors
+  "src/bluesky_adaptive/ax/qserver_agent.py", # TODO: Remove this and fix type errors
 ]
 
 [tool.uv]

@@ -84,7 +84,7 @@ outcomes while an agent runs.
 
 Use a callback when you want to observe optimization progress or send progress
 somewhere else, such as a file, dashboard, log service, or operator display. If
-you want background on how callbacks fit into Blop's optimization workflow, see
+you want background on how callbacks fit into Bluesky Adaptive's optimization workflow, see
 :doc:`/explanations/callbacks`.
 
 Create a callback class
@@ -125,7 +125,7 @@ running the optimization.
 
 .. testcode::
 
-    from blop.ax import Agent, Objective, RangeDOF
+    from bluesky_adaptive.ax import Agent, Objective, RangeDOF
 
 
     agent = Agent(

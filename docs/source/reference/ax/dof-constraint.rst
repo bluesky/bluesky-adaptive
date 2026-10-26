@@ -1,7 +1,7 @@
 Ax DOF Constraint
 =================
 
-.. autoclass:: blop.ax.dof.DOFConstraint
+.. autoclass:: bluesky_adaptive.ax.dof.DOFConstraint
    :members:
    :undoc-members:
    :show-inheritance:

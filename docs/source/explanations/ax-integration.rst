@@ -6,8 +6,8 @@ focus on delivering a great user experience for optimization using Bluesky.
 
 .. note::
 
-    The use of Ax is optional. You can implement your own optimizer using the :class:`blop.protocols.Optimizer` protocol. However,
-    the :class:`blop.ax.Agent` class is designed to be a nicer interface for using Ax only.
+    The use of Ax is optional. You can implement your own optimizer using the :class:`bluesky_adaptive.protocols.Optimizer` protocol. However,
+    the :class:`bluesky_adaptive.ax.Agent` class is designed to be a nicer interface for using Ax only.
 
 Wrapping Ax
 -----------
@@ -15,11 +15,11 @@ Wrapping Ax
 Generally, we want to avoid wrapping the Ax API and allow users to use the full power of Ax themselves. However, there are some cases where
 an API wrapper is useful:
 
-- **DOFs**: We wrap Ax parameters to link them with Bluesky :class:`~blop.protocols.Actuator`\s, enabling automatic movement during acquisition (see :class:`blop.ax.dof.DOF`).
-- **Constraints**: We provide :class:`blop.ax.dof.DOFConstraint` and :class:`blop.ax.objective.OutcomeConstraint` with a readable syntax that maps to Ax constraints.
-- **Agent**: The :class:`blop.ax.Agent` class provides a higher-level interface for common optimization workflows.
+- **DOFs**: We wrap Ax parameters to link them with Bluesky :class:`~bluesky_adaptive.protocols.Actuator`\s, enabling automatic movement during acquisition (see :class:`bluesky_adaptive.ax.dof.DOF`).
+- **Constraints**: We provide :class:`bluesky_adaptive.ax.dof.DOFConstraint` and :class:`bluesky_adaptive.ax.objective.OutcomeConstraint` with a readable syntax that maps to Ax constraints.
+- **Agent**: The :class:`bluesky_adaptive.ax.Agent` class provides a higher-level interface for common optimization workflows.
 
-Blop handles the following aspects of the Ax API for you:
+Bluesky Adaptive handles the following aspects of the Ax API for you:
 
 - Experiment creation and configuration
 - Optimization configuration (objectives, constraints)
@@ -30,18 +30,18 @@ We chose this minimal approach because it encompasses the basic usage of Ax for 
 Using the Ax API directly
 -------------------------
 
-You can access the underlying :class:`ax.Client` instance via :attr:`blop.ax.Agent.ax_client`, and interact with the `Client API <https://ax.readthedocs.io/en/stable/api.html#ax.api.client.Client>`_
+You can access the underlying :class:`ax.Client` instance via :attr:`bluesky_adaptive.ax.Agent.ax_client`, and interact with the `Client API <https://ax.readthedocs.io/en/stable/api.html#ax.api.client.Client>`_
 
-You can learn all about the various Ax features in the `Ax documentation <https://ax.dev/docs/tutorials/quickstart>`_. Some notable features that are not used by Blop by default are:
+You can learn all about the various Ax features in the `Ax documentation <https://ax.dev/docs/tutorials/quickstart>`_. Some notable features that are not used by Bluesky Adaptive by default are:
 
 - Generation strategy configuration
 
   - Influencing Ax's default generation strategy: `<https://ax.dev/docs/recipes/influence-gs-choice>`_
-  - Using custom BoTorch models: `<https://ax.dev/docs/tutorials/modular_botorch/>`_ (see :doc:`/how-to-guides/custom-generation-strategies` for an example in Blop)
+  - Using custom BoTorch models: `<https://ax.dev/docs/tutorials/modular_botorch/>`_ (see :doc:`/how-to-guides/custom-generation-strategies` for an example in Bluesky Adaptive)
   - Using external generators: `<https://ax.dev/docs/tutorials/external_generation_node/>`_
 
 - Configuring early stopping: `<https://ax.dev/docs/tutorials/early_stopping/>`_
-- Analyzing/Summarizing the optimization results and model fit: `<https://ax.dev/docs/tutorials/analyses/>`_ (see :func:`blop.ax.Agent.plot_objective` for an example in Blop)
+- Analyzing/Summarizing the optimization results and model fit: `<https://ax.dev/docs/tutorials/analyses/>`_ (see :func:`bluesky_adaptive.ax.Agent.plot_objective` for an example in Bluesky Adaptive)
 - Configuring tracking metrics: `<https://ax.dev/docs/recipes/tracking-metrics/>`_
 - Saving and loading experiments
 

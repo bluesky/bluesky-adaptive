@@ -1,7 +1,7 @@
 Optimization Callbacks
 ======================
 
-Blop callbacks are for observing optimization progress. They let users attach
+Bluesky Adaptive callbacks are for observing optimization progress. They let users attach
 side effects such as console output, file logging, dashboards, or notifications
 without putting reporting logic inside the optimizer, acquisition plan, or
 evaluation function.
@@ -15,16 +15,16 @@ back, and whether the run finished cleanly. These concerns are related to the
 workflow, but they do not define the workflow. A callback sits beside the
 optimization and reacts to the Bluesky documents it emits.
 
-The built-in :class:`blop.callbacks.logger.OptimizationLogger` follows this
+The built-in :class:`bluesky_adaptive.callbacks.logger.OptimizationLogger` follows this
 model. It formats optimization progress for the console, but it does not choose
 points, move hardware, or compute objectives.
 
-How Blop routes documents
--------------------------
+How Bluesky Adaptive routes documents
+-------------------------------------
 
-Blop builds on the standard Bluesky callback model: callbacks receive
+Bluesky Adaptive builds on the standard Bluesky callback model: callbacks receive
 ``start``, ``descriptor``, ``event``, and ``stop`` documents. When
-:meth:`blop.ax.Agent.optimize` runs, Blop wraps the plan with an optimization
+:meth:`bluesky_adaptive.ax.Agent.optimize` runs, Bluesky Adaptive wraps the plan with an optimization
 callback router. The router forwards only runs whose ``run_key`` marks them as
 optimization-related: ``"optimize"`` or ``"sample_suggestions"``.
 
@@ -45,7 +45,7 @@ but the contents are optimization-focused.
     names, number of iterations, and ``n_points``.
 
 ``descriptor``
-    Field descriptions. Blop marks optimization fields with a ``source`` value,
+    Field descriptions. Bluesky Adaptive marks optimization fields with a ``source`` value,
     distinguishing parameters, outcomes, suggestion identifiers, acquisition
     UIDs, and other values.
 
@@ -82,6 +82,6 @@ Writing custom callbacks
 ------------------------
 
 Custom callbacks are ordinary Bluesky callbacks. They should rely on the
-optimization documents emitted by Blop, rather than on details of how the data
+optimization documents emitted by Bluesky Adaptive, rather than on details of how the data
 were acquired or how the outcomes were computed. For a runnable example, see
 :doc:`/how-to-guides/custom-callbacks`.

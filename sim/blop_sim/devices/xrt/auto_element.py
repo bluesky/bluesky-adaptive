@@ -5,7 +5,7 @@ from collections.abc import Callable
 import numpy as np
 from bluesky.protocols import Readable, Status, Triggerable
 
-from blop.protocols import MovableHasName
+from bluesky_adaptive.protocols import MovableHasName
 
 from ...backends import XRTBackend, build_histRGB
 

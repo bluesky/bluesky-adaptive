@@ -1,23 +1,26 @@
-# Blop - Bluesky Optimization Package
+# Bluesky Adaptive
 
-[![Testing](https://github.com/bluesky/blop/actions/workflows/ci.yml/badge.svg)](https://github.com/bluesky/blop/actions/workflows/ci.yml)
-[![codecov](https://codecov.io/gh/bluesky/blop/branch/main/graph/badge.svg)](https://codecov.io/gh/bluesky/blop)
-[![PyPI](https://img.shields.io/pypi/v/blop.svg)](https://pypi.python.org/pypi/blop)
-[![Conda](https://img.shields.io/conda/vn/conda-forge/blop.svg)](https://anaconda.org/conda-forge/blop)
+[![Testing](https://github.com/bluesky/bluesky-adaptive/actions/workflows/ci.yml/badge.svg)](https://github.com/bluesky/bluesky-adaptive/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/bluesky/bluesky-adaptive/branch/main/graph/badge.svg)](https://codecov.io/gh/bluesky/bluesky-adaptive)
+[![PyPI](https://img.shields.io/pypi/v/bluesky-adaptive.svg)](https://pypi.python.org/pypi/bluesky-adaptive)
+[![Conda](https://img.shields.io/conda/vn/conda-forge/bluesky-adaptive.svg)](https://anaconda.org/conda-forge/bluesky-adaptive)
 
 - Free software: 3-clause BSD license
-- Documentation: <https://blueskyproject.io/blop>.
+- Documentation: <https://blueskyproject.io/bluesky-adaptive>.
+
+Bluesky Adaptive was formerly developed as Blop ([github.com/bluesky/blop](https://github.com/bluesky/blop)).
+The 0.x series of `bluesky-adaptive` is discontinued; to keep using its APIs, pin `bluesky-adaptive<1`.
 
 ## Installation
 
 ```bash
-pip install blop
+pip install bluesky-adaptive
 ```
 
 or with conda:
 
 ```bash
-conda install -c conda-forge blop
+conda install -c conda-forge bluesky-adaptive
 ```
 
 ## Citation

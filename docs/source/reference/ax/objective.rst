@@ -4,7 +4,7 @@ Ax Objectives
 Objective
 ---------
 
-.. autoclass:: blop.ax.objective.Objective
+.. autoclass:: bluesky_adaptive.ax.objective.Objective
    :members:
    :undoc-members:
    :show-inheritance:
@@ -14,7 +14,7 @@ Objective
 Scalarized Objective
 --------------------
 
-.. autoclass:: blop.ax.objective.ScalarizedObjective
+.. autoclass:: bluesky_adaptive.ax.objective.ScalarizedObjective
    :members:
    :undoc-members:
    :show-inheritance:
