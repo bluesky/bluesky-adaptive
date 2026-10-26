@@ -11,7 +11,7 @@ from bluesky.protocols import Readable
 from .core import SimBackend
 
 limits = [[-0.6, 0.6], [-0.45, 0.45]]
-cache_dir = Path("/tmp/blop/sim/render")
+cache_dir = Path("/tmp/bluesky-adaptive/sim/render")
 cache_dir.mkdir(parents=True, exist_ok=True)
 
 

@@ -30,7 +30,7 @@ KB mirror systems use two curved mirrors to focus X-ray beams. Each mirror has a
 
 The image below shows our simulated setup: a beam from a geometric source propagates through a pair of toroidal mirrors that focus it onto a screen.
 
-![xrt_blop_layout_w.jpg](../_static/xrt_blop_layout_w.jpg)
+![xrt_bluesky_adaptive_layout_w.jpg](../_static/xrt_bluesky_adaptive_layout_w.jpg)
 
 ## Setting Up the Environment
 
@@ -57,9 +57,9 @@ from bluesky_adaptive.ax.objective import OutcomeConstraint
 from bluesky_adaptive.protocols import EvaluationFunction
 
 # Import simulation devices (requires: pip install -e sim/)
-from blop_sim.backends.models.xrt_kb_model import KBBackend
-from blop_sim.devices import DetectorDevice
-from blop_sim.devices.xrt import KBMirror
+from bluesky_adaptive_sim.backends.models.xrt_kb_model import KBBackend
+from bluesky_adaptive_sim.devices import DetectorDevice
+from bluesky_adaptive_sim.devices.xrt import KBMirror
 
 # Suppress noisy logs from httpx and dependency deprecation warnings
 logging.getLogger("httpx").setLevel(logging.WARNING)
@@ -449,4 +449,4 @@ These same components apply to any optimization problem: swap the simulated devi
 
 ## See Also
 
-- [`blop_sim` package](https://github.com/bluesky/bluesky-adaptive/tree/main/sim/blop_sim) for XRT simulated beamline control
+- [`bluesky_adaptive_sim` package](https://github.com/bluesky/bluesky-adaptive/tree/main/sim/bluesky_adaptive_sim) for XRT simulated beamline control

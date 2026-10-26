@@ -36,7 +36,7 @@ spaces.
   other typing protocols. Use these in new public APIs instead of `Any`.
 - `src/bluesky_adaptive/queueserver.py` — bluesky-queueserver integration helpers.
 - `src/bluesky_adaptive/callbacks/` — RunEngine callbacks (plotting, logging, etc.).
-- `sim/` — separate `blop-sim` package providing simulated hardware for
+- `sim/` — separate `bluesky-adaptive-sim` package providing simulated hardware for
   tests and tutorials.
 
 When you need an exact location, grep for the symbol name (e.g.

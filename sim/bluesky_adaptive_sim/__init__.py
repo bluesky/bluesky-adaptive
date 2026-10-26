@@ -1,4 +1,4 @@
-"""blop_sim: Simulation devices for BLOP documentation and tutorials."""
+"""bluesky_adaptive_sim: Simulation devices for Bluesky Adaptive documentation and tutorials."""
 
 # Backend exports
 from .backends.simple import SimpleBackend

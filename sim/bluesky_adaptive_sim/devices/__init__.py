@@ -1,4 +1,4 @@
-"""Ophyd-async device exports for blop_sim."""
+"""Ophyd-async device exports for bluesky_adaptive_sim."""
 
 from .detector import DetectorDevice
 from .slit import SlitDevice

@@ -44,7 +44,7 @@ type checking, and `pytest` for tests.
   `utils.py`.
 - `src/bluesky_adaptive/tests/` — pytest tests, mirrors package layout. `conftest.py`
   holds shared fixtures.
-- `sim/` — separate `blop-sim` editable package used by tests/docs.
+- `sim/` — separate `bluesky-adaptive-sim` editable package used by tests/docs.
 - `docs/`, `examples/` — Sphinx docs and example scripts/notebooks.
 
 ## Code style

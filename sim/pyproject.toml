@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "blop-sim"
+name = "bluesky-adaptive-sim"
 version = "0.0.0"
 description = "Example simulations and benchmarks for bluesky-adaptive (not published to PyPI)"
 readme = "README.md"
@@ -22,4 +22,4 @@ dependencies = [
 ]
 
 [tool.hatch.build.targets.wheel]
-packages = ["blop_sim"]
+packages = ["bluesky_adaptive_sim"]

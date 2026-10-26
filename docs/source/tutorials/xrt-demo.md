@@ -20,7 +20,7 @@ Bluesky Adaptive.
 
 ## Some Environment Setup
 
-note, like all other demos you need the blop_sim subpackage to run
+note, like all other demos you need the bluesky_adaptive_sim subpackage to run
 
 ```{code-cell} ipython3
 import logging
@@ -40,8 +40,8 @@ from tiled.server import SimpleTiledServer
 
 from bluesky_adaptive.ax import Agent, Objective, RangeDOF
 from bluesky_adaptive.protocols import EvaluationFunction
-from blop_sim.backends import XRTBackend
-from blop_sim.devices.xrt import infer_detectors, infer_variables
+from bluesky_adaptive_sim.backends import XRTBackend
+from bluesky_adaptive_sim.devices.xrt import infer_detectors, infer_variables
 
 # Suppress noisy logs from httpx and dependency deprecation warnings
 logging.getLogger("httpx").setLevel(logging.WARNING)

@@ -36,7 +36,7 @@ optimization interface for Bluesky-driven experimentation.
     </div>
         <div class="about-viz">
             <div class="about-viz-inner">
-                <img src="_static/blop-alignment-image.png" alt="Image of beamline optimization done through Bluesky Adaptive">      
+                <img src="_static/bluesky-adaptive-alignment-image.png" alt="Image of beamline optimization done through Bluesky Adaptive">      
             </div>
             <p class="viz-caption">Autonomous alignment visualization using Bayesian optimization.</p>
         </div>

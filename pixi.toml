@@ -17,14 +17,14 @@ python = ">=3.11.0,<3.14"
 
 [feature.dev.pypi-dependencies]
 bluesky-adaptive = { path = ".", editable = true, extras = ["dev"] }
-blop-sim = { path = "sim", editable = true }
+bluesky-adaptive-sim = { path = "sim", editable = true }
 
 # CPU-only variant of dev feature
 [feature.dev-cpu.dependencies]
 
 [feature.dev-cpu.pypi-dependencies]
 bluesky-adaptive = { path = ".", editable = true, extras = ["dev", "cpu"] }
-blop-sim = { path = "sim", editable = true }
+bluesky-adaptive-sim = { path = "sim", editable = true }
 
 [feature.dev-cpu.tasks]
 check = "pre-commit run --all-files"
@@ -34,7 +34,7 @@ tests = "pytest src/bluesky_adaptive/tests --ignore=src/bluesky_adaptive/tests/i
 graphviz = ">=14.1.2,<15"
 
 [feature.docs.pypi-dependencies]
-blop-sim = { path = "sim", editable = true }
+bluesky-adaptive-sim = { path = "sim", editable = true }
 numpydoc = "*"
 sphinx-copybutton = "*"
 sphinxcontrib-mermaid = "*"

@@ -1,4 +1,4 @@
-"""Backend simulation infrastructure for blop_sim."""
+"""Backend simulation infrastructure for bluesky_adaptive_sim."""
 
 from .core import SimBackend
 from .models.xrt_kb_model import build_beamline, run_process

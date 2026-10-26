@@ -1,6 +1,6 @@
-# Blop Simulations
+# Bluesky Adaptive Simulations
 
-This package provides ophyd-async simulation devices for BLOP documentation and tutorials. It is **not published to PyPI** and is only meant for local development, testing, and running tutorials.
+This package provides ophyd-async simulation devices for Bluesky Adaptive documentation and tutorials. It is **not published to PyPI** and is only meant for local development, testing, and running tutorials.
 
 ## Installation
 
@@ -25,5 +25,5 @@ The package uses a component-based architecture with individual devices:
     - `DetectorDevice`: Generates beam images (from the backend API)
     - `SlitDevice`: Four-blade aperture slit
   - Backend-specific (available in submodules):
-    - `blop_sim.devices.simple.KBMirror`: KB mirror with jack positions (for SimpleBackend)
-    - `blop_sim.devices.xrt.KBMirror`: KB mirror with curvature radius (for XRTBackend)
+    - `bluesky_adaptive_sim.devices.simple.KBMirror`: KB mirror with jack positions (for SimpleBackend)
+    - `bluesky_adaptive_sim.devices.xrt.KBMirror`: KB mirror with curvature radius (for XRTBackend)
