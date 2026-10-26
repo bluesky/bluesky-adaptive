@@ -13,15 +13,16 @@ authors = [
   { name = "Thomas Hopkins", email = "thopkins1@bnl.gov" },
   { name = "Phillip Maffettone", email = "pmaffetto@bnl.gov" },
   { name = "Dmitri Gavrilov", email = "dgavrilov@bnl.gov" },
-  { name = "Thomas Caswell", email = "tacasewell@bnl.gov" },
+  { name = "Thomas Caswell", email = "tcaswell@bnl.gov" },
 ]
 maintainers = [
   { name = "Max Rakitin", email = "mrakitin@bnl.gov" },
-  { name = "Thomas Morris", email = "tmorris@bnl.gov" },
   { name = "Thomas Hopkins", email = "thopkins1@bnl.gov" },
   { name = "Jessica Moylan", email = "jmoylan1@bnl.gov" },
   { name = "Jennefer Maldonado", email = "jmaldonad@bnl.gov" },
   { name = "Roman Chernikov", email = "rcherniko@bnl.gov" },
+  { name = "Joseph Hanrahan", email = "jhanrahan@bnl.gov" },
+  { name = "Masashi Takahashi", email = "mtakahash1@bnl.gov" },
 ]
 requires-python = ">=3.11"
 dependencies = ["bluesky>=1.14.2", "networkx>=3", "numpy", "rich>=13"]
