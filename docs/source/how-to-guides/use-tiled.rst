@@ -95,6 +95,10 @@ Bluesky Adaptive provides a default acquisition plan (:func:`bluesky_adaptive.pl
 - Includes **blop_acquisition_order** metadata containing suggestion IDs in actual acquired-row order
 - Includes **blop_suggestions** metadata containing the routed suggestions for backwards compatibility
 
+.. note::
+
+   The ``blop_`` prefix is kept so existing data stays readable. A future major release may rename these keys.
+
 When a custom acquisition plan is used, how the data is stored depends on the plan implementation.
 
 Creating an Evaluation Function
