@@ -2,8 +2,11 @@
 Release History
 ===============
 
-Unreleased
-----------
+v1.0.0 (2026-10-26)
+-------------------
+
+First release of Bluesky Adaptive built on the Blop v1.2.0 codebase
+(`bluesky/blop <https://github.com/bluesky/blop>`__). Entries below prefixed with "blop" are Blop releases.
 
 Breaking Changes
 ................
