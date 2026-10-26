@@ -1,0 +1,51 @@
+name: Unit Tests
+
+on:
+  workflow_call:
+  workflow_dispatch:
+  
+jobs:
+  run_tests:
+    runs-on: ${{ matrix.host-os }}
+    strategy:
+      matrix:
+        host-os: ["ubuntu-latest"]
+        python-version: ["py311-cpu", "py312-cpu", "py313-cpu"]
+      fail-fast: false
+
+    defaults:
+      run:
+        shell: bash -l {0}
+
+    steps:
+      - name: Set env vars
+        run: |
+          export REPOSITORY_NAME=${GITHUB_REPOSITORY#*/}  # just the repo, as opposed to org/repo
+          echo "REPOSITORY_NAME=${REPOSITORY_NAME}" >> $GITHUB_ENV
+
+      - name: Checkout the code
+        uses: actions/checkout@v3
+
+      - name: Install pixi and activate environment
+        uses: prefix-dev/setup-pixi@82d477f15f3a381dbcc8adc1206ce643fe110fb7 # v0.9.3
+        with:
+          pixi-version: v0.82.1
+          environments: ${{ matrix.python-version }}
+          cache: false
+          activate-environment: ${{ matrix.python-version }}
+
+      - name: Run unit tests
+        run: |
+          if [ "${{ matrix.python-version }}" = "py313-cpu" ]; then
+            pixi run -e ${{ matrix.python-version }} pytest --cov=blop --cov-report=xml --cov-report=term src/blop/tests --ignore=src/blop/tests/integration -m "not integration"
+          else
+            pixi run tests
+          fi
+
+      - name: Upload coverage to Codecov
+        if: matrix.python-version == 'py313-cpu'
+        uses: codecov/codecov-action@b9fd7d16f6d7d1b5d2bec1a2887e65ceed900238  # v4
+        with:
+          files: ./coverage.xml
+          fail_ci_if_error: false
+          verbose: true

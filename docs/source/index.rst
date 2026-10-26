@@ -1,65 +1,195 @@
-.. warning::
-
-   bluesky-adaptive 0.x is discontinued. Starting with 1.0, bluesky-adaptive adopts the
-   `blop <https://github.com/bluesky/blop>`_ codebase and continues its development under the
-   bluesky-adaptive name at `bluesky-adaptive <https://github.com/bluesky/bluesky-adaptive>`_.
-   The 1.0+ API differs from 0.x: the Kafka/Tiled Agent base, adjudicators,
-   server, and lockstep recommenders are not carried forward. Pin
-   ``bluesky-adaptive<1`` to keep this package.
-
-   0.4.0 is the final 0.x release.
-
-Bluesky Adaptive
-----------------
-
-The documentation is split into 4 sections:
-
-.. grid:: 2
-    :gutter: 4
-
-    .. grid-item-card:: :material-regular:`lightbulb;4em`
-        :link: explanations/index
-        :link-type: doc
-
-        **Explanations**
-
-        Understand the concepts behind bluesky-adaptive. Ideal for gaining a deeper understanding of the library's principles.
-
-    .. grid-item-card:: :material-regular:`school;4em`
-        :link: tutorials/index
-        :link-type: doc
-
-        **Tutorials**
-
-        Step-by-step guides to help you get started with bluesky-adaptive and learn through doing.
-
-    .. grid-item-card:: :material-regular:`directions;4em`
-        :link: how-to/index
-        :link-type: doc
-
-        **How-to guides**
-
-        Practical guides and recipes for accomplishing specific tasks with bluesky-adaptive.
-
-    .. grid-item-card:: :material-regular:`menu_book;4em`
-        :link: reference/index
-        :link-type: doc
-
-        **Reference**
-
-        Comprehensive API documentation for bluesky-adaptive. Reference material for classes, methods, and functionalities.
-
-
-For detailed release notes and version history, see the :doc:`reference/release-history`.
+Blop
+====
 
 .. toctree::
-   :hidden:
-   :caption: Contents
+    :maxdepth: 2
+    :hidden:
 
-   explanations/index
-   how-to/index
-   tutorials/index
-   reference/index
+    installation
+    deployments
+    how-to-guides
+    explanation
+    tutorials
+    reference
+    release-history
 
 
-.. include:: ../../README.md
+.. raw:: html
+
+    <p class="index-subtitle">a BLuesky Optimization Package</p>
+    <div class="index-about-grid">
+    <div>
+
+What is Blop?
+-------------
+
+Blop is a Python library for performing optimization for `Bluesky <https://blueskyproject.io/bluesky/main/index.html>`_
+experiments. It is designed to integrate nicely with the Bluesky 
+ecosystem and primarily targets rapid data acquisition
+and control.
+
+Our goal is to provide a simple and practical data-driven
+optimization interface for Bluesky-driven experimentation.
+
+.. raw:: html
+
+    </div>
+        <div class="about-viz">
+            <div class="about-viz-inner">
+                <img src="_static/blop-alignment-image.png" alt="Image of beamline optimization done through blop">      
+            </div>
+            <p class="viz-caption">Autonomous alignment visualization using Bayesian optimization.</p>
+        </div>
+    </div>
+    <hr class="section-divider">
+
+Installation
+------------
+
+.. raw:: html
+
+    <div class="installation-grid">
+
+.. container:: install-card
+
+    .. container:: install-card-title
+
+        Via PyPI
+
+    .. container:: install-label
+
+        Standard (GPU support):
+
+    .. include:: _includes/installation-code-snippets.rst
+       :start-after: .. snippet-pip-standard-start
+       :end-before: .. snippet-pip-standard-end
+
+    .. container:: install-label
+
+        CPU-only (containers, CI/CD, laptops):
+
+    .. include:: _includes/installation-code-snippets.rst
+       :start-after: .. snippet-pip-cpu-start
+       :end-before: .. snippet-pip-cpu-end
+
+.. container:: install-card
+
+    .. container:: install-card-title
+
+        Via Conda-forge
+
+    .. container:: install-label
+
+        Standard:
+
+    .. include:: _includes/installation-code-snippets.rst
+       :start-after: .. snippet-conda-standard-start
+       :end-before: .. snippet-conda-standard-end
+
+    .. container:: install-label
+
+        CPU-only:
+
+    .. include:: _includes/installation-code-snippets.rst
+       :start-after: .. snippet-conda-cpu-start
+       :end-before: .. snippet-conda-cpu-end
+
+
+.. raw:: html
+
+    </div>
+
+For additional installation instructions, refer to the :doc:`installation` guide.
+
+.. raw:: html
+
+    <hr class="section-divider">
+
+Learn More!
+-----------
+
+.. raw:: html
+
+    <div class="learn-more-grid">
+
+.. container:: learn-more-item
+
+    .. container:: learn-more-card-link
+
+        :doc:`Tutorials <tutorials>`
+
+    .. container:: learn-more-card-desc
+
+        Step-by-step guides to get started with Blop fundamentals and basic workflows.
+
+.. container:: learn-more-item
+
+    .. container:: learn-more-card-link
+
+        :doc:`How-To Guides <how-to-guides>`
+
+    .. container:: learn-more-card-desc
+
+        Practical recipes and solutions for specific beamline optimization tasks.
+
+.. container:: learn-more-item
+
+    .. container:: learn-more-card-link
+
+        :doc:`References <reference>`
+
+    .. container:: learn-more-card-desc
+
+        Complete API documentation, class references, and technical specifications.
+
+.. container:: learn-more-item
+
+    .. container:: learn-more-card-link
+
+        :doc:`Release History <release-history>`
+
+    .. container:: learn-more-card-desc
+
+        Version updates, new features, bug fixes, and changelog for the current release.
+
+.. raw:: html
+
+    </div>
+    <hr class="section-divider">
+
+References
+----------
+
+If you use this package in your work, please cite the following paper:
+
+.. raw:: html
+
+    <div class="index-reference-box">
+
+Morris, T. W., Rakitin, M., Du, Y., Fedurin, M., Giles, A. C., Leshchev,
+D., Li, W. H., Romasky, B., Stavitski, E., Walter, A. L., Moeller, P.,
+Nash, B., & Islegen-Wojdyla, A. (2024). A general Bayesian algorithm for
+the autonomous alignment of beamlines. *Journal of Synchrotron Radiation*,
+31(6), 1446–1456. `https://doi.org/10.1107/S1600577524008993 <https://doi.org/10.1107/S1600577524008993>`_
+
+.. raw:: html
+
+    </div>
+
+**BibTeX:**
+
+.. code-block:: bibtex
+
+    @Article{Morris2024,
+         author   = {Morris, Thomas W. and Rakitin, Max and Du, Yonghua and Fedurin, Mikhail and Giles, Abigail C. and Leshchev, Denis and Li, William H. and Romasky, Brianna and Stavitski, Eli and Walter, Andrew L. and Moeller, Paul and Nash, Boaz and Islegen-Wojdyla, Antoine},
+         journal  = {Journal of Synchrotron Radiation},
+         title    = {A general Bayesian algorithm for the autonomous alignment of beamlines},
+         year     = {2024},
+         month    = {Nov},
+         number   = {6},
+         pages    = {1446--1456},
+         volume   = {31},
+         doi      = {10.1107/S1600577524008993},
+         keywords = {Bayesian optimization, automated alignment, synchrotron radiation, digital twins, machine learning},
+         url      = {https://doi.org/10.1107/S1600577524008993},
+    }

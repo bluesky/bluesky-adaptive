@@ -1,0 +1,361 @@
+"""An optimizer protocol implementation for Ax."""
+
+from collections.abc import Mapping, Sequence
+from typing import Any
+
+from ax import ChoiceParameterConfig, Client, RangeParameterConfig, TOutcome, TParameterization
+from ax.core import MultiObjectiveOptimizationConfig
+from ax.core.parameter import ChoiceParameter, RangeParameter
+from ax.core.types import TParamValue
+from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
+
+from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer, SupportsStoppingCriteria, TrialFaultAware
+
+
+class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultAware, SupportsStoppingCriteria):
+    """
+    An optimizer that uses Ax as the backend for optimization and experiment tracking.
+
+    This is the built-in implementation of the :class:`blop.protocols.Optimizer` protocol.
+
+    Parameters
+    ----------
+    parameters : Sequence[RangeParameterConfig | ChoiceParameterConfig]
+        The parameters to optimize.
+    objective : str
+        The objective to optimize.
+    parameter_constraints : Sequence[str] | None, optional
+        The parameter constraints to apply to the optimization.
+    outcome_constraints : Sequence[str] | None, optional
+        The outcome constraints to apply to the optimization.
+    checkpoint_path : str | None, optional
+        The path to the checkpoint file to save the optimizer's state to.
+    stopping_strategy : BaseGlobalStoppingStrategy | None, optional
+        A stopping strategy that decides when/if optimization should halt early.
+    client_kwargs : dict[str, Any] | None, optional
+        Additional keyword arguments to configure the Ax client.
+    **kwargs : Any
+        Additional keyword arguments to configure the Ax experiment.
+
+    See Also
+    --------
+    blop.ax.Agent : High-level interface that uses AxOptimizer internally.
+    blop.protocols.Optimizer : The protocol this class implements.
+    """
+
+    def __init__(
+        self,
+        parameters: Sequence[RangeParameterConfig | ChoiceParameterConfig],
+        objective: str,
+        parameter_constraints: Sequence[str] | None = None,
+        outcome_constraints: Sequence[str] | None = None,
+        checkpoint_path: str | None = None,
+        stopping_strategy: BaseGlobalStoppingStrategy | None = None,
+        client_kwargs: dict[str, Any] | None = None,
+        **kwargs: Any,
+    ):
+        self._parameter_names = [parameter.name for parameter in parameters]
+        self._checkpoint_path = checkpoint_path
+        self._stopping_strategy = stopping_strategy
+        self._client = Client(**(client_kwargs or {}))
+        self._client.configure_experiment(
+            parameters=parameters,
+            parameter_constraints=parameter_constraints,
+            **kwargs,
+        )
+        self._client.configure_optimization(
+            objective=objective,
+            outcome_constraints=outcome_constraints,
+        )
+        self._fixed_parameters = None
+
+    def should_stop(self) -> tuple[bool, str | None]:
+        """
+        Evaluate whether optimization should terminate early.
+
+        Returns ``(False, None)`` as default when no stopping strategy was provided.
+
+        Returns
+        -------
+        tuple[bool, str | None]
+            ``(stop_now, reason)``. If ``stop_now`` is ``True``, optimization halts.
+            ``reason`` is logged when provided.
+        """
+        if self._stopping_strategy is None:
+            return False, None
+        if isinstance(self._stopping_strategy, BaseGlobalStoppingStrategy):
+            return self._stopping_strategy.should_stop_optimization(experiment=self._client._experiment)
+        return self._stopping_strategy()
+
+    @classmethod
+    def from_checkpoint(cls, checkpoint_path: str) -> "AxOptimizer":
+        """
+        Load an optimizer from a checkpoint file.
+
+        Parameters
+        ----------
+        checkpoint_path : str
+            The path to the checkpoint file to load the optimizer from.
+
+        Returns
+        -------
+        AxOptimizer
+            An instance of the optimizer class, initialized from the checkpoint.
+        """
+        client = Client.load_from_json_file(checkpoint_path)
+        instance = object.__new__(cls)
+        instance._parameter_names = list(client._experiment.parameters.keys())
+        instance._fixed_parameters = None
+        instance._checkpoint_path = checkpoint_path
+        instance._client = client
+
+        return instance
+
+    @property
+    def checkpoint_path(self) -> str | None:
+        """The file path for saving and restoring optimizer state, or ``None`` if disabled."""
+        return self._checkpoint_path
+
+    @checkpoint_path.setter
+    def checkpoint_path(self, value: str) -> None:
+        """Set file path for saving and restoring optimizer state, or ``None`` if disabled."""
+        self._checkpoint_path = value
+
+    @property
+    def ax_client(self) -> Client:
+        """The underlying Ax ``Client`` used for experiment management."""
+        return self._client
+
+    @property
+    def fixed_parameters(self) -> dict[str, Any] | None:
+        """Parameters held fixed during optimization, or ``None`` if all parameters are free."""
+        return self._fixed_parameters
+
+    @fixed_parameters.setter
+    def fixed_parameters(self, fixed_parameters: dict[str, Any] | None) -> None:
+        if not fixed_parameters:
+            self._fixed_parameters = None
+            return
+
+        unknown_parameter_names = fixed_parameters.keys() - set(self._parameter_names)
+        if unknown_parameter_names:
+            raise KeyError(
+                f"Unknown parameter(s): {sorted(unknown_parameter_names)}, expected: {sorted(self._parameter_names)}"
+            )
+        self._fixed_parameters = dict(fixed_parameters)
+
+    def suggest(self, num_points: int | None = None) -> Sequence[Mapping]:
+        """
+        Get the next point(s) to evaluate in the search space.
+
+        Uses Ax's Bayesian optimization to suggest promising points based on the
+        current model and acquisition function.
+
+        Parameters
+        ----------
+        num_points : int | None, optional
+            The number of points to suggest. If not provided, will default to 1.
+
+        Returns
+        -------
+        Sequence[Mapping]
+            A sequence of mappings, each containing a parameterization of a point to
+            evaluate next. Each mapping includes an "_id" key for tracking.
+        """
+        if num_points is None:
+            num_points = 1
+        next_trials = self._client.get_next_trials(max_trials=num_points, fixed_parameters=self._fixed_parameters)
+        return [
+            {
+                ID_KEY: trial_index,
+                **parameterization,
+            }
+            for trial_index, parameterization in next_trials.items()
+        ]
+
+    def get_best_points(self) -> Sequence[tuple[int, TParameterization, TOutcome]]:
+        """
+        Get a list of the optimal points found during optimization.
+
+        For single-objective optimization, returns a single best point.
+        For multi-objective optimization, returns the Pareto-optimal set.
+
+        Returns
+        -------
+        Sequence[tuple[int, TParameterization, TOutcome]]
+            Each element in the list is a tuple of:
+              - trial index (int)
+              - parameter values (dict)
+              - metric values (dict, where values may be (value, sem) tuples)
+
+        Raises
+        ------
+        ValueError
+            If the Ax client's optimization has not been configured yet.
+        """
+        opt_config = self._client._experiment.optimization_config
+        if opt_config is None:
+            raise ValueError("Somehow your optimization has not been configured yet...check `ax_client`.")
+        is_multi_objective = isinstance(opt_config, MultiObjectiveOptimizationConfig)
+
+        if is_multi_objective:
+            frontier = self._client.get_pareto_frontier(use_model_predictions=False)
+            return [(trial_index, params, metrics) for params, metrics, trial_index, _ in frontier]
+        else:
+            params, metrics, trial_index, _ = self._client.get_best_parameterization(use_model_predictions=False)
+            return [(trial_index, params, metrics)]
+
+    def _split_point(self, point: Mapping) -> tuple[dict, dict]:
+        """Split a point into parameters and outcomes."""
+        parameters = {}
+        outcomes = {}
+        for k, v in point.items():
+            if k == ID_KEY:
+                continue
+            elif k in self._parameter_names:
+                parameters[k] = v
+            else:
+                outcomes[k] = v
+        return parameters, outcomes
+
+    def ingest(self, points: Sequence[Mapping]) -> None:
+        """
+        Ingest evaluation results into the optimizer.
+
+        Updates Ax's experiment with new data, which will be used to train the model
+        for future suggestions. Handles both suggested points and external data.
+
+        Parameters
+        ----------
+        points : Sequence[Mapping]
+            A sequence of mappings containing outcomes for a trial. For suggested points
+            (from :meth:`suggest`), include the "_id" key. For external data, include
+            parameter names and objective values, and omit "_id".
+
+        Notes
+        -----
+        Points with ``"_id": "baseline"`` are treated as baseline trials for reference.
+        """
+        for point in points:
+            trial_idx = point.get(ID_KEY, None)
+            parameters, outcomes = self._split_point(point)
+            if trial_idx is None:
+                trial_idx = self._client.attach_trial(parameters=parameters)
+            elif trial_idx == "baseline":
+                trial_idx = self._client.attach_baseline(parameters=parameters)
+            self._client.complete_trial(trial_index=trial_idx, raw_data=outcomes)
+
+    def register_suggestions(self, suggestions: Sequence[Mapping]) -> Sequence[Mapping]:
+        """
+        Register manual suggestions with the Ax experiment.
+
+        Attaches trials to the experiment and returns the suggestions with "_id" keys
+        added for tracking. This enables manual point injection alongside optimizer-driven
+        suggestions.
+
+        Parameters
+        ----------
+        suggestions : Sequence[Mapping]
+            Parameter combinations to register. The "_id" key will be overwritten if present.
+
+        Returns
+        -------
+        Sequence[Mapping]
+            The same suggestions with "_id" keys added.
+        """
+        registered = []
+        for suggestion in suggestions:
+            # Extract parameters (ignore _id if present)
+            # TODO: Overwrite ID_KEY or skip (assume already registered)?
+            parameters = {k: v for k, v in suggestion.items() if k != ID_KEY}
+
+            # Attach trial to Ax experiment
+            trial_idx = self._client.attach_trial(parameters=parameters)
+
+            # Return with trial ID
+            registered.append({ID_KEY: trial_idx, **parameters})
+
+        return registered
+
+    def register_failures(self, suggestions: Sequence[Mapping]) -> None:
+        """
+        Register suggestions as failures.
+
+        Inherited from the trialfaultaware class to make sure either the Ax optimizer knows to
+        either retry the trial or end the optimization context
+
+        Parameters
+        ----------
+        suggestions : Sequence[Mapping]
+            the trial id key must be present to pass back to the optimizer
+        """
+        for s in suggestions:
+            self._client.mark_trial_failed(s[ID_KEY])
+
+    def checkpoint(self) -> None:
+        """Save the optimizer's state to JSON file."""
+        if not self.checkpoint_path:
+            raise ValueError("Checkpoint path is not set. Please set a checkpoint path when initializing the optimizer.")
+        self._client.save_to_json_file(self.checkpoint_path)
+
+    def _apply_parameter_update(
+        self,
+        parameter_name: str,
+        value: tuple[float, float] | list[TParamValue],
+        original_range_values: dict[str, tuple[float, float]],
+        original_choice_values: dict[str, list[TParamValue]],
+    ) -> None:
+        """
+        Validate and apply a single parameter update, storing the original value for rollback in case of failure.
+
+        Raises
+        ------
+        TypeError
+            If the provided value does not match the expected type for the parameter.
+        """
+        parameter = self._client._experiment.parameters[parameter_name]
+        if isinstance(parameter, RangeParameter):
+            if not isinstance(value, tuple):
+                raise TypeError(f"{RangeParameter.__name__} only accepts tuples of length 2, but got: {value}")
+            original_range_values[parameter_name] = (parameter.lower, parameter.upper)
+            parameter.update_range(*value)
+        elif isinstance(parameter, ChoiceParameter):
+            if not isinstance(value, list):
+                raise TypeError(f"{ChoiceParameter.__name__} only accepts list of items, but got: {value}")
+            original_choice_values[parameter_name] = parameter.values
+            parameter.set_values(value)
+        else:
+            raise TypeError(f"Expected RangeParameter or ChoiceParameter, but got {parameter}")
+
+    def _rollback_parameter_updates(
+        self,
+        original_range_values: dict[str, tuple[float, float]],
+        original_choice_values: dict[str, list[TParamValue]],
+    ) -> None:
+        """Rollback original parameter state after a failed update."""
+        for parameter_name, value in original_range_values.items():
+            parameter = self._client._experiment.parameters[parameter_name]
+            if isinstance(parameter, RangeParameter):
+                parameter.update_range(*value)
+        for parameter_name, value in original_choice_values.items():
+            parameter = self._client._experiment.parameters[parameter_name]
+            if isinstance(parameter, ChoiceParameter):
+                parameter.set_values(value)
+
+    def reconfigure_search_space(self, parameter_mappings: dict[str, tuple[float, float] | list[TParamValue]]) -> None:
+        """
+        Update the bounds or values of existing parameters in the underlying experiment.
+
+        Parameters
+        ----------
+        parameter_mappings : dict[str, tuple[float, float] | list[TParamValue]]
+            Mapping of parameter names to (lower, upper) bounds or a list of values depending on the parameter type.
+        """
+        original_range_values = {}
+        original_choice_values = {}
+        try:
+            for parameter_name, value in parameter_mappings.items():
+                self._apply_parameter_update(parameter_name, value, original_range_values, original_choice_values)
+        except Exception as e:
+            self._rollback_parameter_updates(original_range_values, original_choice_values)
+            raise e

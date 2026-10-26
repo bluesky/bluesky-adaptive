@@ -1,0 +1,449 @@
+from unittest.mock import MagicMock, patch
+
+import numpy as np
+import pytest
+from ax import ChoiceParameterConfig, RangeParameterConfig
+from ax.exceptions.core import UnsupportedError
+from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
+
+from blop.ax.optimizer import AxOptimizer
+
+
+def test_ax_optimizer_init():
+    parameters = [
+        RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+        ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+    ]
+    optimizer = AxOptimizer(
+        parameters=parameters,
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+
+    assert optimizer.ax_client is not None
+    with pytest.raises(UnsupportedError):
+        optimizer.ax_client.configure_experiment(parameters)
+
+
+def test_ax_fixed_parameters():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    # Unknown parameter name
+    with pytest.raises(KeyError):
+        optimizer.fixed_parameters = {"x4": 3}
+
+    # Optimizer state should reflect setter call
+    optimizer.fixed_parameters = {"x3": 3}
+    assert optimizer.fixed_parameters == {"x3": 3}
+
+
+def test_ax_optimizer_suggest():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    suggestions = optimizer.suggest(num_points=2)
+    assert len(suggestions) == 2
+    for i, suggestion in enumerate(suggestions):
+        assert suggestion["_id"] == i
+        assert "x1" in suggestion
+        assert "x2" in suggestion
+        assert "x3" in suggestion
+
+
+def test_ax_optimizer_ingest():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    optimizer.ingest(
+        [
+            {"x1": 0.0, "x2": 0.0, "x3": 0, "y1": 1.0, "y2": 2.0},
+            {"x1": 0.1, "x2": 0.2, "x3": 1, "y1": 3.0, "y2": 4.0},
+        ]
+    )
+
+    optimizer.ax_client.configure_generation_strategy()
+    summary_df = optimizer.ax_client.summarize()
+    assert len(summary_df) == 2
+    assert np.all(summary_df["x1"].values == [0.0, 0.1])
+    assert np.all(summary_df["x2"].values == [0.0, 0.2])
+    assert np.all(summary_df["x3"].values == [0, 1])
+    assert np.all(summary_df["y1"].values == [1.0, 3.0])
+    assert np.all(summary_df["y2"].values == [2.0, 4.0])
+
+
+def test_ax_optimizer_ingest_baseline():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    optimizer.ingest([{"x1": 0.0, "x2": 0.0, "x3": 0, "y1": 1.0, "y2": 2.0, "_id": "baseline"}])
+    optimizer.ax_client.configure_generation_strategy()
+    summary_df = optimizer.ax_client.summarize()
+    assert len(summary_df) == 1
+    assert summary_df["arm_name"].values[0] == "baseline"
+    assert np.all(summary_df["x1"].values == [0.0])
+    assert np.all(summary_df["x2"].values == [0.0])
+    assert np.all(summary_df["x3"].values == [0])
+    assert np.all(summary_df["y1"].values == [1.0])
+    assert np.all(summary_df["y2"].values == [2.0])
+
+
+def test_ax_optimizer_suggest_ingest():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    suggestions = optimizer.suggest(num_points=2)
+    outcomes = [
+        {"_id": suggestions[0]["_id"], "y1": 1.0, "y2": 2.0},
+        {"_id": suggestions[1]["_id"], "y1": 3.0, "y2": 4.0},
+    ]
+    optimizer.ingest(outcomes)
+
+    summary_df = optimizer.ax_client.summarize()
+    assert len(summary_df) == 2
+    assert np.all(summary_df["y1"].values == [1.0, 3.0])
+    assert np.all(summary_df["y2"].values == [2.0, 4.0])
+
+
+def test_ax_optimizer_checkpoint(tmp_path):
+    checkpoint_path = tmp_path / "checkpoint.json"
+
+    # Save to checkpoint
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+        checkpoint_path=str(checkpoint_path),
+    )
+    suggestions = optimizer.suggest(num_points=2)
+    outcomes = [
+        {"_id": suggestions[0]["_id"], "y1": 1.0},
+        {"_id": suggestions[1]["_id"], "y1": 3.0},
+    ]
+    optimizer.ingest(outcomes)
+
+    assert not checkpoint_path.exists()
+    optimizer.checkpoint()
+    assert checkpoint_path.exists()
+
+    # Load from checkpoint
+    optimizer = AxOptimizer.from_checkpoint(str(checkpoint_path))
+    summary_df = optimizer.ax_client.summarize()
+    assert "x1" in summary_df.columns
+    assert "y1" in summary_df.columns
+    assert len(summary_df) == 2
+    assert optimizer.checkpoint_path == str(checkpoint_path)
+
+
+def test_ax_optimizer_set_checkpoint_after_init(tmp_path):
+    checkpoint_path = tmp_path / "checkpoint.json"
+
+    # Save to checkpoint
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+    )
+    assert optimizer.checkpoint_path is None
+    suggestions = optimizer.suggest(num_points=2)
+    outcomes = [
+        {"_id": suggestions[0]["_id"], "y1": 1.0},
+        {"_id": suggestions[1]["_id"], "y1": 3.0},
+    ]
+    optimizer.ingest(outcomes)
+
+    with pytest.raises(ValueError, match="path is not set"):
+        optimizer.checkpoint()
+
+    optimizer.checkpoint_path = str(checkpoint_path)
+    assert not checkpoint_path.exists()
+    optimizer.checkpoint()
+    assert checkpoint_path.exists()
+
+    # Load from checkpoint
+    optimizer = AxOptimizer.from_checkpoint(str(checkpoint_path))
+    summary_df = optimizer.ax_client.summarize()
+    assert "x1" in summary_df.columns
+    assert "y1" in summary_df.columns
+    assert len(summary_df) == 2
+    assert optimizer.checkpoint_path == str(checkpoint_path)
+
+
+def test_ax_optimizer_register_failures():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    suggestions = optimizer.suggest(num_points=5)
+    optimizer.register_failures(suggestions)
+    trial_df = optimizer.ax_client.summarize()
+    assert 5 == len(trial_df)
+    assert trial_df.trial_status.eq("FAILED").all()
+
+
+def test_ax_optimizer_checkpoint_no_path():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+    )
+
+    with pytest.raises(ValueError):
+        optimizer.checkpoint()
+
+
+def test_ax_optimizer_reconfigurable_search_space():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    # Unknown parameter name
+    with pytest.raises(KeyError):
+        optimizer.reconfigure_search_space({"x4": (-4, 4)})
+    # ChoiceParameter expects a list
+    with pytest.raises(TypeError):
+        optimizer.reconfigure_search_space({"x3": 3})
+    # ChoiceParameter expects a list of types castable to parameter_type
+    with pytest.raises(ValueError):
+        optimizer.reconfigure_search_space({"x3": ["2", "Hello", 3.6]})
+    # RangeParameter expects a tuple
+    with pytest.raises(TypeError):
+        optimizer.reconfigure_search_space({"x1": 3})
+
+    # Changing the serach space should reflect in parameter state
+    optimizer.reconfigure_search_space({"x1": (-4, 4), "x3": [6, 7, 8]})
+    param_x1 = optimizer._client._experiment.parameters["x1"]
+    param_x3 = optimizer._client._experiment.parameters["x3"]
+    assert (param_x1.lower, param_x1.upper) == (-4, 4)
+    assert param_x3.values == [6, 7, 8]
+
+
+def test_ax_optimizer_reconfigurable_search_space_rollback():
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+            ChoiceParameterConfig(name="x3", values=[0, 1, 2, 3, 4, 5], parameter_type="int", is_ordered=True),
+        ],
+        objective="y1,-y2",
+        parameter_constraints=["x1 + x2 <= 10"],
+        outcome_constraints=["y1 >= 0", "y2 <= 0"],
+    )
+    p1 = optimizer._client._experiment.parameters["x1"]
+    original_p1 = (p1.lower, p1.upper)
+    # Make second state change fail after first
+    with patch.object(p1, "update_range", side_effect=RuntimeError("boom")):
+        with pytest.raises(RuntimeError):
+            optimizer.reconfigure_search_space(
+                {
+                    "x1": (3, 6),
+                    "x2": 5,
+                }
+            )
+
+    # Rollback should restore the original state
+    assert (p1.lower, p1.upper) == original_p1
+
+
+def test_ax_optimizer_get_best_points_single_objective():
+    """get_best_points returns the single best trial for single-objective optimization."""
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+            RangeParameterConfig(name="x2", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+    )
+    # Ingest several points with different objective values
+    optimizer.ingest(
+        [
+            {"x1": 1.0, "x2": 2.0, "y1": 10.0},
+            {"x1": 3.0, "x2": 4.0, "y1": 50.0},
+            {"x1": -1.0, "x2": -2.0, "y1": 5.0},
+        ]
+    )
+    optimizer.ax_client.configure_generation_strategy()
+
+    best_points = optimizer.get_best_points()
+    assert len(best_points) == 1
+    trial_id, params, metrics = best_points[0]
+    # Best point should be the one with y1=50.0 (maximize by default)
+    assert params["x1"] == 3.0
+    assert params["x2"] == 4.0
+    assert metrics["y1"][0] == 50.0
+    assert isinstance(trial_id, int)
+
+
+def test_ax_optimizer_get_best_points_minimize():
+    """get_best_points returns the minimum for a minimization objective."""
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="-y1",
+    )
+    optimizer.ingest(
+        [
+            {"x1": 1.0, "y1": 10.0},
+            {"x1": 2.0, "y1": 3.0},
+            {"x1": 3.0, "y1": 7.0},
+        ]
+    )
+    optimizer.ax_client.configure_generation_strategy()
+
+    best_points = optimizer.get_best_points()
+    assert len(best_points) == 1
+    _trial_id, params, metrics = best_points[0]
+    assert params["x1"] == 2.0
+    assert metrics["y1"][0] == 3.0
+
+
+def test_ax_optimizer_get_best_points_multi_objective():
+    """get_best_points returns the Pareto frontier for multi-objective optimization."""
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(0.0, 10.0), parameter_type="float"),
+        ],
+        objective="y1, y2",
+    )
+    # Ingest points that form a Pareto frontier
+    # Point A: good at y1, bad at y2
+    # Point B: bad at y1, good at y2
+    # Point C: dominated by both A and B
+    optimizer.ingest(
+        [
+            {"x1": 1.0, "y1": 10.0, "y2": 1.0},  # A
+            {"x1": 5.0, "y1": 1.0, "y2": 10.0},  # B
+            {"x1": 3.0, "y1": 2.0, "y2": 2.0},  # C (dominated)
+        ]
+    )
+    optimizer.ax_client.configure_generation_strategy()
+
+    best_points = optimizer.get_best_points()
+    # Should return at least the two non-dominated points (A and B)
+    assert len(best_points) >= 2
+    # Each entry should be (trial_id, params, metrics)
+    for trial_id, params, metrics in best_points:
+        assert isinstance(trial_id, int)
+        assert "x1" in params
+        assert "y1" in metrics
+        assert "y2" in metrics
+
+
+def test_ax_optimizer_should_stop_no_strategy():
+    """should_stop returns (False, None) when no stopping strategy is provided."""
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+    )
+
+    should_stop, reason = optimizer.should_stop()
+
+    assert should_stop is False
+    assert reason is None
+
+
+def test_ax_optimizer_should_stop_with_callable_strategy():
+    """should_stop calls a callable stopping strategy and returns its result."""
+    stopping_strategy = MagicMock(return_value=(True, "test stop reason"))
+
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+        stopping_strategy=stopping_strategy,
+    )
+
+    should_stop, reason = optimizer.should_stop()
+
+    assert should_stop is True
+    assert reason == "test stop reason"
+    stopping_strategy.assert_called_once()
+
+
+def test_ax_optimizer_should_stop_with_base_global_strategy():
+    """should_stop testing if it is an instance of BaseGlobalStoppingStrategy."""
+
+    class TestStoppingStrategy(BaseGlobalStoppingStrategy):
+        def __init__(self, min_trials: int = 1, inactive_when_pending_trials: bool = True) -> None:
+            super().__init__(min_trials=min_trials, inactive_when_pending_trials=inactive_when_pending_trials)
+
+        def _should_stop_optimization(self, experiment):
+            if len(experiment.trials) >= 2:
+                return (True, f"Reached {len(experiment.trials)} trials")
+            return (False, None)
+
+    optimizer = AxOptimizer(
+        parameters=[
+            RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float"),
+        ],
+        objective="y1",
+        stopping_strategy=TestStoppingStrategy(),
+    )
+
+    # should not stop
+    optimizer.ingest([{"x1": 0.5, "y1": 1.0}])
+    should_stop, reason = optimizer.should_stop()
+    assert should_stop is False
+    assert reason is None
+
+    # should stop
+    optimizer.ingest([{"x1": 0.6, "y1": 2.0}])
+    should_stop, reason = optimizer.should_stop()
+    assert should_stop is True
+    assert "2 trials" in reason

@@ -1,126 +1,132 @@
+
 [build-system]
-requires = ["setuptools>=61.0", "setuptools_scm>=8"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling", "hatch-vcs"]
+build-backend = "hatchling.build"
 
 [project]
-name = "bluesky-adaptive"
+name = "blop"
+description = "Beamline optimization with machine learning"
+readme = { file = "README.md", content-type = "text/markdown" }
+authors = [
+  { name = "Max Rakitin", email = "mrakitin@bnl.gov" },
+  { name = "Thomas Morris", email = "tmorris@bnl.gov" },
+  { name = "Thomas Hopkins", email = "thopkins1@bnl.gov" },
+]
+maintainers = [
+  { name = "Max Rakitin", email = "mrakitin@bnl.gov" },
+  { name = "Thomas Morris", email = "tmorris@bnl.gov" },
+  { name = "Thomas Hopkins", email = "thopkins1@bnl.gov" },
+  { name = "Jessica Moylan", email = "jmoylan1@bnl.gov" },
+  { name = "Jennefer Maldonado", email = "jmaldonad@bnl.gov" },
+  { name = "Roman Chernikov", email = "rcherniko@bnl.gov" },
+]
+requires-python = ">=3.11"
+dependencies = ["bluesky>=1.14.2", "networkx>=3", "numpy", "rich>=13"]
 classifiers = [
-  "Development Status :: 7 - Inactive",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: BSD License",
+  "Programming Language :: Python :: 3 :: Only",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Topic :: Scientific/Engineering :: Physics",
 ]
-description = "Tools for writing adaptive plans and building adaptive agents."
-readme = "README.md"
-license = "BSD-3-Clause"
-license-files = ["LICENSE"]
 dynamic = ["version"]
-authors = [
-  { name = "Phillip Maffettone", email = "pmaffetto@bnl.gov" },
-  { name = "Dmitri Gavrilov", email = "dgavrilov@bnl.gov" },
-  { name = "Thomas Caswell", email = "tacasewell@bnl.gov" },
-]
-maintainers = [{ name = "Phillip Maffettone", email = "pmaffetto@bnl.gov" }]
-requires-python = ">=3.9"
-dependencies = [
-  "bluesky",
-  "bluesky-live",
-  "bluesky-widgets",
-  "bluesky-kafka",
-  "bluesky-queueserver-api",
-  "xkcdpass",
-  "tiled[client]",
-  "numpy",
-  "pydantic",
-  "json-rpc",
-]
 
 [project.optional-dependencies]
-agents = ["scikit-learn", "scipy", "botorch"]
+ax = ["ax-platform>=1.3.0,<1.4", "botorch>=0.18.0,<0.19.0", "gpytorch", "torch"]
+queueserver = ["bluesky-queueserver-api"]
+scipy = ["scipy>=1.2.0"]
+xopt = ["xopt>3.0.0"]
+all = ["blop[ax,queueserver,scipy,xopt]"]
 dev = [
-  "certifi>=2026.10.19",
-  "ruff",
-  "coverage",
+  "pip>=26.2.2",
   "pytest",
-  "sphinx",
-  "ipython",
-  "matplotlib",
-  "numpydoc",
-  "sphinx-copybutton",
-  "sphinx-design",
-  "pydata-sphinx-theme",
-  "myst-parser",
-  "fastapi",
-  "caproto != 1.2.0",
-  "ophyd",
-  "scipy",
+  "pytest-cov",
+  "ipykernel",
+  "ruff",
+  "nbstripout",
   "pre-commit",
-  "pre-commit-hooks",
-  "intake",
-  "tiled[client, server]",
-  "humanize",
-  "doct",
-  "mongomock",
-  "databroker[all]>=2.0.0b1,<3.0.0",
-  "bluesky-tiled-plugins",
+  "coverage",
+  "pyright",
+  "uv>=0.13.4",
+  "virtualenv>=21.14.12",
+  "blop[all]",
 ]
-tsuchinoko = ["tsuchinoko>=1.1.23"]
+cpu = [
+  # Empty extra - the source configuration below routes to CPU-only index
+]
 
 [project.urls]
-GitHub = "https://github.com/bluesky/bluesky-adaptive"
-Documentation = "https://blueskyproject.io/bluesky-adaptive"
+Homepage = "https://github.com/bluesky/blop"
+Documentation = "https://blueskyproject.io/blop"
+"Bug Reports" = "https://github.com/bluesky/blop/issues"
 
-[tool.setuptools.packages.find]
-where = ["."]
-include = ["bluesky_adaptive*"]
+[tool.hatch]
+version.source = "vcs"
 
-[tool.setuptools_scm]
-version_file = "bluesky_adaptive/_version.py"
+[tool.hatch.build]
+artifacts = ["src/blop/_version.py"]
 
-[tool.uv]
-# uv < 0.13.4 trusts the compromised eMudhra/emSign CAs (GHSA-hq85-5cpj-mr62); setup-uv in CI reads this too
-required-version = ">=0.13.4"
+[tool.hatch.build.targets.wheel]
+sources = ["src"]
 
-[tool.pytest.ini_options]
-# Run pytest with all our checkers, and don't spam us with massive tracebacks on error
-# Don't collect the interactive directory which is intended for manual execution
-addopts = """
-    --tb=native -vv --doctest-modules --doctest-glob="*.rst"
-    """
-# https://iscinumpy.gitlab.io/post/bound-version-constraints/#watch-for-warnings
-filterwarnings = [
-  "error",
-  "ignore:bluesky-adaptive 0.x is discontinued:FutureWarning",
-  "ignore::PendingDeprecationWarning",
-  "ignore::UserWarning",
-  "ignore::DeprecationWarning",
-]
-testpaths = "bluesky_adaptive/tests"
+[tool.hatch.build.hooks.vcs]
+version-file = "src/blop/_version.py"
 
-[tool.coverage.run]
-data_file = "/tmp/bluesky.coverage"
-
-[tool.coverage.report]
-exclude_lines = ["if __name__ == '__main__':"]
-omit = ["*version*", "*/python?.?/*"]
-
-[tool.coverage.paths]
-source = ["bluesky_adaptive"]
+[tool.hatch.version.raw-options]
+local_scheme = "no-local-version"
 
 [tool.ruff]
-src = ["bluesky_adaptive"]
-line-length = 120
-exclude = ["docs/source/conf.py", "_version.py"]
-
-[tool.ruff.lint]
-select = [
-  "B",  # flake8-bugbear - https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
-  "C4", # flake8-comprehensions - https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
-  "E",  # pycodestyle errors - https://docs.astral.sh/ruff/rules/#error-e
-  "F",  # pyflakes rules - https://docs.astral.sh/ruff/rules/#pyflakes-f
-  "W",  # pycodestyle warnings - https://docs.astral.sh/ruff/rules/#warning-w
-  "I",  # isort - https://docs.astral.sh/ruff/rules/#isort-i
-  "UP", # pyupgrade - https://docs.astral.sh/ruff/rules/#pyupgrade-up
+src = ["src", "examples", "docs/source/tutorials"]
+line-length = 125
+lint.select = [
+  "B",       # flake8-bugbear - https://docs.astral.sh/ruff/rules/#flake8-bugbear-b
+  "C4",      # flake8-comprehensions - https://docs.astral.sh/ruff/rules/#flake8-comprehensions-c4
+  "E",       # pycodestyle errors - https://docs.astral.sh/ruff/rules/#error-e
+  "F",       # pyflakes rules - https://docs.astral.sh/ruff/rules/#pyflakes-f
+  "W",       # pycodestyle warnings - https://docs.astral.sh/ruff/rules/#warning-w
+  "I",       # isort - https://docs.astral.sh/ruff/rules/#isort-i
+  "UP",      # pyupgrade - https://docs.astral.sh/ruff/rules/#pyupgrade-up
+  "SLF",     # self - https://docs.astral.sh/ruff/settings/#lintflake8-self
+  "PLC2701", # private import - https://docs.astral.sh/ruff/rules/import-private-name/
+  "LOG015",  # root logger call - https://docs.astral.sh/ruff/rules/root-logger-call/
+  "S101",    # assert - https://docs.astral.sh/ruff/rules/assert/
+  "D",       # docstring - https://docs.astral.sh/ruff/rules/#pydocstyle-d
 ]
+lint.ignore = [
+  "SLF001", # private member access
+  "B901",   # return-in-generator - https://docs.astral.sh/ruff/rules/return-in-generator/
+]
+lint.preview = true # so that preview mode PLC2701, and LOG015 is enabled
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.ruff.lint.per-file-ignores]
+"src/blop/tests/**/*" = ["S101", "SLF001", "D"]
+"sim/**/*" = ["D"]
+# Ignore F821: undefined name '...' since the ipython profiles are dynamically loaded into the namespace
+"docs/**/*" = ["F821", "D"]
+"examples/**/*" = ["F821", "D"]
+
+[tool.pyright]
+ignore = [
+  "sim/",
+  "src/blop/tests/",
+  "src/blop/bayesian/",           # TODO: Remove this and fix type errors
+  "src/blop/ax/qserver_agent.py", # TODO: Remove this and fix type errors
+]
+
+[tool.uv]
+required-version = ">=0.13.4"
+
+# Configure PyTorch CPU-only installation when [cpu] extra is requested
+# This requires uv (https://docs.astral.sh/uv/)
+[tool.uv.sources]
+torch = [{ index = "pytorch-cpu", marker = "extra == 'cpu'" }]
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true                              # Only use this index for torch-related packages

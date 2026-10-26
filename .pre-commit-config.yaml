@@ -1,26 +1,20 @@
-# All hooks run tools from the `dev` extra (`uv pip install -e ".[dev]"`). Keep them `local` with
-# `language: system` so pre-commit never builds hook virtualenvs, whose seeded pip may predate the
-# eMudhra/emSign CA removal.
 repos:
-  - repo: local
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
     hooks:
       - id: check-added-large-files
-        name: check for added large files
-        language: system
-        entry: check-added-large-files
-        stages: [pre-commit, pre-push, manual]
-
       - id: check-yaml
-        name: check yaml
-        language: system
-        entry: check-yaml
-        types: [yaml]
-
       - id: check-merge-conflict
-        name: check for merge conflicts
+      - id: end-of-file-fixer
+
+  - repo: local
+    hooks:
+      - id: ruff-format
+        name: format with ruff
         language: system
-        entry: check-merge-conflict
-        types: [text]
+        entry: ruff format --force-exclude
+        types: [python]
+        require_serial: true
 
       - id: ruff
         name: lint with ruff
@@ -28,10 +22,23 @@ repos:
         entry: ruff check --force-exclude --fix
         types: [python]
         require_serial: true
-
-      - id: ruff-format
-        name: format with ruff
+      
+      - id: pyright
+        name: type check with pyright
         language: system
-        entry: ruff format --force-exclude
+        entry: pyright
         types: [python]
         require_serial: true
+
+  - repo: https://github.com/kynan/nbstripout
+    rev: 0.8.1
+    hooks:
+      - id: nbstripout
+
+  - repo: https://github.com/executablebooks/mdformat
+    rev: 0.7.21
+    hooks:
+      - id: mdformat
+        additional_dependencies:
+          - mdformat-ruff
+          - mdformat-frontmatter
