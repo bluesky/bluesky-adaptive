@@ -1,0 +1,75 @@
+name: CI
+permissions:
+  contents: read
+
+on:
+  push:
+  pull_request:
+  release:
+    types: [published]
+  schedule:
+    - cron: '00 6 * * *'  # daily at 6AM UTC
+  workflow_dispatch:
+
+jobs:
+  scheduled-job:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_testing.yml
+
+  integration-tests:
+    if: github.event_name == 'schedule'
+    uses: ./.github/workflows/_integration.yml
+
+  check:
+    uses: ./.github/workflows/_check.yml
+   
+  lint:
+    needs: check
+    if: needs.check.outputs.branch-pr == ''
+    uses: ./.github/workflows/_pre-commit.yml
+
+  test:
+    needs: lint
+    if: needs.check.outputs.branch-pr == ''
+    uses: ./.github/workflows/_testing.yml
+
+  docs:
+    needs: lint
+    if: needs.check.outputs.branch-pr == ''
+    uses: ./.github/workflows/_docs.yml
+    with:
+      publish: ${{ github.event_name != 'schedule' }}
+    permissions:
+      contents: write
+  
+  pypi:
+    name: Publish package to PyPI
+    runs-on: ubuntu-latest
+    if: success() && github.event_name == 'release'
+    needs: [lint, test, docs]
+    permissions:
+      id-token: write
+
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        with:
+          version: "0.13.4"
+          enable-cache: false
+
+      - name: Build package
+        run: uv build --no-sources
+
+      - name: Publish wheels to PyPI
+        uses: pypa/gh-action-pypi-publish@7245906fb61fa33a13554f9d5fb856fe61758086 # v1.14.3
+        with:
+          packages-dir: ./dist/

@@ -1,0 +1,25 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "bluesky-adaptive-sim"
+version = "0.0.0"
+description = "Example simulations and benchmarks for bluesky-adaptive (not published to PyPI)"
+readme = "README.md"
+authors = [{ name = "Thomas Hopkins", email = "thopkins1@bnl.gov" }]
+requires-python = ">=3.11"
+dependencies = [
+  "bluesky-adaptive",
+  "ophyd-async<0.17",
+  "h5py",
+  "area-detector-handlers",
+  "bluesky-tiled-plugins",
+  "numpy",
+  "scipy",
+  "matplotlib",
+  "xrt>=2.0.0b1",
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["bluesky_adaptive_sim"]

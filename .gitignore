@@ -1,3 +1,8 @@
+build/*
+
+# setuptools_scm
+src/*/_version.py
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
@@ -21,11 +26,9 @@ parts/
 sdist/
 var/
 venv/
-.venv/
 *.egg-info/
 .installed.cfg
 *.egg
-bluesky_adaptive/_version.py
 
 # PyInstaller
 #  Usually these files are written by a python script from a template
@@ -58,7 +61,6 @@ coverage.xml
 # Sphinx documentation
 docs/build/
 docs/source/generated/
-docs/source/reference/api_gen
 
 # pytest
 .pytest_cache/
@@ -67,20 +69,31 @@ docs/source/reference/api_gen
 target/
 
 # Editor files
-#mac
+# mac
 .DS_Store
 *~
 
-#vim
+# vim
 *.swp
 *.swo
 
-#pycharm
+# pycharm
 .idea/
 
-#VSCode
+# VSCode
 .vscode/
-*.code-workspace
+.cursor/
 
-#Ipython Notebook
+# Ipython Notebook
 .ipynb_checkpoints
+
+# All ipynb files (use MyST markdown and jupytext instead)
+*.ipynb
+
+# Jupyterlite Database
+.jupyterlite.doit.db
+
+# pixi environments
+.pixi
+pixi.lock
+*.egg-info

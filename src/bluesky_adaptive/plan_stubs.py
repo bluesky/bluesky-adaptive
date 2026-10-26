@@ -1,0 +1,276 @@
+"""Bluesky plan stubs for optimization."""
+
+import logging
+from collections.abc import Hashable, Mapping, MutableMapping, Sequence
+from typing import Any, Literal, cast
+
+import bluesky.plan_stubs as bps
+import bluesky.plans as bp
+import numpy as np
+from bluesky.protocols import Readable
+from bluesky.utils import MsgGenerator, plan
+from numpy.typing import ArrayLike
+
+from .protocols import ID_KEY, Actuator, Optimizer, Sensor
+from .utils import (
+    InferredReadable,
+    Source,
+    _drop_run_control_messages,
+    _suggestion_ids,
+    _unpack_for_list_scan,
+    _validate_suggestions,
+    route_suggestions,
+)
+
+logger = logging.getLogger(__name__)
+
+_ACQUISITION_UID_KEY: Literal["acquisition_uid"] = "acquisition_uid"
+_SUGGESTION_IDS_KEY: Literal["suggestion_ids"] = "suggestion_ids"
+_ITERATION_KEY: Literal["iteration"] = "iteration"
+
+
+def _is_array_like_identifier(uid: Any) -> bool:
+    try:
+        numpy_array = np.array(uid)
+    except (TypeError, ValueError):
+        return False
+    return numpy_array.dtype != object
+
+
+def _acquisition_identifier_value(uid: Any) -> Any:
+    """Convert an acquisition UID to an event-readable value."""
+    if _is_array_like_identifier(uid):
+        return cast(ArrayLike, uid)
+    return repr(uid)
+
+
+@plan
+def seq_read(readables: Sequence[Readable], **kwargs: Any) -> MsgGenerator[dict[str, Any]]:
+    """
+    Read the current values of the given readables.
+
+    Parameters
+    ----------
+    readables : Sequence[Readable]
+        The readables to read.
+
+    Returns
+    -------
+    dict[str, Any]
+        A dictionary of the readable names and their current values.
+    """
+    results = {}
+    for readable in readables:
+        results[readable.name] = yield from bps.rd(readable, **kwargs)
+    return results
+
+
+@plan
+def read_step(
+    uid: Any,
+    suggestions: Sequence[Mapping],
+    outcomes: Sequence[Mapping],
+    readable_cache: MutableMapping[str, InferredReadable],
+    iteration: int = -1,
+    stream_name: str = "primary",
+) -> MsgGenerator[None]:
+    """Plan stub to read the suggestions and outcomes of a single optimization step.
+
+    The plan is structured to read out all suggestions given in a point by point basis.
+
+    The emitted ``acquisition_uid`` field retains native array-like identifiers.
+    Other acquisition UIDs are represented by ``repr(uid)``.
+
+    Parameters
+    ----------
+    uid : Any
+        The acquisition UID returned by the acquisition plan.
+    suggestions : Sequence[Mapping]
+        Sequence of suggestion mappings, each containing an ID_KEY.
+    outcomes : Sequence[Mapping]
+        Sequence of outcome mappings, each containing an ID_KEY matching suggestions.
+    iteration: int
+        iteration number passed by the optimization plan. Non iterative plans default to -1
+        (this is a in run value, use a uid to aggregate across runs)
+    readable_cache : dict[str, InferredReadable]
+        Cache of InferredReadable objects to reuse across iterations.
+    stream_name : str, optional
+        Event stream name for the optimization tracking event.
+    """
+    # Normalize the acquisition UID for event-model storage.
+    normalized_uid = _acquisition_identifier_value(uid)
+
+    suggestion_by_id = {}
+    outcome_by_id = {}
+    for suggestion in suggestions:
+        suggestion_copy = dict(suggestion)
+        key = str(suggestion_copy.pop(ID_KEY))
+        suggestion_by_id[key] = suggestion_copy
+    for outcome in outcomes:
+        outcome_copy = dict(outcome)
+        key = str(outcome_copy.pop(ID_KEY))
+        outcome_by_id[key] = outcome_copy
+
+    sids = {str(sid) for sid in suggestion_by_id.keys()}
+    sorted_sids = sorted(sids)
+    if sids != set(outcome_by_id.keys()):
+        raise ValueError(
+            "The suggestions and outcomes must contain the same IDs. Got suggestions: "
+            f"{set(suggestion_by_id.keys())} and outcomes: {set(outcome_by_id.keys())}"
+        )
+
+    def _cache_update(key, element, source=Source.PARAMETER):
+        if key not in readable_cache:
+            readable_cache[key] = InferredReadable(key, source=source, initial_value=element)
+        else:
+            readable_cache[key].update(element)
+
+    _cache_update(_ACQUISITION_UID_KEY, normalized_uid, source=Source.ACQUISITION_UID)
+    _cache_update(_ITERATION_KEY, iteration, source=Source.ITERATION)
+
+    for sid in sorted_sids:
+        suggestion = suggestion_by_id[sid]
+        outcome = outcome_by_id[sid]
+        # Create or update the InferredReadables for the suggestion_ids, step uid, suggestions, and outcomes
+        _cache_update(_SUGGESTION_IDS_KEY, sid, source=Source.SUGGESTION_ID)
+
+        for dof, value in suggestion.items():
+            _cache_update(dof, value, source=Source.PARAMETER)
+
+        for objective, value in outcome.items():
+            _cache_update(objective, value, source=Source.OUTCOME)
+
+        # Read and save to produce a single event
+        yield from bps.trigger_and_read(list(readable_cache.values()), name=stream_name)
+
+
+@plan
+def navigate_to_best(
+    actuators: Sequence[Actuator],
+    optimizer: Optimizer | None = None,
+    parameterization: Mapping | None = None,
+) -> MsgGenerator[None]:
+    """
+    Move actuators to the best point found during optimization.
+
+    If no explicit parameterization is provided, queries the optimizer for its
+    best point(s). For multi-objective optimizers that return multiple Pareto-optimal
+    points, an explicit parameterization must be provided.
+
+    Parameters
+    ----------
+    actuators : Sequence[Actuator]
+        The actuators to move to the best parameterization.
+    optimizer : Optimizer | None, optional
+        The optimizer to query for the best point.
+    parameterization : Mapping | None, optional
+        Explicit parameterization to navigate to. If None, queries the optimizer's
+        best point. For multi-objective problems, call ``optimizer.get_best_points()``
+        to inspect the Pareto set and select one.
+
+    Raises
+    ------
+    TypeError
+        If both ``parameterization`` and ``optimizer`` arguments are ``None``.
+    ValueError
+        If the optimizer returns multiple Pareto-optimal points and no
+        explicit ``parameterization`` is provided.
+    """
+    if parameterization is None:
+        if optimizer is None:
+            raise TypeError("Either pass an explicit parameterization or use an optimizer.")
+        best_points = optimizer.get_best_points()
+        if len(best_points) > 1:
+            raise ValueError(
+                f"The optimizer returned {len(best_points)} Pareto-optimal points. "
+                "Please call optimizer.get_best_points() to inspect them and pass your "
+                "chosen parameterization explicitly via the 'parameterization' argument."
+            )
+        _, parameterization, _ = best_points[0]
+
+    actuator_by_name = {actuator.name: actuator for actuator in actuators}
+    moves = []
+    for name, value in parameterization.items():
+        if name in actuator_by_name:
+            moves.append(actuator_by_name[name])
+            moves.append(value)
+
+    if moves:
+        yield from bps.mv(*moves)
+
+
+@plan
+def list_scan_in_run(
+    suggestions: Sequence[Mapping],
+    actuators: Sequence[Actuator],
+    sensors: Sequence[Sensor] | None = None,
+    *,
+    per_step: bp.PerStep | None = None,
+    **kwargs: Any,
+) -> MsgGenerator[tuple[Hashable, ...]]:
+    """Acquire suggestions inside an already-open Bluesky run.
+
+    This plan moves through the suggestions, optionally reordering them for efficient motion,
+    and executes a Bluesky list scan without opening a child run. The list scan's stage and
+    unstage messages are preserved.
+
+    .. warning::
+
+        The single-run optimization API is **experimental**. This plan may change in
+        future releases without a deprecation period.
+
+    Parameters
+    ----------
+    suggestions : Sequence[Mapping]
+        Suggested parameterizations to execute. Each suggestion must contain a hashable ``_id``.
+    actuators : Sequence[Actuator]
+        Actuators to move to the suggested positions.
+    sensors : Sequence[Sensor] | None, optional
+        Sensors that produce data to evaluate. Non-readable sensors are ignored.
+    per_step : bp.PerStep | None, optional
+        Bluesky list-scan step hook. Custom hooks may emit any number of events into any streams.
+    **kwargs : Any
+        Additional keyword arguments to pass to :func:`bluesky.plans.list_scan`.
+
+    Returns
+    -------
+    tuple[Hashable, ...]
+        Suggestion IDs in the order the suggestions were executed.
+
+        This identifier intentionally does not encode stream names, event UIDs, event counts, or
+        per-stream offsets. Custom ``per_step`` hooks may emit any number of events into any number
+        of streams. The matching evaluation function is responsible for interpreting those documents
+        and correlating them with these ordered suggestion IDs.
+
+    Yields
+    ------
+    Msg
+        Bluesky messages.
+    """
+    _validate_suggestions(suggestions)
+    if sensors is None:
+        sensors = []
+    readables = [s for s in sensors if isinstance(s, Readable)]
+    if len(readables) != len(sensors):
+        logger.warning(f"Some sensors are not readable and will be ignored. Using only the readable sensors: {readables}")
+
+    if len(suggestions) > 1:
+        if all(isinstance(actuator, Readable) for actuator in actuators):
+            current_position = yield from seq_read(cast(Sequence[Readable], actuators))
+        else:
+            current_position = None
+        suggestions = route_suggestions(suggestions, starting_position=current_position)
+
+    suggestion_ids = _suggestion_ids(suggestions)
+    plan_args = _unpack_for_list_scan(suggestions, actuators)
+    # TODO: fix argument type in bluesky.plans.list_scan
+    yield from _drop_run_control_messages(
+        bp.list_scan(
+            readables,
+            *plan_args,  # type: ignore[arg-type]
+            per_step=per_step,
+            **kwargs,
+        )
+    )
+
+    return suggestion_ids

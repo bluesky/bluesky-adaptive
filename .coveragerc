@@ -1,0 +1,16 @@
+[run]
+source =
+    bluesky_adaptive
+[report]
+omit =
+    */python?.?/*
+    */site-packages/nose/*
+    # ignore _version.py and versioneer.py
+    .*version.*
+    *_version.py
+    # ignore test modules
+    src/bluesky_adaptive/tests/**
+    */bluesky_adaptive/tests/**
+
+exclude_lines =
+    if __name__ == '__main__':
