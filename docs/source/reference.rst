@@ -16,3 +16,4 @@ API Reference
     reference/protocols.rst
     reference/callbacks.rst
     reference/queueserver.rst
+    reference/rest.rst

@@ -2,6 +2,16 @@
 Release History
 ===============
 
+Unreleased
+----------
+
+Features
+........
+* **REST API (experimental)**: ``bluesky_adaptive.rest.create_app`` serves a ``QueueserverAgent`` over HTTP
+  with FastAPI: start and stop optimization runs, submit points for acquisition, ask/tell the optimizer, and
+  read best points and the Ax trial summary. Install with ``bluesky-adaptive[server]``
+  (`#79 <https://github.com/bluesky/bluesky-adaptive/issues/79>`_).
+
 v1.0.0 (2026-10-26)
 -------------------
 

@@ -42,11 +42,14 @@ Optional Extras
    * - ``bluesky-adaptive[queueserver]``
      - ``bluesky-queueserver-api``
      - Transport layer only; pair with ``[ax]`` for ``QueueserverAgent``
+   * - ``bluesky-adaptive[server]``
+     - ``[ax]``, ``[queueserver]``, ``fastapi``, ``uvicorn``
+     - Experimental REST API for a ``QueueserverAgent`` (:mod:`bluesky_adaptive.rest`)
    * - ``bluesky-adaptive[cpu]``
      - *(uv index routing)*
      - Routes ``torch`` to the CPU-only PyTorch index; requires ``uv``
    * - ``bluesky-adaptive[all]``
-     - All backends + ``[queueserver]``
+     - All backends + ``[queueserver]`` + ``[server]``
      - No dev tooling; will grow as new backends are added
    * - ``bluesky-adaptive[dev]``
      - ``bluesky-adaptive[all]`` + dev tooling
