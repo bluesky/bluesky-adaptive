@@ -1,6 +1,7 @@
 # Bluesky Adaptive server: MVP plan
 
-Status: design notes, not implemented. Tracking issue: [#79](https://github.com/bluesky/bluesky-adaptive/issues/79).
+Status: prototyped. `bluesky_adaptive.server` implements the core; `prototypes/` holds two applications built on it
+and `prototypes/OVERLAP.md` compares them. Tracking issue: [#79](https://github.com/bluesky/bluesky-adaptive/issues/79).
 
 A single-agent prototype (`bluesky_adaptive.rest`, installed with the `server` extra) serves one
 `QueueserverAgent` over FastAPI. The MVP below replaces it.

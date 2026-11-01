@@ -59,7 +59,7 @@ flowchart
 1. The RE Manager executes the plan (moves motors, reads detectors)
 1. Bluesky documents are published via ZMQ to the proxy
 1. The ZMQ-Tiled bridge persists documents to the Tiled server (using [bluesky-tiled-plugins](https://blueskyproject.io/bluesky-tiled-plugins)'s `TiledWriter` callback)
-1. The agent's ZMQ listener detects plan completion
+1. The agent's `RunRouter` reports the completed run from the ZMQ document stream
 1. The agent's evaluation function reads results from Tiled and computes objectives
 1. The optimizer ingests outcomes and suggests the next point
 
@@ -104,6 +104,8 @@ from bluesky_queueserver_api.zmq import REManagerAPI
 RM = REManagerAPI(zmq_control_addr="tcp://localhost:60615")
 RM.environment_open()
 RM.wait_for_idle(timeout=30)
+# Run queued plans as soon as they are added. Autostart is a deployment setting; agents never change it.
+RM.queue_autostart(True)
 status = RM.status()
 print(f"RE Manager state: {status['manager_state']}")
 print(f"Worker environment exists: {status['worker_environment_exists']}")
@@ -272,15 +274,20 @@ class HimmelblauEvaluation:
 Now we bring everything together. The `QueueserverAgent` needs:
 
 - `re_manager_api`: how to communicate with the queueserver (submit plans, check status)
-- `document_dispatcher`: a `RemoteDispatcher` that subscribes to the Bluesky document stream
+- `run_router`: a `RunRouter` that reports completed runs and hands each agent the runs it submitted.
+  Here it reads the Bluesky document stream through a `RemoteDispatcher`; one router can serve every
+  agent on the same queueserver.
 - The DOFs, objectives, sensors, and evaluation function
 
 ```{code-cell} ipython3
-document_dispatcher = RemoteDispatcher(("localhost", 5578))
+from bluesky_adaptive.runs import DocumentStreamFeed, RunRouter
+
+run_router = RunRouter(DocumentStreamFeed(RemoteDispatcher(("localhost", 5578))))
+run_router.start()
 
 agent = QueueserverAgent(
     re_manager_api=RM,
-    document_dispatcher=document_dispatcher,
+    run_router=run_router,
     sensors=sensors,
     dofs=dofs,
     objectives=objectives,
@@ -294,12 +301,13 @@ The `re_manager_api` argument also accepts an HTTP-based client
 (`bluesky_queueserver_api.http.REManagerAPI`) for deployments that expose the
 queueserver over HTTP rather than ZMQ. Construct the `RemoteDispatcher` with
 whatever arguments your document stream requires, such as a ZMQ address or
-message prefix.
+message prefix. When runs are written to Tiled, `bluesky_adaptive.runs.TiledRunFeed`
+reads completed runs from a Tiled container instead of the document stream.
 ```
 
 ## Running the Optimization
 
-The `run()` method is **non-blocking** — it submits the first plan and returns immediately. The agent reacts asynchronously to plan completions via ZMQ callbacks.
+The `run()` method is **non-blocking** — it submits the first plan and returns immediately. The agent reacts asynchronously to completed runs delivered by the router.
 
 ```{code-cell} ipython3
 future = agent.run(iterations=10, n_points=1)
@@ -339,6 +347,8 @@ The Himmelblau function has four global minima (all with value 0). The optimizer
 When you're done, close the RE environment and stop the Docker services:
 
 ```{code-cell} ipython3
+agent.close()
+run_router.close()
 RM.environment_close()
 RM.wait_for_idle(timeout=30)
 RM.close()
@@ -353,7 +363,7 @@ docker compose down
 
 - **Distributed architecture**: The queueserver separates experiment execution from optimization logic, connected via ZMQ and Tiled
 - **String-based device references**: Since devices live in the remote process, DOFs, sensors, and plans are referenced by name
-- **Asynchronous operation**: `agent.run()` is non-blocking; the agent reacts to events via ZMQ callbacks
+- **Asynchronous operation**: `agent.run()` is non-blocking; the agent reacts to completed runs delivered by its `RunRouter`
 - **Evaluation function**: Reads from Tiled (not direct device access) to compute objectives after each plan completes
 
 ## Next Steps

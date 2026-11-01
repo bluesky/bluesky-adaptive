@@ -33,7 +33,7 @@ Request and response bodies are JSON. Points use the same mappings as the Python
      - ``202``; body :class:`~bluesky_adaptive.rest.SuggestionsRequest`
    * - ``POST /stop``
      - :meth:`~bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.stop`
-     - A plan already on the queueserver still runs and is ingested
+     - A plan still queued is removed; a running plan finishes and is ingested
    * - ``POST /suggest``
      - ``suggest``
      - Ask without acquiring; body :class:`~bluesky_adaptive.rest.SuggestRequest`
@@ -51,8 +51,8 @@ Request and response bodies are JSON. Points use the same mappings as the Python
      - ``204``; requires ``checkpoint_path`` on the agent
 
 While an operation is running, ``/run``, ``/submit-suggestions``, ``/suggest``, ``/ingest``, and
-``/checkpoint`` return ``409 Conflict``: the queueserver runner uses the optimizer from its document
-listener thread, and Ax is not thread-safe.
+``/checkpoint`` return ``409 Conflict``: the queueserver runner uses the optimizer from its own
+thread when a run completes, and Ax is not thread-safe.
 
 Errors return ``{"detail": "<ExceptionType>: <message>"}``:
 

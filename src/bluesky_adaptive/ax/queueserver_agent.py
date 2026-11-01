@@ -12,14 +12,14 @@ except ImportError as e:
         "The queueserver integration requires additional dependencies. "
         "Install them with: pip install bluesky-adaptive[queueserver]"
     ) from e
-from bluesky.callbacks.zmq import RemoteDispatcher
 
 from ..protocols import (
     Actuator,
     EvaluationFunction,
     QueueserverOptimizationProblem,
 )
-from ..queueserver import OptimizationResult, QueueserverClient, QueueserverOptimizationRunner
+from ..queueserver import OptimizationResult, QueueserverClient, QueueserverOptimizationRunner, RunnerState
+from ..runs import RunRouter
 from .agent import _AxAgentMixin
 from .dof import DOF, DOFConstraint
 from .objective import Objective, OutcomeConstraint, to_ax_objective_str
@@ -42,8 +42,8 @@ class QueueserverAgent(_AxAgentMixin):
     ----------
     re_manager_api : bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI
         The manager API for interaction with Bluesky queueserver.
-    document_dispatcher : RemoteDispatcher
-        Dispatcher for consuming Bluesky documents from the remote server.
+    run_router : RunRouter
+        Router for the queueserver's completed runs; started by the caller and shareable between agents.
     sensors : Sequence[str]
         The sensors to use for acquisition. These should be the minimal set
         of sensors that are needed to compute the objectives.
@@ -78,7 +78,7 @@ class QueueserverAgent(_AxAgentMixin):
     def __init__(
         self,
         re_manager_api: bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI,
-        document_dispatcher: RemoteDispatcher,
+        run_router: RunRouter,
         sensors: Sequence[str],
         dofs: Sequence[DOF],
         objectives: Sequence[Objective],
@@ -113,7 +113,8 @@ class QueueserverAgent(_AxAgentMixin):
         )
         self._runner = QueueserverOptimizationRunner(
             self.to_optimization_problem(),
-            QueueserverClient(re_manager_api, document_dispatcher),
+            QueueserverClient(re_manager_api),
+            run_router,
         )
 
     @property
@@ -136,9 +137,25 @@ class QueueserverAgent(_AxAgentMixin):
         """Acquisition plan name used during acquisition."""
         return self._acquisition_plan
 
-    def stop(self) -> None:
-        """Stop the queueserver runner."""
-        self._runner.stop()
+    def stop(self) -> RunnerState:
+        """
+        Submit nothing more; see :meth:`QueueserverOptimizationRunner.stop`.
+
+        Returns
+        -------
+        RunnerState
+            ``"stopped"`` if the in-flight plan was still queued, else ``"stopping"`` until its run is ingested.
+        """
+        return self._runner.stop()
+
+    def close(self) -> None:
+        """Release the agent's run claims and stop its runner threads."""
+        self._runner.close()
+
+    @property
+    def state(self) -> RunnerState:
+        """Lifecycle of the most recent run or submission."""
+        return self._runner.state
 
     @property
     def current_iteration(self) -> int:

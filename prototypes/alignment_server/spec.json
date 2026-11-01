@@ -1,0 +1,23 @@
+{
+  "queueserver": "tst",
+  "dofs": [
+    {"name": "dcm_c2-pitch", "actuator": "dcm_c2.pitch", "bounds": [-1e-4, 1e-4]},
+    {"name": "m1-pitch", "actuator": "m1.pitch", "bounds": [-1e-4, 1e-4]}
+  ],
+  "objectives": [{"name": "diag2_total"}],
+  "outcome_constraints": [
+    "diag2_x_centroid >= 116",
+    "diag2_x_centroid <= 140",
+    "diag2_y_centroid >= 116",
+    "diag2_y_centroid <= 140"
+  ],
+  "sensors": ["diag2"],
+  "acquisition_plan": {"name": "adaptive_acquire"},
+  "evaluation": {
+    "name": "image-metrics",
+    "params": {
+      "screens": [{"image_key": "diag2_image", "prefix": "diag2", "metrics": ["total", "x_centroid", "y_centroid"]}]
+    }
+  },
+  "optimizer": {"name": "ax-bo", "options": {"initialization_budget": 6, "seed": 0}}
+}

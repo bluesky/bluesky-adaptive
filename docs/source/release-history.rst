@@ -11,6 +11,34 @@ Features
   with FastAPI: start and stop optimization runs, submit points for acquisition, ask/tell the optimizer, and
   read best points and the Ax trial summary. Install with ``bluesky-adaptive[server]``
   (`#79 <https://github.com/bluesky/bluesky-adaptive/issues/79>`_).
+* **Adaptive server (experimental)**: ``bluesky_adaptive.server.create_app`` builds a multi-agent HTTP server from
+  catalogs of optimizers, evaluation functions, context functions and run ingestors. Clients compose agents from
+  those entries (DOFs, objectives or a linear scalarized objective, linear constraints, sensors and an acquisition
+  plan) and run them through a Bluesky Queueserver. Agents learn from completed runs reported by Tiled websocket
+  subscriptions or the ZMQ document stream, can suggest in the context of a Bluesky run, and can learn from runs
+  they did not submit. ``bluesky-adaptive[server]`` now includes ``tiled[client]``. The repository's
+  ``prototypes/`` directory holds two applications built on it: beamline alignment and passive learning.
+* **Completed-run routing**: ``bluesky_adaptive.runs`` adds ``CompletedRun``, the ``RunFeed`` protocol with
+  ``DocumentStreamFeed`` and ``TiledRunFeed``, and ``RunRouter``, which hands each completed run to the runner that
+  submitted it and offers every run to subscribers. Several agents can share one queueserver.
+* **Contextual optimization**: the ``ContextAware`` protocol (``suggest_in_context``) and ``ContextFunction``, which
+  derives context features from an acquisition UID. With ``QueueserverOptimizationProblem.context_function``, the
+  queueserver runner suggests in the context of the previous run and ingests points with that run's features.
+* The queueserver runner records an ``IterationRecord`` per iteration (suggestions, context, run UID, ingested
+  points, error) and passes it to an ``on_iteration`` hook. It fails the operation when the plan fails or its run
+  does not arrive, instead of waiting forever.
+
+Breaking Changes
+................
+* ``QueueserverClient`` takes only the RE Manager API. It no longer enables queue autostart or listens for
+  documents: ``start_listener``, ``stop_listener`` and ``ConsumerCallback`` are removed. ``submit_plan`` returns
+  the queue item UID.
+* ``QueueserverOptimizationRunner`` and ``QueueserverAgent`` take a started ``RunRouter`` instead of a
+  ``RemoteDispatcher``: ``RunRouter(DocumentStreamFeed(RemoteDispatcher(address)))``.
+* ``CORRELATION_UID_KEY`` moved from ``bluesky_adaptive.queueserver`` to ``bluesky_adaptive.runs``.
+* ``stop()`` submits nothing more and returns the runner state. A plan still queued is removed and the operation
+  stops at once; otherwise the state is ``"stopping"`` until the in-flight run is ingested. Previously the future
+  resolved at once while the submitted plan still ran.
 
 v1.0.0 (2026-10-26)
 -------------------

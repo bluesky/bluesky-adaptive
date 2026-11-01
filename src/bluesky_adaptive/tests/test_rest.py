@@ -1,7 +1,6 @@
 from unittest.mock import MagicMock
 
 import pytest
-from bluesky.callbacks.zmq import RemoteDispatcher
 from bluesky_queueserver_api.comm_base import RequestFailedError
 from bluesky_queueserver_api.zmq import REManagerAPI
 from fastapi.testclient import TestClient
@@ -9,8 +8,10 @@ from fastapi.testclient import TestClient
 from bluesky_adaptive.ax.dof import RangeDOF
 from bluesky_adaptive.ax.objective import Objective
 from bluesky_adaptive.ax.queueserver_agent import QueueserverAgent
-from bluesky_adaptive.queueserver import CORRELATION_UID_KEY
 from bluesky_adaptive.rest import create_app
+from bluesky_adaptive.runs import CORRELATION_UID_KEY, RunRouter
+
+from .conftest import FakeFeed, wait_until
 
 
 def _evaluate(uid, suggestions):
@@ -21,19 +22,29 @@ def _evaluate(uid, suggestions):
 def re_manager_api():
     api = MagicMock(spec=REManagerAPI)
     api.status.return_value = {"worker_environment_exists": True}
+    api.item_add.side_effect = lambda plan: {"item": {"item_uid": f"item-{api.item_add.call_count}"}}
+    api.history_get.return_value = {"items": []}
     return api
 
 
 @pytest.fixture
-def document_dispatcher():
-    return MagicMock(spec=RemoteDispatcher)
+def feed():
+    return FakeFeed()
 
 
 @pytest.fixture
-def client(re_manager_api, document_dispatcher):
+def run_router(feed):
+    router = RunRouter(feed)
+    router.start()
+    yield router
+    router.close()
+
+
+@pytest.fixture
+def client(re_manager_api, run_router):
     agent = QueueserverAgent(
         re_manager_api=re_manager_api,
-        document_dispatcher=document_dispatcher,
+        run_router=run_router,
         sensors=["det"],
         dofs=[RangeDOF(actuator="x1", bounds=(-5.0, 5.0), parameter_type="float")],
         objectives=[Objective(name="y", minimize=True)],
@@ -41,28 +52,38 @@ def client(re_manager_api, document_dispatcher):
     )
     with TestClient(create_app(agent)) as test_client:
         yield test_client
+    agent.close()
 
 
-def _finish_acquisition(re_manager_api, document_dispatcher, run_uid, exit_status="success"):
-    """Emit the documents the queueserver would publish for the most recently submitted plan."""
-    consumer = document_dispatcher.subscribe.call_args.args[0]
-    md = re_manager_api.item_add.call_args.args[0].kwargs["md"]
-    consumer.start({"uid": run_uid, "time": 0.0, CORRELATION_UID_KEY: md[CORRELATION_UID_KEY]})
-    consumer.stop({"uid": f"{run_uid}-stop", "run_start": run_uid, "time": 0.0, "exit_status": exit_status})
+def _finish_acquisition(re_manager_api, feed, run_uid, iteration=0, exit_status="success"):
+    """Emit the completed run the feed would report for the plan submitted for ``iteration``."""
+    wait_until(lambda: re_manager_api.item_add.call_count > iteration)
+    md = re_manager_api.item_add.call_args_list[iteration].args[0].kwargs["md"]
+    feed.emit(
+        {"uid": run_uid, "time": 0.0, CORRELATION_UID_KEY: md[CORRELATION_UID_KEY]},
+        {"uid": f"{run_uid}-stop", "run_start": run_uid, "time": 0.0, "exit_status": exit_status},
+    )
 
 
-def test_run_reports_progress_until_completed(client, re_manager_api, document_dispatcher):
+def _wait_for_state(client, state):
+    """Runs are processed on the runner's worker thread; wait until the status reflects it."""
+    wait_until(lambda: client.get("/status").json()["state"] == state)
+    return client.get("/status").json()
+
+
+def test_run_reports_progress_until_completed(client, re_manager_api, feed):
     assert client.get("/status").json()["state"] == "idle"
 
     response = client.post("/run", json={"iterations": 2})
     assert response.status_code == 202
     assert response.json()["state"] == "running"
 
-    _finish_acquisition(re_manager_api, document_dispatcher, "run-0")
+    _finish_acquisition(re_manager_api, feed, "run-0")
+    wait_until(lambda: re_manager_api.item_add.call_count == 2)
     assert client.get("/status").json()["state"] == "running"
 
-    _finish_acquisition(re_manager_api, document_dispatcher, "run-1")
-    assert client.get("/status").json() == {
+    _finish_acquisition(re_manager_api, feed, "run-1", iteration=1)
+    assert _wait_for_state(client, "completed") == {
         "state": "completed",
         "operation": "run",
         "current_iteration": 2,
@@ -90,13 +111,12 @@ def test_optimizer_mutations_conflict_while_running(client, path, body):
     assert client.get("/trials").status_code == 200
 
 
-def test_failed_acquisition_fails_operation(client, re_manager_api, document_dispatcher):
+def test_failed_acquisition_fails_operation(client, re_manager_api, feed):
     client.post("/run", json={"iterations": 2})
 
-    _finish_acquisition(re_manager_api, document_dispatcher, "run-0", exit_status="fail")
+    _finish_acquisition(re_manager_api, feed, "run-0", exit_status="fail")
 
-    status = client.get("/status").json()
-    assert status["state"] == "failed"
+    status = _wait_for_state(client, "failed")
     assert "'run-0' ended with status 'fail'" in status["error"]
 
 

@@ -188,7 +188,7 @@ class _AgentService:
 
     Ax ``Client`` is not thread-safe. Requests share ``lock``; endpoints that mutate the optimizer
     also require that no operation is running, because the queueserver runner calls the optimizer
-    from its document-listener thread.
+    from its own thread when a run completes.
     """
 
     def __init__(self, agent: QueueserverAgent) -> None:
@@ -258,8 +258,8 @@ def create_app(agent: QueueserverAgent) -> FastAPI:
     """
     Create a FastAPI application that serves one queueserver agent.
 
-    Shutting the application down stops the agent's optimization loop. Plans already queued on the
-    queueserver are left to finish.
+    Shutting the application down stops the agent's optimization loop. The agent's plan is removed
+    from the queue if it has not started; a running plan finishes.
 
     Parameters
     ----------
@@ -310,7 +310,7 @@ def create_app(agent: QueueserverAgent) -> FastAPI:
 
     @app.post("/stop")
     def stop() -> AgentStatus:
-        """Stop submitting new plans. An acquisition already on the queueserver still runs."""
+        """Stop submitting new plans. A queued plan is removed; a running one finishes and is ingested."""
         return service.stop()
 
     @app.post("/suggest")

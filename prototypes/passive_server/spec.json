@@ -1,0 +1,14 @@
+{
+  "queueserver": "tst",
+  "dofs": [{"name": "dcm_c2-pitch", "actuator": "dcm_c2.pitch", "bounds": [-1e-4, 1e-4]}],
+  "objectives": [{"name": "diag2_total"}],
+  "sensors": ["diag2"],
+  "acquisition_plan": {"name": "adaptive_acquire"},
+  "evaluation": {
+    "name": "image-metrics",
+    "params": {"screens": [{"image_key": "diag2_image", "prefix": "diag2", "metrics": ["total"]}]}
+  },
+  "context": {"name": "baseline-signals", "params": {"signals": ["dcm_c1-pitch"]}},
+  "ingestion": {"name": "bluesky-scans"},
+  "optimizer": {"name": "mlp-sgd", "options": {"seed": 0}}
+}

@@ -18,6 +18,13 @@ OptimizationResult
    :members:
    :undoc-members:
 
+IterationRecord
+---------------
+
+.. autoclass:: bluesky_adaptive.queueserver.IterationRecord
+   :members:
+   :undoc-members:
+
 QueueserverClient
 -----------------
 
@@ -33,3 +40,25 @@ QueueserverOptimizationRunner
    :members:
    :undoc-members:
    :show-inheritance:
+
+Completed runs
+--------------
+
+.. automodule:: bluesky_adaptive.runs
+
+.. autodata:: bluesky_adaptive.runs.CORRELATION_UID_KEY
+
+.. autoclass:: bluesky_adaptive.runs.CompletedRun
+   :members:
+
+.. autoclass:: bluesky_adaptive.runs.RunFeed
+   :members:
+
+.. autoclass:: bluesky_adaptive.runs.DocumentStreamFeed
+   :members:
+
+.. autoclass:: bluesky_adaptive.runs.TiledRunFeed
+   :members:
+
+.. autoclass:: bluesky_adaptive.runs.RunRouter
+   :members:

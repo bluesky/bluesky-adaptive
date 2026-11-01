@@ -122,6 +122,42 @@ class Checkpointable(Protocol):
 
 
 @runtime_checkable
+class ContextAware(Protocol):
+    """
+    A protocol for optimizers that suggest points under a given context.
+
+    Context describes conditions the optimizer does not control, as a mapping of feature name to value
+    (for example, the position of an upstream motor that other users move). A context-aware optimizer
+    models outcomes as a function of its DOFs and of the context features.
+
+    Points ingested by a context-aware optimizer carry the context features as keys, next to the DOF
+    values and outcomes. This mirrors Ax, where context is a parameter held fixed while suggesting.
+
+    The capability is a separate method rather than an argument to :meth:`Optimizer.suggest`, because
+    ``runtime_checkable`` protocols only check that a method exists.
+    """
+
+    def suggest_in_context(self, context: Mapping[str, Any], num_points: int | None = None) -> Sequence[Mapping]:
+        """
+        Suggest points to evaluate next, given the current context.
+
+        Parameters
+        ----------
+        context : Mapping[str, Any]
+            Context feature values, keyed by feature name.
+        num_points : int | None, optional
+            The number of points to suggest. If not provided, will default to 1.
+
+        Returns
+        -------
+        Sequence[Mapping]
+            Suggested parameterizations, as for :meth:`Optimizer.suggest`. Context features are not
+            part of a suggestion.
+        """
+        ...
+
+
+@runtime_checkable
 class Optimizer(Protocol):
     """
     A minimal optimizer interface for optimization.
@@ -235,6 +271,36 @@ class EvaluationFunction(Protocol[_TUid_contra]):
             A sequence of mappings containing the outcomes of the acquisition, one for each
             suggested parameterization. Each mapping must contain an ``"_id"`` identifying
             its evaluated suggestion.
+        """
+        ...
+
+
+@runtime_checkable
+class ContextFunction(Protocol[_TUid_contra]):
+    """
+    A protocol for deriving context features from an acquisition.
+
+    Context is a condition recorded with the acquisition itself, so each acquisition is a
+    self-contained training point for a :class:`ContextAware` optimizer.
+
+    See Also
+    --------
+    ContextAware : Optimizers that consume the features.
+    """
+
+    def __call__(self, uid: _TUid_contra) -> Mapping[str, Any]:
+        """
+        Return the context features recorded with an acquisition.
+
+        Parameters
+        ----------
+        uid : _TUid_contra
+            The acquisition UID, for example a Bluesky run UID.
+
+        Returns
+        -------
+        Mapping[str, Any]
+            Context feature values, keyed by feature name.
         """
         ...
 
@@ -382,6 +448,10 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
         The plan must match the arguments of :class:`AcquisitionPlan`.
     acquisition_plan_kwargs: Mapping[str, Any], optional
         Additional plan arguments to pass to the Bluesky plan.
+    context_function: ContextFunction[str], optional
+        Derives context features from a Bluesky run UID. When given, the optimizer must be
+        :class:`ContextAware`: the runner suggests in the context of a run and ingests points that
+        carry the context features of the run they were measured in.
 
     See Also
     --------
@@ -392,3 +462,4 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
     """
 
     acquisition_plan_kwargs: Mapping[str, Any] | None = None
+    context_function: ContextFunction[str] | None = None
