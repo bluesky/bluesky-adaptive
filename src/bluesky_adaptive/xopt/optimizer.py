@@ -9,6 +9,7 @@ from typing import Any
 import pandas as pd
 from xopt import VOCS
 from xopt.generator import Generator
+from xopt.pydantic import orjson_dumps_except_root
 from xopt.vocs import FeasibilityError, random_inputs, select_best
 
 from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer, TrialFaultAware
@@ -253,7 +254,9 @@ class XoptOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaul
             "generator": {
                 "class": self._generator.__class__.__name__,
                 "module": self._generator.__class__.__module__,
-                "state": self._generator.model_dump(),
+                # model_dump leaves a fitted torch module in place. Plain JSON
+                # then stores its repr, which restore cannot load.
+                "state": orjson_dumps_except_root(self._generator, serialize_torch=True, serialize_inline=True),
                 "data": (
                     self._generator.data.to_dict(orient="records")
                     if isinstance(self._generator.data, pd.DataFrame)

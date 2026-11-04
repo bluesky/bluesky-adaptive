@@ -3,6 +3,7 @@ from collections.abc import Callable
 import numpy as np
 import pandas as pd
 import pytest
+import torch
 from bluesky.run_engine import RunEngine
 from xopt.generators.bayesian import ExpectedImprovementGenerator
 from xopt.generators.random import RandomGenerator
@@ -203,6 +204,34 @@ def test_xopt_optimizer_checkpoint_no_path():
 
     with pytest.raises(ValueError):
         optimizer.checkpoint()
+
+
+def test_xopt_optimizer_checkpoint_restores_fitted_bayesian_model(tmp_path):
+    vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives={"y": "MINIMIZE"})
+    checkpoint_path = tmp_path / "xopt_bo.json"
+    optimizer = _bo_optimizer(vocs, checkpoint_path=str(checkpoint_path))
+    optimizer.ingest(
+        [
+            {"x": 0.0, "y": (0.0 - 0.25) ** 2},
+            {"x": 0.5, "y": (0.5 - 0.25) ** 2},
+            {"x": 1.0, "y": (1.0 - 0.25) ** 2},
+        ]
+    )
+    suggestion = optimizer.suggest(1)[0]
+    x_val = float(suggestion["x"])
+    optimizer.ingest([{"_id": suggestion["_id"], "y": (x_val - 0.25) ** 2}])
+    assert isinstance(optimizer.generator.model, torch.nn.Module)
+
+    optimizer.checkpoint()
+
+    recovered = XoptOptimizer.from_checkpoint(str(checkpoint_path))
+    assert isinstance(recovered.generator.model, torch.nn.Module)
+    assert recovered.generator.data is not None
+    assert len(recovered.generator.data) == len(optimizer.generator.data)
+    best_points = recovered.get_best_points()
+    assert len(best_points) == 1
+    assert float(best_points[0][2]["y"]) <= (0.0 - 0.25) ** 2
+    recovered.suggest(1)
 
 
 def test_xopt_optimizer_get_best_points_single_objective_minimize(optimizer_factory: Callable[[VOCS], XoptOptimizer]):
