@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Your first Scipy optimization with Bluesky Adaptive &#8212; Bluesky Adaptive 1.0.0 documentation</title>
+    <title>Your first Scipy optimization with Bluesky Adaptive &#8212; Bluesky Adaptive 1.0.1.dev2 documentation</title>
   
   
   
@@ -26,8 +26,8 @@
   </noscript>
   
   <!-- Loaded before other Sphinx assets -->
-  <link href="../_static/styles/theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
-<link href="../_static/styles/pydata-sphinx-theme.css?digest=18bd87630a240e9c25be" rel="stylesheet" />
+  <link href="../_static/styles/theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=75c7c72ae941e8b558d8" rel="stylesheet" />
 
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=03e43079" />
     <link rel="stylesheet" type="text/css" href="../_static/plot_directive.css" />
@@ -37,19 +37,19 @@
     <link rel="stylesheet" type="text/css" href="../_static/css/styles.css?v=a24eef6b" />
   
   <!-- So that users can add custom icons -->
-  <script defer src="../_static/scripts/fontawesome.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="../_static/scripts/fontawesome.js?digest=75c7c72ae941e8b558d8"></script>
   <!-- Pre-loaded scripts that we'll load fully later -->
-  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be" />
-<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be" />
+  <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
+<link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=8d563738"></script>
+    <script src="../_static/documentation_options.js?v=6c492ee8"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
     <script src="../_static/copybutton.js?v=f281be69"></script>
     <script>DOCUMENTATION_OPTIONS.pagename = 'tutorials/gradient-optimization';</script>
     <script>
-        DOCUMENTATION_OPTIONS.theme_version = '0.23.0';
+        DOCUMENTATION_OPTIONS.theme_version = '0.24.0';
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://blueskyproject.io/bluesky-adaptive/switcher.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = 'main';
         DOCUMENTATION_OPTIONS.show_version_warning_banner =
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.0" />
+  <meta name="docsearch:version" content="1.0.1.dev2" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -113,7 +113,7 @@
   
     <header id="pst-header" class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
 <div class="bd-header__inner bd-page-width">
-  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+  <button type="button" class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation" aria-expanded="false" aria-controls="pst-primary-sidebar-modal">
     <span class="fa-solid fa-bars"></span>
   </button>
   
@@ -248,14 +248,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
       
@@ -301,7 +301,7 @@
   
 
   
-    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+    <button type="button" class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page" aria-expanded="false" aria-controls="pst-secondary-sidebar-modal">
       <span class="fa-solid fa-outdent"></span>
     </button>
   
@@ -315,7 +315,7 @@
       
       
       
-      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <dialog id="pst-primary-sidebar-modal" tabindex="-1"></dialog>
       <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
         
 
@@ -393,14 +393,14 @@
 
 <div class="theme-switch-container dropdown pst-js-only" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Color mode">
   <button type="button" class="btn btn-sm nav-link pst-navbar-icon theme-switch-button dropdown-toggle" aria-label="Color mode" data-bs-toggle="dropdown">
-    <i class="theme-switch fa-solid fa-sun fa-lg fa-fw" data-mode="light" title="Light"></i>
-    <i class="theme-switch fa-solid fa-moon fa-lg fa-fw" data-mode="dark" title="Dark"></i>
-    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg fa-fw" data-mode="auto" title="System Settings"></i>
+    <i class="theme-switch fa-solid fa-sun fa-lg" data-mode="light" title="Light"></i>
+    <i class="theme-switch fa-solid fa-moon fa-lg" data-mode="dark" title="Dark"></i>
+    <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto" title="System Settings"></i>
   </button>
   <ul class="dropdown-menu dropdown-menu-end">
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg fa-fw me-1"></i>System Settings</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg fa-fw me-1"></i>Light</button></li>
-    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg fa-fw me-1"></i>Dark</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="auto"><i class="fa-solid fa-circle-half-stroke fa-lg me-1"></i>System Settings</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="light"><i class="fa-solid fa-sun fa-lg me-1"></i>Light</button></li>
+    <li><button type="button" class="dropdown-item d-flex align-items-center theme-change-button" data-mode="dark"><i class="fa-solid fa-moon fa-lg me-1"></i>Dark</button></li>
   </ul>
 </div></div>
         
@@ -490,7 +490,7 @@
     
     <li class="breadcrumb-item breadcrumb-home">
       <a href="../index.html" class="nav-link" aria-label="Home">
-        <i class="fa-solid fa-home"></i>
+        <i class="fa-solid fa-house"></i>
       </a>
     </li>
     
@@ -693,7 +693,7 @@
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Actuators  </span>x1, x2                                                                                               <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Sensors    </span>N/A                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Iterations </span>10                                                                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
-<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>4e04db0a-e485-4f53-ae95-c86d50dade7e                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>bea00800-683d-45ba-b807-6e14617f4381                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -768,17 +768,17 @@
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #008000; text-decoration-color: #008000">────────────────────────────────────────────── </span><span style="font-weight: bold">Optimization Complete</span><span style="color: #008000; text-decoration-color: #008000"> ──────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>('4e04db0a-e485-4f53-ae95-c86d50dade7e',
- 'b474c12b-e8a8-46cb-b394-5a3227ce64d4',
- 'ce2cf6d3-e600-4ae8-b594-890e19c9de2d',
- 'bda92c29-2a10-486b-ab6a-7d66d5bb5610',
- '494fa66e-6e73-40c7-9189-3d87d607dd2c',
- '997acc2d-f7e5-4d7f-8a08-ade9085b90b7',
- 'f834eb93-8646-45f8-a609-2fc978d7a672',
- '33ee4600-9513-40f2-b80b-e0258e8847c2',
- 'f799e1b6-187a-4543-8670-c7a36f476cca',
- 'd52de7d8-cf1c-442f-9eb8-3f58520022b3',
- '8633fbae-61b2-4718-866c-838acc7ae06a')
+</div><div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>('bea00800-683d-45ba-b807-6e14617f4381',
+ 'f01625d0-ef44-4303-9bed-c6f8070078c1',
+ 'b96f6422-8973-4992-a021-8816221b3897',
+ '28629f9b-78fa-442e-9d9c-61bb6410063e',
+ '1e687a3b-5203-4d01-b509-21fd6bb9f1af',
+ 'ddf67958-f0b7-43ea-892e-dab3bf5084e2',
+ 'c7b44f44-09da-477e-8001-ac83ca3e7460',
+ '59b2e08e-6ac1-48e2-abb4-a3c485b966d7',
+ '4f9684e6-7584-428c-8c5a-8626a42b76dc',
+ '67650ecc-f290-4f8c-b736-5dcd9e7d376b',
+ '6afaf3bf-c0aa-46d7-b742-6e62f8b879d1')
 </pre></div>
 </div>
 </div>
@@ -806,7 +806,7 @@
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Actuators  </span>x1, x2                                                                                               <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Sensors    </span>N/A                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Iterations </span>20  <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Points/iter </span>2                                                                                    <span style="color: #000080; text-decoration-color: #000080">│</span>
-<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>98933927-1f2c-482a-aec9-e015ad3da675                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>c7a64066-2df9-4f3e-afff-bb6019764884                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -819,15 +819,15 @@
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 1                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.78425 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   4.05703 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   140.554 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 1                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                 -0.0450966 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                -0.0450966 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   171.554 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 2                          </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.0277337 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.30051 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   78.4899 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 2                          </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.97586 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -4.7554 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   449.853 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 3                          </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.56062 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.30051 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   5.31881 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 3                          </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.63142 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -4.7554 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   366.958 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/bluesky-adaptive/bluesky-adaptive/.pixi/envs/docs/lib/python3.13/site-packages/scipy/optimize/_dual_annealing.py:434: OptimizeWarning: Unknown solver options: max_iter
@@ -835,142 +835,142 @@
 </pre></div>
 </div>
 <div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 4                          </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.56062 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   4.21186 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   176.953 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 4                          </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.63142 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.408813 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   134.524 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">──────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">20</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>5.31881<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>176.953<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>114.263
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>134.524<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>449.853<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>258.578
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (5 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 5                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.56062 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.30051 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   5.31881 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 5                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.63142 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.408813 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   134.524 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 6                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.66062 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.30051 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   3.53448 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 6                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.53142 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.408813 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   137.957 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 7                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.56062 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.40051 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   5.92322 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 7                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.63142 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.508813 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   131.403 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 8                          </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -3.74354 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   249.534 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 8                          </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                       530 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 10                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -3.64354 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   234.391 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 10                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                       -4.9 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                    495.97 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">──────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">9</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">20</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>3.53448<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>249.534<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>107.002
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>131.403<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>272.274
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (10 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 9                          </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                        4.9 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -3.74354 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   227.813 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 9                          </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                       4.9 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                    501.45 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 11                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.30038 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.467611 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   12.2468 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 11                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.77899 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.97289 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   36.3547 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 12                         </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.30038 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.567611 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   11.6188 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 12                         </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.77899 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.07289 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   31.5042 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 13                         </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.40038 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.467611 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   12.4922 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 13                         </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.67899 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.97289 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   36.9091 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 14                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.75479 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.8194 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   3.40774 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 14                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.49349 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.94672 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                     20.51 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">──────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">12</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">20</span><span style="color: #000080; text-decoration-color: #000080"> ────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>3.40774<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>249.534<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>89.1731
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>20.51<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>223.298
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (15 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 15                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.75479 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.9194 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   2.54004 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 15                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.49349 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.04672 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   19.5394 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 16                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.85479 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.8194 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   1.75965 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 16                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.39349 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.94672 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   14.9143 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 17                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.35689 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.94131 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   4.89997 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 17                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.59727 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.00976 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   1.83864 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 18                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.35689 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.04131 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   5.61062 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 18                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.59727 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.10976 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   1.31506 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 19                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.45689 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.94131 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   8.41109 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 19                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.49727 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.00976 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   3.26841 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">──────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">15</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">20</span><span style="color: #000080; text-decoration-color: #000080"> ────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.75965<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>249.534<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>68.0409
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.31506<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>169.517
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (20 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 20                         </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.04251 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.87766 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.204622 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 20                         </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.79436 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.31453 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                    1.4354 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 21                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.04251 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.97766 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                 0.0571462 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 21                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.69436 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.31453 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   1.85003 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 22                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.14251 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.87766 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.677184 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 22                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.79436 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.41453 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   3.52668 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 23                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                     2.9524 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.96613 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.133724 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 23                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.68452 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.14468 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.462595 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 24                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                     2.9524 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.06613 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                 0.0961485 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 24                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.58452 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.14468 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                    1.4747 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">──────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">19</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">20</span><span style="color: #000080; text-decoration-color: #000080"> ────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>0.0571462<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>249.534<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>54.4794
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>0.462595<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>135.964
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (25 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 25                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                     3.0524 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.96613 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                 0.0869555 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 25                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.68452 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.24468 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   1.01242 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 26                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.95604 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.97523 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.102429 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 26                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.94103 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.05803 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.848323 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">                             Summary Statistics                              </span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┏━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━┓</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Name          </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Type    </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">       Min </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Max </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">    Mean </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Std </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Count </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┡━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━╇━━━━━━━┩</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x1           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>         0 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>       5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 2.93674 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 1.12113 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    27 │</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x2           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>  -3.74354 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 4.21186 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 1.31231 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 2.01503 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    27 │</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ outcome │</span> 0.0571462 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 249.534 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 50.4509 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 84.8537 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    27 │</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">└───────────────┴─────────┴───────────┴─────────┴─────────┴─────────┴───────┘</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┏━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━┓</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Name          </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Type    </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">      Min </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Max </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Mean </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Std </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Count </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┡━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━┩</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x1           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>       -5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 1.97586 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> -2.46345 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 1.49293 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    27 │</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x2           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>  -4.7554 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>       5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>  1.99271 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 2.42259 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    27 │</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ outcome │</span> 0.462595 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>     530 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>  125.961 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 177.865 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    27 │</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">└───────────────┴─────────┴──────────┴─────────┴──────────┴─────────┴───────┘</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #008000; text-decoration-color: #008000">────────────────────────────────────────────── </span><span style="font-weight: bold">Optimization Complete</span><span style="color: #008000; text-decoration-color: #008000"> ──────────────────────────────────────────────</span>
 </pre>
@@ -1004,7 +1004,7 @@
 <div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Text(0.5, 1.0, "Visualizing Scipy's traversal of Himmelblau")
 </pre></div>
 </div>
-<a class="reference internal image-reference" href="../_images/4d287fd35b8058c7dd1020150b3e79331dceebb688613f10f4d49d14b9f7643d.png"><img alt="../_images/4d287fd35b8058c7dd1020150b3e79331dceebb688613f10f4d49d14b9f7643d.png" class="align-center" src="../_images/4d287fd35b8058c7dd1020150b3e79331dceebb688613f10f4d49d14b9f7643d.png" style="width: 100%;" />
+<a class="reference internal image-reference" href="../_images/55b4c17aebb7595ba0774578ffb91fc75161ce51d8cd620272df383828463748.png"><img alt="../_images/55b4c17aebb7595ba0774578ffb91fc75161ce51d8cd620272df383828463748.png" class="align-center" src="../_images/55b4c17aebb7595ba0774578ffb91fc75161ce51d8cd620272df383828463748.png" style="width: 100%;" />
 </a>
 </div>
 </div>
@@ -1034,12 +1034,12 @@
   <thead>
     <tr style="text-align: right;">
       <th></th>
-      <th>x2</th>
-      <th>suggestion_ids</th>
       <th>himmelblau_2d</th>
+      <th>iteration</th>
       <th>x1</th>
       <th>acquisition_uid</th>
-      <th>iteration</th>
+      <th>x2</th>
+      <th>suggestion_ids</th>
     </tr>
     <tr>
       <th>time</th>
@@ -1053,247 +1053,247 @@
   </thead>
   <tbody>
     <tr>
-      <th>1.793050e+09</th>
-      <td>0.000000</td>
-      <td>0</td>
+      <th>1.793912e+09</th>
       <td>170.000000</td>
+      <td>0</td>
       <td>0.000000</td>
-      <td>017effa8-1468-4758-93c3-ee2012bd6575</td>
+      <td>4c68a4db-38ab-4124-9d5a-4f76e3b14284</td>
+      <td>0.000000</td>
       <td>0</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>4.057027</td>
+      <th>1.793912e+09</th>
+      <td>171.553972</td>
       <td>1</td>
-      <td>140.554395</td>
-      <td>1.784252</td>
-      <td>38f94bc3-1cde-4660-abf7-9c235527aeb0</td>
+      <td>-0.045097</td>
+      <td>887fa00b-889c-4906-948b-049aa5dbd05f</td>
+      <td>-0.045097</td>
       <td>1</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>2.300509</td>
+      <th>1.793912e+09</th>
+      <td>449.852986</td>
       <td>2</td>
-      <td>78.489919</td>
-      <td>0.027734</td>
-      <td>97807c78-c19d-4177-8844-51bc5b1893dc</td>
+      <td>1.975863</td>
+      <td>4768af2f-f41a-4c6b-bbe5-ef7a6fb73e04</td>
+      <td>-4.755402</td>
       <td>2</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>2.300509</td>
+      <th>1.793912e+09</th>
+      <td>366.958302</td>
       <td>3</td>
-      <td>5.318810</td>
-      <td>2.560618</td>
-      <td>527a1610-af28-4384-a24b-95c2bbe05d7f</td>
+      <td>-1.631416</td>
+      <td>b517c3c5-9225-4cd1-b5ee-41080ce7dd2a</td>
+      <td>-4.755402</td>
       <td>3</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>4.211857</td>
+      <th>1.793912e+09</th>
+      <td>134.523826</td>
       <td>4</td>
-      <td>176.953074</td>
-      <td>2.560618</td>
-      <td>688a68a5-ac5d-49e7-959e-0797e48be1c8</td>
+      <td>-1.631416</td>
+      <td>0166df40-4b73-4edb-86c1-92b4ce70f220</td>
+      <td>0.408813</td>
       <td>4</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>2.300509</td>
+      <th>1.793912e+09</th>
+      <td>134.523826</td>
       <td>5</td>
-      <td>5.318810</td>
-      <td>2.560618</td>
-      <td>5ad9e3d0-3178-454c-83fb-765d13ccec90</td>
+      <td>-1.631416</td>
+      <td>8bdcf474-d6f2-4f2f-b6fa-95c0de615b59</td>
+      <td>0.408813</td>
       <td>5</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>2.300509</td>
+      <th>1.793912e+09</th>
+      <td>137.957046</td>
       <td>6</td>
-      <td>3.534480</td>
-      <td>2.660618</td>
-      <td>9c76870d-0280-434f-aea3-faf1bfe4243f</td>
+      <td>-1.531416</td>
+      <td>f070cfaf-0a8f-4a61-a04a-b45442817f69</td>
+      <td>0.408813</td>
       <td>6</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>2.400509</td>
+      <th>1.793912e+09</th>
+      <td>131.402904</td>
+      <td>6</td>
+      <td>-1.631416</td>
+      <td>f070cfaf-0a8f-4a61-a04a-b45442817f69</td>
+      <td>0.508813</td>
       <td>7</td>
-      <td>5.923215</td>
-      <td>2.560618</td>
-      <td>9c76870d-0280-434f-aea3-faf1bfe4243f</td>
-      <td>6</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>-3.743542</td>
-      <td>8</td>
-      <td>249.533730</td>
+      <th>1.793912e+09</th>
+      <td>530.000000</td>
+      <td>7</td>
+      <td>-5.000000</td>
+      <td>3284221b-850d-48d4-aac2-c9b217ab4aa2</td>
       <td>5.000000</td>
-      <td>bd50602b-be84-4f3c-843b-1b1fd516b042</td>
-      <td>7</td>
+      <td>8</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>-3.643542</td>
+      <th>1.793912e+09</th>
+      <td>495.970100</td>
+      <td>8</td>
+      <td>-4.900000</td>
+      <td>6ac4c405-94d8-46a2-97c9-f2c8617ffe89</td>
+      <td>5.000000</td>
       <td>10</td>
-      <td>234.390865</td>
-      <td>5.000000</td>
-      <td>ff602c73-6581-48ad-a1f5-e0d5f22ce09b</td>
-      <td>8</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>-3.743542</td>
-      <td>9</td>
-      <td>227.813222</td>
+      <th>1.793912e+09</th>
+      <td>501.450100</td>
+      <td>8</td>
+      <td>-5.000000</td>
+      <td>6ac4c405-94d8-46a2-97c9-f2c8617ffe89</td>
       <td>4.900000</td>
-      <td>ff602c73-6581-48ad-a1f5-e0d5f22ce09b</td>
-      <td>8</td>
-    </tr>
-    <tr>
-      <th>1.793050e+09</th>
-      <td>0.467611</td>
-      <td>11</td>
-      <td>12.246776</td>
-      <td>3.300377</td>
-      <td>58bd887b-29e7-415a-9fa6-2ba9f3e1ecbe</td>
       <td>9</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>0.567611</td>
-      <td>12</td>
-      <td>11.618799</td>
-      <td>3.300377</td>
-      <td>fc4fa361-4801-4e5e-abf6-a15a855e14c0</td>
-      <td>10</td>
-    </tr>
-    <tr>
-      <th>1.793050e+09</th>
-      <td>0.467611</td>
-      <td>13</td>
-      <td>12.492169</td>
-      <td>3.400377</td>
-      <td>fc4fa361-4801-4e5e-abf6-a15a855e14c0</td>
-      <td>10</td>
-    </tr>
-    <tr>
-      <th>1.793050e+09</th>
-      <td>1.819403</td>
-      <td>14</td>
-      <td>3.407740</td>
-      <td>2.754793</td>
-      <td>ff613496-7214-42a1-b48f-61cd82cbd912</td>
+      <th>1.793912e+09</th>
+      <td>36.354687</td>
+      <td>9</td>
+      <td>-2.778986</td>
+      <td>97e733fb-2159-40de-8b8b-2cf54d6437ba</td>
+      <td>1.972885</td>
       <td>11</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>1.919403</td>
-      <td>15</td>
-      <td>2.540043</td>
-      <td>2.754793</td>
-      <td>7eea6aab-01af-429a-8a25-b5879b7266a6</td>
+      <th>1.793912e+09</th>
+      <td>31.504244</td>
+      <td>10</td>
+      <td>-2.778986</td>
+      <td>bdaa4eb1-95fe-4e38-b2e0-e53b634b0fef</td>
+      <td>2.072885</td>
       <td>12</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>1.819403</td>
-      <td>16</td>
-      <td>1.759647</td>
-      <td>2.854793</td>
-      <td>7eea6aab-01af-429a-8a25-b5879b7266a6</td>
-      <td>12</td>
-    </tr>
-    <tr>
-      <th>1.793050e+09</th>
-      <td>1.941314</td>
-      <td>17</td>
-      <td>4.899971</td>
-      <td>3.356890</td>
-      <td>baa75ec2-9b2b-4f9f-8d66-2e054be53e13</td>
+      <th>1.793912e+09</th>
+      <td>36.909060</td>
+      <td>10</td>
+      <td>-2.678986</td>
+      <td>bdaa4eb1-95fe-4e38-b2e0-e53b634b0fef</td>
+      <td>1.972885</td>
       <td>13</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>2.041314</td>
-      <td>18</td>
-      <td>5.610623</td>
-      <td>3.356890</td>
-      <td>401316e0-abc4-43c5-b4b7-0d0eca6df7d5</td>
+      <th>1.793912e+09</th>
+      <td>20.509991</td>
+      <td>11</td>
+      <td>-3.493495</td>
+      <td>61bdf413-7f73-449a-8af4-48f4701037dc</td>
+      <td>2.946719</td>
       <td>14</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>1.941314</td>
-      <td>19</td>
-      <td>8.411085</td>
-      <td>3.456890</td>
-      <td>401316e0-abc4-43c5-b4b7-0d0eca6df7d5</td>
-      <td>14</td>
-    </tr>
-    <tr>
-      <th>1.793050e+09</th>
-      <td>1.877659</td>
-      <td>20</td>
-      <td>0.204622</td>
-      <td>3.042508</td>
-      <td>1751cb96-3f96-460c-b6df-7853bd6facc8</td>
+      <th>1.793912e+09</th>
+      <td>19.539415</td>
+      <td>12</td>
+      <td>-3.493495</td>
+      <td>b3eee142-c596-4c51-bc62-0ea17fe530b3</td>
+      <td>3.046719</td>
       <td>15</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>1.977659</td>
-      <td>21</td>
-      <td>0.057146</td>
-      <td>3.042508</td>
-      <td>b6be6ea5-1dbe-4788-8d32-1b1dce41ca92</td>
+      <th>1.793912e+09</th>
+      <td>14.914343</td>
+      <td>12</td>
+      <td>-3.393495</td>
+      <td>b3eee142-c596-4c51-bc62-0ea17fe530b3</td>
+      <td>2.946719</td>
       <td>16</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>1.877659</td>
-      <td>22</td>
-      <td>0.677184</td>
-      <td>3.142508</td>
-      <td>b6be6ea5-1dbe-4788-8d32-1b1dce41ca92</td>
-      <td>16</td>
-    </tr>
-    <tr>
-      <th>1.793050e+09</th>
-      <td>1.966129</td>
-      <td>23</td>
-      <td>0.133724</td>
-      <td>2.952399</td>
-      <td>ef7aedcc-f2a2-4ecf-b5ec-73a53054def5</td>
+      <th>1.793912e+09</th>
+      <td>1.838643</td>
+      <td>13</td>
+      <td>-2.597272</td>
+      <td>c3a1848c-06dd-4df7-baf5-4587c9dd7117</td>
+      <td>3.009764</td>
       <td>17</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>2.066129</td>
-      <td>24</td>
-      <td>0.096148</td>
-      <td>2.952399</td>
-      <td>ceb0036e-8765-4ec2-8ad4-d851ee9cc9c0</td>
+      <th>1.793912e+09</th>
+      <td>1.315062</td>
+      <td>14</td>
+      <td>-2.597272</td>
+      <td>a0071f32-5f87-455d-b5da-566394cbb4f1</td>
+      <td>3.109764</td>
       <td>18</td>
     </tr>
     <tr>
-      <th>1.793050e+09</th>
-      <td>1.966129</td>
-      <td>25</td>
-      <td>0.086956</td>
-      <td>3.052399</td>
-      <td>ceb0036e-8765-4ec2-8ad4-d851ee9cc9c0</td>
-      <td>18</td>
-    </tr>
-    <tr>
-      <th>1.793050e+09</th>
-      <td>1.975230</td>
-      <td>26</td>
-      <td>0.102429</td>
-      <td>2.956039</td>
-      <td>7d60f284-7d86-495b-875e-3bccaea708ca</td>
+      <th>1.793912e+09</th>
+      <td>3.268411</td>
+      <td>14</td>
+      <td>-2.497272</td>
+      <td>a0071f32-5f87-455d-b5da-566394cbb4f1</td>
+      <td>3.009764</td>
       <td>19</td>
+    </tr>
+    <tr>
+      <th>1.793912e+09</th>
+      <td>1.435405</td>
+      <td>15</td>
+      <td>-2.794358</td>
+      <td>87f9b040-81dd-4b7f-bf86-2c89d9dd6a28</td>
+      <td>3.314531</td>
+      <td>20</td>
+    </tr>
+    <tr>
+      <th>1.793912e+09</th>
+      <td>1.850029</td>
+      <td>16</td>
+      <td>-2.694358</td>
+      <td>cb742dd8-c2b4-46e4-b270-aad2d34dc97a</td>
+      <td>3.314531</td>
+      <td>21</td>
+    </tr>
+    <tr>
+      <th>1.793912e+09</th>
+      <td>3.526682</td>
+      <td>16</td>
+      <td>-2.794358</td>
+      <td>cb742dd8-c2b4-46e4-b270-aad2d34dc97a</td>
+      <td>3.414531</td>
+      <td>22</td>
+    </tr>
+    <tr>
+      <th>1.793912e+09</th>
+      <td>0.462595</td>
+      <td>17</td>
+      <td>-2.684520</td>
+      <td>e864bba9-0fe7-497e-955d-5b80d15d4448</td>
+      <td>3.144681</td>
+      <td>23</td>
+    </tr>
+    <tr>
+      <th>1.793912e+09</th>
+      <td>1.474698</td>
+      <td>18</td>
+      <td>-2.584520</td>
+      <td>2ab424b2-4d3e-4ffe-87f4-6ab48b5bb6bd</td>
+      <td>3.144681</td>
+      <td>24</td>
+    </tr>
+    <tr>
+      <th>1.793912e+09</th>
+      <td>1.012424</td>
+      <td>18</td>
+      <td>-2.684520</td>
+      <td>2ab424b2-4d3e-4ffe-87f4-6ab48b5bb6bd</td>
+      <td>3.244681</td>
+      <td>25</td>
+    </tr>
+    <tr>
+      <th>1.793912e+09</th>
+      <td>0.848323</td>
+      <td>19</td>
+      <td>-2.941031</td>
+      <td>4965a142-e84e-4976-89bc-e458f94f0bf7</td>
+      <td>3.058029</td>
+      <td>26</td>
     </tr>
   </tbody>
 </table>
@@ -1306,7 +1306,7 @@
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[25, {'x1': np.float64(2.9560387532187553), 'x2': np.float64(1.9752296429882843)}, {'himmelblau_2d': np.float64(0.13372377997935608)}]
+<div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[25, {'x1': np.float64(-2.9410305801672716), 'x2': np.float64(3.0580289751192145)}, {'himmelblau_2d': np.float64(0.46259472033485893)}]
 </pre></div>
 </div>
 </div>
@@ -1363,7 +1363,7 @@
             
             
               
-                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <dialog id="pst-secondary-sidebar-modal" tabindex="-1"></dialog>
                 <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
 
 
@@ -1416,8 +1416,8 @@
   </div>
   
   <!-- Scripts loaded after <body> so the DOM is not blocked -->
-  <script defer src="../_static/scripts/bootstrap.js?digest=18bd87630a240e9c25be"></script>
-<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=18bd87630a240e9c25be"></script>
+  <script defer src="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8"></script>
+<script defer src="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8"></script>
 
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
@@ -1450,7 +1450,7 @@
         <div class="footer-item">
 <p class="theme-version">
   <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
-  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.23.0.
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.24.0.
 </p></div>
       
     </div>
