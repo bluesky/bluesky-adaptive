@@ -18,6 +18,24 @@ OptimizationResult
    :members:
    :undoc-members:
 
+AcquisitionRequest
+------------------
+
+.. autoclass:: bluesky_adaptive.queueserver.AcquisitionRequest
+   :members:
+
+IterationRecord
+---------------
+
+.. autoclass:: bluesky_adaptive.queueserver.IterationRecord
+   :members:
+
+QueueItemResult
+---------------
+
+.. autoclass:: bluesky_adaptive.queueserver.QueueItemResult
+   :members:
+
 QueueserverClient
 -----------------
 

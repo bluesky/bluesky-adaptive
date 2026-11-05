@@ -1,13 +1,16 @@
 """An optimizer protocol implementation for Ax."""
 
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, Literal
 
 from ax import ChoiceParameterConfig, Client, RangeParameterConfig, TOutcome, TParameterization
+from ax.api.utils.generation_strategy_dispatch import choose_generation_strategy
+from ax.api.utils.structs import GenerationStrategyDispatchStruct
 from ax.core import MultiObjectiveOptimizationConfig
 from ax.core.parameter import ChoiceParameter, RangeParameter
 from ax.core.types import TParamValue
 from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
+from botorch.acquisition import AcquisitionFunction
 
 from ..protocols import ID_KEY, CanRegisterSuggestions, Checkpointable, Optimizer, SupportsStoppingCriteria, TrialFaultAware
 
@@ -143,6 +146,48 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultA
                 f"Unknown parameter(s): {sorted(unknown_parameter_names)}, expected: {sorted(self._parameter_names)}"
             )
         self._fixed_parameters = dict(fixed_parameters)
+
+    def configure_generation_strategy(
+        self,
+        method: Literal["fast", "quality", "random_search"] = "fast",
+        *,
+        acquisition_function: type[AcquisitionFunction] | None = None,
+        initialization_budget: int | None = None,
+        initialization_random_seed: int | None = None,
+    ) -> None:
+        """
+        Choose how Ax generates suggestions.
+
+        Replaces the generation strategy Ax chooses by default. Configure the strategy
+        before the first suggestion.
+
+        Parameters
+        ----------
+        method : {"fast", "quality", "random_search"}, optional
+            The Ax generation method. ``"fast"`` uses Ax's default Bayesian optimization model,
+            ``"quality"`` a slower, fully Bayesian model, and ``"random_search"`` quasi-random
+            Sobol sampling only. Default is ``"fast"``.
+        acquisition_function : type[botorch.acquisition.AcquisitionFunction] | None, optional
+            The BoTorch acquisition function class for the Bayesian optimization phase, for example
+            ``botorch.acquisition.qLogNoisyExpectedImprovement``. If not given, Ax chooses one.
+        initialization_budget : int | None, optional
+            The number of quasi-random trials before Bayesian optimization starts. If not given, Ax chooses.
+        initialization_random_seed : int | None, optional
+            The seed of the quasi-random initialization.
+
+        Raises
+        ------
+        ValueError
+            If an acquisition function is given with ``method="random_search"``.
+        """
+        if method == "random_search" and acquisition_function is not None:
+            raise ValueError(f"Random search does not use an acquisition function, got {acquisition_function.__name__}.")
+        struct = GenerationStrategyDispatchStruct(
+            method=method,
+            initialization_budget=initialization_budget,
+            initialization_random_seed=initialization_random_seed,
+        )
+        self._client.set_generation_strategy(choose_generation_strategy(struct, botorch_acqf_class=acquisition_function))
 
     def suggest(self, num_points: int | None = None) -> Sequence[Mapping]:
         """

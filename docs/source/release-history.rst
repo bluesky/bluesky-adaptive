@@ -2,6 +2,43 @@
 Release History
 ===============
 
+Unreleased
+----------
+
+Features
+........
+* **Optimization server (experimental prototype)**: the ``server`` extra adds ``bluesky_adaptive.server``,
+  an ``OptimizationManager`` and mountable FastAPI routers for agents, optimizations, manual
+  suggest/evaluate/ingest, queueserver execution, analyses, health, and a Server-Sent Events stream.
+  Applications register ``ProblemTemplate``\ s; clients configure agents from their parameter models.
+* ``bluesky_adaptive.ax.server`` adds ``AxOptimizerSpec``, a client-configurable Ax optimizer, and Ax
+  analyses (summary, contour, slice) for the server's analysis catalog. ``AxOptimizerSpec.restricted``
+  limits DOF and objective names to the application's choices and lists them in the JSON schema.
+* ``AxOptimizer.configure_generation_strategy`` chooses the Ax generation method, BoTorch acquisition
+  function, and initialization budget.
+* ``QueueserverOptimizationRunner`` accepts an ``optimizer_lock`` shared with other optimizer users and
+  ``on_submit``, ``on_evaluation`` (before ingestion), and ``on_iteration`` (after ingestion) hooks.
+
+Breaking Changes
+................
+* ``QueueserverClient.start_listener``/``stop_listener`` are replaced by ``subscribe``/``unsubscribe`` and
+  ``close``; one client and its document listener can be shared by several runners.
+  ``QueueserverClient.submit_plan`` returns the queue item UID. ``ConsumerCallback`` takes no arguments;
+  use ``add``/``remove``.
+
+Bug Fixes
+.........
+* The queueserver runner ignores runs of other runners instead of failing on them.
+* A rejected plan submission registers its suggestions as failed trials.
+* The runner fails an iteration whose plan ended without a stop document, for example a plan that
+  failed before opening a run, by checking the queueserver history.
+* ``QueueserverOptimizationRunner.stop`` removes a still-queued plan, or waits until the running
+  acquisition is ingested, before resolving; it no longer ingests after resolving. ``close`` releases the
+  runner's document subscription.
+* ``submit_suggestions`` no longer registers suggestions that already carry an ``"_id"`` a second time.
+* An error while registering failed trials is attached as a note to the original error instead of
+  escaping into the document listener thread.
+
 v1.0.0 (2026-10-26)
 -------------------
 

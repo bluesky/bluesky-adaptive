@@ -111,10 +111,8 @@ class QueueserverAgent(_AxAgentMixin):
             checkpoint_path=checkpoint_path,
             **kwargs,
         )
-        self._runner = QueueserverOptimizationRunner(
-            self.to_optimization_problem(),
-            QueueserverClient(re_manager_api, document_dispatcher),
-        )
+        self._client = QueueserverClient(re_manager_api, document_dispatcher)
+        self._runner = QueueserverOptimizationRunner(self.to_optimization_problem(), self._client)
 
     @property
     def evaluation_function(self) -> EvaluationFunction[str]:
@@ -139,6 +137,11 @@ class QueueserverAgent(_AxAgentMixin):
     def stop(self) -> None:
         """Stop the queueserver runner."""
         self._runner.stop()
+
+    def close(self) -> None:
+        """Stop listening for documents. Call :meth:`stop` and wait for the run to finish first."""
+        self._runner.close()
+        self._client.close()
 
     @property
     def current_iteration(self) -> int:
