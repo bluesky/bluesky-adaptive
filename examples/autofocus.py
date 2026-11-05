@@ -76,7 +76,7 @@ def main_plan() -> MsgGenerator[None]:
     horizontal_ref = yield from bps.rd(horizontal.user_readback)
 
     dofs = [
-        RangeDOF(actuator=pitch, bounds=(pitch_ref - 0.05, pitch_ref + 0.05), parameter_type="float"),
+        RangeDOF(actuator=pitch,  bounds=(pitch_ref - 0.05, pitch_ref + 0.05), parameter_type="float"),
         RangeDOF(actuator=normal, bounds=(normal_ref - 50, normal_ref + 50), parameter_type="float"),
     ]
     sensors = [
