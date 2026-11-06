@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Ax Agent &#8212; Bluesky Adaptive 1.0.1.dev2 documentation</title>
+    <title>Ax Agent &#8212; Bluesky Adaptive 1.0.1.dev3 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=6c492ee8"></script>
+    <script src="../../_static/documentation_options.js?v=c831aaf1"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1.dev2" />
+  <meta name="docsearch:version" content="1.0.1.dev3" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -1008,7 +1008,7 @@ explicit <code class="docutils literal notranslate"><span class="pre">parameteri
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.ax.queueserver_agent.QueueserverAgent">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.ax.queueserver_agent.</span></span><span class="sig-name descname"><span class="pre">QueueserverAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_manager_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_dispatcher</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dofs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/queueserver_agent.html#QueueserverAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.ax.queueserver_agent.</span></span><span class="sig-name descname"><span class="pre">QueueserverAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_manager_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_dispatcher</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dofs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_run_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/queueserver_agent.html#QueueserverAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_AxAgentMixin</span></code></p>
 <p>An asynchronous interface that uses Ax as the backend for optimization and experiment tracking.</p>
 <p>Uses the bluesky-queueserver-api for scheduling plan execution.</p>
@@ -1042,6 +1042,13 @@ of sensors that are needed to compute the objectives.</p>
 <dt><strong>outcome_constraints</strong><span class="classifier">Sequence[OutcomeConstraint] | None, optional</span></dt><dd><p>Constraints on outcomes to be satisfied during optimization.</p>
 </dd>
 <dt><strong>checkpoint_path</strong><span class="classifier">str | None, optional</span></dt><dd><p>The path to the checkpoint file to save the optimizer’s state to.</p>
+</dd>
+<dt><strong>acquisition_plan_kwargs</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Additional arguments to pass to the acquisition plan.</p>
+</dd>
+<dt><strong>acquisition_run_filter</strong><span class="classifier">Callable[[RunStart], bool] | None, optional</span></dt><dd><p>Selects the run to evaluate when the acquisition plan opens more than one run carrying the
+submitted metadata. Runs whose start document does not satisfy the filter are ignored. For example,
+<code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">start:</span> <span class="pre">not</span> <span class="pre">start.get(&quot;dark_frame&quot;,</span> <span class="pre">False)</span></code> skips xpdAcq dark-frame runs. If not provided,
+the first run carrying the metadata is evaluated.</p>
 </dd>
 <dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to configure the Ax experiment.</p>
 </dd>

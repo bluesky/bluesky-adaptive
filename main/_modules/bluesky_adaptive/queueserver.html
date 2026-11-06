@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.1.dev2 documentation</title>
+    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.1.dev3 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=6c492ee8"></script>
+    <script src="../../_static/documentation_options.js?v=c831aaf1"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1.dev2" />
+  <meta name="docsearch:version" content="1.0.1.dev3" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -1345,6 +1345,10 @@ window.runMermaid = runMermaid;</script>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_process_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_doc</span><span class="p">:</span> <span class="n">RunStart</span><span class="p">,</span> <span class="n">stop_doc</span><span class="p">:</span> <span class="n">RunStop</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Core acquisition-complete logic (called from _on_acquisition_complete)."""</span>
+        <span class="n">run_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">acquisition_run_filter</span>
+        <span class="k">if</span> <span class="n">run_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">run_filter</span><span class="p">(</span><span class="n">start_doc</span><span class="p">):</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Ignoring run </span><span class="si">{</span><span class="n">start_doc</span><span class="p">[</span><span class="s1">'uid'</span><span class="p">]</span><span class="si">!r}</span><span class="s2">: excluded by acquisition_run_filter"</span><span class="p">)</span>
+            <span class="k">return</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"_on_acquisition_complete called before run()"</span><span class="p">)</span>
@@ -1354,7 +1358,9 @@ window.runMermaid = runMermaid;</script>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span> <span class="o">!=</span> <span class="n">start_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CORRELATION_UID_KEY</span><span class="p">):</span>
                 <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
                     <span class="s2">"current_uid did not match start document. "</span>
-                    <span class="sa">f</span><span class="s2">"Got: </span><span class="si">{</span><span class="n">start_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CORRELATION_UID_KEY</span><span class="p">)</span><span class="si">}</span><span class="s2">, Expected: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="si">}</span><span class="s2">"</span>
+                    <span class="sa">f</span><span class="s2">"Got: </span><span class="si">{</span><span class="n">start_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CORRELATION_UID_KEY</span><span class="p">)</span><span class="si">}</span><span class="s2">, Expected: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="si">}</span><span class="s2">. "</span>
+                    <span class="s2">"If the acquisition plan opens more than one run with this metadata (for example, a "</span>
+                    <span class="s2">"dark-frame run), set acquisition_run_filter to select the run to evaluate."</span>
                 <span class="p">)</span>
             <span class="k">if</span> <span class="n">exit_status</span> <span class="o">!=</span> <span class="s2">"success"</span><span class="p">:</span>
                 <span class="n">reason</span> <span class="o">=</span> <span class="n">stop_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reason"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"(no reason given)"</span>
