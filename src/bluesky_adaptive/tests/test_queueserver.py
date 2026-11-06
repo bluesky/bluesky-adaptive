@@ -1,6 +1,6 @@
 import threading
 from dataclasses import replace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from bluesky.callbacks.zmq import RemoteDispatcher
@@ -115,27 +115,22 @@ def test_queueserver_client_check_environment_raises_when_not_ready(mock_re_mana
 
 
 @patch("bluesky_adaptive.queueserver.bluesky_queueserver_api.http.REManagerAPI")
-def test_queueserver_client_submit_plan_with_autostart(mock_re_manager, mock_document_dispatcher):
-    """Test submit_plan adds item and starts queue when autostart=True."""
-    client = QueueserverClient(mock_re_manager, mock_document_dispatcher, autostart=True)
-    mock_plan = MagicMock()
+def test_queueserver_client_construction_sends_no_requests(mock_re_manager, mock_document_dispatcher):
+    """Constructing a client leaves the shared queueserver state, including autostart, untouched."""
+    QueueserverClient(mock_re_manager, mock_document_dispatcher)
 
-    client.submit_plan(mock_plan)
-
-    mock_re_manager.queue_autostart.assert_called_once_with(True)
-    mock_re_manager.item_add.assert_called_once_with(mock_plan)
+    assert mock_re_manager.method_calls == []
 
 
 @patch("bluesky_adaptive.queueserver.bluesky_queueserver_api.http.REManagerAPI")
-def test_queueserver_client_submit_plan_without_autostart(mock_re_manager, mock_document_dispatcher):
-    """Test submit_plan only adds item when autostart=False."""
-    client = QueueserverClient(mock_re_manager, mock_document_dispatcher, autostart=False)
+def test_queueserver_client_submit_plan_only_adds_item(mock_re_manager, mock_document_dispatcher):
+    """Test submit_plan adds the item without starting the queue or changing autostart."""
+    client = QueueserverClient(mock_re_manager, mock_document_dispatcher)
     mock_plan = MagicMock()
 
     client.submit_plan(mock_plan)
 
-    mock_re_manager.queue_autostart.assert_called_once_with(False)
-    mock_re_manager.item_add.assert_called_once_with(mock_plan)
+    assert mock_re_manager.method_calls == [call.item_add(mock_plan)]
 
 
 @patch("bluesky_adaptive.queueserver.bluesky_queueserver_api.http.REManagerAPI")

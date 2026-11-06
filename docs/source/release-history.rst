@@ -5,6 +5,12 @@ Release History
 Unreleased
 ----------
 
+Breaking Changes
+................
+* ``QueueserverClient`` no longer enables queue autostart and no longer accepts ``autostart``. Start the queue or
+  call ``re_manager_api.queue_autostart(True)`` yourself
+  (`#84 <https://github.com/bluesky/bluesky-adaptive/issues/84>`_).
+
 Features
 ........
 * ``QueueserverAgent`` and ``QueueserverOptimizationProblem`` accept ``acquisition_run_filter``, a predicate on
