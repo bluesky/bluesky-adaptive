@@ -479,7 +479,7 @@ def test_runner_submit_suggestions_twice_fails():
         runner.run(iterations=1)
 
 
-def _make_runner_with_captured_callback(mock_optimization_problem, iterations=3, checkpoint_interval=None):
+def _make_runner_with_captured_callback(mock_optimization_problem, iterations=3, checkpoint_interval=None, **runner_kwargs):
     """Helper: build a runner and capture the on_stop callback via start_listener side-effect."""
     mock_client = MagicMock(spec=QueueserverClient)
 
@@ -491,6 +491,7 @@ def _make_runner_with_captured_callback(mock_optimization_problem, iterations=3,
     runner = QueueserverOptimizationRunner(
         optimization_problem=mock_optimization_problem,
         queueserver_client=mock_client,
+        **runner_kwargs,
     )
     future = runner.run(iterations=iterations, num_points=1, checkpoint_interval=checkpoint_interval)
     return runner, mock_client, future
@@ -873,3 +874,77 @@ def test_runner_raises_not_checkpointable(mock_optimization_problem):
     _fire_callback(runner, mock_client, 0)
     with pytest.raises(ValueError, match="optimizer is not checkpointable"):
         raise future.exception()
+
+
+def _collect_record_documents():
+    documents = []
+
+    def callback(name, doc):
+        documents.append((name, doc))
+
+    return callback, documents
+
+
+def test_runner_records_full_run(mock_optimization_problem):
+    """run() emits one record run with one event per evaluated point and links submitted plans to it."""
+    callback, documents = _collect_record_documents()
+    runner, mock_client, future = _make_runner_with_captured_callback(
+        mock_optimization_problem, iterations=2, callbacks=[callback], optimization_uid="opt-q"
+    )
+    _fire_callback(runner, mock_client, 0)
+    _fire_callback(runner, mock_client, 1)
+
+    assert future.result().iterations_completed == 2
+    assert [name for name, _ in documents] == ["start", "descriptor", "event", "event", "stop"]
+    start = documents[0][1]
+    assert start["plan_name"] == "QueueserverOptimizationRunner.run"
+    assert start["iterations"] == 2
+    assert start["adaptive"]["optimization_uid"] == "opt-q"
+    events = [doc["data"] for name, doc in documents if name == "event"]
+    assert [(event["adaptive_iteration"], event["adaptive_acquisition"]) for event in events] == [
+        (0, "fake-uid-0"),
+        (1, "fake-uid-1"),
+    ]
+    assert documents[-1][1]["exit_status"] == "success"
+    assert mock_client.submit_plan.call_count == 2
+    for call in mock_client.submit_plan.call_args_list:
+        md = call.args[0].kwargs["md"]
+        assert md["adaptive"]["optimization_uid"] == "opt-q"
+        assert CORRELATION_UID_KEY in md
+        assert "blop_suggestions" in md
+
+
+def test_runner_records_evaluation_failure(mock_optimization_problem):
+    """A failing evaluation stops the record run with a reason naming the iteration and suggestion IDs."""
+    mock_optimization_problem.evaluation_function.side_effect = ValueError("bad")
+    callback, documents = _collect_record_documents()
+    runner, mock_client, future = _make_runner_with_captured_callback(
+        mock_optimization_problem, iterations=2, callbacks=[callback]
+    )
+    _fire_callback(runner, mock_client, 0)
+
+    assert isinstance(future.exception(), ValueError)
+    assert [name for name, _ in documents] == ["start", "stop"]
+    stop = documents[-1][1]
+    assert stop["exit_status"] == "fail"
+    assert stop["reason"] == "Iteration 0 with suggestion IDs [0] failed: ValueError: bad"
+
+
+def test_runner_ignores_acquisition_after_stop(mock_optimization_problem):
+    """stop() ends the record run at once; a later acquisition is neither evaluated, ingested, nor recorded."""
+    callback, documents = _collect_record_documents()
+    runner, mock_client, future = _make_runner_with_captured_callback(
+        mock_optimization_problem, iterations=10, callbacks=[callback]
+    )
+    runner.stop()
+
+    stop = documents[-1][1]
+    assert (stop["exit_status"], stop["reason"]) == ("success", "Stop requested")
+    assert future.result().iterations_completed == 0
+
+    _fire_callback(runner, mock_client, 0)
+
+    mock_optimization_problem.evaluation_function.assert_not_called()
+    mock_optimization_problem.optimizer.ingest.assert_not_called()
+    assert [name for name, _ in documents] == ["start", "stop"]
+    assert mock_client.submit_plan.call_count == 1

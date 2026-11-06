@@ -1,7 +1,8 @@
 """Bluesky plans for optimization."""
 
 import logging
-from collections.abc import Mapping, Sequence
+import uuid
+from collections.abc import Iterable, Mapping, Sequence
 from itertools import count
 from typing import Any, Literal, cast
 
@@ -10,20 +11,21 @@ import bluesky.preprocessors as bpp
 from bluesky.protocols import Readable
 from bluesky.utils import Msg, MsgGenerator, plan
 
-from .plan_stubs import list_scan_in_run, read_step, seq_read
+from .plan_stubs import list_scan_in_run, seq_read
 from .protocols import (
     ID_KEY,
     AcquisitionPlan,
     Actuator,
     CanRegisterSuggestions,
+    DocumentCallback,
     OptimizationProblem,
     Sensor,
     SupportsStoppingCriteria,
     TrialFaultAware,
     TUid,
 )
+from .records import RecordRun, _with_optimization_uid
 from .utils import (
-    InferredReadable,
     _maybe_checkpoint,
     _reject_child_run_messages,
     _unpack_for_list_scan,
@@ -36,10 +38,7 @@ from .utils import (
 logger = logging.getLogger(__name__)
 
 _DEFAULT_ACQUIRE_RUN_KEY: Literal["default_acquire"] = "default_acquire"
-SAMPLE_SUGGESTIONS_RUN_KEY: Literal["sample_suggestions"] = "sample_suggestions"
-OPTIMIZE_RUN_KEY: Literal["optimize"] = "optimize"
 OPTIMIZE_IN_RUN_KEY: Literal["optimize_in_run"] = "optimize_in_run"
-OPTIMIZE_IN_RUN_TRACKING_STREAM: Literal["optimization"] = "optimization"
 
 
 @plan
@@ -175,11 +174,17 @@ def optimize(
     iterations: int | None = 1,
     n_points: int = 1,
     checkpoint_interval: int | None = None,
-    readable_cache: dict[str, InferredReadable] | None = None,
+    *,
+    callbacks: Iterable[DocumentCallback] = (),
+    optimization_uid: str | None = None,
     **kwargs: Any,
 ) -> MsgGenerator[None]:
     """
     Solve the optimization problem.
+
+    Each call composes one record run (see :class:`bluesky_adaptive.records.RecordRun`) with one
+    ``primary`` event per evaluated point, emitted after the outcomes are validated and before the
+    optimizer ingests them. The record run is sent to ``callbacks``, not to the RunEngine.
 
     Parameters
     ----------
@@ -195,11 +200,13 @@ def optimize(
         The number of iterations between optimizer checkpoints. If None, checkpoints
         will not be saved. Optimizer must implement the
         :class:`bluesky_adaptive.protocols.Checkpointable` protocol.
-    readable_cache: dict[str, InferredReadable] | None = None
-        Cache of readable objects to store the suggestions and outcomes as events.
-        If None, a new cache will be created.
+    callbacks : Iterable[DocumentCallback], optional
+        Bluesky callbacks that receive the record run's documents.
+    optimization_uid : str | None, optional
+        Identifier stored as ``start["adaptive"]["optimization_uid"]`` in the record run and passed
+        to the acquisition plan in ``md``. If None, a new UUID4 is generated.
     **kwargs : Any
-        Additional keyword arguments to pass to the :func:`optimize_step` plan.
+        Additional keyword arguments to pass to the acquisition plan.
 
     Raises
     ------
@@ -211,53 +218,62 @@ def optimize(
     --------
     bluesky_adaptive.protocols.OptimizationProblem : The problem to solve.
     bluesky_adaptive.protocols.Checkpointable : The protocol for checkpointable objects.
-    optimize_step : The plan to execute a single step of the optimization.
+    optimize_step : A single optimization step, without a record run.
     """
     optimizer = optimization_problem.optimizer
     if iterations is None and not isinstance(optimizer, SupportsStoppingCriteria):
         raise ValueError("iterations=None requires an optimizer that implements SupportsStoppingCriteria")
+    if optimization_problem.acquisition_plan is None:
+        acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
+    else:
+        acquisition_plan = optimization_problem.acquisition_plan
+    actuators = optimization_problem.actuators
+    sensors = optimization_problem.sensors
 
-    # Cache to track readables created from suggestions and outcomes
-    readable_cache = readable_cache or {}
-
-    _md = collect_optimization_metadata(optimization_problem)
-    _md.update(
-        {
-            "plan_name": "optimize",
-            "iterations": iterations,
-            "n_points": n_points,
-            "checkpoint_interval": checkpoint_interval,
-            "run_key": OPTIMIZE_RUN_KEY,
-        }
-    )
-
-    # Encapsulate the optimization plan in a run decorator
-    @bpp.set_run_key_decorator(OPTIMIZE_RUN_KEY)
-    @bpp.run_decorator(md=_md)
-    def _optimize() -> MsgGenerator[None]:
-        iteration_indices = count() if iterations is None else range(iterations)
-        for i in iteration_indices:
-            # Perform a single step of the optimization
-            uid, suggestions, outcomes = yield from optimize_step(optimization_problem, n_points, **kwargs)
+    metadata = {
+        **collect_optimization_metadata(optimization_problem),
+        "plan_name": "optimize",
+        "iterations": iterations,
+        "n_points": n_points,
+        "checkpoint_interval": checkpoint_interval,
+    }
+    record = RecordRun(optimizer, callbacks=callbacks, metadata=metadata, optimization_uid=optimization_uid)
+    md = _with_optimization_uid(kwargs.pop("md", None), record.optimization_uid)
+    iteration = 0
+    suggestions: Sequence[Mapping] = []
+    try:
+        for iteration in count() if iterations is None else range(iterations):
+            suggestions = []  # a failing suggest() must not report the previous iteration's IDs
+            suggestions = optimizer.suggest(n_points)
+            _validate_suggestions(suggestions)
+            try:
+                uid = yield from acquisition_plan(suggestions, actuators, sensors, md=md, **kwargs)
+                outcomes = optimization_problem.evaluation_function(uid, suggestions)
+            except Exception:
+                if isinstance(optimizer, TrialFaultAware):
+                    optimizer.register_failures(suggestions)
+                raise
+            _validate_outcomes(outcomes, suggestions)
+            record.record(iteration, uid, suggestions, outcomes)
+            optimizer.ingest(outcomes)
 
             if isinstance(optimizer, SupportsStoppingCriteria):
                 stop_now, stop_reason = optimizer.should_stop()
                 if stop_now:
-                    reason = stop_reason if stop_reason is not None else "No reason provided"
-                    logger.info(f"Global stopping triggered at iteration {i + 1}: {reason}")
+                    reason = f"Stopping criterion met at iteration {iteration}: {stop_reason or 'No reason provided'}"
+                    logger.info(reason)
+                    record.stop("success", reason)
                     return
 
-            # Read the optimization step into the Bluesky and emit events for each suggestion and outcome
-            yield from read_step(uid, suggestions, outcomes, iteration=i, readable_cache=readable_cache)
-
             # Possibly take a checkpoint of the optimizer state
-            _maybe_checkpoint(optimizer, checkpoint_interval, i)
+            _maybe_checkpoint(optimizer, checkpoint_interval, iteration)
 
             # Bluesky checkpoint for mid-optimization pauses
             yield Msg("checkpoint")
-
-    # Start the optimization run
-    return (yield from _optimize())
+    except BaseException as error:
+        record.stop_for(error, iteration, suggestions)
+        raise
+    record.stop()
 
 
 @plan
@@ -266,7 +282,9 @@ def optimize_in_run(
     iterations: int = 1,
     n_points: int = 1,
     checkpoint_interval: int | None = None,
-    readable_cache: dict[str, InferredReadable] | None = None,
+    *,
+    callbacks: Iterable[DocumentCallback] = (),
+    optimization_uid: str | None = None,
     **kwargs: Any,
 ) -> MsgGenerator[None]:
     """Solve an optimization problem by evaluating acquisition documents inside one run.
@@ -275,6 +293,10 @@ def optimize_in_run(
 
         This plan is **experimental**. Its API is not yet stable and may change in
         future releases without a deprecation period.
+
+    The RunEngine run holds the raw data. Each call also composes one record run (see
+    :class:`bluesky_adaptive.records.RecordRun`) with one ``primary`` event per evaluated point,
+    sent to ``callbacks``. Both runs carry the same ``start["adaptive"]["optimization_uid"]``.
 
     Parameters
     ----------
@@ -288,24 +310,22 @@ def optimize_in_run(
         The number of iterations between optimizer checkpoints. If None, checkpoints
         will not be saved. Optimizer must implement the
         :class:`bluesky_adaptive.protocols.Checkpointable` protocol.
-    readable_cache: dict[str, InferredReadable] | None = None
-        Cache of readable objects to store the suggestions and outcomes as optimization events.
-        If None, a new cache will be created.
+    callbacks : Iterable[DocumentCallback], optional
+        Bluesky callbacks that receive the record run's documents.
+    optimization_uid : str | None, optional
+        Identifier stored as ``start["adaptive"]["optimization_uid"]`` in the record run and the
+        RunEngine run. If None, a new UUID4 is generated.
     **kwargs : Any
         Additional keyword arguments to pass to the acquisition plan.
     """
-    _md = collect_optimization_metadata(optimization_problem)
-    _md.update(
-        {
-            "plan_name": "optimize_in_run",
-            "iterations": iterations,
-            "n_points": n_points,
-            "checkpoint_interval": checkpoint_interval,
-            "run_key": OPTIMIZE_IN_RUN_KEY,
-            "optimization_stream": OPTIMIZE_IN_RUN_TRACKING_STREAM,
-        }
-    )
-    readable_cache = readable_cache or {}
+    optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
+    metadata = {
+        **collect_optimization_metadata(optimization_problem),
+        "plan_name": "optimize_in_run",
+        "iterations": iterations,
+        "n_points": n_points,
+        "checkpoint_interval": checkpoint_interval,
+    }
 
     optimizer = optimization_problem.optimizer
     actuators = optimization_problem.actuators
@@ -316,42 +336,46 @@ def optimize_in_run(
     )
 
     @bpp.set_run_key_decorator(OPTIMIZE_IN_RUN_KEY)
-    @bpp.run_decorator(md=_md)
+    @bpp.run_decorator(md=_with_optimization_uid({**metadata, "run_key": OPTIMIZE_IN_RUN_KEY}, optimization_uid))
     def _optimize_in_run() -> MsgGenerator[None]:
-        for i in range(iterations):
-            suggestions = optimizer.suggest(n_points)
-            _validate_suggestions(suggestions)
-            try:
-                uid = yield from _reject_child_run_messages(
-                    acquisition_plan(suggestions, actuators, optimization_problem.sensors, **kwargs)
-                )
-                outcomes = optimization_problem.evaluation_function(uid, suggestions)
-                _validate_outcomes(outcomes, suggestions)
-            except Exception:
-                if isinstance(optimizer, TrialFaultAware):
-                    # TODO: Is it possible to be more fine-grained than this?
-                    # Some suggestions may have been acquired/evaluated without issue.
-                    optimizer.register_failures(suggestions)
-                raise
+        # Started inside the RunEngine run, so a failure to open that run leaves no unstopped record.
+        record = RecordRun(optimizer, callbacks=callbacks, metadata=metadata, optimization_uid=optimization_uid)
+        iteration = 0
+        suggestions: Sequence[Mapping] = []
+        try:
+            for iteration in range(iterations):
+                suggestions = []  # a failing suggest() must not report the previous iteration's IDs
+                suggestions = optimizer.suggest(n_points)
+                _validate_suggestions(suggestions)
+                try:
+                    uid = yield from _reject_child_run_messages(
+                        acquisition_plan(suggestions, actuators, optimization_problem.sensors, **kwargs)
+                    )
+                    outcomes = optimization_problem.evaluation_function(uid, suggestions)
+                    _validate_outcomes(outcomes, suggestions)
+                except Exception:
+                    if isinstance(optimizer, TrialFaultAware):
+                        # TODO: Is it possible to be more fine-grained than this?
+                        # Some suggestions may have been acquired/evaluated without issue.
+                        optimizer.register_failures(suggestions)
+                    raise
 
-            optimizer.ingest(outcomes)
-            yield from read_step(
-                uid,
-                suggestions,
-                outcomes,
-                iteration=i,
-                readable_cache=readable_cache,
-                stream_name=OPTIMIZE_IN_RUN_TRACKING_STREAM,
-            )
+                record.record(iteration, uid, suggestions, outcomes)
+                optimizer.ingest(outcomes)
 
-            if isinstance(optimizer, SupportsStoppingCriteria):
-                stop_now, stop_reason = optimizer.should_stop()
-                if stop_now:
-                    reason = stop_reason if stop_reason is not None else "No reason provided"
-                    logger.info(f"Global stopping triggered at iteration {i + 1}: {reason}")
-                    return
+                if isinstance(optimizer, SupportsStoppingCriteria):
+                    stop_now, stop_reason = optimizer.should_stop()
+                    if stop_now:
+                        reason = f"Stopping criterion met at iteration {iteration}: {stop_reason or 'No reason provided'}"
+                        logger.info(reason)
+                        record.stop("success", reason)
+                        return
 
-            _maybe_checkpoint(optimizer, checkpoint_interval, i)
+                _maybe_checkpoint(optimizer, checkpoint_interval, iteration)
+        except BaseException as error:
+            record.stop_for(error, iteration, suggestions)
+            raise
+        record.stop()
 
     return (yield from _optimize_in_run())
 
@@ -360,7 +384,9 @@ def optimize_in_run(
 def sample_suggestions(
     optimization_problem: OptimizationProblem[TUid],
     suggestions: Sequence[Mapping],
-    readable_cache: dict[str, InferredReadable] | None = None,
+    *,
+    callbacks: Iterable[DocumentCallback] = (),
+    optimization_uid: str | None = None,
     **kwargs: Any,
 ) -> MsgGenerator[tuple[TUid, Sequence[Mapping], Sequence[Mapping]]]:
     """
@@ -369,6 +395,9 @@ def sample_suggestions(
     This plan acquires data for given suggestions and ingests results into the optimizer.
     Supports both optimizer-generated suggestions (with "_id") and manual points
     (without "_id", if optimizer implements CanRegisterSuggestions).
+
+    Each call composes one record run (see :class:`bluesky_adaptive.records.RecordRun`) with one
+    ``primary`` event per suggestion, recorded with ``adaptive_iteration = -1``.
 
     Parameters
     ----------
@@ -380,8 +409,11 @@ def sample_suggestions(
         - Optimizer suggestions (with "_id" keys from suggest())
         - Manual points (without "_id", requires CanRegisterSuggestions protocol)
 
-    readable_cache : dict[str, InferredReadable] | None
-        Cache for storing suggestions/outcomes as events.
+    callbacks : Iterable[DocumentCallback], optional
+        Bluesky callbacks that receive the record run's documents.
+    optimization_uid : str | None, optional
+        Identifier stored as ``start["adaptive"]["optimization_uid"]`` in the record run and passed
+        to the acquisition plan in ``md``. If None, a new UUID4 is generated.
     **kwargs : Any
         Additional arguments for acquisition plan.
 
@@ -404,58 +436,57 @@ def sample_suggestions(
     optimize_step : Standard optimizer-driven step.
     bluesky_adaptive.protocols.CanRegisterSuggestions : Protocol for manual suggestions.
     """
+    optimizer = optimization_problem.optimizer
     # Ensure the suggestions have an ID_KEY or register them with the optimizer
-    if not isinstance(optimization_problem.optimizer, CanRegisterSuggestions) and any(
-        ID_KEY not in suggestion for suggestion in suggestions
-    ):
+    if not isinstance(optimizer, CanRegisterSuggestions) and any(ID_KEY not in suggestion for suggestion in suggestions):
         raise ValueError(
             f"All suggestions must contain an '{ID_KEY}' key to later match with the outcomes or your optimizer must "
             "implement the `bluesky_adaptive.protocols.CanRegisterSuggestions` protocol. Please review your optimizer "
             f"implementation. Got suggestions: {suggestions}"
         )
-    elif isinstance(optimization_problem.optimizer, CanRegisterSuggestions):
-        suggestions = optimization_problem.optimizer.register_suggestions(suggestions)
+    elif isinstance(optimizer, CanRegisterSuggestions):
+        suggestions = optimizer.register_suggestions(suggestions)
+    _validate_suggestions(suggestions)
 
-    # Collect the metadata for the run
-    _md = collect_optimization_metadata(optimization_problem)
-    _md.update(
-        {
-            "plan_name": "sample_suggestions",
-            "suggestions": suggestions,
-            "run_key": SAMPLE_SUGGESTIONS_RUN_KEY,
-        }
-    )
-
-    @bpp.set_run_key_decorator(SAMPLE_SUGGESTIONS_RUN_KEY)
-    @bpp.run_decorator(md=_md)
-    def _inner_sample_suggestions() -> MsgGenerator[tuple[TUid, Sequence[Mapping], Sequence[Mapping]]]:
-
-        # Acquire data, evaluate, and ingest outcomes
-        if optimization_problem.acquisition_plan is None:
-            acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
-        else:
-            acquisition_plan = optimization_problem.acquisition_plan
+    if optimization_problem.acquisition_plan is None:
+        acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
+    else:
+        acquisition_plan = optimization_problem.acquisition_plan
+    metadata = {
+        **collect_optimization_metadata(optimization_problem),
+        "plan_name": "sample_suggestions",
+        "suggestions": suggestions,
+    }
+    record = RecordRun(optimizer, callbacks=callbacks, metadata=metadata, optimization_uid=optimization_uid)
+    md = _with_optimization_uid(kwargs.pop("md", None), record.optimization_uid)
+    try:
         uid = yield from acquisition_plan(
-            suggestions, optimization_problem.actuators, optimization_problem.sensors, **kwargs
+            suggestions, optimization_problem.actuators, optimization_problem.sensors, md=md, **kwargs
         )
         outcomes = optimization_problem.evaluation_function(uid, suggestions)
-        optimization_problem.optimizer.ingest(outcomes)
-
-        # Emit a Bluesky event
-        yield from read_step(uid, suggestions, outcomes, readable_cache=readable_cache or {})
-
-        return uid, suggestions, outcomes
-
-    return (yield from _inner_sample_suggestions())
+        _validate_outcomes(outcomes, suggestions)
+        record.record(-1, uid, suggestions, outcomes)
+        optimizer.ingest(outcomes)
+    except BaseException as error:
+        record.stop_for(error, -1, suggestions)
+        raise
+    record.stop()
+    return uid, suggestions, outcomes
 
 
 def acquire_baseline(
     optimization_problem: OptimizationProblem[TUid],
     parameterization: Mapping[str, Any] | None = None,
+    *,
+    callbacks: Iterable[DocumentCallback] = (),
+    optimization_uid: str | None = None,
     **kwargs: Any,
 ) -> MsgGenerator[None]:
     """
     Acquire a baseline reading. Useful for relative outcome constraints.
+
+    Each call composes one record run (see :class:`bluesky_adaptive.records.RecordRun`) with one
+    ``primary`` event for the baseline point, recorded with ``adaptive_iteration = -1``.
 
     Parameters
     ----------
@@ -463,6 +494,13 @@ def acquire_baseline(
         The optimization problem to solve.
     parameterization : dict[str, Any] | None = None
         Move the DOFs to the given parameterization, if provided.
+    callbacks : Iterable[DocumentCallback], optional
+        Bluesky callbacks that receive the record run's documents.
+    optimization_uid : str | None, optional
+        Identifier stored as ``start["adaptive"]["optimization_uid"]`` in the record run and passed
+        to the acquisition plan in ``md``. If None, a new UUID4 is generated.
+    **kwargs : Any
+        Additional keyword arguments to pass to the acquisition plan.
 
     See Also
     --------
@@ -484,7 +522,21 @@ def acquire_baseline(
         acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
     else:
         acquisition_plan = optimization_problem.acquisition_plan
-    uid = yield from acquisition_plan([parameterization_copy], actuators, optimization_problem.sensors, **kwargs)
-    outcome = optimization_problem.evaluation_function(uid, [parameterization_copy])[0]
-    data = {**outcome, **parameterization_copy}
-    optimizer.ingest([data])
+    points = [parameterization_copy]
+    metadata = {
+        **collect_optimization_metadata(optimization_problem),
+        "plan_name": "acquire_baseline",
+        "suggestions": points,
+    }
+    record = RecordRun(optimizer, callbacks=callbacks, metadata=metadata, optimization_uid=optimization_uid)
+    md = _with_optimization_uid(kwargs.pop("md", None), record.optimization_uid)
+    try:
+        uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, md=md, **kwargs)
+        outcomes = optimization_problem.evaluation_function(uid, points)
+        _validate_outcomes(outcomes, points)
+        record.record(-1, uid, points, outcomes)
+        optimizer.ingest([{**outcomes[0], **parameterization_copy}])
+    except BaseException as error:
+        record.stop_for(error, -1, points)
+        raise
+    record.stop()

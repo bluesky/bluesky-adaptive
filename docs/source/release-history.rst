@@ -11,6 +11,36 @@ Features
   the start document that selects the run to evaluate when the acquisition plan opens more than one run with
   the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
   completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``.
+* Each call to ``optimize``, ``optimize_in_run``, ``sample_suggestions``, ``acquire_baseline``,
+  ``QueueserverOptimizationRunner.run``, and ``QueueserverOptimizationRunner.submit_suggestions`` emits one
+  *record run*, composed with event-model and sent to the new ``callbacks`` argument: one ``primary`` event per
+  evaluated point, emitted after validation and before ingestion, and a stop document with ``success``, ``abort``,
+  or ``fail`` (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
+* Every run of one optimization carries ``start["adaptive"]["optimization_uid"]``. Agents and the runner accept
+  ``optimization_uid`` and expose it as a property; plans pass it to the acquisition plan's ``md``.
+* ``bluesky_adaptive.protocols.Describable`` lets an optimizer declare its parameter and outcome fields. The
+  configuration of an optimizer implementing ``bluesky.protocols.Configurable`` is recorded in the descriptor.
+* ``QueueserverOptimizationRunner`` accepts ``callbacks`` for record runs; ``QueueserverAgent`` gains
+  ``callbacks``, ``subscribe``, and ``unsubscribe`` (no callbacks by default).
+
+Breaking Changes
+................
+* Record runs no longer go through the RunEngine: subscribe callbacks with ``callbacks=`` or ``Agent.subscribe``,
+  not ``RE.subscribe``. ``optimize`` and ``sample_suggestions`` no longer open an outer RunEngine run, and
+  ``optimize_in_run`` no longer writes an ``optimization`` stream or ``optimization_stream`` start key.
+* Record event fields are renamed: ``suggestion_ids`` to ``adaptive_id``, ``iteration`` to ``adaptive_iteration``,
+  and ``acquisition_uid`` to ``adaptive_acquisition``. Acquisition UIDs that are not strings or numbers are
+  stored as their ``repr``. Parameter and outcome names must not start with ``adaptive_``, and a parameter and an
+  outcome must not share a name.
+* The descriptor's ``object_keys`` (``"parameters"``, ``"outcomes"``) replace the ``DataKey.source`` values
+  for telling parameters from outcomes.
+* Removed ``plan_stubs.read_step``, ``utils.InferredReadable``, ``utils.Source``, the ``readable_cache`` arguments,
+  ``plans.OPTIMIZE_RUN_KEY``, ``plans.SAMPLE_SUGGESTIONS_RUN_KEY``, ``plans.OPTIMIZE_IN_RUN_TRACKING_STREAM``, and
+  ``callbacks.OptimizationCallbackRouter``.
+* The step on which a stopping criterion fires is now recorded.
+* ``sample_suggestions`` and ``acquire_baseline`` validate suggestions and outcomes like ``optimize``.
+* ``QueueserverOptimizationRunner.stop()`` ends the record run immediately; an acquisition that completes after
+  ``stop()`` is no longer evaluated or ingested.
 
 v1.0.0 (2026-10-26)
 -------------------

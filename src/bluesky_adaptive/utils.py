@@ -1,30 +1,14 @@
 """A set of useful helper utilities."""
 
-import time
 from collections.abc import Hashable, Mapping, Sequence
-from enum import StrEnum
 from typing import Any, cast
 
 import bluesky.preprocessors as bpp
 import networkx as nx
 import numpy as np
-from bluesky.protocols import HasHints, HasParent, Hints, Readable, Reading
 from bluesky.utils import MsgGenerator
-from event_model import DataKey
-from numpy.typing import ArrayLike
 
-from .protocols import ID_KEY, Actuator, Checkpointable, OptimizationProblem, Optimizer
-
-
-class Source(StrEnum):
-    """An enum that helps describe where the data key comes from."""
-
-    OUTCOME = "optimization-outcome"
-    PARAMETER = "optimization-parameter"
-    SUGGESTION_ID = "optimization-suggestion-id"
-    ACQUISITION_UID = "optimization-acquisition-uid"
-    ITERATION = "optimization-iteration"
-    OTHER = "optimization-other"
+from .protocols import ID_KEY, Actuator, BaseOptimizationProblem, Checkpointable, Optimizer
 
 
 def _unpack_for_list_scan(suggestions: Sequence[Mapping], actuators: Sequence[Actuator]) -> list[Any]:
@@ -118,109 +102,6 @@ def _maybe_checkpoint(optimizer: Optimizer, checkpoint_interval: int | None, ite
         optimizer.checkpoint()
 
 
-def _infer_data_key(source: Source, value: Any) -> DataKey:
-    """Infer the data key from the provided value."""
-    numpy_array = np.array(value)
-    # Descriptions are cached across updates, so reserve enough space for UUIDs.
-    dtype_numpy = (
-        np.promote_types(numpy_array.dtype, np.dtype("<U36")).str if numpy_array.dtype.kind == "U" else numpy_array.dtype.str
-    )
-    if len(numpy_array.shape) > 1 or (len(numpy_array.shape) == 1 and numpy_array.shape[0] > 1):
-        dtype = "array"
-        shape = list(numpy_array.shape)
-    else:
-        shape = []
-        item = numpy_array[0] if len(numpy_array.shape) == 1 else numpy_array.item()
-        if isinstance(item, (int, float)):
-            dtype = "number"
-        else:
-            dtype = "string"
-    return DataKey(source=source.value, dtype=dtype, shape=shape, dtype_numpy=dtype_numpy)
-
-
-class InferredReadable(Readable, HasHints, HasParent):
-    """
-    An inferred readable object that can be used in Bluesky plans.
-
-    It performs inference on the initial value to describe the data key.
-
-    Parameters
-    ----------
-    name : str
-        The name of the readable instance.
-    source : str
-
-    initial_value : numpy.typing.ArrayLike
-        The initial value of the readable instance.
-    """
-
-    def __init__(self, name: str, source: Source, initial_value: ArrayLike) -> None:
-        self._name = name
-        self._source = source
-        self._data_key = None
-
-        if isinstance(initial_value, np.ndarray):
-            self._dtype = initial_value.dtype
-            initial_value = initial_value.tolist()
-        else:
-            self._dtype = None
-
-        if isinstance(initial_value, Sequence) and len(initial_value) == 1:
-            initial_value = initial_value[0]
-        self._value = initial_value
-
-    @property
-    def parent(self) -> Any | None:
-        """Parent of the readable, always ``None``."""
-        return None
-
-    @property
-    def name(self) -> str:
-        """Name of the readable."""
-        return self._name
-
-    @property
-    def hints(self) -> Hints:
-        """Hints for callbacks (such as plotting)."""
-        return {
-            "fields": [self.name],
-            "dimensions": [],
-            "gridding": "rectilinear",
-        }
-
-    def describe(self) -> dict[str, DataKey]:
-        """Describe the properties of this readable."""
-        if not self._data_key:
-            # Use stored dtype if available, otherwise infer
-            if self._dtype is not None:
-                value = np.array(self._value, dtype=self._dtype)
-            else:
-                value = np.array(self._value)
-            self._data_key = _infer_data_key(self._source, value)
-        return {self.name: self._data_key}
-
-    def update(self, value: ArrayLike) -> None:
-        """Update the stored value of this readable."""
-        if isinstance(value, np.ndarray):
-            self._dtype = value.dtype
-            value = value.tolist()
-        else:
-            self._dtype = None
-
-        if isinstance(value, Sequence) and len(value) == 1:
-            value = value[0]
-        self._value = value
-
-    def read(self) -> dict[str, Reading]:
-        """Emit a reading for this readable."""
-        return {
-            self.name: {
-                "value": self._value,
-                "timestamp": time.time(),
-            }
-        }
-
-
 def _validate_route_index(index: Sequence[int], num_points: int) -> list[int]:
     """Validate that a route visits every suggestion once."""
     route = list(index)
@@ -278,20 +159,19 @@ def route_suggestions(suggestions: Sequence[Mapping], starting_position: dict | 
     return [suggestions[i] for i in _get_route_index(points=points, starting_point=starting_point)]
 
 
-def collect_optimization_metadata(optimization_problem: OptimizationProblem) -> dict[str, Any]:
+def _component_name(component: Any) -> str:
+    """Return a problem component's name: the string itself, its ``__name__``, or its class name."""
+    if isinstance(component, str):
+        return component
+    return getattr(component, "__name__", component.__class__.__name__)
+
+
+def collect_optimization_metadata(optimization_problem: BaseOptimizationProblem[Any, Any, Any, Any]) -> dict[str, Any]:
     """Collect the metadata for the optimization problem."""
-    if hasattr(optimization_problem.evaluation_function, "__name__"):
-        evaluation_function_name = optimization_problem.evaluation_function.__name__  # type: ignore[attr-defined]
-    else:
-        evaluation_function_name = optimization_problem.evaluation_function.__class__.__name__
-    if hasattr(optimization_problem.acquisition_plan, "__name__"):
-        acquisition_plan_name = optimization_problem.acquisition_plan.__name__  # type: ignore[attr-defined]
-    else:
-        acquisition_plan_name = optimization_problem.acquisition_plan.__class__.__name__
     return {
-        "evaluation_function": evaluation_function_name,
-        "acquisition_plan": acquisition_plan_name,
+        "evaluation_function": _component_name(optimization_problem.evaluation_function),
+        "acquisition_plan": _component_name(optimization_problem.acquisition_plan),
         "optimizer": optimization_problem.optimizer.__class__.__name__,
-        "sensors": [sensor.name for sensor in optimization_problem.sensors],
-        "actuators": [actuator.name for actuator in optimization_problem.actuators],
+        "sensors": [x if isinstance(x, str) else x.name for x in optimization_problem.sensors],
+        "actuators": [x if isinstance(x, str) else x.name for x in optimization_problem.actuators],
     }

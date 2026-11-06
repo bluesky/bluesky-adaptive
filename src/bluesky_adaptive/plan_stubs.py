@@ -1,20 +1,16 @@
 """Bluesky plan stubs for optimization."""
 
 import logging
-from collections.abc import Hashable, Mapping, MutableMapping, Sequence
-from typing import Any, Literal, cast
+from collections.abc import Hashable, Mapping, Sequence
+from typing import Any, cast
 
 import bluesky.plan_stubs as bps
 import bluesky.plans as bp
-import numpy as np
 from bluesky.protocols import Readable
 from bluesky.utils import MsgGenerator, plan
-from numpy.typing import ArrayLike
 
-from .protocols import ID_KEY, Actuator, Optimizer, Sensor
+from .protocols import Actuator, Optimizer, Sensor
 from .utils import (
-    InferredReadable,
-    Source,
     _drop_run_control_messages,
     _suggestion_ids,
     _unpack_for_list_scan,
@@ -23,25 +19,6 @@ from .utils import (
 )
 
 logger = logging.getLogger(__name__)
-
-_ACQUISITION_UID_KEY: Literal["acquisition_uid"] = "acquisition_uid"
-_SUGGESTION_IDS_KEY: Literal["suggestion_ids"] = "suggestion_ids"
-_ITERATION_KEY: Literal["iteration"] = "iteration"
-
-
-def _is_array_like_identifier(uid: Any) -> bool:
-    try:
-        numpy_array = np.array(uid)
-    except (TypeError, ValueError):
-        return False
-    return numpy_array.dtype != object
-
-
-def _acquisition_identifier_value(uid: Any) -> Any:
-    """Convert an acquisition UID to an event-readable value."""
-    if _is_array_like_identifier(uid):
-        return cast(ArrayLike, uid)
-    return repr(uid)
 
 
 @plan
@@ -63,85 +40,6 @@ def seq_read(readables: Sequence[Readable], **kwargs: Any) -> MsgGenerator[dict[
     for readable in readables:
         results[readable.name] = yield from bps.rd(readable, **kwargs)
     return results
-
-
-@plan
-def read_step(
-    uid: Any,
-    suggestions: Sequence[Mapping],
-    outcomes: Sequence[Mapping],
-    readable_cache: MutableMapping[str, InferredReadable],
-    iteration: int = -1,
-    stream_name: str = "primary",
-) -> MsgGenerator[None]:
-    """Plan stub to read the suggestions and outcomes of a single optimization step.
-
-    The plan is structured to read out all suggestions given in a point by point basis.
-
-    The emitted ``acquisition_uid`` field retains native array-like identifiers.
-    Other acquisition UIDs are represented by ``repr(uid)``.
-
-    Parameters
-    ----------
-    uid : Any
-        The acquisition UID returned by the acquisition plan.
-    suggestions : Sequence[Mapping]
-        Sequence of suggestion mappings, each containing an ID_KEY.
-    outcomes : Sequence[Mapping]
-        Sequence of outcome mappings, each containing an ID_KEY matching suggestions.
-    iteration: int
-        iteration number passed by the optimization plan. Non iterative plans default to -1
-        (this is a in run value, use a uid to aggregate across runs)
-    readable_cache : dict[str, InferredReadable]
-        Cache of InferredReadable objects to reuse across iterations.
-    stream_name : str, optional
-        Event stream name for the optimization tracking event.
-    """
-    # Normalize the acquisition UID for event-model storage.
-    normalized_uid = _acquisition_identifier_value(uid)
-
-    suggestion_by_id = {}
-    outcome_by_id = {}
-    for suggestion in suggestions:
-        suggestion_copy = dict(suggestion)
-        key = str(suggestion_copy.pop(ID_KEY))
-        suggestion_by_id[key] = suggestion_copy
-    for outcome in outcomes:
-        outcome_copy = dict(outcome)
-        key = str(outcome_copy.pop(ID_KEY))
-        outcome_by_id[key] = outcome_copy
-
-    sids = {str(sid) for sid in suggestion_by_id.keys()}
-    sorted_sids = sorted(sids)
-    if sids != set(outcome_by_id.keys()):
-        raise ValueError(
-            "The suggestions and outcomes must contain the same IDs. Got suggestions: "
-            f"{set(suggestion_by_id.keys())} and outcomes: {set(outcome_by_id.keys())}"
-        )
-
-    def _cache_update(key, element, source=Source.PARAMETER):
-        if key not in readable_cache:
-            readable_cache[key] = InferredReadable(key, source=source, initial_value=element)
-        else:
-            readable_cache[key].update(element)
-
-    _cache_update(_ACQUISITION_UID_KEY, normalized_uid, source=Source.ACQUISITION_UID)
-    _cache_update(_ITERATION_KEY, iteration, source=Source.ITERATION)
-
-    for sid in sorted_sids:
-        suggestion = suggestion_by_id[sid]
-        outcome = outcome_by_id[sid]
-        # Create or update the InferredReadables for the suggestion_ids, step uid, suggestions, and outcomes
-        _cache_update(_SUGGESTION_IDS_KEY, sid, source=Source.SUGGESTION_ID)
-
-        for dof, value in suggestion.items():
-            _cache_update(dof, value, source=Source.PARAMETER)
-
-        for objective, value in outcome.items():
-            _cache_update(objective, value, source=Source.OUTCOME)
-
-        # Read and save to produce a single event
-        yield from bps.trigger_and_read(list(readable_cache.values()), name=stream_name)
 
 
 @plan

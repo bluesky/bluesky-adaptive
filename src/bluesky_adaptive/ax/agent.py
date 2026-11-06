@@ -1,31 +1,29 @@
 """Agent interface for optimization with Ax as the backend."""
 
 import logging
+import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, Generic, cast
 
-import bluesky.preprocessors as bpp
 from ax import Client, TOutcome, TParameterization
 from ax.analysis.plotly.surface.contour import ContourPlot
 from ax.core.analysis_card import AnalysisCardBase
 from ax.core.types import TParamValue
 from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
-from bluesky.callbacks import CallbackBase
 from bluesky.utils import MsgGenerator
 
 from ..callbacks.logger import OptimizationLogger
-from ..callbacks.router import OptimizationCallbackRouter
 from ..plan_stubs import navigate_to_best
 from ..plans import acquire_baseline, optimize, sample_suggestions
 from ..protocols import (
     AcquisitionPlan,
     Actuator,
+    DocumentCallback,
     EvaluationFunction,
     OptimizationProblem,
     Sensor,
     TUid,
 )
-from ..utils import InferredReadable
 from .dof import DOF, DOFConstraint
 from .objective import Objective, OutcomeConstraint, ScalarizedObjective, to_ax_objective_str
 from .optimizer import AxOptimizer
@@ -37,10 +35,67 @@ class _AxAgentMixin:
     """
     Mixin providing Ax-related functionality shared by agents.
 
-    Expects subclasses to define `self._optimizer` as an `AxOptimizer`.
+    Expects subclasses to define `self._optimizer` as an `AxOptimizer`, `self._callbacks`,
+    and `self._optimization_uid`.
     """
 
     _optimizer: AxOptimizer
+    _callbacks: list[DocumentCallback]
+    _optimization_uid: str
+
+    @property
+    def optimization_uid(self) -> str:
+        """Identifier of this agent's optimization.
+
+        Shared by every record run and raw-data run of this agent, as
+        ``start["adaptive"]["optimization_uid"]``. A process continuing the same optimization
+        passes it in explicitly.
+        """
+        return self._optimization_uid
+
+    @property
+    def callbacks(self) -> list[DocumentCallback]:
+        """The list of active optimization callbacks.
+
+        Callbacks in this list receive the documents of this agent's record runs. A change
+        takes effect at the next record run.
+
+        The list can be mutated directly, or use :meth:`subscribe` /
+        :meth:`unsubscribe` for convenience.
+        """
+        return self._callbacks
+
+    def subscribe(self, callback: DocumentCallback) -> None:
+        """Subscribe a callback to receive optimization record run documents.
+
+        Parameters
+        ----------
+        callback : DocumentCallback
+            A Bluesky callback, e.g. a :class:`bluesky.callbacks.CallbackBase` instance.
+
+        Raises
+        ------
+        ValueError
+            If *callback* is already subscribed.
+        """
+        if callback in self._callbacks:
+            raise ValueError(f"Callback {callback!r} is already subscribed.")
+        self._callbacks.append(callback)
+
+    def unsubscribe(self, callback: DocumentCallback) -> None:
+        """Unsubscribe a previously subscribed callback.
+
+        Parameters
+        ----------
+        callback : DocumentCallback
+            The callback to remove.
+
+        Raises
+        ------
+        ValueError
+            If *callback* is not subscribed.
+        """
+        self._callbacks.remove(callback)
 
     @property
     def ax_client(self) -> Client:
@@ -231,6 +286,9 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         The path to the checkpoint file to save the optimizer's state to.
     stopping_strategy : BaseGlobalStoppingStrategy | None, optional
         A stopping strategy that decides when/if optimization should halt early.
+    optimization_uid : str | None, optional
+        Identifier of this optimization, shared by all of the agent's runs. If None, a new UUID4 is
+        generated. Pass the previous value to continue the same optimization in another process.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -262,6 +320,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         outcome_constraints: Sequence[OutcomeConstraint] | None = None,
         checkpoint_path: str | None = None,
         stopping_strategy: BaseGlobalStoppingStrategy | None = None,
+        optimization_uid: str | None = None,
         **kwargs: Any,
     ):
         if any(isinstance(dof.actuator, str) for dof in dofs):
@@ -284,9 +343,8 @@ class Agent(_AxAgentMixin, Generic[TUid]):
             stopping_strategy=stopping_strategy,
             **kwargs,
         )
-        self._readable_cache: dict[str, InferredReadable] = {}
-        self._callbacks: list[CallbackBase] = [OptimizationLogger()]
-        self._callback_router = OptimizationCallbackRouter(self._callbacks)
+        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
+        self._callbacks = [OptimizationLogger()]
 
     @classmethod
     def from_checkpoint(
@@ -296,6 +354,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         sensors: Sequence[Sensor],
         evaluation_function: EvaluationFunction[TUid],
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
+        optimization_uid: str | None = None,
     ) -> "Agent[TUid]":
         """
         Load an agent from the optimizer's checkpoint file.
@@ -318,6 +377,8 @@ class Agent(_AxAgentMixin, Generic[TUid]):
             A callable that uses an acquisition identifier to retrieve acquired data and produce outcomes.
         acquisition_plan: AcquisitionPlan, optional
             A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.
+        optimization_uid : str | None, optional
+            Identifier of the optimization to continue. If None, a new UUID4 is generated.
         """
         instance = object.__new__(cls)
         instance._optimizer = AxOptimizer.from_checkpoint(checkpoint_path)
@@ -325,56 +386,10 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         instance._sensors = sensors
         instance._evaluation_function = evaluation_function
         instance._acquisition_plan = acquisition_plan
-        instance._readable_cache = {}
+        instance._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
         instance._callbacks = [OptimizationLogger()]
-        instance._callback_router = OptimizationCallbackRouter(instance._callbacks)
 
         return instance
-
-    @property
-    def callbacks(self) -> list[CallbackBase]:
-        """The list of active optimization callbacks.
-
-        Callbacks in this list receive documents from ``"optimize"`` and
-        ``"sample_suggestions"`` runs. The default list contains an
-        :class:`~bluesky_adaptive.callbacks.logger.OptimizationLogger`.
-
-        The list can be mutated directly, or use :meth:`subscribe` /
-        :meth:`unsubscribe` for convenience.
-        """
-        return self._callbacks
-
-    def subscribe(self, callback: CallbackBase) -> None:
-        """Subscribe a callback to receive optimization run documents.
-
-        Parameters
-        ----------
-        callback : CallbackBase
-            A Bluesky callback instance.
-
-        Raises
-        ------
-        ValueError
-            If *callback* is already subscribed.
-        """
-        if callback in self._callbacks:
-            raise ValueError(f"Callback {callback!r} is already subscribed.")
-        self._callbacks.append(callback)
-
-    def unsubscribe(self, callback: CallbackBase) -> None:
-        """Unsubscribe a previously subscribed callback.
-
-        Parameters
-        ----------
-        callback : CallbackBase
-            The callback instance to remove.
-
-        Raises
-        ------
-        ValueError
-            If *callback* is not subscribed.
-        """
-        self._callbacks.remove(callback)
 
     @property
     def sensors(self) -> Sequence[Sensor]:
@@ -444,7 +459,12 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         --------
         bluesky_adaptive.plans.acquire_baseline : The underlying Bluesky plan.
         """
-        yield from acquire_baseline(self.to_optimization_problem(), parameterization=parameterization)
+        yield from acquire_baseline(
+            self.to_optimization_problem(),
+            parameterization=parameterization,
+            callbacks=self._callbacks,
+            optimization_uid=self._optimization_uid,
+        )
 
     def optimize(self, iterations: int | None = 1, n_points: int = 1) -> MsgGenerator[None]:
         """
@@ -487,16 +507,13 @@ class Agent(_AxAgentMixin, Generic[TUid]):
 
         For complete examples, see :doc:`/tutorials/simple-experiment`.
         """
-        optimize_plan = optimize(
-            self.to_optimization_problem(), iterations=iterations, n_points=n_points, readable_cache=self._readable_cache
+        yield from optimize(
+            self.to_optimization_problem(),
+            iterations=iterations,
+            n_points=n_points,
+            callbacks=self._callbacks,
+            optimization_uid=self._optimization_uid,
         )
-        if self._callbacks:
-            optimize_plan = bpp.subs_wrapper(
-                optimize_plan,
-                self._callback_router,
-            )
-
-        yield from optimize_plan
 
     def sample_suggestions(
         self, suggestions: Sequence[Mapping]
@@ -522,16 +539,14 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         suggest : Get optimizer suggestions.
         optimize : Run full optimization loop.
         """
-        sample_suggestions_plan = sample_suggestions(
-            self.to_optimization_problem(), suggestions=suggestions, readable_cache=self._readable_cache
-        )
-        if self._callbacks:
-            sample_suggestions_plan = bpp.subs_wrapper(
-                sample_suggestions_plan,
-                self._callback_router,
+        return (
+            yield from sample_suggestions(
+                self.to_optimization_problem(),
+                suggestions=suggestions,
+                callbacks=self._callbacks,
+                optimization_uid=self._optimization_uid,
             )
-
-        return (yield from sample_suggestions_plan)
+        )
 
     def navigate_to_best(self, parameterization: Mapping | None = None) -> MsgGenerator[None]:
         """

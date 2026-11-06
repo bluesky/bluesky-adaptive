@@ -1,8 +1,7 @@
 """Logging callback for Bluesky optimization runs."""
 
 import math
-from collections import defaultdict
-from typing import Any, cast
+from typing import Any
 
 from bluesky.callbacks import CallbackBase
 from event_model import Event, EventDescriptor, RunStart, RunStop
@@ -12,8 +11,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from ..plan_stubs import _ACQUISITION_UID_KEY, _ITERATION_KEY, _SUGGESTION_IDS_KEY
-from ..utils import Source
+from ..records import ID_FIELD, ITERATION_FIELD
 from .utils import RunningStats
 
 # Styling constants
@@ -75,7 +73,8 @@ class OptimizationLogger(CallbackBase):
 
         self._console = console or Console()
         self._data_keys: dict = {}
-        self._sorted_data_keys_by_source: dict[Source, list[str]] = {}
+        self._parameter_keys: list[str] = []
+        self._outcome_keys: list[str] = []
         self._total_iterations: int | None = 0
         self._base_iteration: int = 0
         self._current_iteration: int = 0
@@ -136,15 +135,11 @@ class OptimizationLogger(CallbackBase):
         self._console.print(panel)
 
     def descriptor(self, doc: EventDescriptor) -> None:
-        """Cache data keys and group by their source."""
+        """Cache data keys and the parameter and outcome fields named by ``object_keys``."""
         data_keys = doc.get("data_keys", {})
-        data_keys_by_source: dict[Source, list[str]] = defaultdict(list)
-        for key, data_key in data_keys.items():
-            data_keys_by_source[cast(Source, data_key.get("source", Source.OTHER))].append(key)
-
-        self._sorted_data_keys_by_source = {key: sorted(keys) for key, keys in data_keys_by_source.items()}
-        self._parameter_keys: list[str] = self._sorted_data_keys_by_source.get(Source.PARAMETER, [])
-        self._outcome_keys: list[str] = self._sorted_data_keys_by_source.get(Source.OUTCOME, [])
+        object_keys = doc.get("object_keys", {})
+        self._parameter_keys = sorted(object_keys.get("parameters", []))
+        self._outcome_keys = sorted(object_keys.get("outcomes", []))
 
         # build header item for iteratively generated table
         table = Table(expand=True)
@@ -184,16 +179,11 @@ class OptimizationLogger(CallbackBase):
         param_columns: dict[str, Any] = {k: data[k] for k in parameter_keys if k in data}
         outcome_columns: dict[str, Any] = {k: data[k] for k in outcome_keys if k in data}
 
-        # Extract suggestion IDs and acquisition identifier
-        suggestion_ids = data.get(_SUGGESTION_IDS_KEY, -1)
-        acquire_uid = data.get(_ACQUISITION_UID_KEY, "")
-        run_iteration = data.get(_ITERATION_KEY, -1)
+        # Extract suggestion IDs and iteration
+        suggestion_ids = data.get(ID_FIELD, -1)
+        run_iteration = data.get(ITERATION_FIELD, -1)
         if run_iteration != -1:
             self._current_iteration = self._base_iteration + run_iteration + 1
-
-        # Scalar string comes through as-is; ensure it's a plain string
-        if isinstance(acquire_uid, list):
-            acquire_uid = acquire_uid[0] if acquire_uid else ""
 
         # Update running statistics
         self._update_stats(param_columns)
@@ -264,8 +254,8 @@ class OptimizationLogger(CallbackBase):
         exit_status = doc.get("exit_status", "success")
         reason = doc.get("reason", "")
 
-        parameter_keys: list[str] = self._sorted_data_keys_by_source.get(Source.PARAMETER, [])
-        outcome_keys: list[str] = self._sorted_data_keys_by_source.get(Source.OUTCOME, [])
+        parameter_keys = self._parameter_keys
+        outcome_keys = self._outcome_keys
 
         # housekeeping iteration tracking
         self._base_iteration = self._current_iteration

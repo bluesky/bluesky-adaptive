@@ -177,19 +177,26 @@ agent = Scipy(
     evaluation_function=Himmelblau2DEvaluation(tiled_client=tiled_client),
     name="test_experiment",
 )
-res_uid = RE(agent.optimize(20, n_points=2))
+agent.subscribe(tiled_writer)
+RE(agent.optimize(20, n_points=2))
 ```
 
 ## Viewing the results
 
-Scipy is a local optimizer so it doesn't have internal point tracking, but we can to grab it from our datastore.
+Scipy is a local optimizer so it doesn't have internal point tracking, but we can grab it from our datastore. The agent sent its record run, one event per evaluated point, to `tiled_writer`; every run of this optimization carries the agent's `optimization_uid`.
 
 ```{code-cell} ipython3
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from tiled.queries import Key
 
-res_client = tiled_client[res_uid[0]]
+res_client = (
+    tiled_client.search(Key("start.adaptive.optimization_uid") == agent.optimization_uid)
+    .search(Key("start.plan_name") == "optimize")
+    .values()
+    .first()
+)
 data = res_client["primary"].read().to_dataframe()
 
 fig, ax = plt.subplots(figsize=(12, 8))

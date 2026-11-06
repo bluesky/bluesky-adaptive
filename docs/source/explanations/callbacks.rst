@@ -19,45 +19,55 @@ The built-in :class:`bluesky_adaptive.callbacks.logger.OptimizationLogger` follo
 model. It formats optimization progress for the console, but it does not choose
 points, move hardware, or compute objectives.
 
-How Bluesky Adaptive routes documents
--------------------------------------
+How Bluesky Adaptive emits documents
+------------------------------------
 
 Bluesky Adaptive builds on the standard Bluesky callback model: callbacks receive
-``start``, ``descriptor``, ``event``, and ``stop`` documents. When
-:meth:`bluesky_adaptive.ax.Agent.optimize` runs, Bluesky Adaptive wraps the plan with an optimization
-callback router. The router forwards only runs whose ``run_key`` marks them as
-optimization-related: ``"optimize"`` or ``"sample_suggestions"``.
+``start``, ``descriptor``, ``event``, and ``stop`` documents. Each call to an
+optimization loop (:func:`bluesky_adaptive.plans.optimize`,
+:func:`bluesky_adaptive.plans.optimize_in_run`, :func:`bluesky_adaptive.plans.sample_suggestions`,
+:func:`bluesky_adaptive.plans.acquire_baseline`, and the queue-server runner's ``run`` and
+``submit_suggestions``) composes one *record run* with event-model and passes its documents to
+the callbacks given to that call. Agents pass their :attr:`~bluesky_adaptive.ax.Agent.callbacks`.
+The record run does not go through the RunEngine, so RunEngine subscribers see only the
+acquisition runs.
 
-The optimization run and the acquisition run are related but distinct. The
-acquisition run records what happened at the beamline for a suggested point.
-The optimization run records the optimization-facing summary of that step: the
-suggestion identifiers, the acquisition UID, the parameter values, and the
-outcomes returned by the evaluation function.
+The record run and the acquisition runs are related but distinct. An acquisition
+run records what happened at the beamline for the suggested points. The record
+run records the optimization-facing summary of each evaluated point: the
+suggestion identifier, the iteration, the acquisition UID, the parameter values,
+and the outcomes returned by the evaluation function. Every run of one
+optimization carries the same ``start["adaptive"]["optimization_uid"]``, which
+links record runs to their acquisition runs.
 
 What a callback sees
 --------------------
 
-Optimization callbacks see the same document types as other Bluesky callbacks,
-but the contents are optimization-focused.
-
 ``start``
-    Run-level context such as optimizer description, actuator names, sensor
-    names, number of iterations, and ``n_points``.
+    Run-level context such as ``plan_name``, optimizer description, actuator names,
+    sensor names, number of iterations, ``n_points``, and
+    ``{"adaptive": {"optimization_uid": ...}}``.
 
 ``descriptor``
-    Field descriptions. Bluesky Adaptive marks optimization fields with a ``source`` value,
-    distinguishing parameters, outcomes, suggestion identifiers, acquisition
-    UIDs, and other values.
+    One ``primary`` stream. Its ``object_keys`` list the parameter fields under
+    ``"parameters"`` and the outcome fields under ``"outcomes"``. An optimizer that
+    implements :class:`bluesky_adaptive.protocols.Describable` declares those fields;
+    otherwise the first evaluated point defines them.
 
 ``event``
-    Per-step values such as ``suggestion_ids``, ``acquisition_uid``, parameter
-    values, and outcome values.
+    One event per evaluated point, emitted after the outcomes are validated and
+    before the optimizer ingests them: ``adaptive_id`` (the suggestion ID, as a
+    string), ``adaptive_iteration`` (``-1`` for one-shot plans), ``adaptive_acquisition``,
+    and the parameter and outcome values. Field names starting with ``adaptive_`` are
+    reserved for these bookkeeping fields.
 
-For ``acquisition_uid``, native array-like UIDs are stored directly. Other UIDs are
+For ``adaptive_acquisition``, string and numeric UIDs are stored directly. Other UIDs are
 stored using their ``repr``; the evaluation function still receives the original value.
 
 ``stop``
-    Completion status and reason, useful for summaries or cleanup.
+    Completion status and reason: ``success`` when the loop finishes, meets its
+    stopping criterion, or is stopped; ``abort`` when it is aborted or halted;
+    ``fail`` with the failing iteration and suggestion IDs otherwise.
 
 What belongs in a callback
 --------------------------

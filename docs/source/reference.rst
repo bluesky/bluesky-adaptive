@@ -13,6 +13,7 @@ API Reference
     reference/xopt/optimizer.rst
     reference/plans.rst
     reference/plan_stubs.rst
+    reference/records.rst
     reference/protocols.rst
     reference/callbacks.rst
     reference/queueserver.rst

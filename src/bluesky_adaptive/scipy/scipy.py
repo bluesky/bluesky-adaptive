@@ -1,17 +1,15 @@
 """Scipy optimization power class for fast start QOL and Ax like agent behavior."""
 
+import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, Generic, cast
 
-import bluesky.preprocessors as bpp
-from bluesky.callbacks import CallbackBase
-
 from bluesky_adaptive.callbacks.logger import OptimizationLogger
-from bluesky_adaptive.callbacks.router import OptimizationCallbackRouter
 from bluesky_adaptive.plans import optimize
 from bluesky_adaptive.protocols import (
     AcquisitionPlan,
     Actuator,
+    DocumentCallback,
     EvaluationFunction,
     OptimizationProblem,
     Sensor,
@@ -20,7 +18,6 @@ from bluesky_adaptive.protocols import (
 from bluesky_adaptive.scipy.configs import SCP, Objective, RangeDOF, ScipyCFG
 from bluesky_adaptive.scipy.inverter import InteractiveOptimizer
 from bluesky_adaptive.scipy.normalizers import SHGO, DualAnnealing, Minimize
-from bluesky_adaptive.utils import InferredReadable
 
 
 class Scipy(Generic[TUid]):
@@ -37,6 +34,7 @@ class Scipy(Generic[TUid]):
         config: ScipyCFG,
         evaluation_function: EvaluationFunction[TUid],
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
+        optimization_uid: str | None = None,
         **kwargs: Any,
     ):
         if config.optimizer not in list(SCP):
@@ -58,9 +56,8 @@ class Scipy(Generic[TUid]):
         self.timeout = kwargs.pop("timeout", 200)
         self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
         self.optimizer.force_resiliance = self.resiliance = kwargs.pop("resiliance", True)
-        self._readable_cache: dict[str, InferredReadable] = {}
-        self._callbacks: list[CallbackBase] = [OptimizationLogger()]
-        self._callback_router = OptimizationCallbackRouter(self._callbacks)
+        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
+        self._callbacks: list[DocumentCallback] = [OptimizationLogger()]
         self.sessioning = kwargs.pop("sessioning", True)
 
     @classmethod
@@ -139,11 +136,21 @@ class Scipy(Generic[TUid]):
         return self._acquisition_plan
 
     @property
-    def callbacks(self) -> list[CallbackBase]:
+    def optimization_uid(self) -> str:
+        """Identifier of this agent's optimization.
+
+        Shared by every record run and raw-data run of this agent, as
+        ``start["adaptive"]["optimization_uid"]``. A process continuing the same optimization
+        passes it in explicitly.
+        """
+        return self._optimization_uid
+
+    @property
+    def callbacks(self) -> list[DocumentCallback]:
         """The list of active optimization callbacks.
 
-        Callbacks in this list receive documents from ``"optimize"`` and
-        ``"sample_suggestions"`` runs. The default list contains an
+        Callbacks in this list receive the documents of this agent's record runs. A change
+        takes effect at the next record run. The default list contains an
         :class:`~bluesky_adaptive.callbacks.logger.OptimizationLogger`.
 
         The list can be mutated directly, or use :meth:`subscribe` /
@@ -151,13 +158,13 @@ class Scipy(Generic[TUid]):
         """
         return self._callbacks
 
-    def subscribe(self, callback: CallbackBase) -> None:
-        """Subscribe a callback to receive optimization run documents.
+    def subscribe(self, callback: DocumentCallback) -> None:
+        """Subscribe a callback to receive optimization record run documents.
 
         Parameters
         ----------
-        callback : CallbackBase
-            A Bluesky callback instance.
+        callback : DocumentCallback
+            A Bluesky callback, e.g. a :class:`bluesky.callbacks.CallbackBase` instance.
 
         Raises
         ------
@@ -168,13 +175,13 @@ class Scipy(Generic[TUid]):
             raise ValueError(f"Callback {callback!r} is already subscribed.")
         self._callbacks.append(callback)
 
-    def unsubscribe(self, callback: CallbackBase) -> None:
+    def unsubscribe(self, callback: DocumentCallback) -> None:
         """Unsubscribe a previously subscribed callback.
 
         Parameters
         ----------
-        callback : CallbackBase
-            The callback instance to remove.
+        callback : DocumentCallback
+            The callback to remove.
 
         Raises
         ------
@@ -264,14 +271,9 @@ class Scipy(Generic[TUid]):
             self.to_optimization_problem(),
             iterations=iterations,
             n_points=n_points,
-            readable_cache=self._readable_cache,
+            callbacks=self._callbacks,
+            optimization_uid=self._optimization_uid,
         )
-
-        if self._callbacks:
-            optimize_plan = bpp.subs_wrapper(
-                optimize_plan,
-                self._callback_router,
-            )
         if self.sessioning:
             with self.optimizer:
                 yield from optimize_plan

@@ -1,5 +1,6 @@
 """Agent interface for asynchronous optimization using Bluesky Queueserver and Ax."""
 
+import uuid
 from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import Future
 from typing import Any
@@ -17,6 +18,7 @@ from event_model import RunStart
 
 from ..protocols import (
     Actuator,
+    DocumentCallback,
     EvaluationFunction,
     QueueserverOptimizationProblem,
 )
@@ -70,6 +72,9 @@ class QueueserverAgent(_AxAgentMixin):
         submitted metadata. Runs whose start document does not satisfy the filter are ignored. For example,
         ``lambda start: not start.get("dark_frame", False)`` skips xpdAcq dark-frame runs. If not provided,
         the first run carrying the metadata is evaluated.
+    optimization_uid : str | None, optional
+        Identifier of this optimization, shared by all of the agent's runs. If None, a new UUID4 is
+        generated. Pass the previous value to continue the same optimization in another process.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -97,6 +102,7 @@ class QueueserverAgent(_AxAgentMixin):
         checkpoint_path: str | None = None,
         acquisition_plan_kwargs: Mapping[str, Any] | None = None,
         acquisition_run_filter: Callable[[RunStart], bool] | None = None,
+        optimization_uid: str | None = None,
         **kwargs: Any,
     ):
         self._sensors = sensors
@@ -121,9 +127,14 @@ class QueueserverAgent(_AxAgentMixin):
             checkpoint_path=checkpoint_path,
             **kwargs,
         )
+        # Empty by default: record documents are emitted from the document listener thread.
+        self._callbacks: list[DocumentCallback] = []
+        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
         self._runner = QueueserverOptimizationRunner(
             self.to_optimization_problem(),
             QueueserverClient(re_manager_api, document_dispatcher),
+            callbacks=self._callbacks,
+            optimization_uid=self._optimization_uid,
         )
 
     @property

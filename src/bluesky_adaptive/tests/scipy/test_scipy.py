@@ -1,4 +1,3 @@
-import types
 from unittest.mock import MagicMock
 
 import pytest
@@ -404,19 +403,8 @@ def test_suggest_after_final_optimization(secoundary_agent_prep):
     secoundary_agent_prep.optimizer.close()
 
 
-def test_optimize(secoundary_agent_prep):
-    """Test agent setup of optimize plane"""
-    # Set final optimization result
-
-    iter = secoundary_agent_prep.optimize(0)
-    assert isinstance(iter, types.GeneratorType)
-    next(iter)
-    secoundary_agent_prep.optimizer.close()
-
-
 def test_optimize_with_prev_final(secoundary_agent_prep):
-    """Test agent setup of optimize plane"""
-    # Set final optimization result
+    """An optimization with a prior final result uses that result as its initial point."""
     secoundary_agent_prep.optimizer.final = ScipyResult(
         x=[7.0],
         fun=0.95,
@@ -424,7 +412,6 @@ def test_optimize_with_prev_final(secoundary_agent_prep):
         status=0,
     )
 
-    iter = secoundary_agent_prep.optimize(0)
-    assert isinstance(iter, types.GeneratorType)
-    next(iter)
+    list(secoundary_agent_prep.optimize(0))
+    assert secoundary_agent_prep.config.initial == [7.0]
     secoundary_agent_prep.optimizer.close()

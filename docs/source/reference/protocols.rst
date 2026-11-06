@@ -16,6 +16,11 @@ Sensor
 
 .. autoclass:: bluesky_adaptive.protocols.Sensor
 
+DocumentCallback
+----------------
+
+.. autodata:: bluesky_adaptive.protocols.DocumentCallback
+
 AcquisitionPlan
 ---------------
 
@@ -93,6 +98,15 @@ Checkpointable
 --------------
 
 .. autoclass:: bluesky_adaptive.protocols.Checkpointable
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :inherited-members:
+
+Describable
+-----------
+
+.. autoclass:: bluesky_adaptive.protocols.Describable
    :members:
    :undoc-members:
    :show-inheritance:

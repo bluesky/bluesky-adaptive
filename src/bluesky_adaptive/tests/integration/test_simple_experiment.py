@@ -6,6 +6,7 @@ from bluesky.run_engine import RunEngine
 from bluesky_tiled_plugins import TiledWriter
 from tiled.client import from_uri
 from tiled.client.container import Container
+from tiled.queries import Key
 from tiled.server import SimpleTiledServer
 
 from bluesky_adaptive.ax import Agent, Objective, RangeDOF
@@ -105,6 +106,7 @@ def test_simple_experiment_tiled_round_trip() -> None:
             name="integration-simple-experiment",
             description="Scheduled integration test for the simple experiment",
         )
+        agent.subscribe(tiled_writer)
 
         RE(agent.optimize(iterations=2, n_points=2))
 
@@ -114,6 +116,13 @@ def test_simple_experiment_tiled_round_trip() -> None:
         assert len({outcome["_id"] for outcome in evaluation.outcomes}) == 4
         assert all(outcome["himmelblau_2d"] >= 0 for outcome in evaluation.outcomes)
         assert len(agent.ax_client.summarize()) == 4
+
+        # Two raw-data runs and one record run share the optimization UID.
+        runs = tiled_client.search(Key("start.adaptive.optimization_uid") == agent.optimization_uid)
+        assert len(runs) == 3
+        record = runs.search(Key("start.plan_name") == "optimize").values().first()
+        assert len(record["primary/adaptive_id"].read()) == 4
+        assert set(record["primary/adaptive_acquisition"].read()) == set(evaluation.uids)
     finally:
         tiled_server.close()
 
@@ -149,19 +158,30 @@ def test_optimize_in_run_tiled_round_trip() -> None:
         # Keep each integration iteration at four points rather than crossing Ax's initialization boundary.
         agent.ax_client.configure_generation_strategy(method="random_search", initialization_random_seed=0)
 
-        RE(optimize_in_run(agent.to_optimization_problem(), iterations=2, n_points=4))
+        RE(
+            optimize_in_run(
+                agent.to_optimization_problem(),
+                iterations=2,
+                n_points=4,
+                callbacks=[tiled_writer],
+                optimization_uid=agent.optimization_uid,
+            )
+        )
 
         assert evaluation.run_uid is not None
+        assert len(tiled_client) == 2
         run = tiled_client[evaluation.run_uid]
-        assert len(tiled_client) == 1
         assert run.start["plan_name"] == "optimize_in_run"
         assert run.start["run_key"] == "optimize_in_run"
         assert run.start["n_points"] == 4
-        assert run.start["optimization_stream"] == "optimization"
+        assert run.start["adaptive"]["optimization_uid"] == agent.optimization_uid
         assert len(run["primary/x1"].read()) == 8
         assert len(run["primary/x2"].read()) == 8
-        assert len(run["optimization/suggestion_ids"].read()) == 8
-        assert len({tuple(uid) for uid in run["optimization/acquisition_uid"].read()}) == 2
+        (record_uid,) = [uid for uid in tiled_client if uid != evaluation.run_uid]
+        record = tiled_client[record_uid]
+        assert record.start["adaptive"]["optimization_uid"] == agent.optimization_uid
+        assert len(record["primary/adaptive_id"].read()) == 8
+        assert len(set(record["primary/adaptive_acquisition"].read())) == 2
         assert len(evaluation.acquisition_ids) == 2
         assert all(len(acquisition_ids) == 4 for acquisition_ids in evaluation.acquisition_ids)
         assert len(evaluation.primary_events) == 8

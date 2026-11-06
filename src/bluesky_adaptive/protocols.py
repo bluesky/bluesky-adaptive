@@ -6,7 +6,7 @@ from typing import Any, Generic, Literal, Protocol, TypeVar, runtime_checkable
 
 from bluesky.protocols import EventCollectable, EventPageCollectable, Flyable, HasName, Movable, Readable
 from bluesky.utils import MsgGenerator, plan
-from event_model import RunStart
+from event_model import DataKey, RunStart
 
 
 @runtime_checkable
@@ -26,6 +26,8 @@ class MovableHasName(Movable, HasName, Protocol):
 ID_KEY: Literal["_id"] = "_id"
 Actuator = MovableHasName | Flyable
 Sensor = Readable | EventCollectable | EventPageCollectable
+DocumentCallback = Callable[[str, dict[str, Any]], Any]
+"""A Bluesky document callback, e.g. a bluesky.callbacks.CallbackBase instance."""
 
 TActuator = TypeVar("TActuator")
 """Actuator generic type"""
@@ -119,6 +121,29 @@ class Checkpointable(Protocol):
 
     def checkpoint(self) -> None:
         """Write the object's state to persistent storage."""
+        ...
+
+
+@runtime_checkable
+class Describable(Protocol):
+    """
+    An optimizer that declares the event fields of its parameters and outcomes.
+
+    Record runs read :meth:`describe` once when each run starts and use it as the ``primary``
+    stream's data keys for parameters and outcomes. Without this protocol, the first evaluated
+    point defines the fields.
+    """
+
+    def describe(self) -> dict[str, DataKey]:
+        """
+        Describe every parameter and outcome field, keyed by name (the describe() half of Readable).
+
+        Returns
+        -------
+        dict[str, DataKey]
+            One data key per field. The keys must be exactly the suggestion parameter names
+            (excluding ``"_id"``) plus the outcome names (excluding ``"_id"``).
+        """
         ...
 
 
@@ -292,7 +317,9 @@ class AcquisitionPlan(Protocol[_TUid_co]):
         sensors: Sequence[Sensor], optional
             The sensors that produce data to evaluate.
         md : Mapping[str, Any] | None, optional
-            Metadata to attach to the start document
+            Metadata to attach to the start document. Optimization plans that open a run per
+            acquisition pass ``{"adaptive": {"optimization_uid": ...}}``, which links the run to
+            the optimization's record runs.
 
         Returns
         -------

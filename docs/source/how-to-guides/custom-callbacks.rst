@@ -92,7 +92,9 @@ Create a callback class
 
 Subclass ``bluesky.callbacks.CallbackBase`` and implement the document methods
 you need. A common pattern is to use ``descriptor`` to identify fields of
-interest and ``event`` to record their values.
+interest and ``event`` to record their values. The descriptor's ``object_keys``
+name the parameter fields under ``"parameters"`` and the outcome fields under
+``"outcomes"``.
 
 .. testcode::
 
@@ -105,11 +107,7 @@ interest and ``event`` to record their values.
             self.rows = []
 
         def descriptor(self, doc):
-            self.outcome_keys = [
-                name
-                for name, data_key in doc.get("data_keys", {}).items()
-                if data_key.get("source") == "optimization-outcome"
-            ]
+            self.outcome_keys = doc.get("object_keys", {}).get("outcomes", [])
 
         def event(self, doc):
             data = doc.get("data", {})

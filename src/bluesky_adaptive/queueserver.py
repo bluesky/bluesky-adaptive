@@ -34,8 +34,15 @@ except ImportError as e:
 from event_model import RunStart, RunStop
 
 from .plans import default_acquire
-from .protocols import ID_KEY, CanRegisterSuggestions, QueueserverOptimizationProblem, TrialFaultAware
-from .utils import _maybe_checkpoint
+from .protocols import (
+    ID_KEY,
+    CanRegisterSuggestions,
+    DocumentCallback,
+    QueueserverOptimizationProblem,
+    TrialFaultAware,
+)
+from .records import RecordRun, _with_optimization_uid
+from .utils import _maybe_checkpoint, _validate_outcomes, _validate_suggestions, collect_optimization_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -249,17 +256,31 @@ class QueueserverOptimizationRunner:
         Client for communicating with the queueserver.
         The document listener is started once during runner construction so it
         is ready before any submitted plan can emit documents.
+    callbacks : Sequence[DocumentCallback], optional
+        Bluesky callbacks that receive the documents of each record run: one per :meth:`run` or
+        :meth:`submit_suggestions` call, with one ``primary`` event per evaluated point (see
+        :class:`bluesky_adaptive.records.RecordRun`). Held by reference; a change takes effect at
+        the next call. Documents are emitted from the caller's thread and the document listener thread.
+    optimization_uid : str | None, optional
+        Identifier stored as ``start["adaptive"]["optimization_uid"]`` in the record runs and the
+        submitted plans' metadata. If None, a new UUID4 is generated.
     """
 
     def __init__(
         self,
         optimization_problem: QueueserverOptimizationProblem,
         queueserver_client: QueueserverClient,
+        *,
+        callbacks: Sequence[DocumentCallback] = (),
+        optimization_uid: str | None = None,
     ):
         self._problem = optimization_problem
         self._client = queueserver_client
         self._plan_name = optimization_problem.acquisition_plan or DEFAULT_ACQUIRE_PLAN_NAME
         self._state: _OptimizationState | None = None
+        self._callbacks = callbacks
+        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
+        self._record: RecordRun | None = None
         self._continuous = True
         self._autostart = True
         self._state_lock = threading.RLock()
@@ -321,20 +342,32 @@ class QueueserverOptimizationRunner:
                 max_iterations=iterations, num_points=num_points, checkpoint_interval=checkpoint_interval
             )
             self._continuous = True
-        suggestions = self._problem.optimizer.suggest(num_points)
-        with self._state_lock:
-            plan = self._build_plan(suggestions)
-            logger.info(
-                f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations} "
-                f"with correlation uid: {self._state.current_uid}"
+            self._start_record(
+                {
+                    "plan_name": "QueueserverOptimizationRunner.run",
+                    "iterations": iterations,
+                    "n_points": num_points,
+                    "checkpoint_interval": checkpoint_interval,
+                }
             )
-            future: Future[OptimizationResult] = Future()
-            self._current_future = future
+            self._state.current_iteration += 1
+            self._state.current_suggestions = []
         try:
+            suggestions = self._problem.optimizer.suggest(num_points)
+            _validate_suggestions(suggestions)
+            with self._state_lock:
+                plan = self._build_plan(suggestions)
+                logger.info(
+                    f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations} "
+                    f"with correlation uid: {self._state.current_uid}"
+                )
+                future: Future[OptimizationResult] = Future()
+                self._current_future = future
             self._client.submit_plan(plan)
         except Exception as exc:
             with self._state_lock:
                 self._fail_future(exc)
+                self._stop_record_for(exc)
             raise
         return future
 
@@ -374,8 +407,12 @@ class QueueserverOptimizationRunner:
             )
         elif isinstance(self.optimization_problem.optimizer, CanRegisterSuggestions):
             suggestions = self.optimization_problem.optimizer.register_suggestions(suggestions)
+        _validate_suggestions(suggestions)
 
         with self._state_lock:
+            self._start_record({"plan_name": "QueueserverOptimizationRunner.submit_suggestions", "suggestions": suggestions})
+            self._state.current_iteration += 1
+            self._state.current_suggestions = []
             plan = self._build_plan(suggestions)
             logger.info(f"Submitting manually specified suggestion(s) with correlation uid: {self._state.current_uid}")
             future: Future[OptimizationResult] = Future()
@@ -385,6 +422,7 @@ class QueueserverOptimizationRunner:
         except Exception as exc:
             with self._state_lock:
                 self._fail_future(exc)
+                self._stop_record_for(exc)
             raise
         return future
 
@@ -394,7 +432,9 @@ class QueueserverOptimizationRunner:
 
         The future returned by :meth:`run` or :meth:`submit_suggestions` will
         be resolved with a partial :class:`OptimizationResult` containing however
-        many iterations completed before the stop.
+        many iterations completed before the stop. The record run stops immediately,
+        with reason ``"Stop requested"``. An acquisition that completes after the stop
+        is ignored: it is not evaluated, ingested, or recorded.
         """
         with self._state_lock:
             self._continuous = False
@@ -403,8 +443,29 @@ class QueueserverOptimizationRunner:
                 if self._state is not None
                 else OptimizationResult(iterations_completed=0, num_points=0, uids=())
             )
+            # Resolved first, so a raising callback cannot leave the future pending.
             self._resolve_future(result)
+            if self._record is not None:
+                self._record.stop("success", "Stop requested")
         logger.info("Optimization stopped")
+
+    def _start_record(self, metadata: Mapping[str, Any]) -> None:
+        """LOCKED: Start the record run of one run() or submit_suggestions() call."""
+        self._record = RecordRun(
+            self._problem.optimizer,
+            callbacks=self._callbacks,
+            metadata={**collect_optimization_metadata(self._problem), "acquisition_plan": self._plan_name, **metadata},
+            optimization_uid=self._optimization_uid,
+        )
+
+    def _stop_record_for(self, exc: BaseException) -> None:
+        """LOCKED: Stop the record run for the exception that ended the optimization, if it is still running."""
+        if self._record is not None and self._state is not None:
+            self._record.stop_for(
+                exc,
+                self._state.current_iteration - 1 if self._continuous else -1,
+                self._state.current_suggestions,
+            )
 
     def _resolve_future(self, result: OptimizationResult) -> None:
         """LOCKED: Resolve the current future with a result if it is not already done."""
@@ -436,15 +497,14 @@ class QueueserverOptimizationRunner:
         if self._state is None:
             raise RuntimeError("_build_plan() called before run() or submit_suggestions()")
 
-        self._state.current_iteration += 1
         self._state.current_suggestions = suggestions
         self._state.current_uid = str(uuid.uuid4())
 
         # Build metadata
-        md: dict[str, Any] = {
-            CORRELATION_UID_KEY: self._state.current_uid,
-            "blop_suggestions": self._state.current_suggestions,
-        }
+        md = _with_optimization_uid(
+            {CORRELATION_UID_KEY: self._state.current_uid, "blop_suggestions": self._state.current_suggestions},
+            self._optimization_uid,
+        )
 
         return BPlan(
             self._plan_name,
@@ -464,10 +524,15 @@ class QueueserverOptimizationRunner:
                 "Unhandled exception in optimization background thread. "
                 "Optimization has been stopped. Inspect the future's exception for details."
             )
-            with self._state_lock:
-                suggestions = self._state.current_suggestions if self._state is not None else []
-                self._fail_future(exc)
-            self._try_register_failures(suggestions)
+            suggestions: Sequence[Mapping] = []
+            try:
+                with self._state_lock:
+                    suggestions = self._state.current_suggestions if self._state is not None else []
+                    self._fail_future(exc)
+                    # Stopped together with the future: once the future fails, run() may replace the record.
+                    self._stop_record_for(exc)
+            finally:
+                self._try_register_failures(suggestions)
 
     def _process_acquisition(self, start_doc: RunStart, stop_doc: RunStop) -> None:
         """Core acquisition-complete logic (called from _on_acquisition_complete)."""
@@ -476,8 +541,14 @@ class QueueserverOptimizationRunner:
             logger.info(f"Ignoring run {start_doc['uid']!r}: excluded by acquisition_run_filter")
             return
         with self._state_lock:
-            if self._state is None:
+            if self._state is None or self._record is None:
                 raise RuntimeError("_on_acquisition_complete called before run()")
+            # Until this record stops, the runner's state belongs to this acquisition's optimization:
+            # a new run() requires a done future, and the future completes together with the record.
+            record = self._record
+            if record.stopped:
+                logger.info(f"Ignoring acquisition run {start_doc['uid']!r}: the optimization was stopped")
+                return
             if self._state.current_uid is None:
                 raise RuntimeError("current_uid not set")
             exit_status = stop_doc.get("exit_status")
@@ -498,11 +569,22 @@ class QueueserverOptimizationRunner:
         # Evaluate the results
         outcomes = self._problem.evaluation_function(uid=start_doc["uid"], suggestions=suggestions)
         logger.info(f"Evaluated {len(outcomes)} outcomes")
+        _validate_outcomes(outcomes, suggestions)
+
+        with self._state_lock:
+            if record.stopped:
+                logger.info(f"Ignoring acquisition run {start_doc['uid']!r}: the optimization was stopped")
+                return
+            record.record(
+                self._state.current_iteration - 1 if self._continuous else -1, start_doc["uid"], suggestions, outcomes
+            )
 
         # Ingest into optimizer
         self._problem.optimizer.ingest(outcomes)
 
         with self._state_lock:
+            if record.stopped:
+                return
             # Checkpoint optimizer, if applicable
             _maybe_checkpoint(
                 self._problem.optimizer, self._state.checkpoint_interval, iteration=self._state.current_iteration
@@ -510,15 +592,20 @@ class QueueserverOptimizationRunner:
             # Check if done
             if not self._continuous or self._state.current_iteration >= self._state.max_iterations:
                 logger.info(f"Optimization complete after {self._state.current_iteration} iterations")
-                result = self._state.build_result()
-                self._resolve_future(result)
+                record.stop()
+                self._resolve_future(self._state.build_result())
                 return
 
-            # Continue: get next suggestions and submit
+            # Continue: start the next iteration, get suggestions, and submit
+            self._state.current_iteration += 1
+            self._state.current_suggestions = []
             num_points = self._state.num_points
 
         suggestions = self._problem.optimizer.suggest(num_points)
+        _validate_suggestions(suggestions)
         with self._state_lock:
+            if record.stopped:
+                return
             plan = self._build_plan(suggestions)
             logger.info(
                 f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations} "

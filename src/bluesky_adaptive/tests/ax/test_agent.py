@@ -3,6 +3,8 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 from ax import Client
+from bluesky import RunEngine
+from bluesky import plan_stubs as bps
 from bluesky.callbacks import CallbackBase
 from bluesky.callbacks.zmq import RemoteDispatcher
 
@@ -430,6 +432,37 @@ def test_from_checkpoint_has_default_callbacks(mock_evaluation_function, tmp_pat
     )
     assert len(restored.callbacks) == 1
     assert isinstance(restored.callbacks[0], OptimizationLogger)
+
+
+def test_agent_record_runs_share_optimization_uid(agent):
+    documents: list[tuple[str, dict]] = []
+    agent.evaluation_function.side_effect = lambda _uid, suggestions: [
+        {"_id": suggestion["_id"], "obj": 1.0} for suggestion in suggestions
+    ]
+    agent.subscribe(lambda name, doc: documents.append((name, dict(doc))))
+
+    def acquisition_plan(*_args, **_kwargs):
+        yield from bps.null()
+        return "uid"
+
+    agent._acquisition_plan = acquisition_plan
+
+    RE = RunEngine({})
+    RE(agent.optimize(1))
+    RE(agent.optimize(1))
+
+    record_starts = [doc for name, doc in documents if name == "start"]
+    assert len(record_starts) == 2
+    assert all(doc["adaptive"]["optimization_uid"] == agent.optimization_uid for doc in record_starts)
+
+    given = Agent(
+        sensors=[],
+        dofs=[RangeDOF(name="x1", bounds=(0, 10), parameter_type="float")],
+        objectives=[Objective(name="obj", minimize=False)],
+        evaluation_function=MagicMock(spec=EvaluationFunction),
+        optimization_uid="given",
+    )
+    assert given.optimization_uid == "given"
 
 
 def test_agent_get_best_points_single_objective(mock_evaluation_function):

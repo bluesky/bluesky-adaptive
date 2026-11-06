@@ -13,8 +13,7 @@ from rich.table import Table
 
 from bluesky_adaptive.callbacks.logger import OptimizationLogger
 from bluesky_adaptive.callbacks.utils import RunningStats
-from bluesky_adaptive.plan_stubs import _ITERATION_KEY
-from bluesky_adaptive.utils import Source
+from bluesky_adaptive.records import ITERATION_FIELD
 
 
 @pytest.fixture()
@@ -33,17 +32,20 @@ def _make_start(**overrides) -> RunStart:
     return RunStart(**doc)
 
 
-def _make_descriptor(data_keys: dict | None = None, **overrides) -> EventDescriptor:
+def _make_descriptor(data_keys: dict | None = None, object_keys: dict | None = None, **overrides) -> EventDescriptor:
     if data_keys is None:
         data_keys = {
-            "x": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-            "y": {"dtype": "number", "shape": [], "source": Source.OUTCOME.value},
+            "x": {"dtype": "number", "shape": [], "source": "test"},
+            "y": {"dtype": "number", "shape": [], "source": "test"},
         }
+    if object_keys is None:
+        object_keys = {"parameters": ["x"], "outcomes": ["y"]}
     doc = {
         "uid": "desc-001",
         "time": 0.0,
         "run_start": "start-001",
         "data_keys": data_keys,
+        "object_keys": object_keys,
     }
     doc.update(overrides)
     return EventDescriptor(**doc)
@@ -73,9 +75,9 @@ def _make_stop(exit_status: str = "success", **overrides) -> RunStop:
     return RunStop(**doc)
 
 
-def _setup_descriptor(logger, data_keys=None):
+def _setup_descriptor(logger, data_keys=None, object_keys=None):
     """Feed a descriptor so the logger knows about param/outcome keys."""
-    logger.descriptor(_make_descriptor(data_keys=data_keys))
+    logger.descriptor(_make_descriptor(data_keys=data_keys, object_keys=object_keys))
 
 
 def _run_to_stop(logger, exit_status="success", reason=""):
@@ -159,11 +161,12 @@ def test_descriptor(logger):
     logger.descriptor(
         _make_descriptor(
             data_keys={
-                "x1": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-                "x2": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-                "y": {"dtype": "number", "shape": [], "source": Source.OUTCOME.value},
-                "other": {"dtype": "string", "shape": [], "source": Source.OTHER.value},
-            }
+                "x1": {"dtype": "number", "shape": [], "source": "test"},
+                "x2": {"dtype": "number", "shape": [], "source": "test"},
+                "y": {"dtype": "number", "shape": [], "source": "test"},
+                "other": {"dtype": "string", "shape": [], "source": "test"},
+            },
+            object_keys={"parameters": ["x1", "x2"], "outcomes": ["y"]},
         )
     )
 
@@ -217,7 +220,7 @@ def test_event_multiple_iterations(logger, console):
     logger.start(_make_start(iterations=8))
     _setup_descriptor(logger)
     for i in range(8):
-        logger.event(_make_event(data={_ITERATION_KEY: i}))
+        logger.event(_make_event(data={ITERATION_FIELD: i}))
     assert console.print.call_count >= 1
     assert console.rule.call_count >= 1
     rule_values = _collect_ruler_info(console.rule.call_args_list[0])
@@ -230,9 +233,10 @@ def test_event_non_numeric_data(logger, console):
     _setup_descriptor(
         logger,
         data_keys={
-            "x": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-            "label": {"dtype": "string", "shape": [], "source": Source.OUTCOME.value},
+            "x": {"dtype": "number", "shape": [], "source": "test"},
+            "label": {"dtype": "string", "shape": [], "source": "test"},
         },
+        object_keys={"parameters": ["x"], "outcomes": ["label"]},
     )
     doc = _make_event(data={"x": 1.0, "label": "good"})
     result = logger.event(doc)
@@ -243,7 +247,7 @@ def test_event_null_iterations(logger, console):
     logger.start(_make_start(iterations=10))
     _setup_descriptor(logger)
     for _ in range(5):
-        logger.event(_make_event(data={_ITERATION_KEY: -1}))
+        logger.event(_make_event(data={ITERATION_FIELD: -1}))
         logger.event(_make_event(data={}))
     assert console.print.call_count >= 1
     assert console.rule.call_count >= 1
@@ -296,7 +300,7 @@ def test_full_lifecycle(logger, console):
                 data={
                     "x": [float(i), float(i) + 0.5],
                     "y": [float(i) * 10, float(i) * 10 + 5],
-                    "suggestion_ids": [f"s{2 * i}", f"s{2 * i + 1}"],
+                    "adaptive_id": [f"s{2 * i}", f"s{2 * i + 1}"],
                 },
                 seq_num=i + 1,
                 uid=f"event-{i:03d}",
@@ -313,12 +317,12 @@ def test_multi_run_accumulates_iterations(logger, console):
     """Calling start() twice should bump the internal iteration bookkeeping by how many iterations have been recorded"""
     logger.start(_make_start(iterations=5))
     logger.descriptor(_make_descriptor())
-    logger.event(_make_event(data={"x": -1.5, "y": -3.14, _ITERATION_KEY: 0}))
+    logger.event(_make_event(data={"x": -1.5, "y": -3.14, ITERATION_FIELD: 0}))
     logger.stop(_make_stop())
     logger.start(_make_start(iterations=5))
     # logger.descriptor(_make_descriptor())
     for i in range(3):
-        doc = _make_event(data={"x": 1.5 * i, "y": 3.14, _ITERATION_KEY: i})
+        doc = _make_event(data={"x": 1.5 * i, "y": 3.14, ITERATION_FIELD: i})
         logger.event(doc)
     logger.stop(_make_stop())
     logger.start(_make_start(iterations=3))

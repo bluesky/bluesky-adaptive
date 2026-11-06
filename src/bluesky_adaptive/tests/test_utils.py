@@ -1,45 +1,5 @@
-import numpy as np
-import pytest
-
 from bluesky_adaptive.protocols import ID_KEY
-from bluesky_adaptive.utils import InferredReadable, Source, _infer_data_key, route_suggestions
-
-# InferredReadable tests
-
-
-def test_inferred_readable_scalar_number():
-    r = InferredReadable("x", Source.OTHER, 1.5)
-    assert r.name == "x"
-    assert r.parent is None
-    read = r.read()
-    assert read["x"]["value"] == 1.5
-    assert "timestamp" in read["x"]
-    assert r.describe()["x"]["dtype"] == "number"
-    assert r.hints["fields"] == ["x"]
-
-
-def test_inferred_readable_scalar_string():
-    r = InferredReadable("ids", Source.OTHER, ["0"])
-    assert r.read()["ids"]["value"] == "0"
-    assert r.describe()["ids"]["dtype"] == "string"
-    assert r.describe()["ids"]["dtype_numpy"] == "<U36"
-
-
-def test_inferred_readable_array():
-    r = InferredReadable("arr", Source.OTHER, [0.0, 0.1])
-    assert r.read()["arr"]["value"] == [0.0, 0.1]
-    assert r.describe()["arr"]["dtype"] == "array"
-
-
-def test_inferred_readable_update():
-    r = InferredReadable("x", Source.OTHER, 1.5)
-    r.update(2.0)
-    assert r.read()["x"]["value"] == 2.0
-
-    r2 = InferredReadable("arr", Source.OTHER, [0.0, 0.1])
-    r2.update(np.array([1.0, 2.0]))
-    assert list(r2.read()["arr"]["value"]) == [1.0, 2.0]
-
+from bluesky_adaptive.utils import route_suggestions
 
 # route_suggestions tests
 
@@ -95,14 +55,3 @@ def test_route_suggestions_visits_each_reported_suggestion_once():
     assert routed_ids[0] == 3
     assert len(routed_ids) == len(suggestions)
     assert set(routed_ids) == {suggestion[ID_KEY] for suggestion in suggestions}
-
-
-# _infer_data_key source value tests
-
-
-@pytest.mark.parametrize("source", list(Source))
-def test_infer_data_key_source_is_enum_value(source):
-    """The 'source' field in the DataKey must be the enum's string value, not its repr."""
-    data_key = _infer_data_key(source, 1.0)
-    assert data_key["source"] == source.value
-    assert "Source." not in data_key["source"]
