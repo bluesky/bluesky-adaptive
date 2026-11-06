@@ -5,12 +5,22 @@ Release History
 Unreleased
 ----------
 
+Breaking Changes
+................
+* ``CanRegisterSuggestions.register_suggestions`` returns already-registered suggestions unchanged instead of
+  assigning them a new ``"_id"``.
+
 Features
 ........
 * ``QueueserverAgent`` and ``QueueserverOptimizationProblem`` accept ``acquisition_run_filter``, a predicate on
   the start document that selects the run to evaluate when the acquisition plan opens more than one run with
   the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
   completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``.
+
+Bug Fixes
+.........
+* ``AxOptimizer`` and ``XoptOptimizer`` no longer register suggestions from ``suggest()`` a second time
+  (`#83 <https://github.com/bluesky/bluesky-adaptive/issues/83>`_).
 
 v1.0.0 (2026-10-26)
 -------------------
