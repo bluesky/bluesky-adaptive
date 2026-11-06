@@ -183,6 +183,54 @@ def test_xopt_optimizer_register_failures():
     assert all(suggestion["_id"] not in optimizer._params_by_id for suggestion in suggestions)
 
 
+def test_xopt_optimizer_register_suggestions_registers_only_new_points():
+    vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives={"y": "MINIMIZE"})
+    optimizer = _random_optimizer(vocs)
+    suggestions = optimizer.suggest(num_points=2)
+
+    registered = optimizer.register_suggestions([{"x": 0.1}, suggestions[0], {"x": 0.2, "_id": "A"}, suggestions[1]])
+
+    assert registered == [{"_id": 2, "x": 0.1}, suggestions[0], {"x": 0.2, "_id": "A"}, suggestions[1]]
+    assert len(optimizer.generator.data) == 4
+
+
+def test_xopt_optimizer_register_suggestions_adopted_integer_id_is_not_reissued():
+    vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives={"y": "MINIMIZE"})
+    optimizer = _random_optimizer(vocs)
+
+    optimizer.register_suggestions([{"x": 0.3, "_id": 50}])
+
+    assert optimizer.register_suggestions([{"x": 0.4}]) == [{"_id": 51, "x": 0.4}]
+
+
+def _edited_parameters(optimizer, suggestion):
+    return {**suggestion, "x": suggestion["x"] + 1.0}
+
+
+def _with_outcomes(optimizer, suggestion):
+    optimizer.ingest([{"_id": suggestion["_id"], "y": 1.0}])
+    return suggestion
+
+
+def _marked_failed(optimizer, suggestion):
+    optimizer.register_failures([suggestion])
+    return suggestion
+
+
+@pytest.mark.parametrize("make_suggestion", [_edited_parameters, _with_outcomes, _marked_failed])
+def test_xopt_optimizer_register_suggestions_rejects_ids_not_awaiting_results(make_suggestion):
+    vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives={"y": "MINIMIZE"})
+    optimizer = _random_optimizer(vocs)
+    suggestion = make_suggestion(optimizer, optimizer.suggest(num_points=1)[0])
+
+    with pytest.raises(ValueError):
+        optimizer.register_suggestions([{"x": 0.5}, suggestion])
+
+    # The valid manual point before the rejected one must not be registered.
+    assert len(optimizer.generator.data) == 1
+    assert optimizer.register_suggestions([{"x": 0.5}]) == [{"_id": 1, "x": 0.5}]
+
+
 def test_xopt_optimizer_checkpoint_roundtrip(tmp_path):
     vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives={"y": "MINIMIZE"})
     checkpoint_path = tmp_path / "xopt_optimizer.pkl"

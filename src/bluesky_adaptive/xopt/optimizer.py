@@ -127,21 +127,85 @@ class XoptOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaul
         return self.register_suggestions(suggestions)
 
     def register_suggestions(self, suggestions: Sequence[Mapping]) -> Sequence[Mapping]:
-        """Register external suggestions with the optimizer."""
+        """
+        Register external suggestions with the optimizer.
+
+        Suggestions without an "_id" get the next ID. Registered suggestions still awaiting outcomes are returned
+        unchanged; an unknown "_id" is registered as given.
+
+        Raises
+        ------
+        ValueError
+            If an "_id" already has outcomes or was marked failed, or its parameters differ from those registered.
+            No suggestions are registered.
+        """
+        if any(ID_KEY in suggestion for suggestion in suggestions):
+            self._validate_suggestion_ids(suggestions)
+
         # Attach stable Bluesky Adaptive trial IDs and cache suggested parameterizations by ID.
-        registered: list[dict] = []
+        registered: list[Mapping] = []
+        new_rows: list[dict] = []
         for suggestion in suggestions:
-            trial_id = self._next_id
-            self._next_id += 1
-
             params = {name: suggestion[name] for name in self.vocs.variable_names if name in suggestion}
+            if ID_KEY in suggestion:
+                trial_id = _normalize_trial_id(suggestion[ID_KEY])
+                if trial_id in self._params_by_id:
+                    registered.append(suggestion)
+                    continue
+                # Keep generated IDs from colliding with a user-supplied integer ID.
+                if isinstance(trial_id, int):
+                    self._next_id = max(self._next_id, trial_id + 1)
+                row = dict(suggestion)
+            else:
+                trial_id = self._next_id
+                self._next_id += 1
+                row = {ID_KEY: trial_id, **suggestion}
             self._params_by_id[trial_id] = params
-            registered.append({ID_KEY: trial_id, **suggestion})
+            registered.append(row)
+            new_rows.append(row)
 
-        # add the registered suggestions to the generator's data
-        self._generator.ingest(registered)
+        # add the newly registered suggestions to the generator's data
+        if new_rows:
+            self._generator.ingest(new_rows)
 
         return registered
+
+    def _validate_suggestion_ids(self, suggestions: Sequence[Mapping]) -> None:
+        """Reject "_id"s that already have outcomes, were marked failed, or have different parameters."""
+        recorded_ids: set[int | str] = set()
+        completed_ids: set[int | str] = set()
+        data = self._generator.data
+        if isinstance(data, pd.DataFrame) and ID_KEY in data.columns:
+            output_names = [name for name in self.vocs.output_names if name in data.columns]
+            has_outcomes = data[output_names].notna().to_numpy().any(axis=1)
+            for raw_trial_id, completed in zip(data[ID_KEY], has_outcomes, strict=True):
+                trial_id = _normalize_trial_id(raw_trial_id)
+                recorded_ids.add(trial_id)
+                if completed:
+                    completed_ids.add(trial_id)
+
+        for suggestion in suggestions:
+            if ID_KEY not in suggestion:
+                continue
+            trial_id = _normalize_trial_id(suggestion[ID_KEY])
+            if trial_id in completed_ids:
+                raise ValueError(
+                    f"Suggestion {suggestion} has '{ID_KEY}' {trial_id!r}, which already has outcomes. "
+                    f"Remove '{ID_KEY}' to register it under a new ID."
+                )
+            if trial_id in self._params_by_id:
+                params = {name: suggestion[name] for name in self.vocs.variable_names if name in suggestion}
+                if params != self._params_by_id[trial_id]:
+                    raise ValueError(
+                        f"Suggestion {suggestion} does not match the parameters registered under '{ID_KEY}' "
+                        f"{trial_id!r}: {self._params_by_id[trial_id]}. Remove '{ID_KEY}' to register it under a new ID."
+                    )
+            elif trial_id in recorded_ids:
+                # register_failures drops the ID from _params_by_id but its row stays in the generator data.
+                raise ValueError(
+                    f"Suggestion {suggestion} has '{ID_KEY}' {trial_id!r}, which was marked failed. "
+                    f"Remove '{ID_KEY}' to register it under a new ID."
+                )
 
     def ingest(self, points: Sequence[Mapping]) -> None:
         """Ingest outcomes into the optimizer."""
