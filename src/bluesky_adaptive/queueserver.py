@@ -471,6 +471,10 @@ class QueueserverOptimizationRunner:
 
     def _process_acquisition(self, start_doc: RunStart, stop_doc: RunStop) -> None:
         """Core acquisition-complete logic (called from _on_acquisition_complete)."""
+        run_filter = self._problem.acquisition_run_filter
+        if run_filter is not None and not run_filter(start_doc):
+            logger.info(f"Ignoring run {start_doc['uid']!r}: excluded by acquisition_run_filter")
+            return
         with self._state_lock:
             if self._state is None:
                 raise RuntimeError("_on_acquisition_complete called before run()")
@@ -480,7 +484,9 @@ class QueueserverOptimizationRunner:
             if self._state.current_uid != start_doc.get(CORRELATION_UID_KEY):
                 raise RuntimeError(
                     "current_uid did not match start document. "
-                    f"Got: {start_doc.get(CORRELATION_UID_KEY)}, Expected: {self._state.current_uid}"
+                    f"Got: {start_doc.get(CORRELATION_UID_KEY)}, Expected: {self._state.current_uid}. "
+                    "If the acquisition plan opens more than one run with this metadata (for example, a "
+                    "dark-frame run), set acquisition_run_filter to select the run to evaluate."
                 )
             if exit_status != "success":
                 reason = stop_doc.get("reason") or "(no reason given)"

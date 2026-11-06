@@ -2,6 +2,16 @@
 Release History
 ===============
 
+Unreleased
+----------
+
+Features
+........
+* ``QueueserverAgent`` and ``QueueserverOptimizationProblem`` accept ``acquisition_run_filter``, a predicate on
+  the start document that selects the run to evaluate when the acquisition plan opens more than one run with
+  the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
+  completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``.
+
 v1.0.0 (2026-10-26)
 -------------------
 

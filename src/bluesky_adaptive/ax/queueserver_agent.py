@@ -1,6 +1,6 @@
 """Agent interface for asynchronous optimization using Bluesky Queueserver and Ax."""
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from concurrent.futures import Future
 from typing import Any
 
@@ -13,6 +13,7 @@ except ImportError as e:
         "Install them with: pip install bluesky-adaptive[queueserver]"
     ) from e
 from bluesky.callbacks.zmq import RemoteDispatcher
+from event_model import RunStart
 
 from ..protocols import (
     Actuator,
@@ -62,6 +63,13 @@ class QueueserverAgent(_AxAgentMixin):
         Constraints on outcomes to be satisfied during optimization.
     checkpoint_path : str | None, optional
         The path to the checkpoint file to save the optimizer's state to.
+    acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+        Additional arguments to pass to the acquisition plan.
+    acquisition_run_filter : Callable[[RunStart], bool] | None, optional
+        Selects the run to evaluate when the acquisition plan opens more than one run carrying the
+        submitted metadata. Runs whose start document does not satisfy the filter are ignored. For example,
+        ``lambda start: not start.get("dark_frame", False)`` skips xpdAcq dark-frame runs. If not provided,
+        the first run carrying the metadata is evaluated.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -88,6 +96,7 @@ class QueueserverAgent(_AxAgentMixin):
         outcome_constraints: Sequence[OutcomeConstraint] | None = None,
         checkpoint_path: str | None = None,
         acquisition_plan_kwargs: Mapping[str, Any] | None = None,
+        acquisition_run_filter: Callable[[RunStart], bool] | None = None,
         **kwargs: Any,
     ):
         self._sensors = sensors
@@ -101,6 +110,7 @@ class QueueserverAgent(_AxAgentMixin):
         self._evaluation_function = evaluation_function
         self._acquisition_plan = acquisition_plan
         self._acquisition_plan_kwargs = acquisition_plan_kwargs or {}
+        self._acquisition_run_filter = acquisition_run_filter
         self._optimizer = AxOptimizer(
             parameters=[dof.to_ax_parameter_config() for dof in dofs],
             objective=to_ax_objective_str(objectives),
@@ -154,6 +164,7 @@ class QueueserverAgent(_AxAgentMixin):
             evaluation_function=self._evaluation_function,
             acquisition_plan=self._acquisition_plan,
             acquisition_plan_kwargs=self._acquisition_plan_kwargs,
+            acquisition_run_filter=self._acquisition_run_filter,
         )
 
     def run(

@@ -297,6 +297,13 @@ whatever arguments your document stream requires, such as a ZMQ address or
 message prefix.
 ```
 
+```{note}
+The agent evaluates the first run that carries its submitted metadata. If your acquisition plan opens
+additional runs with the same metadata, such as a dark-frame run that xpdAcq's `periodic_dark` inserts
+before the measurement, pass `acquisition_run_filter` to select the run to evaluate. For example,
+`acquisition_run_filter=lambda start: not start.get("dark_frame", False)` skips dark-frame runs.
+```
+
 ## Running the Optimization
 
 The `run()` method is **non-blocking** — it submits the first plan and returns immediately. The agent reacts asynchronously to plan completions via ZMQ callbacks.
