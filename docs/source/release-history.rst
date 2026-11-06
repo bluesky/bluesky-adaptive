@@ -12,6 +12,11 @@ Features
   the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
   completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``.
 
+Bug Fixes
+.........
+* The Queue Server runner validates suggestions and outcomes like ``optimize`` instead of ingesting mismatched
+  outcomes (`#85 <https://github.com/bluesky/bluesky-adaptive/issues/85>`_).
+
 v1.0.0 (2026-10-26)
 -------------------
 
