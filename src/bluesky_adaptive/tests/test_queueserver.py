@@ -1,4 +1,5 @@
 import threading
+from dataclasses import replace
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -570,6 +571,26 @@ def test_runner_on_acquisition_complete_ignores_other_bluesky_adaptive_runs(mock
     exc = future.exception()
     assert isinstance(exc, RuntimeError)
     assert "current_uid did not match start document" in str(exc)
+
+
+def test_runner_acquisition_run_filter_evaluates_measurement_run_after_dark_run(mock_optimization_problem):
+    """A filtered dark-frame run sharing the correlation UID neither completes nor fails the iteration."""
+    problem = replace(mock_optimization_problem, acquisition_run_filter=lambda start: not start.get("dark_frame", False))
+    runner, mock_client, future = _make_runner_with_captured_callback(problem, iterations=2)
+    consumer = ConsumerCallback(callback=mock_client._on_stop)
+
+    measurement_uids = []
+    for _ in range(2):
+        correlation_uid = runner._state.current_uid
+        dark_uid, measurement_uid = f"dark-{correlation_uid}", f"measurement-{correlation_uid}"
+        measurement_uids.append(measurement_uid)
+        consumer("start", {"uid": dark_uid, CORRELATION_UID_KEY: correlation_uid, "dark_frame": True})
+        consumer("stop", {"uid": f"stop-{dark_uid}", "run_start": dark_uid, "exit_status": "success"})
+        consumer("start", {"uid": measurement_uid, CORRELATION_UID_KEY: correlation_uid})
+        consumer("stop", {"uid": f"stop-{measurement_uid}", "run_start": measurement_uid, "exit_status": "success"})
+
+    assert [call.kwargs["uid"] for call in problem.evaluation_function.call_args_list] == measurement_uids
+    assert future.result().uids == tuple(measurement_uids)
 
 
 def test_runner_private_method_calls_before_run(mock_optimization_problem):
