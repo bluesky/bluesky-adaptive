@@ -114,7 +114,7 @@ class QueueserverClient:
     Handles communication with a Bluesky queueserver.
 
     This class encapsulates queueserver communication, including plan submission
-    and event listening.
+    and event listening. The queue must be running or have autostart enabled.
 
     .. warning::
 
@@ -133,16 +133,11 @@ class QueueserverClient:
         self,
         re_manager_api: bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI,
         document_dispatcher: RemoteDispatcher,
-        *,
-        autostart: bool = True,
     ):
         self._rm = re_manager_api
         self._dispatcher = document_dispatcher
         self._consumer_callback: ConsumerCallback | None = None
         self._listener_thread: threading.Thread | None = None
-
-        response = self._rm.queue_autostart(autostart)
-        logger.debug(f"Set queue autostart to {autostart}. Response: {response}")
 
     def check_environment(self) -> None:
         """
@@ -261,7 +256,6 @@ class QueueserverOptimizationRunner:
         self._plan_name = optimization_problem.acquisition_plan or DEFAULT_ACQUIRE_PLAN_NAME
         self._state: _OptimizationState | None = None
         self._continuous = True
-        self._autostart = True
         self._state_lock = threading.RLock()
         self._current_future: Future[OptimizationResult] | None = None
         self._client.start_listener(

@@ -104,6 +104,7 @@ from bluesky_queueserver_api.zmq import REManagerAPI
 RM = REManagerAPI(zmq_control_addr="tcp://localhost:60615")
 RM.environment_open()
 RM.wait_for_idle(timeout=30)
+RM.queue_autostart(True)
 status = RM.status()
 print(f"RE Manager state: {status['manager_state']}")
 print(f"Worker environment exists: {status['worker_environment_exists']}")

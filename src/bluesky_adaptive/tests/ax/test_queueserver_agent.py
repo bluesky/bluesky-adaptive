@@ -58,6 +58,22 @@ def test_queueserver_agent_init(mock_re_manager_api, mock_document_dispatcher, m
     assert problem.evaluation_function == mock_evaluation_function
 
 
+def test_queueserver_agent_init_sends_no_manager_requests(
+    mock_re_manager_api, mock_document_dispatcher, mock_evaluation_function
+):
+    """Constructing an agent leaves the shared queueserver state, including autostart, untouched."""
+    QueueserverAgent(
+        mock_re_manager_api,
+        mock_document_dispatcher,
+        ["det"],
+        [RangeDOF(actuator="test_motor1", bounds=(0, 10), parameter_type="float")],
+        [Objective(name="obj1", minimize=False)],
+        mock_evaluation_function,
+    )
+
+    assert mock_re_manager_api.method_calls == []
+
+
 def test_queueserver_agent_init_acquisition_plan_kwargs(
     mock_re_manager_api, mock_document_dispatcher, mock_evaluation_function
 ):
