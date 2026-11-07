@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.1.dev4 documentation</title>
+    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.1.dev5 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=03b83a3c"></script>
+    <script src="../../_static/documentation_options.js?v=a7c0be25"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1.dev4" />
+  <meta name="docsearch:version" content="1.0.1.dev5" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -964,7 +964,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    Handles communication with a Bluesky queueserver.</span>
 
 <span class="sd">    This class encapsulates queueserver communication, including plan submission</span>
-<span class="sd">    and event listening.</span>
+<span class="sd">    and event listening. The queue must be running or have autostart enabled.</span>
 
 <span class="sd">    .. warning::</span>
 
@@ -983,16 +983,11 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">re_manager_api</span><span class="p">:</span> <span class="n">bluesky_queueserver_api</span><span class="o">.</span><span class="n">zmq</span><span class="o">.</span><span class="n">REManagerAPI</span> <span class="o">|</span> <span class="n">bluesky_queueserver_api</span><span class="o">.</span><span class="n">http</span><span class="o">.</span><span class="n">REManagerAPI</span><span class="p">,</span>
         <span class="n">document_dispatcher</span><span class="p">:</span> <span class="n">RemoteDispatcher</span><span class="p">,</span>
-        <span class="o">*</span><span class="p">,</span>
-        <span class="n">autostart</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rm</span> <span class="o">=</span> <span class="n">re_manager_api</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_dispatcher</span> <span class="o">=</span> <span class="n">document_dispatcher</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_consumer_callback</span><span class="p">:</span> <span class="n">ConsumerCallback</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_listener_thread</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-
-        <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rm</span><span class="o">.</span><span class="n">queue_autostart</span><span class="p">(</span><span class="n">autostart</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Set queue autostart to </span><span class="si">{</span><span class="n">autostart</span><span class="si">}</span><span class="s2">. Response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 <div class="viewcode-block" id="QueueserverClient.check_environment">
 <a class="viewcode-back" href="../../reference/queueserver.html#bluesky_adaptive.queueserver.QueueserverClient.check_environment">[docs]</a>
@@ -1126,7 +1121,6 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_plan_name</span> <span class="o">=</span> <span class="n">optimization_problem</span><span class="o">.</span><span class="n">acquisition_plan</span> <span class="ow">or</span> <span class="n">DEFAULT_ACQUIRE_PLAN_NAME</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span> <span class="n">_OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="o">=</span> <span class="kc">True</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_autostart</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_current_future</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">start_listener</span><span class="p">(</span>
