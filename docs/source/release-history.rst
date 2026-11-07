@@ -17,6 +17,10 @@ Features
   the start document that selects the run to evaluate when the acquisition plan opens more than one run with
   the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
   completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``.
+* ``OptimizationProblem`` and ``QueueserverOptimizationProblem`` gain ``optimization_uid``, which the ``optimize``,
+  ``optimize_in_run``, and ``sample_suggestions`` runs record as ``start["adaptive"]["optimization_uid"]``.
+  ``Agent`` and ``Scipy`` generate one, expose it, and accept it to continue an optimization
+  (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
 
 Bug Fixes
 .........

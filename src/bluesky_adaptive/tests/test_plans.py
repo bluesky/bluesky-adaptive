@@ -14,6 +14,7 @@ from bluesky_adaptive.plans import (
     optimize,
     optimize_in_run,
     optimize_step,
+    sample_suggestions,
 )
 from bluesky_adaptive.protocols import (
     AcquisitionPlan,
@@ -1338,3 +1339,30 @@ def test_optimize_emits_checkpoints_per_iteration(RE):
     RE(optimize(optimization_problem, iterations=5))
 
     assert commands.count("checkpoint") == 5
+
+
+@pytest.mark.parametrize(
+    ("run_plan", "plan_name"),
+    [
+        (lambda problem: optimize(problem), "optimize"),
+        (lambda problem: optimize_in_run(problem), "optimize_in_run"),
+        (lambda problem: sample_suggestions(problem, [{"x1": 1.0, "_id": 0}]), "sample_suggestions"),
+    ],
+    ids=["optimize", "optimize_in_run", "sample_suggestions"],
+)
+def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, plan_name):
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+    )
+    callback, documents = _collect_documents()
+    RE.subscribe(callback)
+
+    RE(run_plan(problem))
+
+    start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == plan_name)
+    assert start["adaptive"]["optimization_uid"] == problem.optimization_uid

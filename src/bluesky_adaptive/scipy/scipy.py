@@ -1,5 +1,6 @@
 """Scipy optimization power class for fast start QOL and Ax like agent behavior."""
 
+import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, Generic, cast
 
@@ -37,6 +38,7 @@ class Scipy(Generic[TUid]):
         config: ScipyCFG,
         evaluation_function: EvaluationFunction[TUid],
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
+        optimization_uid: str | None = None,
         **kwargs: Any,
     ):
         if config.optimizer not in list(SCP):
@@ -61,6 +63,7 @@ class Scipy(Generic[TUid]):
         self._readable_cache: dict[str, InferredReadable] = {}
         self._callbacks: list[CallbackBase] = [OptimizationLogger()]
         self._callback_router = OptimizationCallbackRouter(self._callbacks)
+        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
         self.sessioning = kwargs.pop("sessioning", True)
 
     @classmethod
@@ -139,6 +142,11 @@ class Scipy(Generic[TUid]):
         return self._acquisition_plan
 
     @property
+    def optimization_uid(self) -> str:
+        """Identifier of this agent's optimization."""
+        return self._optimization_uid
+
+    @property
     def callbacks(self) -> list[CallbackBase]:
         """The list of active optimization callbacks.
 
@@ -207,6 +215,7 @@ class Scipy(Generic[TUid]):
             sensors=self._sensors,
             evaluation_function=self._evaluation_function,
             acquisition_plan=self._acquisition_plan,
+            optimization_uid=self._optimization_uid,
         )
 
     def suggest(self, num_points: int = 1) -> Sequence[Mapping]:
