@@ -79,7 +79,9 @@ class RecordRun:
         for callback in self._callbacks:
             callback(name, document)
 
-    def record(self, iteration: int, acquisition_uid: Any, suggestions: Sequence[Mapping], outcomes: Sequence[Mapping]) -> None:
+    def record(
+        self, iteration: int, acquisition_uid: Any, suggestions: Sequence[Mapping], outcomes: Sequence[Mapping]
+    ) -> None:
         """
         Record one evaluated step as one event per suggestion, in suggestion order.
 

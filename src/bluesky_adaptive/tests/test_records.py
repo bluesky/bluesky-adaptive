@@ -75,7 +75,9 @@ def test_record_run_records_acquisition_uid_as_string(acquisition_uid, recorded)
 )
 def test_record_run_records_plain_values(value, recorded, dtype, shape):
     callback, documents = _collector()
-    RecordRun(callbacks=[callback], metadata={}).record(0, "acquisition-uid", [{"_id": 1, "x": 0.5}], [{"_id": 1, "y": value}])
+    RecordRun(callbacks=[callback], metadata={}).record(
+        0, "acquisition-uid", [{"_id": 1, "x": 0.5}], [{"_id": 1, "y": value}]
+    )
 
     data_key = _first(documents, "descriptor")["data_keys"]["y"]
     assert _first(documents, "event")["data"]["y"] == recorded
