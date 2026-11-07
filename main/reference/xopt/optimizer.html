@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Xopt Optimizer &#8212; Bluesky Adaptive 1.0.1.dev5 documentation</title>
+    <title>Xopt Optimizer &#8212; Bluesky Adaptive 1.0.1.dev6 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=a7c0be25"></script>
+    <script src="../../_static/documentation_options.js?v=9038344f"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1.dev5" />
+  <meta name="docsearch:version" content="1.0.1.dev6" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -567,7 +567,16 @@
 <dt class="sig sig-object py" id="bluesky_adaptive.xopt.optimizer.XoptOptimizer.register_suggestions">
 <span class="sig-name descname"><span class="pre">register_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/xopt/optimizer.html#XoptOptimizer.register_suggestions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.xopt.optimizer.XoptOptimizer.register_suggestions" title="Link to this definition">#</a></dt>
 <dd><p>Register external suggestions with the optimizer.</p>
+<p>Suggestions without an “_id” get the next ID. Registered suggestions still awaiting outcomes are returned
+unchanged; an unknown “_id” is registered as given.</p>
 <dl class="field-list simple">
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>ValueError</dt><dd><p>If an “_id” already has outcomes or was marked failed, or its parameters differ from those registered.
+No suggestions are registered.</p>
+</dd>
+</dl>
+</dd>
 </dl>
 </dd></dl>
 

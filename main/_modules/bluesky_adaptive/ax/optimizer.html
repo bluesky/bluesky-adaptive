@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.ax.optimizer &#8212; Bluesky Adaptive 1.0.1.dev5 documentation</title>
+    <title>bluesky_adaptive.ax.optimizer &#8212; Bluesky Adaptive 1.0.1.dev6 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../../_static/documentation_options.js?v=a7c0be25"></script>
+    <script src="../../../_static/documentation_options.js?v=9038344f"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1.dev5" />
+  <meta name="docsearch:version" content="1.0.1.dev6" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -851,6 +851,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ax</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChoiceParameterConfig</span><span class="p">,</span> <span class="n">Client</span><span class="p">,</span> <span class="n">RangeParameterConfig</span><span class="p">,</span> <span class="n">TOutcome</span><span class="p">,</span> <span class="n">TParameterization</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ax.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiObjectiveOptimizationConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ax.core.parameter</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChoiceParameter</span><span class="p">,</span> <span class="n">RangeParameter</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">ax.core.trial_status</span><span class="w"> </span><span class="kn">import</span> <span class="n">TrialStatus</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ax.core.types</span><span class="w"> </span><span class="kn">import</span> <span class="n">TParamValue</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ax.global_stopping.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseGlobalStoppingStrategy</span>
 
@@ -1113,32 +1114,55 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Register manual suggestions with the Ax experiment.</span>
 
-<span class="sd">        Attaches trials to the experiment and returns the suggestions with "_id" keys</span>
-<span class="sd">        added for tracking. This enables manual point injection alongside optimizer-driven</span>
-<span class="sd">        suggestions.</span>
+<span class="sd">        Attaches a trial for each suggestion without an "_id". A suggestion with an "_id" must be a running</span>
+<span class="sd">        trial with the same parameters and is returned unchanged.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        suggestions : Sequence[Mapping]</span>
-<span class="sd">            Parameter combinations to register. The "_id" key will be overwritten if present.</span>
+<span class="sd">            Parameter combinations to register.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Sequence[Mapping]</span>
-<span class="sd">            The same suggestions with "_id" keys added.</span>
+<span class="sd">            The suggestions, each with an "_id" key.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If an "_id" is not a running trial with the same parameters. No trials are attached.</span>
 <span class="sd">        """</span>
+        <span class="c1"># Validate before attaching so a rejected batch attaches no trials.</span>
+        <span class="k">for</span> <span class="n">suggestion</span> <span class="ow">in</span> <span class="n">suggestions</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">ID_KEY</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">suggestion</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="n">trial_idx</span> <span class="o">=</span> <span class="n">suggestion</span><span class="p">[</span><span class="n">ID_KEY</span><span class="p">]</span>
+            <span class="n">trial</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">_experiment</span><span class="o">.</span><span class="n">trials</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">trial_idx</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">trial</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Suggestion </span><span class="si">{</span><span class="n">suggestion</span><span class="si">}</span><span class="s2"> has '</span><span class="si">{</span><span class="n">ID_KEY</span><span class="si">}</span><span class="s2">' </span><span class="si">{</span><span class="n">trial_idx</span><span class="si">!r}</span><span class="s2">, which is not a trial of this experiment. "</span>
+                    <span class="sa">f</span><span class="s2">"Remove '</span><span class="si">{</span><span class="n">ID_KEY</span><span class="si">}</span><span class="s2">' to register it as a new trial."</span>
+                <span class="p">)</span>
+            <span class="k">if</span> <span class="n">trial</span><span class="o">.</span><span class="n">status</span> <span class="o">!=</span> <span class="n">TrialStatus</span><span class="o">.</span><span class="n">RUNNING</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Suggestion </span><span class="si">{</span><span class="n">suggestion</span><span class="si">}</span><span class="s2"> references trial </span><span class="si">{</span><span class="n">trial_idx</span><span class="si">}</span><span class="s2">, which is </span><span class="si">{</span><span class="n">trial</span><span class="o">.</span><span class="n">status</span><span class="o">.</span><span class="n">name</span><span class="si">}</span><span class="s2"> and no longer "</span>
+                    <span class="sa">f</span><span class="s2">"awaiting results. Remove '</span><span class="si">{</span><span class="n">ID_KEY</span><span class="si">}</span><span class="s2">' to register it as a new trial."</span>
+                <span class="p">)</span>
+            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">suggestion</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">ID_KEY</span><span class="p">}</span>
+            <span class="n">trial_parameters</span> <span class="o">=</span> <span class="p">[</span><span class="n">arm</span><span class="o">.</span><span class="n">parameters</span> <span class="k">for</span> <span class="n">arm</span> <span class="ow">in</span> <span class="n">trial</span><span class="o">.</span><span class="n">arms</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">trial_parameters</span> <span class="o">!=</span> <span class="p">[</span><span class="n">parameters</span><span class="p">]:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">"Suggestion </span><span class="si">{</span><span class="n">suggestion</span><span class="si">}</span><span class="s2"> does not match the parameters of trial </span><span class="si">{</span><span class="n">trial_idx</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">trial_parameters</span><span class="si">}</span><span class="s2">. "</span>
+                    <span class="sa">f</span><span class="s2">"Remove '</span><span class="si">{</span><span class="n">ID_KEY</span><span class="si">}</span><span class="s2">' to register it as a new trial."</span>
+                <span class="p">)</span>
+
         <span class="n">registered</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="k">for</span> <span class="n">suggestion</span> <span class="ow">in</span> <span class="n">suggestions</span><span class="p">:</span>
-            <span class="c1"># Extract parameters (ignore _id if present)</span>
-            <span class="c1"># TODO: Overwrite ID_KEY or skip (assume already registered)?</span>
-            <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">suggestion</span><span class="o">.</span><span class="n">items</span><span class="p">()</span> <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">ID_KEY</span><span class="p">}</span>
-
-            <span class="c1"># Attach trial to Ax experiment</span>
-            <span class="n">trial_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">attach_trial</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="n">parameters</span><span class="p">)</span>
-
-            <span class="c1"># Return with trial ID</span>
-            <span class="n">registered</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">ID_KEY</span><span class="p">:</span> <span class="n">trial_idx</span><span class="p">,</span> <span class="o">**</span><span class="n">parameters</span><span class="p">})</span>
-
+            <span class="k">if</span> <span class="n">ID_KEY</span> <span class="ow">in</span> <span class="n">suggestion</span><span class="p">:</span>
+                <span class="n">registered</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">suggestion</span><span class="p">)</span>
+                <span class="k">continue</span>
+            <span class="n">trial_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">attach_trial</span><span class="p">(</span><span class="n">parameters</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">suggestion</span><span class="p">))</span>
+            <span class="n">registered</span><span class="o">.</span><span class="n">append</span><span class="p">({</span><span class="n">ID_KEY</span><span class="p">:</span> <span class="n">trial_idx</span><span class="p">,</span> <span class="o">**</span><span class="n">suggestion</span><span class="p">})</span>
         <span class="k">return</span> <span class="n">registered</span></div>
 
 

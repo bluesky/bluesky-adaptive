@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.1.dev5 documentation</title>
+    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.1.dev6 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=a7c0be25"></script>
+    <script src="../../_static/documentation_options.js?v=9038344f"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1.dev5" />
+  <meta name="docsearch:version" content="1.0.1.dev6" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -906,15 +906,22 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Register the suggestions with the optimizer.</span>
 
+<span class="sd">        Suggestions already registered with the optimizer are returned unchanged.</span>
+
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        suggestions: Sequence[Mapping]</span>
-<span class="sd">            The suggestions to register. The "_id" key is optional and will be overwritten if present.</span>
+<span class="sd">            The suggestions to register.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
 <span class="sd">        Sequence[Mapping]</span>
-<span class="sd">            The suggestions with an "_id" key added.</span>
+<span class="sd">            The suggestions, each with an "_id" key.</span>
+
+<span class="sd">        Raises</span>
+<span class="sd">        ------</span>
+<span class="sd">        ValueError</span>
+<span class="sd">            If a suggestion cannot be registered.</span>
 <span class="sd">        """</span>
         <span class="o">...</span></div>
 </div>
