@@ -1,7 +1,8 @@
 """Protocols that bridge between optimizer backends and Bluesky."""
 
+import uuid
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Any, Generic, Literal, Protocol, TypeVar, runtime_checkable
 
 from bluesky.protocols import EventCollectable, EventPageCollectable, Flyable, HasName, Movable, Readable
@@ -322,6 +323,7 @@ class BaseOptimizationProblem(Generic[TActuator, TSensor, TUid, TPlan]):
     sensors: Sequence[TSensor]
     evaluation_function: EvaluationFunction[TUid]
     acquisition_plan: TPlan | None = None
+    optimization_uid: str = field(default_factory=lambda: str(uuid.uuid4()), kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -346,6 +348,9 @@ class OptimizationProblem(BaseOptimizationProblem[Actuator, Sensor, TUid, Acquis
         A callable that uses an acquisition UID to retrieve acquired data and produce outcomes.
     acquisition_plan: AcquisitionPlan[TUid], optional
         A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.
+    optimization_uid: str, optional
+        Identifier of the optimization, recorded as ``start["adaptive"]["optimization_uid"]`` in optimization
+        runs. If not provided, a new UUID4 is generated.
 
     See Also
     --------
@@ -388,6 +393,8 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
         submitted metadata, such as a dark-frame run inserted before the measurement. Runs whose start
         document does not satisfy the filter are ignored and do not complete the iteration. If not
         provided, the first run carrying the metadata completes the iteration.
+    optimization_uid: str, optional
+        Identifier of the optimization. If not provided, a new UUID4 is generated.
 
     See Also
     --------

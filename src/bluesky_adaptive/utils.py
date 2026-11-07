@@ -294,4 +294,5 @@ def collect_optimization_metadata(optimization_problem: OptimizationProblem) -> 
         "optimizer": optimization_problem.optimizer.__class__.__name__,
         "sensors": [sensor.name for sensor in optimization_problem.sensors],
         "actuators": [actuator.name for actuator in optimization_problem.actuators],
+        "adaptive": {"optimization_uid": optimization_problem.optimization_uid},
     }

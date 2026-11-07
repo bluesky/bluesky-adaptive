@@ -161,9 +161,25 @@ Configure an agent
         evaluation_function=TiledEvaluation(tiled_client=tiled_client),
     )
     RE(agent.optimize())
-    server.close()
 
 .. testoutput::
    :hide:
 
    ...
+
+Find an agent's optimization runs
+---------------------------------
+
+Search for the agent's ``optimization_uid``:
+
+.. testcode::
+
+    from tiled.queries import Key
+
+    runs = tiled_client.search(Key("start.adaptive.optimization_uid") == agent.optimization_uid)
+    print([run.start["plan_name"] for run in runs.values()])
+    server.close()
+
+.. testoutput::
+
+   ['optimize']
