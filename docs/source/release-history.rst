@@ -9,6 +9,9 @@ Breaking Changes
 ................
 * ``CanRegisterSuggestions.register_suggestions`` returns already-registered suggestions unchanged instead of
   assigning them a new ``"_id"``.
+* ``QueueserverClient`` no longer enables queue autostart and no longer accepts ``autostart``. Start the queue or
+  call ``re_manager_api.queue_autostart(True)`` yourself
+  (`#84 <https://github.com/bluesky/bluesky-adaptive/issues/84>`_).
 
 Features
 ........
@@ -21,6 +24,8 @@ Bug Fixes
 .........
 * ``AxOptimizer`` and ``XoptOptimizer`` no longer register suggestions from ``suggest()`` a second time
   (`#83 <https://github.com/bluesky/bluesky-adaptive/issues/83>`_).
+* The Queue Server runner validates suggestions and outcomes like ``optimize`` instead of ingesting mismatched
+  outcomes (`#85 <https://github.com/bluesky/bluesky-adaptive/issues/85>`_).
 
 v1.0.0 (2026-10-26)
 -------------------

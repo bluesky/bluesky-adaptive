@@ -35,7 +35,7 @@ from event_model import RunStart, RunStop
 
 from .plans import default_acquire
 from .protocols import ID_KEY, CanRegisterSuggestions, QueueserverOptimizationProblem, TrialFaultAware
-from .utils import _maybe_checkpoint
+from .utils import _maybe_checkpoint, _validate_outcomes, _validate_suggestions
 
 logger = logging.getLogger(__name__)
 
@@ -114,7 +114,7 @@ class QueueserverClient:
     Handles communication with a Bluesky queueserver.
 
     This class encapsulates queueserver communication, including plan submission
-    and event listening.
+    and event listening. The queue must be running or have autostart enabled.
 
     .. warning::
 
@@ -133,16 +133,11 @@ class QueueserverClient:
         self,
         re_manager_api: bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI,
         document_dispatcher: RemoteDispatcher,
-        *,
-        autostart: bool = True,
     ):
         self._rm = re_manager_api
         self._dispatcher = document_dispatcher
         self._consumer_callback: ConsumerCallback | None = None
         self._listener_thread: threading.Thread | None = None
-
-        response = self._rm.queue_autostart(autostart)
-        logger.debug(f"Set queue autostart to {autostart}. Response: {response}")
 
     def check_environment(self) -> None:
         """
@@ -261,7 +256,6 @@ class QueueserverOptimizationRunner:
         self._plan_name = optimization_problem.acquisition_plan or DEFAULT_ACQUIRE_PLAN_NAME
         self._state: _OptimizationState | None = None
         self._continuous = True
-        self._autostart = True
         self._state_lock = threading.RLock()
         self._current_future: Future[OptimizationResult] | None = None
         self._client.start_listener(
@@ -313,7 +307,7 @@ class QueueserverOptimizationRunner:
         RuntimeError
             If the queueserver environment is not ready.
         ValueError
-            If required devices or plans are not available.
+            If required devices or plans are not available, or the suggestions are invalid.
         """
         with self._state_lock:
             self._validate()
@@ -435,6 +429,7 @@ class QueueserverOptimizationRunner:
         """LOCKED: Build the plan to submit and update current state."""
         if self._state is None:
             raise RuntimeError("_build_plan() called before run() or submit_suggestions()")
+        _validate_suggestions(suggestions)
 
         self._state.current_iteration += 1
         self._state.current_suggestions = suggestions
@@ -497,12 +492,15 @@ class QueueserverOptimizationRunner:
 
         # Evaluate the results
         outcomes = self._problem.evaluation_function(uid=start_doc["uid"], suggestions=suggestions)
+        _validate_outcomes(outcomes, suggestions)
         logger.info(f"Evaluated {len(outcomes)} outcomes")
 
         # Ingest into optimizer
         self._problem.optimizer.ingest(outcomes)
 
         with self._state_lock:
+            # Ingested suggestions are no longer in flight.
+            self._state.current_suggestions = []
             # Checkpoint optimizer, if applicable
             _maybe_checkpoint(
                 self._problem.optimizer, self._state.checkpoint_interval, iteration=self._state.current_iteration

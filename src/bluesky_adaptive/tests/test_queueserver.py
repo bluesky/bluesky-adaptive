@@ -1,6 +1,6 @@
 import threading
 from dataclasses import replace
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 import pytest
 from bluesky.callbacks.zmq import RemoteDispatcher
@@ -115,27 +115,22 @@ def test_queueserver_client_check_environment_raises_when_not_ready(mock_re_mana
 
 
 @patch("bluesky_adaptive.queueserver.bluesky_queueserver_api.http.REManagerAPI")
-def test_queueserver_client_submit_plan_with_autostart(mock_re_manager, mock_document_dispatcher):
-    """Test submit_plan adds item and starts queue when autostart=True."""
-    client = QueueserverClient(mock_re_manager, mock_document_dispatcher, autostart=True)
-    mock_plan = MagicMock()
+def test_queueserver_client_construction_sends_no_requests(mock_re_manager, mock_document_dispatcher):
+    """Constructing a client leaves the shared queueserver state, including autostart, untouched."""
+    QueueserverClient(mock_re_manager, mock_document_dispatcher)
 
-    client.submit_plan(mock_plan)
-
-    mock_re_manager.queue_autostart.assert_called_once_with(True)
-    mock_re_manager.item_add.assert_called_once_with(mock_plan)
+    assert mock_re_manager.method_calls == []
 
 
 @patch("bluesky_adaptive.queueserver.bluesky_queueserver_api.http.REManagerAPI")
-def test_queueserver_client_submit_plan_without_autostart(mock_re_manager, mock_document_dispatcher):
-    """Test submit_plan only adds item when autostart=False."""
-    client = QueueserverClient(mock_re_manager, mock_document_dispatcher, autostart=False)
+def test_queueserver_client_submit_plan_only_adds_item(mock_re_manager, mock_document_dispatcher):
+    """Test submit_plan adds the item without starting the queue or changing autostart."""
+    client = QueueserverClient(mock_re_manager, mock_document_dispatcher)
     mock_plan = MagicMock()
 
     client.submit_plan(mock_plan)
 
-    mock_re_manager.queue_autostart.assert_called_once_with(False)
-    mock_re_manager.item_add.assert_called_once_with(mock_plan)
+    assert mock_re_manager.method_calls == [call.item_add(mock_plan)]
 
 
 @patch("bluesky_adaptive.queueserver.bluesky_queueserver_api.http.REManagerAPI")
@@ -692,6 +687,78 @@ def test_runner_error_in_ingest_sets_future_exception(mock_optimization_problem)
 
     assert future.done()
     assert future.exception() is error
+
+
+@pytest.mark.parametrize(
+    "outcomes",
+    [[{"_id": 0, "objective": 1.0}, {"_id": 99, "objective": 2.0}], [{"_id": 0, "objective": 1.0}]],
+    ids=["unknown-id", "missing-id"],
+)
+def test_runner_rejects_outcomes_that_do_not_match_suggestions(outcomes):
+    """Mismatched outcomes fail the run and are not ingested."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    suggestions = [{"_id": 0, "motor1": 5.0}, {"_id": 1, "motor1": 6.0}]
+    problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(return_value=outcomes),
+    )
+    problem.optimizer.suggest.return_value = suggestions
+
+    runner, mock_client, future = _make_runner_with_captured_callback(problem)
+    _fire_callback(runner, mock_client, 0)
+
+    with pytest.raises(ValueError, match="must contain the same IDs"):
+        future.result()
+    problem.optimizer.ingest.assert_not_called()
+    problem.optimizer.register_failures.assert_called_once_with(suggestions)
+    mock_client.submit_plan.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "suggestions",
+    [[{"motor1": 5.0}], [{"_id": 0, "motor1": 5.0}, {"_id": 0, "motor1": 6.0}]],
+    ids=["missing-id", "duplicate-id"],
+)
+def test_runner_run_does_not_submit_invalid_suggestions(mock_optimization_problem, suggestions):
+    """run() does not submit invalid suggestions."""
+    mock_optimization_problem.optimizer.suggest.return_value = suggestions
+    mock_client = MagicMock(spec=QueueserverClient)
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=mock_optimization_problem,
+        queueserver_client=mock_client,
+    )
+
+    with pytest.raises(ValueError, match="'_id'"):
+        runner.run(iterations=1)
+
+    mock_client.submit_plan.assert_not_called()
+
+
+def test_runner_invalid_next_suggestions_fail_future_without_failing_ingested_trials():
+    """Invalid next suggestions fail the run without failing ingested trials."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(return_value=[{"_id": 0, "objective": 1.0}]),
+    )
+    problem.optimizer.suggest.side_effect = [[{"_id": 0, "motor1": 5.0}], [{"motor1": 6.0}]]
+
+    runner, mock_client, future = _make_runner_with_captured_callback(problem, iterations=2)
+    _fire_callback(runner, mock_client, 0)
+
+    with pytest.raises(ValueError, match="'_id'"):
+        future.result()
+    problem.optimizer.ingest.assert_called_once()
+    problem.optimizer.register_failures.assert_not_called()
+    mock_client.submit_plan.assert_called_once()
 
 
 def test_runner_future_resolves_none_on_successful_run(mock_optimization_problem):
