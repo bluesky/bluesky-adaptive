@@ -26,6 +26,8 @@ class MovableHasName(Movable, HasName, Protocol):
 ID_KEY: Literal["_id"] = "_id"
 Actuator = MovableHasName | Flyable
 Sensor = Readable | EventCollectable | EventPageCollectable
+DocumentCallback = Callable[[str, dict[str, Any]], Any]
+"""A Bluesky document callback, e.g. a :class:`bluesky.callbacks.CallbackBase` instance."""
 
 TActuator = TypeVar("TActuator")
 """Actuator generic type"""
