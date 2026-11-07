@@ -19,45 +19,55 @@ The built-in :class:`bluesky_adaptive.callbacks.logger.OptimizationLogger` follo
 model. It formats optimization progress for the console, but it does not choose
 points, move hardware, or compute objectives.
 
-How Bluesky Adaptive routes documents
--------------------------------------
+How Bluesky Adaptive emits documents
+------------------------------------
 
 Bluesky Adaptive builds on the standard Bluesky callback model: callbacks receive
-``start``, ``descriptor``, ``event``, and ``stop`` documents. When
-:meth:`bluesky_adaptive.ax.Agent.optimize` runs, Bluesky Adaptive wraps the plan with an optimization
-callback router. The router forwards only runs whose ``run_key`` marks them as
-optimization-related: ``"optimize"`` or ``"sample_suggestions"``.
+``start``, ``descriptor``, ``event``, and ``stop`` documents. Each call to
+:func:`bluesky_adaptive.plans.optimize`, :func:`bluesky_adaptive.plans.sample_suggestions`, or
+:func:`bluesky_adaptive.plans.acquire_baseline` composes one *record run* and sends its documents to
+the callbacks passed in ``callbacks``. An agent passes the callbacks registered with
+:meth:`bluesky_adaptive.ax.Agent.subscribe`.
 
-The optimization run and the acquisition run are related but distinct. The
-acquisition run records what happened at the beamline for a suggested point.
-The optimization run records the optimization-facing summary of that step: the
-suggestion identifiers, the acquisition UID, the parameter values, and the
-outcomes returned by the evaluation function.
+The record run and the acquisition runs are related but distinct. The RunEngine executes the
+acquisition plan, and each acquisition run records what happened at the beamline for the suggested
+points. The record run records the optimization-facing summary of each evaluated point: its
+suggestion identifier, the acquisition UID, the parameter values, and the outcomes returned by the
+evaluation function. Record runs do not pass through the RunEngine, so callbacks subscribed with
+``RE.subscribe`` receive only the acquisition runs. To store both in Tiled, subscribe the same
+``TiledWriter`` to the RunEngine and to the agent; the record run carries the problem's optimization
+UID in ``start["adaptive"]["optimization_uid"]``.
+
+:func:`bluesky_adaptive.plans.optimize_in_run` is different: it runs the whole optimization inside
+one RunEngine run and writes the summary to that run's ``optimization`` stream.
 
 What a callback sees
 --------------------
 
-Optimization callbacks see the same document types as other Bluesky callbacks,
-but the contents are optimization-focused.
+A record run contains the same document types as any other Bluesky run, but the contents are
+optimization-focused.
 
 ``start``
-    Run-level context such as optimizer description, actuator names, sensor
-    names, number of iterations, and ``n_points``.
+    Run-level context such as the plan name, optimizer description, actuator names, sensor
+    names, the optimization UID, and the plan arguments (``iterations`` and ``n_points`` for
+    :func:`~bluesky_adaptive.plans.optimize`, the points for the other plans).
 
 ``descriptor``
-    Field descriptions. Bluesky Adaptive marks optimization fields with a ``source`` value,
-    distinguishing parameters, outcomes, suggestion identifiers, acquisition
-    UIDs, and other values.
+    One ``primary`` stream. Its ``object_keys`` name the parameter fields under ``"parameters"``
+    and the outcome fields under ``"outcomes"``.
 
 ``event``
-    Per-step values such as ``suggestion_ids``, ``acquisition_uid``, parameter
-    values, and outcome values.
+    One event per evaluated point, holding ``adaptive_suggestion_id`` (the suggestion's ``_id`` as
+    a string), ``adaptive_iteration`` (``-1`` outside the :func:`~bluesky_adaptive.plans.optimize`
+    loop), ``adaptive_acquisition_uid``, the parameter values, and the outcome values.
 
-For ``acquisition_uid``, native array-like UIDs are stored directly. Other UIDs are
-stored using their ``repr``; the evaluation function still receives the original value.
+    ``adaptive_acquisition_uid`` is the value the acquisition plan returned, such as the run UID from
+    :func:`bluesky_adaptive.plans.default_acquire`. Values that are not strings are stored as their
+    ``repr``; the evaluation function still receives the original value.
 
 ``stop``
-    Completion status and reason, useful for summaries or cleanup.
+    Completion status and reason, useful for summaries or cleanup. A failed step stops the run
+    with ``"fail"`` and a reason naming the iteration and the suggestion IDs.
 
 What belongs in a callback
 --------------------------

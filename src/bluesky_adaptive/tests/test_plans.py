@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import bluesky.plan_stubs as bps
 import pytest
 from bluesky.run_engine import RunEngine
-from bluesky.utils import plan
+from bluesky.utils import PlanHalt, RequestAbort, RequestStop, plan
 
 from bluesky_adaptive.plan_stubs import list_scan_in_run
 from bluesky_adaptive.plans import (
@@ -133,26 +133,8 @@ class StageableReadable(ReadableSignal):
         return [self]
 
 
-def _collect_optimize_events():
-    """Return a callback and list that collect event docs from the outer optimize run."""
-    events = []
-    optimize_run_uid = None
-    optimize_descriptors = set()
-
-    def callback(name, doc):
-        nonlocal optimize_run_uid
-        if name == "start" and doc.get("run_key") == "optimize":
-            optimize_run_uid = doc["uid"]
-        elif name == "descriptor" and doc.get("run_start") == optimize_run_uid:
-            optimize_descriptors.add(doc["uid"])
-        elif name == "event" and doc.get("descriptor") in optimize_descriptors:
-            events.append(doc)
-
-    return callback, events
-
-
 def _collect_documents():
-    """Return a callback and list that collect all RunEngine documents."""
+    """Return a callback and list that collect documents."""
     documents = []
 
     def callback(name, doc):
@@ -191,27 +173,25 @@ def test_optimize(RE):
         evaluation_function=evaluation_function,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, callbacks=[callback]))
 
     optimizer.suggest.assert_called_once_with(1)
     optimizer.ingest.assert_called_once_with([{"objective": 0.0, "_id": 0}])
     assert evaluation_function.call_count == 1
 
-    # Validate event documents from outer-plan _read_step
-    assert len(events) == 1
-    data = events[0]["data"]
-    assert "suggestion_ids" in data
-    assert "acquisition_uid" in data
+    assert [name for name, _ in documents] == ["start", "descriptor", "event", "stop"]
+    start = documents[0][1]
+    assert (start["plan_name"], start["iterations"], start["n_points"]) == ("optimize", 1, 1)
+    assert documents[-1][1]["exit_status"] == "success"
+    data = _events_by_stream(documents)["primary"][0]["data"]
+    assert "adaptive_suggestion_id" in data
+    assert "adaptive_acquisition_uid" in data
     assert "x1" in data
     assert "objective" in data
     assert data["x1"] == 0.0
     assert data["objective"] == 0.0
-    assert data["acquisition_uid"] and isinstance(data["acquisition_uid"], str)
+    assert data["adaptive_acquisition_uid"] and isinstance(data["adaptive_acquisition_uid"], str)
 
 
 def test_optimize_accepts_unhashable_acquisition_reference(RE):
@@ -236,16 +216,13 @@ def test_optimize_accepts_unhashable_acquisition_reference(RE):
     with pytest.raises(TypeError):
         hash(_UNHASHABLE_ACQUISITION_REFERENCE)
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, callbacks=[callback]))
 
     assert captured == [_UNHASHABLE_ACQUISITION_REFERENCE]
     optimizer.ingest.assert_called_once_with([{"objective": 1.0, "_id": 0}])
-    assert events[0]["data"]["acquisition_uid"] == repr(_UNHASHABLE_ACQUISITION_REFERENCE)
+    events = _events_by_stream(documents)["primary"]
+    assert events[0]["data"]["adaptive_acquisition_uid"] == repr(_UNHASHABLE_ACQUISITION_REFERENCE)
 
 
 def test_optimization_failure(RE):
@@ -264,17 +241,14 @@ def test_optimization_failure(RE):
         acquisition_plan=aquisition_function,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    except RuntimeError:
-        ...
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    with pytest.raises(RuntimeError):
+        RE(optimize(optimization_problem, callbacks=[callback]))
 
     optimizer.register_failures.assert_called_once_with(suggestion)
     assert evaluation_function.call_count == 0
+    assert documents[-1][0] == "stop"
+    assert documents[-1][1]["exit_status"] == "fail"
 
 
 def test_evaluation_failure_registers_suggestions(RE):
@@ -310,12 +284,8 @@ def test_optimize_multiple(RE):
         evaluation_function=evaluation_function,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem, iterations=5))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, iterations=5, callbacks=[callback]))
 
     optimizer.suggest.assert_called_with(1)
     optimizer.ingest.assert_called_with([{"objective": 0.0, "_id": 0}])
@@ -323,12 +293,12 @@ def test_optimize_multiple(RE):
     assert optimizer.ingest.call_count == 5
     assert evaluation_function.call_count == 5
 
-    # Validate event documents from outer-plan _read_step
+    events = _events_by_stream(documents)["primary"]
     assert len(events) == 5
     for event in events:
         data = event["data"]
-        assert "suggestion_ids" in data
-        assert "acquisition_uid" in data
+        assert "adaptive_suggestion_id" in data
+        assert "adaptive_acquisition_uid" in data
         assert "x1" in data
         assert "objective" in data
         assert data["x1"] == 0.0
@@ -347,29 +317,25 @@ def test_optimize_multiple_with_n_points(RE):
         sensors=[ReadableSignal("objective")],
         evaluation_function=evaluation_function,
     )
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem, iterations=5, n_points=2))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, iterations=5, n_points=2, callbacks=[callback]))
     optimizer.suggest.assert_called_with(2)
     optimizer.ingest.assert_called_with([{"objective": 0.0, "_id": 0}, {"objective": 0.1, "_id": 1}])
     assert optimizer.suggest.call_count == 5
     assert optimizer.ingest.call_count == 5
     assert evaluation_function.call_count == 5
 
-    # Validate event documents from outer-plan _read_step
+    events = _events_by_stream(documents)["primary"]
     assert len(events) == 10
     for ind, event in enumerate(events):
         ard = ind % 2
         data = event["data"]
-        assert "suggestion_ids" in data
-        assert "acquisition_uid" in data
+        assert "adaptive_suggestion_id" in data
+        assert "adaptive_acquisition_uid" in data
         assert "x1" in data
         assert "objective" in data
 
-        assert int(data["suggestion_ids"]) == [0, 1][ard]
+        assert data["adaptive_suggestion_id"] == ["0", "1"][ard]
         assert data["x1"] == [0.0, 0.1][ard]
         assert data["objective"] == [0.0, 0.1][ard]
 
@@ -400,12 +366,8 @@ def test_optimize_complex_case(RE):
         evaluation_function=evaluation_function,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        uids = RE(optimize(optimization_problem, iterations=2, n_points=2))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    uids = RE(optimize(optimization_problem, iterations=2, n_points=2, callbacks=[callback]))
 
     optimizer.suggest.assert_called_with(2)
     optimizer.ingest.assert_called_with(
@@ -418,13 +380,13 @@ def test_optimize_complex_case(RE):
     assert optimizer.ingest.call_count == 2
     assert evaluation_function.call_count == 2
 
-    # Validate event documents from outer-plan _read_step
+    events = _events_by_stream(documents)["primary"]
     assert len(events) == 4
     for ind, event in enumerate(events):
         ard = ind % 2
         data = event["data"]
-        assert "suggestion_ids" in data
-        assert "acquisition_uid" in data
+        assert "adaptive_suggestion_id" in data
+        assert "adaptive_acquisition_uid" in data
         assert "x1" in data
         assert "x2" in data
         assert "x3" in data
@@ -435,8 +397,8 @@ def test_optimize_complex_case(RE):
         assert data["x3"] == [0.0, 0.3][ard]
         assert data["objective1"] == [0.0, 0.1][ard]
         assert data["objective2"] == [0.1, 0.2][ard]
-        assert data["suggestion_ids"] == ["0", "1"][ard]
-        assert data["acquisition_uid"] in uids  # uids not ordered
+        assert data["adaptive_suggestion_id"] == ["0", "1"][ard]
+        assert data["adaptive_acquisition_uid"] in uids  # uids not ordered
 
 
 @pytest.mark.parametrize("checkpoint_interval", [0, 1, 2, 3])
@@ -840,7 +802,7 @@ def test_optimize_step_default(RE):
 
 
 def test_optimize_event_document_structure(RE):
-    """Validate the event document structure from the outer-plan _read_step in detail."""
+    """Validate a record-run event document in detail."""
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.5, "_id": 0}]
     evaluation_function = MagicMock(spec=EvaluationFunction, return_value=[{"objective": 1.25, "_id": 0}])
@@ -852,31 +814,27 @@ def test_optimize_event_document_structure(RE):
         acquisition_plan=_test_acquisition_plan,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, callbacks=[callback]))
 
+    events = _events_by_stream(documents)["primary"]
     assert len(events) == 1
     data = events[0]["data"]
-
-    # Validate required fields from _read_step
-    assert "suggestion_ids" in data
-    assert "acquisition_uid" in data
+    assert "adaptive_suggestion_id" in data
+    assert "adaptive_acquisition_uid" in data
     assert "x1" in data
     assert "objective" in data
 
     # Validate predictable values from custom acquisition plan
-    assert data["acquisition_uid"] == "test-uid-123"
+    assert data["adaptive_acquisition_uid"] == "test-uid-123"
+    assert data["adaptive_iteration"] == 0
     assert data["x1"] == 0.5
     assert data["objective"] == 1.25
-    assert data["suggestion_ids"] == "0"
+    assert data["adaptive_suggestion_id"] == "0"
 
 
 def test_optimize_with_tuple_acquisition_identifier(RE):
-    """Pass tuple acquisition identifiers unchanged to evaluation and event data."""
+    """Pass tuple acquisition identifiers unchanged to evaluation and record them as their repr."""
     suggestion = {"x1": 0.5, "_id": 0}
     outcome = {"objective": 1.25, "_id": 0}
     optimizer = MagicMock(spec=Optimizer)
@@ -890,17 +848,14 @@ def test_optimize_with_tuple_acquisition_identifier(RE):
         acquisition_plan=_tuple_acquisition_plan,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, callbacks=[callback]))
 
     acquisition_identifier = ("event-a", "event-b")
     evaluation_function.assert_called_once_with(acquisition_identifier, [suggestion])
+    events = _events_by_stream(documents)["primary"]
     assert len(events) == 1
-    assert events[0]["data"]["acquisition_uid"] == acquisition_identifier
+    assert events[0]["data"]["adaptive_acquisition_uid"] == repr(acquisition_identifier)
 
 
 def test_optimize_with_custom_hashable_acquisition_identifier_uses_repr(RE):
@@ -918,16 +873,13 @@ def test_optimize_with_custom_hashable_acquisition_identifier_uses_repr(RE):
         acquisition_plan=_custom_identifier_acquisition_plan,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, callbacks=[callback]))
 
     evaluation_function.assert_called_once_with(_CUSTOM_ACQUISITION_IDENTIFIER, [suggestion])
+    events = _events_by_stream(documents)["primary"]
     assert len(events) == 1
-    assert events[0]["data"]["acquisition_uid"] == repr(_CUSTOM_ACQUISITION_IDENTIFIER)
+    assert events[0]["data"]["adaptive_acquisition_uid"] == repr(_CUSTOM_ACQUISITION_IDENTIFIER)
 
 
 def test_optimize_with_dataclass_acquisition_uid_uses_repr(RE):
@@ -947,16 +899,13 @@ def test_optimize_with_dataclass_acquisition_uid_uses_repr(RE):
         acquisition_plan=typed_acquisition_plan,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, callbacks=[callback]))
 
     evaluation_function.assert_called_once_with(_DATACLASS_ACQUISITION_UID, [suggestion])
+    events = _events_by_stream(documents)["primary"]
     assert len(events) == 1
-    assert events[0]["data"]["acquisition_uid"] == repr(_DATACLASS_ACQUISITION_UID)
+    assert events[0]["data"]["adaptive_acquisition_uid"] == repr(_DATACLASS_ACQUISITION_UID)
 
 
 def test_optimize_with_array_rejecting_uid_uses_repr(RE):
@@ -974,15 +923,12 @@ def test_optimize_with_array_rejecting_uid_uses_repr(RE):
         acquisition_plan=_array_rejecting_uid_acquisition_plan,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, callbacks=[callback]))
 
     evaluation_function.assert_called_once_with(_ARRAY_REJECTING_ACQUISITION_UID, [suggestion])
-    assert events[0]["data"]["acquisition_uid"] == "ArrayRejectingAcquisitionUID()"
+    events = _events_by_stream(documents)["primary"]
+    assert events[0]["data"]["adaptive_acquisition_uid"] == "ArrayRejectingAcquisitionUID()"
 
 
 def test_optimize_step_custom_acquisition_plan(RE):
@@ -1141,13 +1087,22 @@ def test_acquire_baseline(RE):
         evaluation_function=evaluation_function,
     )
 
-    RE(acquire_baseline(optimization_problem, parameterization={"x1": 0.0}))
+    callback, documents = _collect_documents()
+    RE(acquire_baseline(optimization_problem, parameterization={"x1": 0.0}, callbacks=[callback]))
 
     # No suggestions are made since this is a baseline reading
     assert optimizer.suggest.call_count == 0
 
     optimizer.ingest.assert_called_once_with([{"objective": 0.0, "_id": "baseline", "x1": 0.0}])
     assert evaluation_function.call_count == 1
+    assert documents[0][1]["plan_name"] == "acquire_baseline"
+    (event,) = _events_by_stream(documents)["primary"]
+    assert {key: event["data"][key] for key in ("adaptive_suggestion_id", "adaptive_iteration", "x1", "objective")} == {
+        "adaptive_suggestion_id": "baseline",
+        "adaptive_iteration": -1,
+        "x1": 0.0,
+        "objective": 0.0,
+    }
 
 
 def test_acquire_baseline_from_current(RE):
@@ -1316,14 +1271,11 @@ def test_optimize_stops_when_change_is_within_tolerance(RE):
         evaluation_function=evaluation_function,
     )
 
-    callback, events = _collect_optimize_events()
-    RE.subscribe(callback)
-    try:
-        RE(optimize(optimization_problem, iterations=5))
-    finally:
-        RE.unsubscribe(callback)
+    callback, documents = _collect_documents()
+    RE(optimize(optimization_problem, iterations=5, callbacks=[callback]))
 
     assert evaluation_function.call_count == 2
+    assert len(_events_by_stream(documents)["primary"]) == 2
 
 
 def test_optimize_emits_checkpoints_per_iteration(RE):
@@ -1344,11 +1296,15 @@ def test_optimize_emits_checkpoints_per_iteration(RE):
 @pytest.mark.parametrize(
     ("run_plan", "plan_name"),
     [
-        (lambda problem: optimize(problem), "optimize"),
-        (lambda problem: optimize_in_run(problem), "optimize_in_run"),
-        (lambda problem: sample_suggestions(problem, [{"x1": 1.0, "_id": 0}]), "sample_suggestions"),
+        (lambda problem, callback: optimize(problem, callbacks=[callback]), "optimize"),
+        (lambda problem, callback: optimize_in_run(problem), "optimize_in_run"),
+        (
+            lambda problem, callback: sample_suggestions(problem, [{"x1": 1.0, "_id": 0}], callbacks=[callback]),
+            "sample_suggestions",
+        ),
+        (lambda problem, callback: acquire_baseline(problem, {"x1": 1.0}, callbacks=[callback]), "acquire_baseline"),
     ],
-    ids=["optimize", "optimize_in_run", "sample_suggestions"],
+    ids=["optimize", "optimize_in_run", "sample_suggestions", "acquire_baseline"],
 )
 def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, plan_name):
     optimizer = MagicMock(spec=Optimizer)
@@ -1357,12 +1313,232 @@ def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, pla
         optimizer=optimizer,
         actuators=[MovableSignal("x1")],
         sensors=[ReadableSignal("objective")],
-        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+        evaluation_function=MagicMock(
+            side_effect=lambda uid, suggestions: [{"objective": 0.0, "_id": s["_id"]} for s in suggestions]
+        ),
     )
     callback, documents = _collect_documents()
     RE.subscribe(callback)
 
-    RE(run_plan(problem))
+    RE(run_plan(problem, callback))
 
     start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == plan_name)
     assert start["adaptive"]["optimization_uid"] == problem.optimization_uid
+
+
+class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+
+def test_optimize_failed_acquisition_stops_record(RE):
+    calls = 0
+
+    @plan
+    def acquisition_plan(suggestions, actuators, sensors, **kwargs):
+        nonlocal calls
+        calls += 1
+        if calls == 2:
+            raise RuntimeError("detector offline")
+        yield from bps.null()
+        return "acquisition-uid"
+
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.side_effect = lambda _: [{"x1": 0.0, "_id": optimizer.suggest.call_count - 1}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(
+            side_effect=lambda uid, suggestions: [{"objective": 0.0, "_id": suggestions[0]["_id"]}]
+        ),
+        acquisition_plan=acquisition_plan,
+    )
+    callback, documents = _collect_documents()
+
+    with pytest.raises(RuntimeError, match="detector offline"):
+        RE(optimize(problem, iterations=3, callbacks=[callback]))
+
+    stop = documents[-1][1]
+    assert stop["exit_status"] == "fail"
+    assert stop["reason"] == "Iteration 1 with suggestion IDs [1] failed: RuntimeError: detector offline"
+    assert len(_events_by_stream(documents)["primary"]) == 1
+    optimizer.ingest.assert_called_once()
+
+
+def test_optimize_invalid_outcomes_mark_trials_failed(RE):
+    suggestions = [{"x1": 0.0, "_id": 0}]
+    optimizer = MagicMock(spec=FaultAwareOptimizer)
+    optimizer.suggest.return_value = suggestions
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 1}]),
+        acquisition_plan=_test_acquisition_plan,
+    )
+    callback, documents = _collect_documents()
+
+    with pytest.raises(ValueError, match="same IDs"):
+        RE(optimize(problem, callbacks=[callback]))
+
+    optimizer.register_failures.assert_called_once_with(suggestions)
+    optimizer.ingest.assert_not_called()
+    assert [name for name, _ in documents] == ["start", "stop"]
+
+
+def test_optimize_recording_failure_marks_trials_failed(RE):
+    suggestions = [{"x1": 0.0, "_id": 0}]
+    optimizer = MagicMock(spec=FaultAwareOptimizer)
+    optimizer.suggest.return_value = suggestions
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+        acquisition_plan=_test_acquisition_plan,
+    )
+    documents = []
+
+    def callback(name, doc):
+        documents.append((name, dict(doc)))
+        if name == "event":
+            raise RuntimeError("callback failed")
+
+    with pytest.raises(RuntimeError, match="callback failed"):
+        RE(optimize(problem, callbacks=[callback]))
+
+    optimizer.register_failures.assert_called_once_with(suggestions)
+    optimizer.ingest.assert_not_called()
+    assert documents[-1][0] == "stop"
+    assert documents[-1][1]["exit_status"] == "fail"
+
+
+def test_optimize_stopping_criterion_records_stopping_step(RE):
+    class StoppingOptimizer(Optimizer, SupportsStoppingCriteria): ...
+
+    optimizer = MagicMock(spec=StoppingOptimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    optimizer.should_stop.side_effect = [(False, None), (True, "converged")]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+    )
+    callback, documents = _collect_documents()
+
+    RE(optimize(problem, iterations=5, callbacks=[callback]))
+
+    stop = documents[-1][1]
+    assert stop["exit_status"] == "success"
+    assert stop["reason"] == "Stopping criterion met at iteration 1: converged"
+    assert len(_events_by_stream(documents)["primary"]) == 2
+
+
+@pytest.mark.parametrize(
+    ("exception", "exit_status", "reason"),
+    [
+        (RequestStop(), "success", "Stop requested"),
+        (RequestAbort(), "abort", "Aborted: RequestAbort"),
+        # PlanHalt is a GeneratorExit subclass: `yield from` closes the delegated plan, so optimize sees GeneratorExit.
+        (PlanHalt(), "abort", "Aborted: GeneratorExit"),
+    ],
+    ids=["stop", "abort", "halt"],
+)
+def test_optimize_interrupts_stop_record(exception, exit_status, reason):
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+        acquisition_plan=_test_acquisition_plan,
+    )
+    callback, documents = _collect_documents()
+    generator = iter(optimize(problem, iterations=2, callbacks=[callback]))
+
+    next(generator)
+    with pytest.raises(type(exception)):
+        generator.throw(exception)
+
+    stop = documents[-1][1]
+    assert (stop["exit_status"], stop["reason"]) == (exit_status, reason)
+    optimizer.ingest.assert_not_called()
+
+
+def test_sample_suggestions_records_points(RE):
+    optimizer = MagicMock(spec=Optimizer)
+    suggestions = [{"x1": 0.0, "_id": 0}, {"x1": 1.0, "_id": 1}]
+    outcomes = [{"objective": 0.0, "_id": 0}, {"objective": 1.0, "_id": 1}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=outcomes),
+        acquisition_plan=_test_acquisition_plan,
+    )
+    callback, documents = _collect_documents()
+
+    RE(sample_suggestions(problem, suggestions, callbacks=[callback]))
+
+    assert [name for name, _ in documents] == ["start", "descriptor", "event", "event", "stop"]
+    assert documents[0][1]["plan_name"] == "sample_suggestions"
+    assert [event["data"]["adaptive_iteration"] for event in _events_by_stream(documents)["primary"]] == [-1, -1]
+    optimizer.ingest.assert_called_once_with(outcomes)
+
+
+@pytest.mark.parametrize(
+    ("suggestions", "outcomes", "message"),
+    [
+        ([{"x1": 0.0, "_id": 0}, {"x1": 1.0, "_id": 0}], [{"objective": 0.0, "_id": 0}], "unique '_id'"),
+        ([{"x1": 0.0, "_id": 0}], [{"objective": 0.0, "_id": 1}], "same IDs"),
+    ],
+    ids=["duplicate-suggestion-ids", "mismatched-outcome-ids"],
+)
+def test_sample_suggestions_validates_suggestions_and_outcomes(RE, suggestions, outcomes, message):
+    optimizer = MagicMock(spec=Optimizer)
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=outcomes),
+        acquisition_plan=_test_acquisition_plan,
+    )
+
+    with pytest.raises(ValueError, match=message):
+        RE(sample_suggestions(problem, suggestions))
+
+    optimizer.ingest.assert_not_called()
+
+
+def test_acquire_baseline_rejects_mismatched_outcomes(RE):
+    optimizer = MagicMock(spec=Optimizer)
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": "other"}]),
+    )
+
+    with pytest.raises(ValueError, match="same IDs"):
+        RE(acquire_baseline(problem, {"x1": 0.0}))
+
+    optimizer.ingest.assert_not_called()
+
+
+def test_acquire_baseline_failure_does_not_register_failures(RE):
+    optimizer = MagicMock(spec=FaultAwareOptimizer)
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(side_effect=RuntimeError("evaluation failed")),
+    )
+    callback, documents = _collect_documents()
+
+    with pytest.raises(RuntimeError, match="evaluation failed"):
+        RE(acquire_baseline(problem, {"x1": 0.0}, callbacks=[callback]))
+
+    optimizer.register_failures.assert_not_called()
+    assert [name for name, _ in documents] == ["start", "stop"]
+    assert documents[-1][1]["exit_status"] == "fail"

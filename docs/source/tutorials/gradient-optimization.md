@@ -177,7 +177,9 @@ agent = Scipy(
     evaluation_function=Himmelblau2DEvaluation(tiled_client=tiled_client),
     name="test_experiment",
 )
-res_uid = RE(agent.optimize(20, n_points=2))
+# Store the agent's record runs in Tiled to view the results below
+agent.subscribe(tiled_writer)
+RE(agent.optimize(20, n_points=2))
 ```
 
 ## Viewing the results
@@ -188,8 +190,9 @@ Scipy is a local optimizer so it doesn't have internal point tracking, but we ca
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from tiled.queries import Key
 
-res_client = tiled_client[res_uid[0]]
+res_client = tiled_client.search(Key("start.adaptive.optimization_uid") == agent.optimization_uid).values().first()
 data = res_client["primary"].read().to_dataframe()
 
 fig, ax = plt.subplots(figsize=(12, 8))

@@ -10,6 +10,23 @@ Breaking Changes
 * ``QueueserverClient`` no longer enables queue autostart and no longer accepts ``autostart``. Start the queue or
   call ``re_manager_api.queue_autostart(True)`` yourself
   (`#84 <https://github.com/bluesky/bluesky-adaptive/issues/84>`_).
+* ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` send the record of each evaluated point to the
+  callbacks passed in the new ``callbacks`` argument instead of writing it through the RunEngine. Each call
+  composes one record run: a ``start`` document, a ``primary`` descriptor, one event per evaluated point, and a
+  ``stop`` document. ``Agent`` and ``Scipy`` pass the callbacks registered with ``subscribe``. ``optimize`` and
+  ``sample_suggestions`` no longer open an outer RunEngine run, so callbacks subscribed with ``RE.subscribe`` see
+  only acquisition runs and ``RE(agent.optimize())`` returns only acquisition run UIDs. To store record runs in
+  Tiled, also subscribe the ``TiledWriter`` to the agent; find them by ``start["adaptive"]["optimization_uid"]``
+  (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
+* Record-run events name their bookkeeping fields ``adaptive_suggestion_id`` (a string), ``adaptive_iteration``,
+  and ``adaptive_acquisition_uid`` instead of ``suggestion_ids``, ``iteration``, and ``acquisition_uid``.
+  Acquisition UIDs that are not strings, including tuples and arrays, are stored as their ``repr``. The
+  descriptor's ``object_keys`` name the parameter (``"parameters"``) and outcome (``"outcomes"``) fields instead
+  of ``DataKey`` ``source`` values. Parameter and outcome names must not start with ``adaptive_``, and a
+  parameter and an outcome must not share a name. The ``optimization`` stream of ``optimize_in_run`` is
+  unchanged.
+* Removed ``OptimizationCallbackRouter``, the ``readable_cache`` argument of ``optimize`` and
+  ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
 
 Features
 ........
@@ -26,6 +43,11 @@ Bug Fixes
 .........
 * The Queue Server runner validates suggestions and outcomes like ``optimize`` instead of ingesting mismatched
   outcomes (`#85 <https://github.com/bluesky/bluesky-adaptive/issues/85>`_).
+* ``optimize`` and ``optimize_step`` mark a step's trials failed on a ``TrialFaultAware`` optimizer when its
+  outcomes fail validation, as they already did for acquisition and evaluation errors.
+* ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like
+  ``optimize`` instead of ingesting mismatched outcomes.
+* ``optimize`` records the step that meets the stopping criterion.
 
 v1.0.0 (2026-10-26)
 -------------------

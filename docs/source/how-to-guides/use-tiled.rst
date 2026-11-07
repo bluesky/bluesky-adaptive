@@ -160,6 +160,8 @@ Configure an agent
         objectives=[objective],
         evaluation_function=TiledEvaluation(tiled_client=tiled_client),
     )
+    # Store the agent's record runs in Tiled too
+    agent.subscribe(tiled_writer)
     RE(agent.optimize())
 
 .. testoutput::

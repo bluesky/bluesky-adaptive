@@ -1,4 +1,3 @@
-import types
 from unittest.mock import MagicMock
 
 import pytest
@@ -404,19 +403,8 @@ def test_suggest_after_final_optimization(secoundary_agent_prep):
     secoundary_agent_prep.optimizer.close()
 
 
-def test_optimize(secoundary_agent_prep):
-    """Test agent setup of optimize plane"""
-    # Set final optimization result
-
-    iter = secoundary_agent_prep.optimize(0)
-    assert isinstance(iter, types.GeneratorType)
-    next(iter)
-    secoundary_agent_prep.optimizer.close()
-
-
 def test_optimize_with_prev_final(secoundary_agent_prep):
-    """Test agent setup of optimize plane"""
-    # Set final optimization result
+    """An optimization with a prior final result starts from that result."""
     secoundary_agent_prep.optimizer.final = ScipyResult(
         x=[7.0],
         fun=0.95,
@@ -424,13 +412,17 @@ def test_optimize_with_prev_final(secoundary_agent_prep):
         status=0,
     )
 
-    iter = secoundary_agent_prep.optimize(0)
-    assert isinstance(iter, types.GeneratorType)
-    next(iter)
+    list(secoundary_agent_prep.optimize(0))
+    assert secoundary_agent_prep.config.initial == [7.0]
     secoundary_agent_prep.optimizer.close()
 
 
 def test_optimize_run_records_optimization_uid(secoundary_agent_prep):
-    """The optimization run of a Scipy agent records the agent's optimization UID."""
-    open_run = next(msg for msg in list(secoundary_agent_prep.optimize(0)) if msg.command == "open_run")
-    assert open_run.kwargs["adaptive"]["optimization_uid"] == secoundary_agent_prep.optimization_uid
+    """A Scipy agent's record runs record its optimization UID."""
+    documents = []
+    secoundary_agent_prep.subscribe(lambda name, doc: documents.append((name, doc)))
+
+    list(secoundary_agent_prep.optimize(0))
+
+    start = next(doc for name, doc in documents if name == "start")
+    assert start["adaptive"]["optimization_uid"] == secoundary_agent_prep.optimization_uid
