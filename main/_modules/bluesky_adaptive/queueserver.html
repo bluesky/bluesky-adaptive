@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.1.dev3 documentation</title>
+    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.1.dev4 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=c831aaf1"></script>
+    <script src="../../_static/documentation_options.js?v=03b83a3c"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1.dev3" />
+  <meta name="docsearch:version" content="1.0.1.dev4" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -880,7 +880,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.plans</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_acquire</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">ID_KEY</span><span class="p">,</span> <span class="n">CanRegisterSuggestions</span><span class="p">,</span> <span class="n">QueueserverOptimizationProblem</span><span class="p">,</span> <span class="n">TrialFaultAware</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_maybe_checkpoint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_maybe_checkpoint</span><span class="p">,</span> <span class="n">_validate_outcomes</span><span class="p">,</span> <span class="n">_validate_suggestions</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -1180,7 +1180,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        RuntimeError</span>
 <span class="sd">            If the queueserver environment is not ready.</span>
 <span class="sd">        ValueError</span>
-<span class="sd">            If required devices or plans are not available.</span>
+<span class="sd">            If required devices or plans are not available, or the suggestions are invalid.</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_validate</span><span class="p">()</span>
@@ -1309,6 +1309,7 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""LOCKED: Build the plan to submit and update current state."""</span>
         <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"_build_plan() called before run() or submit_suggestions()"</span><span class="p">)</span>
+        <span class="n">_validate_suggestions</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span> <span class="o">=</span> <span class="n">suggestions</span>
@@ -1371,12 +1372,15 @@ window.runMermaid = runMermaid;</script>
 
         <span class="c1"># Evaluate the results</span>
         <span class="n">outcomes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">evaluation_function</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="n">start_doc</span><span class="p">[</span><span class="s2">"uid"</span><span class="p">],</span> <span class="n">suggestions</span><span class="o">=</span><span class="n">suggestions</span><span class="p">)</span>
+        <span class="n">_validate_outcomes</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span><span class="si">}</span><span class="s2"> outcomes"</span><span class="p">)</span>
 
         <span class="c1"># Ingest into optimizer</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">ingest</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
+            <span class="c1"># Ingested suggestions are no longer in flight.</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="c1"># Checkpoint optimizer, if applicable</span>
             <span class="n">_maybe_checkpoint</span><span class="p">(</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">checkpoint_interval</span><span class="p">,</span> <span class="n">iteration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span>
