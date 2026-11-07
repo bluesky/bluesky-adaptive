@@ -694,6 +694,78 @@ def test_runner_error_in_ingest_sets_future_exception(mock_optimization_problem)
     assert future.exception() is error
 
 
+@pytest.mark.parametrize(
+    "outcomes",
+    [[{"_id": 0, "objective": 1.0}, {"_id": 99, "objective": 2.0}], [{"_id": 0, "objective": 1.0}]],
+    ids=["unknown-id", "missing-id"],
+)
+def test_runner_rejects_outcomes_that_do_not_match_suggestions(outcomes):
+    """Mismatched outcomes fail the run and are not ingested."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    suggestions = [{"_id": 0, "motor1": 5.0}, {"_id": 1, "motor1": 6.0}]
+    problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(return_value=outcomes),
+    )
+    problem.optimizer.suggest.return_value = suggestions
+
+    runner, mock_client, future = _make_runner_with_captured_callback(problem)
+    _fire_callback(runner, mock_client, 0)
+
+    with pytest.raises(ValueError, match="must contain the same IDs"):
+        future.result()
+    problem.optimizer.ingest.assert_not_called()
+    problem.optimizer.register_failures.assert_called_once_with(suggestions)
+    mock_client.submit_plan.assert_called_once()
+
+
+@pytest.mark.parametrize(
+    "suggestions",
+    [[{"motor1": 5.0}], [{"_id": 0, "motor1": 5.0}, {"_id": 0, "motor1": 6.0}]],
+    ids=["missing-id", "duplicate-id"],
+)
+def test_runner_run_does_not_submit_invalid_suggestions(mock_optimization_problem, suggestions):
+    """run() does not submit invalid suggestions."""
+    mock_optimization_problem.optimizer.suggest.return_value = suggestions
+    mock_client = MagicMock(spec=QueueserverClient)
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=mock_optimization_problem,
+        queueserver_client=mock_client,
+    )
+
+    with pytest.raises(ValueError, match="'_id'"):
+        runner.run(iterations=1)
+
+    mock_client.submit_plan.assert_not_called()
+
+
+def test_runner_invalid_next_suggestions_fail_future_without_failing_ingested_trials():
+    """Invalid next suggestions fail the run without failing ingested trials."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(return_value=[{"_id": 0, "objective": 1.0}]),
+    )
+    problem.optimizer.suggest.side_effect = [[{"_id": 0, "motor1": 5.0}], [{"motor1": 6.0}]]
+
+    runner, mock_client, future = _make_runner_with_captured_callback(problem, iterations=2)
+    _fire_callback(runner, mock_client, 0)
+
+    with pytest.raises(ValueError, match="'_id'"):
+        future.result()
+    problem.optimizer.ingest.assert_called_once()
+    problem.optimizer.register_failures.assert_not_called()
+    mock_client.submit_plan.assert_called_once()
+
+
 def test_runner_future_resolves_none_on_successful_run(mock_optimization_problem):
     """Future resolves to an OptimizationResult (not an exception) after a clean run."""
     runner, mock_client, future = _make_runner_with_captured_callback(mock_optimization_problem, iterations=1)
