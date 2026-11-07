@@ -3,14 +3,17 @@ from unittest.mock import MagicMock, patch
 import numpy as np
 import pytest
 from ax import Client
+from bluesky import plan_stubs as bps
 from bluesky.callbacks import CallbackBase
 from bluesky.callbacks.zmq import RemoteDispatcher
+from bluesky.run_engine import RunEngine
 
 from bluesky_adaptive.ax.agent import Agent
 from bluesky_adaptive.ax.dof import ChoiceDOF, DOFConstraint, RangeDOF
 from bluesky_adaptive.ax.objective import Objective, ScalarizedObjective
 from bluesky_adaptive.ax.optimizer import AxOptimizer
 from bluesky_adaptive.callbacks.logger import OptimizationLogger
+from bluesky_adaptive.plans import optimize_in_run
 from bluesky_adaptive.protocols import AcquisitionPlan, EvaluationFunction
 
 from ..conftest import MovableSignal, ReadableSignal
@@ -430,6 +433,29 @@ def test_from_checkpoint_has_default_callbacks(mock_evaluation_function, tmp_pat
     )
     assert len(restored.callbacks) == 1
     assert isinstance(restored.callbacks[0], OptimizationLogger)
+
+
+def test_agent_optimization_runs_share_optimization_uid(agent):
+    """Optimization runs started by an agent, or from its problems, record the agent's optimization UID."""
+
+    def acquisition_plan(suggestions, actuators, sensors=None, md=None):
+        yield from bps.null()
+        return "uid"
+
+    agent._acquisition_plan = acquisition_plan
+    agent.evaluation_function.side_effect = lambda _uid, suggestions: [
+        {"_id": suggestion["_id"], "obj": 1.0} for suggestion in suggestions
+    ]
+    agent.callbacks.clear()
+    documents = []
+    RE = RunEngine({})
+    RE.subscribe(lambda name, doc: documents.append((name, doc)))
+
+    RE(agent.optimize(1))
+    RE(optimize_in_run(agent.to_optimization_problem()))
+
+    run_uids = [doc["adaptive"]["optimization_uid"] for name, doc in documents if name == "start"]
+    assert run_uids == [agent.optimization_uid] * 2
 
 
 def test_agent_get_best_points_single_objective(mock_evaluation_function):
