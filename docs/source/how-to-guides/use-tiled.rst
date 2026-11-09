@@ -176,7 +176,7 @@ Search for the agent's ``optimization_uid``:
 
     from tiled.queries import Key
 
-    runs = tiled_client.search(Key("start.adaptive.optimization_uid") == agent.optimization_uid)
+    runs = tiled_client.search(Key("start.bluesky-adaptive.optimization_uid") == agent.optimization_uid)
     print([run.start["plan_name"] for run in runs.values()])
     server.close()
 
