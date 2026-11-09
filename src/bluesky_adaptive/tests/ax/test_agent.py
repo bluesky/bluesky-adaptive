@@ -454,7 +454,7 @@ def test_agent_optimization_runs_share_optimization_uid(agent):
     RE(agent.optimize(1))
     RE(optimize_in_run(agent.to_optimization_problem()))
 
-    run_uids = [doc["adaptive"]["optimization_uid"] for name, doc in documents if name == "start"]
+    run_uids = [doc["bluesky-adaptive"]["optimization_uid"] for name, doc in documents if name == "start"]
     assert run_uids == [agent.optimization_uid] * 2
 
 

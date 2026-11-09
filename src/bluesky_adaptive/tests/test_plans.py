@@ -1365,4 +1365,25 @@ def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, pla
     RE(run_plan(problem))
 
     start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == plan_name)
-    assert start["adaptive"]["optimization_uid"] == problem.optimization_uid
+    assert start["bluesky-adaptive"]["optimization_uid"] == problem.optimization_uid
+
+
+def test_optimization_runs_duplicate_released_metadata_at_top_level(RE):
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+    )
+    callback, documents = _collect_documents()
+    RE.subscribe(callback)
+
+    RE(optimize(problem, iterations=1))
+
+    start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == "optimize")
+    assert start["sensors"] == ["objective"]
+    assert start["actuators"] == ["x1"]
+    for key in ("evaluation_function", "acquisition_plan", "optimizer", "sensors", "actuators"):
+        assert start["bluesky-adaptive"][key] == start[key]

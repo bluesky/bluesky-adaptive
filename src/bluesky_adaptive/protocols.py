@@ -356,7 +356,7 @@ class OptimizationProblem(BaseOptimizationProblem[Actuator, Sensor, TUid, Acquis
     acquisition_plan: AcquisitionPlan[TUid], optional
         A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.
     optimization_uid: str, optional
-        Identifier of the optimization, recorded as ``start["adaptive"]["optimization_uid"]`` in optimization
+        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in optimization
         runs. If not provided, a new UUID4 is generated.
 
     See Also
