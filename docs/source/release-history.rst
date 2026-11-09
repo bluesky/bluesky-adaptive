@@ -33,7 +33,8 @@ Features
 * ``QueueserverAgent`` and ``QueueserverOptimizationProblem`` accept ``acquisition_run_filter``, a predicate on
   the start document that selects the run to evaluate when the acquisition plan opens more than one run with
   the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
-  completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``.
+  completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``
+  (`#86 <https://github.com/bluesky/bluesky-adaptive/pull/86>`_).
 
 Bug Fixes
 .........
