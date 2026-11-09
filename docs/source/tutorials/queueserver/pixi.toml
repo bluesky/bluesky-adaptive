@@ -10,8 +10,8 @@ python = ">=3.10,<3.13"
 
 [pypi-dependencies]
 certifi = ">=2026.10.19"
-bluesky-queueserver = "*"
-bluesky-queueserver-api = "*"
+bluesky-queueserver = ">=0.0.26"
+bluesky-queueserver-api = ">=0.0.14"
 bluesky-tiled-plugins = "*"
 tiled = { version = "*", extras = ["all"] }
 ophyd = "*"

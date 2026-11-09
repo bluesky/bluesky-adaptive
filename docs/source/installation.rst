@@ -40,7 +40,7 @@ Optional Extras
      - ``xopt``, ``botorch``, ``gpytorch``, ``torch``
      - GPU torch by default; pair with ``[cpu]`` for CPU-only
    * - ``bluesky-adaptive[queueserver]``
-     - ``bluesky-queueserver-api``
+     - ``bluesky-queueserver-api>=0.0.14``
      - Transport layer only; pair with ``[ax]`` for ``QueueserverAgent``
    * - ``bluesky-adaptive[cpu]``
      - *(uv index routing)*
