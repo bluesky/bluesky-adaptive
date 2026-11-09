@@ -428,3 +428,9 @@ def test_optimize_with_prev_final(secoundary_agent_prep):
     assert isinstance(iter, types.GeneratorType)
     next(iter)
     secoundary_agent_prep.optimizer.close()
+
+
+def test_optimize_run_records_optimization_uid(secoundary_agent_prep):
+    """The optimization run of a Scipy agent records the agent's optimization UID."""
+    open_run = next(msg for msg in list(secoundary_agent_prep.optimize(0)) if msg.command == "open_run")
+    assert open_run.kwargs["bluesky-adaptive"]["optimization_uid"] == secoundary_agent_prep.optimization_uid
