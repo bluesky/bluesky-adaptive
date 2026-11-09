@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Release History &#8212; Bluesky Adaptive 1.0.1 documentation</title>
+    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=292eb321"></script>
+    <script src="_static/documentation_options.js?v=21071f6d"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1" />
+  <meta name="docsearch:version" content="1.0.2.dev1" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -504,6 +504,21 @@
                   
   <section id="release-history">
 <h1>Release History<a class="headerlink" href="#release-history" title="Link to this heading">#</a></h1>
+<section id="unreleased">
+<h2>Unreleased<a class="headerlink" href="#unreleased" title="Link to this heading">#</a></h2>
+<section id="features">
+<h3>Features<a class="headerlink" href="#features" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">OptimizationProblem</span></code> and <code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem</span></code> gain <code class="docutils literal notranslate"><span class="pre">optimization_uid</span></code>, which the <code class="docutils literal notranslate"><span class="pre">optimize</span></code>,
+<code class="docutils literal notranslate"><span class="pre">optimize_in_run</span></code>, and <code class="docutils literal notranslate"><span class="pre">sample_suggestions</span></code> runs record as <code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;optimization_uid&quot;]</span></code>.
+<code class="docutils literal notranslate"><span class="pre">Agent</span></code> and <code class="docutils literal notranslate"><span class="pre">Scipy</span></code> generate one, expose it, and accept it to continue an optimization
+(<a class="reference external" href="https://github.com/bluesky/bluesky-adaptive/issues/82">#82</a>).</p></li>
+<li><p>Optimization run metadata is also recorded under <code class="docutils literal notranslate"><span class="pre">&quot;bluesky-adaptive&quot;</span></code> in start documents, duplicating
+<code class="docutils literal notranslate"><span class="pre">evaluation_function</span></code>, <code class="docutils literal notranslate"><span class="pre">acquisition_plan</span></code>, <code class="docutils literal notranslate"><span class="pre">optimizer</span></code>, <code class="docutils literal notranslate"><span class="pre">sensors</span></code>, and <code class="docutils literal notranslate"><span class="pre">actuators</span></code>. The top-level keys
+are kept for backwards compatibility.</p></li>
+</ul>
+</section>
+</section>
 <section id="v1-0-1-2026-11-07">
 <h2>v1.0.1 (2026-11-07)<a class="headerlink" href="#v1-0-1-2026-11-07" title="Link to this heading">#</a></h2>
 <section id="breaking-changes">
@@ -518,8 +533,8 @@ longer accepts <code class="docutils literal notranslate"><span class="pre">auto
 (<a class="reference external" href="https://github.com/bluesky/bluesky-adaptive/issues/84">#84</a>).</p></li>
 </ul>
 </section>
-<section id="features">
-<h3>Features<a class="headerlink" href="#features" title="Link to this heading">#</a></h3>
+<section id="id4">
+<h3>Features<a class="headerlink" href="#id4" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code> and <code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem</span></code> accept <code class="docutils literal notranslate"><span class="pre">acquisition_run_filter</span></code>, a predicate on
 the start document that selects the run to evaluate when the acquisition plan opens more than one run with
@@ -545,8 +560,8 @@ saved the model’s repr, which restore rejected (<a class="reference external" 
 <h2>v1.0.0 (2026-10-26)<a class="headerlink" href="#v1-0-0-2026-10-26" title="Link to this heading">#</a></h2>
 <p>First release of Bluesky Adaptive built on the Blop v1.2.0 codebase
 (<a class="reference external" href="https://github.com/bluesky/blop">bluesky/blop</a>). Entries below prefixed with “blop” are Blop releases.</p>
-<section id="id7">
-<h3>Breaking Changes<a class="headerlink" href="#id7" title="Link to this heading">#</a></h3>
+<section id="id9">
+<h3>Breaking Changes<a class="headerlink" href="#id9" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>The package is renamed: replace <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">blop[...]</span></code> with <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">bluesky-adaptive[...]</span></code> and
 <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">blop</span></code> with <code class="docutils literal notranslate"><span class="pre">import</span> <span class="pre">bluesky_adaptive</span></code>.</p></li>
@@ -561,8 +576,8 @@ saved the model’s repr, which restore rejected (<a class="reference external" 
 <h2>blop v1.2.0 (2026-10-23)<a class="headerlink" href="#blop-v1-2-0-2026-10-23" title="Link to this heading">#</a></h2>
 <p>This is the final feature release of Blop. Development continues in
 <a class="reference external" href="https://github.com/bluesky/bluesky-adaptive">bluesky-adaptive</a> 1.0.</p>
-<section id="id8">
-<h3>Features<a class="headerlink" href="#id8" title="Link to this heading">#</a></h3>
+<section id="id10">
+<h3>Features<a class="headerlink" href="#id10" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>Single-run optimization (experimental)</strong>: <code class="docutils literal notranslate"><span class="pre">blop.plans.optimize_in_run</span></code> runs the optimization
 loop inside one Bluesky run, using <code class="docutils literal notranslate"><span class="pre">blop.plan_stubs.list_scan_in_run</span></code> for acquisition
@@ -576,8 +591,8 @@ metadata. Use it to match acquired data to suggestions
 (<a class="reference external" href="https://github.com/bluesky/blop/pull/378">#378</a>).</p></li>
 </ul>
 </section>
-<section id="id13">
-<h3>Breaking Changes<a class="headerlink" href="#id13" title="Link to this heading">#</a></h3>
+<section id="id15">
+<h3>Breaking Changes<a class="headerlink" href="#id15" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Optimization runs record one event per suggestion, with an <code class="docutils literal notranslate"><span class="pre">iteration</span></code> field, instead of one
 event per iteration with array values. <code class="docutils literal notranslate"><span class="pre">read_step</span></code> no longer takes <code class="docutils literal notranslate"><span class="pre">n_points</span></code>
@@ -593,8 +608,8 @@ event per iteration with array values. <code class="docutils literal notranslate
 exactly one outcome per suggestion ID (<a class="reference external" href="https://github.com/bluesky/blop/pull/353">#353</a>).</p></li>
 </ul>
 </section>
-<section id="id17">
-<h3>Bug Fixes<a class="headerlink" href="#id17" title="Link to this heading">#</a></h3>
+<section id="id19">
+<h3>Bug Fixes<a class="headerlink" href="#id19" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>String fields such as suggestion IDs are no longer truncated to the length of their first value
 (<a class="reference external" href="https://github.com/bluesky/blop/pull/363">#363</a>).</p></li>
@@ -612,8 +627,8 @@ exactly one outcome per suggestion ID (<a class="reference external" href="https
 </section>
 <section id="blop-v1-1-0-2026-08-26">
 <h2>blop v1.1.0 (2026-08-26)<a class="headerlink" href="#blop-v1-1-0-2026-08-26" title="Link to this heading">#</a></h2>
-<section id="id21">
-<h3>Features<a class="headerlink" href="#id21" title="Link to this heading">#</a></h3>
+<section id="id23">
+<h3>Features<a class="headerlink" href="#id23" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>SciPy backend</strong>: The new <code class="docutils literal notranslate"><span class="pre">blop.scipy</span></code> namespace provides Bluesky-compatible
 wrappers for SciPy’s local minimization, SHGO, and dual annealing routines
@@ -637,8 +652,8 @@ XML descriptions and infer Bluesky-compatible motors and detectors
 (<a class="reference external" href="https://github.com/bluesky/blop/pull/317">#317</a>).</p></li>
 </ul>
 </section>
-<section id="id30">
-<h3>Compatibility Notes<a class="headerlink" href="#id30" title="Link to this heading">#</a></h3>
+<section id="id32">
+<h3>Compatibility Notes<a class="headerlink" href="#id32" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>Optimization event identifier renamed</strong>: The <code class="docutils literal notranslate"><span class="pre">bluesky_uid</span></code> field in optimization event
 documents is now <code class="docutils literal notranslate"><span class="pre">acquisition_uid</span></code>. Acquisition plans may return any hashable identifier,
@@ -651,8 +666,8 @@ protocol implementations may need their annotations updated to satisfy static ty
 (<a class="reference external" href="https://github.com/bluesky/blop/pull/350">#350</a>).</p></li>
 </ul>
 </section>
-<section id="id33">
-<h3>Bug Fixes<a class="headerlink" href="#id33" title="Link to this heading">#</a></h3>
+<section id="id35">
+<h3>Bug Fixes<a class="headerlink" href="#id35" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Evaluation failures are now registered with fault-aware optimizers before the original
 exception is re-raised, preventing failed suggestions from remaining pending
@@ -681,8 +696,8 @@ allowed-device and allowed-plan validation, allowing remote errors to propagate 
 </section>
 <section id="blop-v1-0-0-2026-07-16">
 <h2>blop v1.0.0 (2026-07-16)<a class="headerlink" href="#blop-v1-0-0-2026-07-16" title="Link to this heading">#</a></h2>
-<section id="id41">
-<h3>Features<a class="headerlink" href="#id41" title="Link to this heading">#</a></h3>
+<section id="id43">
+<h3>Features<a class="headerlink" href="#id43" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>Xopt backend</strong>: New optional <code class="docutils literal notranslate"><span class="pre">blop.xopt.XoptOptimizer</span></code> backend, installable via the
 <code class="docutils literal notranslate"><span class="pre">blop[xopt]</span></code> extra, implementing the <code class="docutils literal notranslate"><span class="pre">Optimizer</span></code>, <code class="docutils literal notranslate"><span class="pre">Checkpointable</span></code>,
@@ -706,8 +721,8 @@ additional runner properties (<code class="docutils literal notranslate"><span c
 (<a class="reference external" href="https://github.com/bluesky/blop/pull/291">#291</a>).</p></li>
 </ul>
 </section>
-<section id="id49">
-<h3>Breaking Changes<a class="headerlink" href="#id49" title="Link to this heading">#</a></h3>
+<section id="id51">
+<h3>Breaking Changes<a class="headerlink" href="#id51" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>`QueueserverClient` now takes a `RemoteDispatcher`</strong>: Replaces the previous raw ZMQ address
 argument, giving users full control over how documents are dispatched from the queueserver
@@ -718,8 +733,8 @@ extra was also renamed from <code class="docutils literal notranslate"><span cla
 (<a class="reference external" href="https://github.com/bluesky/blop/pull/321">#321</a>).</p></li>
 </ul>
 </section>
-<section id="id52">
-<h3>Bug Fixes<a class="headerlink" href="#id52" title="Link to this heading">#</a></h3>
+<section id="id54">
+<h3>Bug Fixes<a class="headerlink" href="#id54" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Made <code class="docutils literal notranslate"><span class="pre">ChoiceDOF</span></code> hashable, fixing a bug when reconfiguring or fixing <code class="docutils literal notranslate"><span class="pre">ChoiceDOF</span></code> parameters
 (<a class="reference external" href="https://github.com/bluesky/blop/pull/301">#301</a>).</p></li>
@@ -733,8 +748,8 @@ correct <code class="docutils literal notranslate"><span class="pre">run_start</
 <li><p>Fixed the import path for <code class="docutils literal notranslate"><span class="pre">ContourPlot</span></code> (<a class="reference external" href="https://github.com/bluesky/blop/pull/281">#281</a>).</p></li>
 </ul>
 </section>
-<section id="id58">
-<h3>Dependency Changes<a class="headerlink" href="#id58" title="Link to this heading">#</a></h3>
+<section id="id60">
+<h3>Dependency Changes<a class="headerlink" href="#id60" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Reworked and clarified the optional-dependency structure, adding an <code class="docutils literal notranslate"><span class="pre">all</span></code> extra and
 renaming the <code class="docutils literal notranslate"><span class="pre">qs</span></code> extra to <code class="docutils literal notranslate"><span class="pre">queueserver</span></code>
@@ -769,8 +784,8 @@ general documentation maintenance pass
 </section>
 <section id="blop-v1-0-0b1-2026-04-17">
 <h2>blop v1.0.0b1 (2026-04-17)<a class="headerlink" href="#blop-v1-0-0b1-2026-04-17" title="Link to this heading">#</a></h2>
-<section id="id71">
-<h3>Features<a class="headerlink" href="#id71" title="Link to this heading">#</a></h3>
+<section id="id73">
+<h3>Features<a class="headerlink" href="#id73" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>Manual suggestions</strong>: A new method for the Agent that allows manual
 optimization control (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/235">#235</a>).</p></li>
@@ -799,8 +814,8 @@ devices (<a class="reference external" href="https://github.com/NSLS-II/blop/pul
 <li><p><strong>Python 3.13 support</strong> (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/206">#206</a>).</p></li>
 </ul>
 </section>
-<section id="id85">
-<h3>Breaking Changes<a class="headerlink" href="#id85" title="Link to this heading">#</a></h3>
+<section id="id87">
+<h3>Breaking Changes<a class="headerlink" href="#id87" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><strong>Plans moved to top-level package</strong>: Plans are now imported from <code class="docutils literal notranslate"><span class="pre">blop.plans</span></code> instead of
 <code class="docutils literal notranslate"><span class="pre">blop.ax.plans</span></code> (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/259">#259</a>).</p></li>
@@ -813,15 +828,15 @@ devices (<a class="reference external" href="https://github.com/NSLS-II/blop/pul
 functions instead (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/207">#207</a>).</p></li>
 </ul>
 </section>
-<section id="id91">
-<h3>Dependency Changes<a class="headerlink" href="#id91" title="Link to this heading">#</a></h3>
+<section id="id93">
+<h3>Dependency Changes<a class="headerlink" href="#id93" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Requires Ax Platform &gt;= 1.2.3 (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/241">#241</a>).</p></li>
 <li><p>Requires BoTorch &gt;= 0.16.0 (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/221">#221</a>).</p></li>
 </ul>
 </section>
-<section id="id94">
-<h3>Documentation<a class="headerlink" href="#id94" title="Link to this heading">#</a></h3>
+<section id="id96">
+<h3>Documentation<a class="headerlink" href="#id96" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>New how-to guide for using Tiled as a databroker (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/215">#215</a>).</p></li>
 <li><p>New how-to guide for using ophyd and ophyd-async devices (<a class="reference external" href="https://github.com/NSLS-II/blop/pull/210">#210</a>).</p></li>
@@ -861,8 +876,8 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 </section>
 <section id="blop-v0-8-1-2025-11-06">
 <h2>blop v0.8.1 (2025-11-06)<a class="headerlink" href="#blop-v0-8-1-2025-11-06" title="Link to this heading">#</a></h2>
-<section id="id116">
-<h3>What’s Changed<a class="headerlink" href="#id116" title="Link to this heading">#</a></h3>
+<section id="id118">
+<h3>What’s Changed<a class="headerlink" href="#id118" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Pin networkx and tabulate (required by python-tsp) by <a class="reference external" href="https://github.com/thopkins32">&#64;thopkins32</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/171">NSLS-II/blop#171</a></p></li>
 <li><p>Update blop conda-forge badge by <a class="reference external" href="https://github.com/thopkins32">&#64;thopkins32</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/172">NSLS-II/blop#172</a></p></li>
@@ -878,8 +893,8 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 </section>
 <section id="blop-v0-8-0-2025-10-13">
 <h2>blop v0.8.0 (2025-10-13)<a class="headerlink" href="#blop-v0-8-0-2025-10-13" title="Link to this heading">#</a></h2>
-<section id="id125">
-<h3>What’s Changed<a class="headerlink" href="#id125" title="Link to this heading">#</a></h3>
+<section id="id127">
+<h3>What’s Changed<a class="headerlink" href="#id127" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>DOC: add citation information to <cite>README</cite> by <a class="reference external" href="https://github.com/mrakitin">&#64;mrakitin</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/119">NSLS-II/blop#119</a></p></li>
 <li><p>Ax Adapters for Blop and Minimal Agent Interface by <a class="reference external" href="https://github.com/thopkins32">&#64;thopkins32</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/126">NSLS-II/blop#126</a></p></li>
@@ -909,8 +924,8 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 </section>
 <section id="blop-v0-7-5-2025-06-18">
 <h2>blop v0.7.5 (2025-06-18)<a class="headerlink" href="#blop-v0-7-5-2025-06-18" title="Link to this heading">#</a></h2>
-<section id="id140">
-<h3>What’s Changed<a class="headerlink" href="#id140" title="Link to this heading">#</a></h3>
+<section id="id142">
+<h3>What’s Changed<a class="headerlink" href="#id142" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Remove ‘created’ from release types by <a class="reference external" href="https://github.com/jennmald">&#64;jennmald</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/105">NSLS-II/blop#105</a></p></li>
 <li><p>Refactor DOFs to fix trust domain behavior by <a class="reference external" href="https://github.com/thomaswmorris">&#64;thomaswmorris</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/97">NSLS-II/blop#97</a></p></li>
@@ -921,8 +936,8 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 <li><p>Ax integrations with the Bluesky ecosystem by <a class="reference external" href="https://github.com/thopkins32">&#64;thopkins32</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/112">NSLS-II/blop#112</a></p></li>
 </ul>
 </section>
-<section id="id146">
-<h3>New Contributors<a class="headerlink" href="#id146" title="Link to this heading">#</a></h3>
+<section id="id148">
+<h3>New Contributors<a class="headerlink" href="#id148" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><a class="reference external" href="https://github.com/whs92">&#64;whs92</a> made their first contribution in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/107">NSLS-II/blop#107</a></p></li>
 </ul>
@@ -938,8 +953,8 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 </section>
 <section id="blop-v0-7-3-2025-03-04">
 <h2>blop v0.7.3 (2025-03-04)<a class="headerlink" href="#blop-v0-7-3-2025-03-04" title="Link to this heading">#</a></h2>
-<section id="id148">
-<h3>What’s Changed<a class="headerlink" href="#id148" title="Link to this heading">#</a></h3>
+<section id="id150">
+<h3>What’s Changed<a class="headerlink" href="#id150" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p>Fix documentation CI error by <a class="reference external" href="https://github.com/jennmald">&#64;jennmald</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/84">NSLS-II/blop#84</a></p></li>
 <li><p>Fix fitness and constraint plots by <a class="reference external" href="https://github.com/jennmald">&#64;jennmald</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/80">NSLS-II/blop#80</a></p></li>
@@ -950,8 +965,8 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 <li><p>Add XRT demo to blop tutorials by <a class="reference external" href="https://github.com/jennmald">&#64;jennmald</a> in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/102">NSLS-II/blop#102</a></p></li>
 </ul>
 </section>
-<section id="id155">
-<h3>New Contributors<a class="headerlink" href="#id155" title="Link to this heading">#</a></h3>
+<section id="id157">
+<h3>New Contributors<a class="headerlink" href="#id157" title="Link to this heading">#</a></h3>
 <ul class="simple">
 <li><p><a class="reference external" href="https://github.com/jennmald">&#64;jennmald</a> made their first contribution in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/84">NSLS-II/blop#84</a></p></li>
 <li><p><a class="reference external" href="https://github.com/maffettone">&#64;maffettone</a> made their first contribution in <a class="github reference external" href="https://github.com/NSLS-II/blop/pull/86">NSLS-II/blop#86</a></p></li>
@@ -1090,44 +1105,48 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unreleased">Unreleased</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#features">Features</a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-1-2026-11-07">v1.0.1 (2026-11-07)</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#breaking-changes">Breaking Changes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#features">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id4">Features</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#v1-0-0-2026-10-26">v1.0.0 (2026-10-26)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id7">Breaking Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id9">Breaking Changes</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v1-2-0-2026-10-23">blop v1.2.0 (2026-10-23)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id8">Features</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id13">Breaking Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id10">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id15">Breaking Changes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#compatibility-notes">Compatibility Notes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id17">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id19">Bug Fixes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#dependency-changes">Dependency Changes</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v1-1-0-2026-08-26">blop v1.1.0 (2026-08-26)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id21">Features</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id30">Compatibility Notes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id33">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id23">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id32">Compatibility Notes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id35">Bug Fixes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation-and-development">Documentation and Development</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v1-0-0-2026-07-16">blop v1.0.0 (2026-07-16)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id41">Features</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id49">Breaking Changes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id52">Bug Fixes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id58">Dependency Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id43">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id51">Breaking Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id54">Bug Fixes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id60">Dependency Changes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#documentation">Documentation</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v1-0-0b1-2026-04-17">blop v1.0.0b1 (2026-04-17)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id71">Features</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id85">Breaking Changes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id91">Dependency Changes</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id94">Documentation</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id73">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id87">Breaking Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id93">Dependency Changes</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id96">Documentation</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v0-9-0-2025-12-08">blop v0.9.0 (2025-12-08)</a><ul class="nav section-nav flex-column">
@@ -1135,23 +1154,23 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v0-8-1-2025-11-06">blop v0.8.1 (2025-11-06)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id116">What’s Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id118">What’s Changed</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v0-8-0-2025-10-13">blop v0.8.0 (2025-10-13)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id125">What’s Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id127">What’s Changed</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#new-contributors">New Contributors</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v0-7-5-2025-06-18">blop v0.7.5 (2025-06-18)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id140">What’s Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id146">New Contributors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id142">What’s Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id148">New Contributors</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v0-7-4-2025-03-04">blop v0.7.4 (2025-03-04)</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v0-7-3-2025-03-04">blop v0.7.3 (2025-03-04)</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id148">What’s Changed</a></li>
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id155">New Contributors</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id150">What’s Changed</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#id157">New Contributors</a></li>
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#blop-v0-7-2-2025-01-31">blop v0.7.2 (2025-01-31)</a></li>

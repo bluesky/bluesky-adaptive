@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.ax.agent &#8212; Bluesky Adaptive 1.0.1 documentation</title>
+    <title>bluesky_adaptive.ax.agent &#8212; Bluesky Adaptive 1.0.2.dev1 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../../../_static/documentation_options.js?v=21071f6d"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1" />
+  <meta name="docsearch:version" content="1.0.2.dev1" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -846,6 +846,7 @@ window.runMermaid = runMermaid;</script>
 <span></span><span class="sd">"""Agent interface for optimization with Ax as the backend."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -1078,6 +1079,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        The path to the checkpoint file to save the optimizer's state to.</span>
 <span class="sd">    stopping_strategy : BaseGlobalStoppingStrategy | None, optional</span>
 <span class="sd">        A stopping strategy that decides when/if optimization should halt early.</span>
+<span class="sd">    optimization_uid : str | None, optional</span>
+<span class="sd">        Identifier of the optimization. If None, a new UUID4 is generated.</span>
 <span class="sd">    **kwargs : Any</span>
 <span class="sd">        Additional keyword arguments to configure the Ax experiment.</span>
 
@@ -1109,6 +1112,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">outcome_constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OutcomeConstraint</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">checkpoint_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">stopping_strategy</span><span class="p">:</span> <span class="n">BaseGlobalStoppingStrategy</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optimization_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">dof</span><span class="o">.</span><span class="n">actuator</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">dof</span> <span class="ow">in</span> <span class="n">dofs</span><span class="p">):</span>
@@ -1134,6 +1138,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_readable_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">InferredReadable</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CallbackBase</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">OptimizationLogger</span><span class="p">()]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_callback_router</span> <span class="o">=</span> <span class="n">OptimizationCallbackRouter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_optimization_uid</span> <span class="o">=</span> <span class="n">optimization_uid</span> <span class="k">if</span> <span class="n">optimization_uid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
 
 <div class="viewcode-block" id="Agent.from_checkpoint">
 <a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.Agent.from_checkpoint">[docs]</a>
@@ -1145,6 +1150,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">sensors</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Sensor</span><span class="p">],</span>
         <span class="n">evaluation_function</span><span class="p">:</span> <span class="n">EvaluationFunction</span><span class="p">[</span><span class="n">TUid</span><span class="p">],</span>
         <span class="n">acquisition_plan</span><span class="p">:</span> <span class="n">AcquisitionPlan</span><span class="p">[</span><span class="n">TUid</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optimization_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">"Agent[TUid]"</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Load an agent from the optimizer's checkpoint file.</span>
@@ -1167,6 +1173,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">            A callable that uses an acquisition identifier to retrieve acquired data and produce outcomes.</span>
 <span class="sd">        acquisition_plan: AcquisitionPlan, optional</span>
 <span class="sd">            A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.</span>
+<span class="sd">        optimization_uid : str | None, optional</span>
+<span class="sd">            Identifier of the optimization to continue. If None, a new UUID4 is generated.</span>
 <span class="sd">        """</span>
         <span class="n">instance</span> <span class="o">=</span> <span class="nb">object</span><span class="o">.</span><span class="fm">__new__</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_optimizer</span> <span class="o">=</span> <span class="n">AxOptimizer</span><span class="o">.</span><span class="n">from_checkpoint</span><span class="p">(</span><span class="n">checkpoint_path</span><span class="p">)</span>
@@ -1177,6 +1185,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">instance</span><span class="o">.</span><span class="n">_readable_cache</span> <span class="o">=</span> <span class="p">{}</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_callbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">OptimizationLogger</span><span class="p">()]</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_callback_router</span> <span class="o">=</span> <span class="n">OptimizationCallbackRouter</span><span class="p">(</span><span class="n">instance</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">)</span>
+        <span class="n">instance</span><span class="o">.</span><span class="n">_optimization_uid</span> <span class="o">=</span> <span class="n">optimization_uid</span> <span class="k">if</span> <span class="n">optimization_uid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
 
         <span class="k">return</span> <span class="n">instance</span></div>
 
@@ -1252,6 +1261,11 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""The acquisition plan for acquiring data, or ``None`` if using the default."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acquisition_plan</span>
 
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimization_uid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Identifier of this agent's optimization."""</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimization_uid</span>
+
 <div class="viewcode-block" id="Agent.to_optimization_problem">
 <a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.Agent.to_optimization_problem">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">to_optimization_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationProblem</span><span class="p">[</span><span class="n">TUid</span><span class="p">]:</span>
@@ -1278,6 +1292,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">sensors</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">sensors</span><span class="p">,</span>
             <span class="n">evaluation_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">evaluation_function</span><span class="p">,</span>
             <span class="n">acquisition_plan</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">acquisition_plan</span><span class="p">,</span>
+            <span class="n">optimization_uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimization_uid</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Tiled with Bluesky Adaptive &#8212; Bluesky Adaptive 1.0.1 documentation</title>
+    <title>Tiled with Bluesky Adaptive &#8212; Bluesky Adaptive 1.0.2.dev1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../_static/documentation_options.js?v=21071f6d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1" />
+  <meta name="docsearch:version" content="1.0.2.dev1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -607,7 +607,20 @@
     <span class="n">evaluation_function</span><span class="o">=</span><span class="n">TiledEvaluation</span><span class="p">(</span><span class="n">tiled_client</span><span class="o">=</span><span class="n">tiled_client</span><span class="p">),</span>
 <span class="p">)</span>
 <span class="n">RE</span><span class="p">(</span><span class="n">agent</span><span class="o">.</span><span class="n">optimize</span><span class="p">())</span>
+</pre></div>
+</div>
+</section>
+<section id="find-an-agent-s-optimization-runs">
+<h2>Find an agent’s optimization runs<a class="headerlink" href="#find-an-agent-s-optimization-runs" title="Link to this heading">#</a></h2>
+<p>Search for the agent’s <code class="docutils literal notranslate"><span class="pre">optimization_uid</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">tiled.queries</span><span class="w"> </span><span class="kn">import</span> <span class="n">Key</span>
+
+<span class="n">runs</span> <span class="o">=</span> <span class="n">tiled_client</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">Key</span><span class="p">(</span><span class="s2">"start.bluesky-adaptive.optimization_uid"</span><span class="p">)</span> <span class="o">==</span> <span class="n">agent</span><span class="o">.</span><span class="n">optimization_uid</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">([</span><span class="n">run</span><span class="o">.</span><span class="n">start</span><span class="p">[</span><span class="s2">"plan_name"</span><span class="p">]</span> <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">runs</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
 <span class="n">server</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+</pre></div>
+</div>
+<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>['optimize']
 </pre></div>
 </div>
 </section>
@@ -667,6 +680,7 @@
 </ul>
 </li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#configure-an-agent">Configure an agent</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#find-an-agent-s-optimization-runs">Find an agent’s optimization runs</a></li>
 </ul>
   </nav></div>
 

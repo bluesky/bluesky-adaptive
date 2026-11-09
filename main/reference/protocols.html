@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Protocols &#8212; Bluesky Adaptive 1.0.1 documentation</title>
+    <title>Protocols &#8212; Bluesky Adaptive 1.0.2.dev1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../_static/documentation_options.js?v=21071f6d"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1" />
+  <meta name="docsearch:version" content="1.0.2.dev1" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -760,7 +760,7 @@ For multi-objective optimization, returns the Pareto-optimal set.</p>
 <h2>BaseOptimizationProblem<a class="headerlink" href="#baseoptimizationproblem" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.protocols.BaseOptimizationProblem">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.protocols.</span></span><span class="sig-name descname"><span class="pre">BaseOptimizationProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/protocols.html#BaseOptimizationProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.protocols.BaseOptimizationProblem" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.protocols.</span></span><span class="sig-name descname"><span class="pre">BaseOptimizationProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_uid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/protocols.html#BaseOptimizationProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.protocols.BaseOptimizationProblem" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Generic" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">TActuator</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">TSensor</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">TUid</span></code>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">TPlan</span></code>]</p>
 <p>Base class for optimization problem definitions.</p>
 <p>Provides the common structure shared by all optimization problem types.
@@ -802,6 +802,11 @@ Users should use the concrete subclasses <a class="reference internal" href="#bl
 <span class="sig-name descname"><span class="pre">acquisition_plan</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="pre">TPlan</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><span class="property"><span class="w"> </span><span class="p"><span class="pre">=</span></span><span class="w"> </span><span class="pre">None</span></span><a class="headerlink" href="#bluesky_adaptive.protocols.BaseOptimizationProblem.acquisition_plan" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluesky_adaptive.protocols.BaseOptimizationProblem.optimization_uid">
+<span class="sig-name descname"><span class="pre">optimization_uid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#bluesky_adaptive.protocols.BaseOptimizationProblem.optimization_uid" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -809,7 +814,7 @@ Users should use the concrete subclasses <a class="reference internal" href="#bl
 <h2>OptimizationProblem<a class="headerlink" href="#optimizationproblem" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.protocols.OptimizationProblem">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.protocols.</span></span><span class="sig-name descname"><span class="pre">OptimizationProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/protocols.html#OptimizationProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.protocols.OptimizationProblem" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.protocols.</span></span><span class="sig-name descname"><span class="pre">OptimizationProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_uid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/protocols.html#OptimizationProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.protocols.OptimizationProblem" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#bluesky_adaptive.protocols.BaseOptimizationProblem" title="bluesky_adaptive.protocols.BaseOptimizationProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseOptimizationProblem</span></code></a>[<a class="reference internal" href="#bluesky_adaptive.protocols.MovableHasName" title="bluesky_adaptive.protocols.MovableHasName"><code class="xref py py-class docutils literal notranslate"><span class="pre">MovableHasName</span></code></a> | <a class="reference external" href="https://blueskyproject.io/bluesky/main/hardware.html#bluesky.protocols.Flyable" title="(in bluesky v1.16.1.dev2+g2ca46def4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Flyable</span></code></a>, <a class="reference external" href="https://blueskyproject.io/bluesky/main/hardware.html#bluesky.protocols.Readable" title="(in bluesky v1.16.1.dev2+g2ca46def4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Readable</span></code></a> | <a class="reference external" href="https://blueskyproject.io/bluesky/main/hardware.html#bluesky.protocols.EventCollectable" title="(in bluesky v1.16.1.dev2+g2ca46def4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventCollectable</span></code></a> | <a class="reference external" href="https://blueskyproject.io/bluesky/main/hardware.html#bluesky.protocols.EventPageCollectable" title="(in bluesky v1.16.1.dev2+g2ca46def4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">EventPageCollectable</span></code></a>, <code class="xref py py-obj docutils literal notranslate"><span class="pre">TUid</span></code>, <a class="reference internal" href="#bluesky_adaptive.protocols.AcquisitionPlan" title="bluesky_adaptive.protocols.AcquisitionPlan"><code class="xref py py-class docutils literal notranslate"><span class="pre">AcquisitionPlan</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">TUid</span></code>]], <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Generic" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">TUid</span></code>]</p>
 <p>An optimization problem to solve. Immutable once initialized.</p>
 <p>This dataclass encapsulates all components needed for optimization into a single
@@ -828,6 +833,9 @@ A subset of the actuators’ names must match the names of suggested parameteriz
 <dt><strong>evaluation_function: EvaluationFunction[TUid]</strong></dt><dd><p>A callable that uses an acquisition UID to retrieve acquired data and produce outcomes.</p>
 </dd>
 <dt><strong>acquisition_plan: AcquisitionPlan[TUid], optional</strong></dt><dd><p>A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.</p>
+</dd>
+<dt><strong>optimization_uid: str, optional</strong></dt><dd><p>Identifier of the optimization, recorded as <code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;optimization_uid&quot;]</span></code> in optimization
+runs. If not provided, a new UUID4 is generated.</p>
 </dd>
 </dl>
 </dd>
@@ -866,6 +874,11 @@ A subset of the actuators’ names must match the names of suggested parameteriz
 <span class="sig-name descname"><span class="pre">evaluation_function</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bluesky_adaptive.protocols.EvaluationFunction" title="bluesky_adaptive.protocols.EvaluationFunction"><span class="pre">EvaluationFunction</span></a><span class="p"><span class="pre">[</span></span><span class="pre">TUid</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bluesky_adaptive.protocols.OptimizationProblem.evaluation_function" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluesky_adaptive.protocols.OptimizationProblem.optimization_uid">
+<span class="sig-name descname"><span class="pre">optimization_uid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#bluesky_adaptive.protocols.OptimizationProblem.optimization_uid" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </section>
@@ -873,7 +886,7 @@ A subset of the actuators’ names must match the names of suggested parameteriz
 <h2>QueueserverOptimizationProblem<a class="headerlink" href="#queueserveroptimizationproblem" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.protocols.QueueserverOptimizationProblem">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.protocols.</span></span><span class="sig-name descname"><span class="pre">QueueserverOptimizationProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_run_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/protocols.html#QueueserverOptimizationProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.protocols.</span></span><span class="sig-name descname"><span class="pre">QueueserverOptimizationProblem</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimizer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_run_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">*</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_uid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">&lt;factory&gt;</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/protocols.html#QueueserverOptimizationProblem"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference internal" href="#bluesky_adaptive.protocols.BaseOptimizationProblem" title="bluesky_adaptive.protocols.BaseOptimizationProblem"><code class="xref py py-class docutils literal notranslate"><span class="pre">BaseOptimizationProblem</span></code></a>[<a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">str</span></code></a>]</p>
 <p>An optimization problem to solve. Immutable once initialized.</p>
 <p>This dataclass encapsulates all components needed for optimization into a single
@@ -902,6 +915,8 @@ The plan must match the arguments of <a class="reference internal" href="#bluesk
 submitted metadata, such as a dark-frame run inserted before the measurement. Runs whose start
 document does not satisfy the filter are ignored and do not complete the iteration. If not
 provided, the first run carrying the metadata completes the iteration.</p>
+</dd>
+<dt><strong>optimization_uid: str, optional</strong></dt><dd><p>Identifier of the optimization. If not provided, a new UUID4 is generated.</p>
 </dd>
 </dl>
 </dd>
@@ -938,6 +953,11 @@ provided, the first run carrying the metadata completes the iteration.</p>
 <dl class="py attribute">
 <dt class="sig sig-object py" id="bluesky_adaptive.protocols.QueueserverOptimizationProblem.evaluation_function">
 <span class="sig-name descname"><span class="pre">evaluation_function</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="#bluesky_adaptive.protocols.EvaluationFunction" title="bluesky_adaptive.protocols.EvaluationFunction"><span class="pre">EvaluationFunction</span></a><span class="p"><span class="pre">[</span></span><span class="pre">TUid</span><span class="p"><span class="pre">]</span></span></span><a class="headerlink" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.evaluation_function" title="Link to this definition">#</a></dt>
+<dd></dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="bluesky_adaptive.protocols.QueueserverOptimizationProblem.optimization_uid">
+<span class="sig-name descname"><span class="pre">optimization_uid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.optimization_uid" title="Link to this definition">#</a></dt>
 <dd></dd></dl>
 
 <dl class="py attribute">
@@ -1129,6 +1149,7 @@ The checkpoint method then saves or updates to that pre-configured location.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.BaseOptimizationProblem.sensors"><code class="docutils literal notranslate"><span class="pre">BaseOptimizationProblem.sensors</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.BaseOptimizationProblem.evaluation_function"><code class="docutils literal notranslate"><span class="pre">BaseOptimizationProblem.evaluation_function</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.BaseOptimizationProblem.acquisition_plan"><code class="docutils literal notranslate"><span class="pre">BaseOptimizationProblem.acquisition_plan</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.BaseOptimizationProblem.optimization_uid"><code class="docutils literal notranslate"><span class="pre">BaseOptimizationProblem.optimization_uid</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1140,6 +1161,7 @@ The checkpoint method then saves or updates to that pre-configured location.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.OptimizationProblem.actuators"><code class="docutils literal notranslate"><span class="pre">OptimizationProblem.actuators</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.OptimizationProblem.sensors"><code class="docutils literal notranslate"><span class="pre">OptimizationProblem.sensors</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.OptimizationProblem.evaluation_function"><code class="docutils literal notranslate"><span class="pre">OptimizationProblem.evaluation_function</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.OptimizationProblem.optimization_uid"><code class="docutils literal notranslate"><span class="pre">OptimizationProblem.optimization_uid</span></code></a></li>
 </ul>
 </li>
 </ul>
@@ -1151,6 +1173,7 @@ The checkpoint method then saves or updates to that pre-configured location.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.actuators"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem.actuators</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.sensors"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem.sensors</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.evaluation_function"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem.evaluation_function</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.optimization_uid"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem.optimization_uid</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.acquisition_plan_kwargs"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem.acquisition_plan_kwargs</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.protocols.QueueserverOptimizationProblem.acquisition_run_filter"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationProblem.acquisition_run_filter</span></code></a></li>
 </ul>

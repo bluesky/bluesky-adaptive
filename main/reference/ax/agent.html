@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Ax Agent &#8212; Bluesky Adaptive 1.0.1 documentation</title>
+    <title>Ax Agent &#8212; Bluesky Adaptive 1.0.2.dev1 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../../_static/documentation_options.js?v=21071f6d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1" />
+  <meta name="docsearch:version" content="1.0.2.dev1" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -524,7 +524,7 @@
 <h1>Ax Agent<a class="headerlink" href="#ax-agent" title="Link to this heading">#</a></h1>
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.ax.Agent">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.ax.</span></span><span class="sig-name descname"><span class="pre">Agent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dofs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stopping_strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/agent.html#Agent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.Agent" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.ax.</span></span><span class="sig-name descname"><span class="pre">Agent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dofs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">stopping_strategy</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_uid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/agent.html#Agent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.Agent" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_AxAgentMixin</span></code>, <a class="reference external" href="https://docs.python.org/3/library/typing.html#typing.Generic" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Generic</span></code></a>[<code class="xref py py-obj docutils literal notranslate"><span class="pre">TUid</span></code>]</p>
 <p>An interface that uses Ax as the backend for optimization and experiment tracking.</p>
 <p>The Agent is the main entry point for setting up and running Bayesian optimization
@@ -552,6 +552,8 @@ of sensors that are needed to compute the objectives.</p>
 <dt><strong>checkpoint_path</strong><span class="classifier">str | None, optional</span></dt><dd><p>The path to the checkpoint file to save the optimizer’s state to.</p>
 </dd>
 <dt><strong>stopping_strategy</strong><span class="classifier">BaseGlobalStoppingStrategy | None, optional</span></dt><dd><p>A stopping strategy that decides when/if optimization should halt early.</p>
+</dd>
+<dt><strong>optimization_uid</strong><span class="classifier">str | None, optional</span></dt><dd><p>Identifier of the optimization. If None, a new UUID4 is generated.</p>
 </dd>
 <dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to configure the Ax experiment.</p>
 </dd>
@@ -581,7 +583,7 @@ of sensors that are needed to compute the objectives.</p>
 documentation, particularly <a class="reference internal" href="../../tutorials/simple-experiment.html"><span class="doc">Your first Bayesian optimization with Bluesky Adaptive</span></a>.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="bluesky_adaptive.ax.Agent.from_checkpoint">
-<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/agent.html#Agent.from_checkpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.Agent.from_checkpoint" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">classmethod</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">from_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">optimization_uid</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/agent.html#Agent.from_checkpoint"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.Agent.from_checkpoint" title="Link to this definition">#</a></dt>
 <dd><p>Load an agent from the optimizer’s checkpoint file.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -601,6 +603,8 @@ A subset of the actuators’ names must match the names of suggested parameteriz
 <dt><strong>evaluation_function: EvaluationFunction</strong></dt><dd><p>A callable that uses an acquisition identifier to retrieve acquired data and produce outcomes.</p>
 </dd>
 <dt><strong>acquisition_plan: AcquisitionPlan, optional</strong></dt><dd><p>A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.</p>
+</dd>
+<dt><strong>optimization_uid</strong><span class="classifier">str | None, optional</span></dt><dd><p>Identifier of the optimization to continue. If None, a new UUID4 is generated.</p>
 </dd>
 </dl>
 </dd>
@@ -680,6 +684,12 @@ A subset of the actuators’ names must match the names of suggested parameteriz
 <dt class="sig sig-object py" id="bluesky_adaptive.ax.Agent.acquisition_plan">
 <span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">acquisition_plan</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference internal" href="../protocols.html#bluesky_adaptive.protocols.AcquisitionPlan" title="bluesky_adaptive.protocols.AcquisitionPlan"><span class="pre">AcquisitionPlan</span></a><span class="p"><span class="pre">[</span></span><span class="pre">TUid</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/constants.html#None" title="(in Python v3.15)"><span class="pre">None</span></a></span><a class="headerlink" href="#bluesky_adaptive.ax.Agent.acquisition_plan" title="Link to this definition">#</a></dt>
 <dd><p>The acquisition plan for acquiring data, or <code class="docutils literal notranslate"><span class="pre">None</span></code> if using the default.</p>
+</dd></dl>
+
+<dl class="py property">
+<dt class="sig sig-object py" id="bluesky_adaptive.ax.Agent.optimization_uid">
+<span class="property"><span class="k"><span class="pre">property</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">optimization_uid</span></span><span class="property"><span class="p"><span class="pre">:</span></span><span class="w"> </span><a class="reference external" href="https://docs.python.org/3/builtins/stdtypes.html#str" title="(in Python v3.15)"><span class="pre">str</span></a></span><a class="headerlink" href="#bluesky_adaptive.ax.Agent.optimization_uid" title="Link to this definition">#</a></dt>
+<dd><p>Identifier of this agent’s optimization.</p>
 </dd></dl>
 
 <dl class="py method">
@@ -1401,6 +1411,7 @@ evaluate next. Each mapping includes an “_id” key for identification.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.ax.Agent.actuators"><code class="docutils literal notranslate"><span class="pre">Agent.actuators</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.ax.Agent.evaluation_function"><code class="docutils literal notranslate"><span class="pre">Agent.evaluation_function</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.ax.Agent.acquisition_plan"><code class="docutils literal notranslate"><span class="pre">Agent.acquisition_plan</span></code></a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.ax.Agent.optimization_uid"><code class="docutils literal notranslate"><span class="pre">Agent.optimization_uid</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.ax.Agent.to_optimization_problem"><code class="docutils literal notranslate"><span class="pre">Agent.to_optimization_problem()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.ax.Agent.acquire_baseline"><code class="docutils literal notranslate"><span class="pre">Agent.acquire_baseline()</span></code></a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.ax.Agent.optimize"><code class="docutils literal notranslate"><span class="pre">Agent.optimize()</span></code></a></li>

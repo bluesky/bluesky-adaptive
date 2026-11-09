@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.1 documentation</title>
+    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev1 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=292eb321"></script>
+    <script src="../../_static/documentation_options.js?v=21071f6d"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.1" />
+  <meta name="docsearch:version" content="1.0.2.dev1" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -845,8 +845,9 @@ window.runMermaid = runMermaid;</script>
   <h1>Source code for bluesky_adaptive.protocols</h1><div class="highlight"><pre>
 <span></span><span class="sd">"""Protocols that bridge between optimizer backends and Bluesky."""</span>
 
+<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">Literal</span><span class="p">,</span> <span class="n">Protocol</span><span class="p">,</span> <span class="n">TypeVar</span><span class="p">,</span> <span class="n">runtime_checkable</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">bluesky.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventCollectable</span><span class="p">,</span> <span class="n">EventPageCollectable</span><span class="p">,</span> <span class="n">Flyable</span><span class="p">,</span> <span class="n">HasName</span><span class="p">,</span> <span class="n">Movable</span><span class="p">,</span> <span class="n">Readable</span>
@@ -1220,7 +1221,8 @@ window.runMermaid = runMermaid;</script>
     <span class="n">actuators</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TActuator</span><span class="p">]</span>
     <span class="n">sensors</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">TSensor</span><span class="p">]</span>
     <span class="n">evaluation_function</span><span class="p">:</span> <span class="n">EvaluationFunction</span><span class="p">[</span><span class="n">TUid</span><span class="p">]</span>
-    <span class="n">acquisition_plan</span><span class="p">:</span> <span class="n">TPlan</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">acquisition_plan</span><span class="p">:</span> <span class="n">TPlan</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">optimization_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">()),</span> <span class="n">kw_only</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span></div>
 
 
 
@@ -1248,6 +1250,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        A callable that uses an acquisition UID to retrieve acquired data and produce outcomes.</span>
 <span class="sd">    acquisition_plan: AcquisitionPlan[TUid], optional</span>
 <span class="sd">        A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.</span>
+<span class="sd">    optimization_uid: str, optional</span>
+<span class="sd">        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in optimization</span>
+<span class="sd">        runs. If not provided, a new UUID4 is generated.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
@@ -1293,6 +1298,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        submitted metadata, such as a dark-frame run inserted before the measurement. Runs whose start</span>
 <span class="sd">        document does not satisfy the filter are ignored and do not complete the iteration. If not</span>
 <span class="sd">        provided, the first run carrying the metadata completes the iteration.</span>
+<span class="sd">    optimization_uid: str, optional</span>
+<span class="sd">        Identifier of the optimization. If not provided, a new UUID4 is generated.</span>
 
 <span class="sd">    See Also</span>
 <span class="sd">    --------</span>
