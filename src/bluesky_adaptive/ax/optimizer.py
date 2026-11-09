@@ -6,6 +6,7 @@ from typing import Any
 from ax import ChoiceParameterConfig, Client, RangeParameterConfig, TOutcome, TParameterization
 from ax.core import MultiObjectiveOptimizationConfig
 from ax.core.parameter import ChoiceParameter, RangeParameter
+from ax.core.trial_status import TrialStatus
 from ax.core.types import TParamValue
 from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
 
@@ -249,32 +250,55 @@ class AxOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaultA
         """
         Register manual suggestions with the Ax experiment.
 
-        Attaches trials to the experiment and returns the suggestions with "_id" keys
-        added for tracking. This enables manual point injection alongside optimizer-driven
-        suggestions.
+        Attaches a trial for each suggestion without an "_id". A suggestion with an "_id" must be a running
+        trial with the same parameters and is returned unchanged.
 
         Parameters
         ----------
         suggestions : Sequence[Mapping]
-            Parameter combinations to register. The "_id" key will be overwritten if present.
+            Parameter combinations to register.
 
         Returns
         -------
         Sequence[Mapping]
-            The same suggestions with "_id" keys added.
+            The suggestions, each with an "_id" key.
+
+        Raises
+        ------
+        ValueError
+            If an "_id" is not a running trial with the same parameters. No trials are attached.
         """
+        # Validate before attaching so a rejected batch attaches no trials.
+        for suggestion in suggestions:
+            if ID_KEY not in suggestion:
+                continue
+            trial_idx = suggestion[ID_KEY]
+            trial = self._client._experiment.trials.get(trial_idx)
+            if trial is None:
+                raise ValueError(
+                    f"Suggestion {suggestion} has '{ID_KEY}' {trial_idx!r}, which is not a trial of this experiment. "
+                    f"Remove '{ID_KEY}' to register it as a new trial."
+                )
+            if trial.status != TrialStatus.RUNNING:
+                raise ValueError(
+                    f"Suggestion {suggestion} references trial {trial_idx}, which is {trial.status.name} and no longer "
+                    f"awaiting results. Remove '{ID_KEY}' to register it as a new trial."
+                )
+            parameters = {k: v for k, v in suggestion.items() if k != ID_KEY}
+            trial_parameters = [arm.parameters for arm in trial.arms]
+            if trial_parameters != [parameters]:
+                raise ValueError(
+                    f"Suggestion {suggestion} does not match the parameters of trial {trial_idx}: {trial_parameters}. "
+                    f"Remove '{ID_KEY}' to register it as a new trial."
+                )
+
         registered = []
         for suggestion in suggestions:
-            # Extract parameters (ignore _id if present)
-            # TODO: Overwrite ID_KEY or skip (assume already registered)?
-            parameters = {k: v for k, v in suggestion.items() if k != ID_KEY}
-
-            # Attach trial to Ax experiment
-            trial_idx = self._client.attach_trial(parameters=parameters)
-
-            # Return with trial ID
-            registered.append({ID_KEY: trial_idx, **parameters})
-
+            if ID_KEY in suggestion:
+                registered.append(suggestion)
+                continue
+            trial_idx = self._client.attach_trial(parameters=dict(suggestion))
+            registered.append({ID_KEY: trial_idx, **suggestion})
         return registered
 
     def register_failures(self, suggestions: Sequence[Mapping]) -> None:

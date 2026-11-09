@@ -55,15 +55,22 @@ class CanRegisterSuggestions(Protocol):
         """
         Register the suggestions with the optimizer.
 
+        Suggestions already registered with the optimizer are returned unchanged.
+
         Parameters
         ----------
         suggestions: Sequence[Mapping]
-            The suggestions to register. The "_id" key is optional and will be overwritten if present.
+            The suggestions to register.
 
         Returns
         -------
         Sequence[Mapping]
-            The suggestions with an "_id" key added.
+            The suggestions, each with an "_id" key.
+
+        Raises
+        ------
+        ValueError
+            If a suggestion cannot be registered.
         """
         ...
 
