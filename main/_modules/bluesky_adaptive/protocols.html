@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev1 documentation</title>
+    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev2 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=21071f6d"></script>
+    <script src="../../_static/documentation_options.js?v=16ff9507"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev1" />
+  <meta name="docsearch:version" content="1.0.2.dev2" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -875,6 +875,8 @@ window.runMermaid = runMermaid;</script>
 <span class="n">ID_KEY</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"_id"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"_id"</span>
 <span class="n">Actuator</span> <span class="o">=</span> <span class="n">MovableHasName</span> <span class="o">|</span> <span class="n">Flyable</span>
 <span class="n">Sensor</span> <span class="o">=</span> <span class="n">Readable</span> <span class="o">|</span> <span class="n">EventCollectable</span> <span class="o">|</span> <span class="n">EventPageCollectable</span>
+<span class="n">DocumentCallback</span> <span class="o">=</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]],</span> <span class="n">Any</span><span class="p">]</span>
+<span class="sd">"""A Bluesky document callback, e.g. a :class:`bluesky.callbacks.CallbackBase` instance."""</span>
 
 <span class="n">TActuator</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"TActuator"</span><span class="p">)</span>
 <span class="sd">"""Actuator generic type"""</span>
