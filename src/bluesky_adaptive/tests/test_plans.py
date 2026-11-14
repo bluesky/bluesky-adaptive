@@ -1405,30 +1405,60 @@ def test_optimize_invalid_outcomes_mark_trials_failed(RE):
     assert [name for name, _ in documents] == ["start", "stop"]
 
 
-def test_optimize_recording_failure_marks_trials_failed(RE):
-    suggestions = [{"x1": 0.0, "_id": 0}]
+@pytest.mark.parametrize(
+    "run_plan",
+    [
+        lambda problem, callbacks: optimize(problem, callbacks=callbacks),
+        lambda problem, callbacks: sample_suggestions(problem, [{"x1": 0.0, "_id": 0}], callbacks=callbacks),
+        lambda problem, callbacks: acquire_baseline(problem, {"x1": 0.0}, callbacks=callbacks),
+    ],
+    ids=["optimize", "sample_suggestions", "acquire_baseline"],
+)
+def test_failing_callback_keeps_the_evaluated_step(RE, run_plan):
     optimizer = MagicMock(spec=FaultAwareOptimizer)
-    optimizer.suggest.return_value = suggestions
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
     problem = OptimizationProblem(
         optimizer=optimizer,
         actuators=[MovableSignal("x1")],
         sensors=[ReadableSignal("objective")],
-        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+        evaluation_function=lambda uid, suggestions: [{"objective": 0.0, "_id": s["_id"]} for s in suggestions],
         acquisition_plan=_test_acquisition_plan,
     )
-    documents = []
+    callback, documents = _collect_documents()
 
-    def callback(name, doc):
-        documents.append((name, dict(doc)))
+    def failing(name, doc):
         if name == "event":
             raise RuntimeError("callback failed")
 
     with pytest.raises(RuntimeError, match="callback failed"):
-        RE(optimize(problem, callbacks=[callback]))
+        RE(run_plan(problem, [failing, callback]))
 
-    optimizer.register_failures.assert_called_once_with(suggestions)
-    optimizer.ingest.assert_not_called()
-    assert documents[-1][0] == "stop"
+    optimizer.ingest.assert_called_once()
+    optimizer.register_failures.assert_not_called()
+    assert [name for name, _ in documents] == ["start", "descriptor", "event", "stop"]
+    assert documents[-1][1]["exit_status"] == "fail"
+
+
+def test_optimize_failure_is_raised_when_a_callback_also_fails_on_stop(RE):
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(side_effect=RuntimeError("evaluation failed")),
+        acquisition_plan=_test_acquisition_plan,
+    )
+    callback, documents = _collect_documents()
+
+    def fails_on_stop(name, doc):
+        if name == "stop":
+            raise ConnectionError("notifier down")
+
+    with pytest.raises(RuntimeError, match="evaluation failed"):
+        RE(optimize(problem, callbacks=[fails_on_stop, callback]))
+
+    assert [name for name, _ in documents] == ["start", "stop"]
     assert documents[-1][1]["exit_status"] == "fail"
 
 

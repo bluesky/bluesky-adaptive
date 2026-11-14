@@ -128,12 +128,10 @@ def default_acquire(
 def _acquire_and_evaluate(
     optimization_problem: OptimizationProblem[TUid],
     suggestions: Sequence[Mapping],
-    recorder: RunRecorder | None,
-    iteration: int,
     *args: Any,
     **kwargs: Any,
 ) -> MsgGenerator[tuple[TUid, Sequence[Mapping]]]:
-    """Acquire and evaluate suggestions, then validate and record the outcomes.
+    """Acquire and evaluate suggestions, then validate the outcomes.
 
     Any failure marks the suggestions failed on a ``TrialFaultAware`` optimizer before it is re-raised.
     """
@@ -148,8 +146,6 @@ def _acquire_and_evaluate(
         )
         outcomes = optimization_problem.evaluation_function(uid, suggestions)
         _validate_outcomes(outcomes, suggestions)
-        if recorder is not None:
-            recorder.record(iteration, uid, suggestions, outcomes)
     except Exception:
         if isinstance(optimizer, TrialFaultAware):
             optimizer.register_failures(suggestions)
@@ -182,7 +178,7 @@ def optimize_step(
     optimizer = optimization_problem.optimizer
     suggestions = optimizer.suggest(n_points)
     _validate_suggestions(suggestions)
-    uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, None, -1, *args, **kwargs)
+    uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, *args, **kwargs)
     optimizer.ingest(outcomes)
     return uid, suggestions, outcomes
 
@@ -251,8 +247,10 @@ def optimize(
             suggestions = []  # a failing suggest() must not report the previous iteration's IDs
             suggestions = optimizer.suggest(n_points)
             _validate_suggestions(suggestions)
-            _, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, recorder, iteration, **kwargs)
+            uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, **kwargs)
             optimizer.ingest(outcomes)
+            # Recorded after ingesting, so that a failing callback cannot cost the optimizer an evaluated step.
+            recorder.record(iteration, uid, suggestions, outcomes)
 
             if isinstance(optimizer, SupportsStoppingCriteria):
                 stop_now, stop_reason = optimizer.should_stop()
@@ -441,8 +439,10 @@ def sample_suggestions(
         },
     )
     try:
-        uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, recorder, -1, **kwargs)
+        uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, **kwargs)
         optimization_problem.optimizer.ingest(outcomes)
+        # Recorded after ingesting, so that a failing callback cannot cost the optimizer the evaluated points.
+        recorder.record(-1, uid, suggestions, outcomes)
     except BaseException as error:
         recorder.stop_for(error, -1, suggestions)
         raise
@@ -503,8 +503,9 @@ def acquire_baseline(
         uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, **kwargs)
         outcomes = optimization_problem.evaluation_function(uid, points)
         _validate_outcomes(outcomes, points)
-        recorder.record(-1, uid, points, outcomes)
         optimizer.ingest([{**outcomes[0], **parameterization_copy}])
+        # Recorded after ingesting, so that a failing callback cannot cost the optimizer the baseline.
+        recorder.record(-1, uid, points, outcomes)
     except BaseException as error:
         recorder.stop_for(error, -1, points)
         raise

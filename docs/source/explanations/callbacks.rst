@@ -38,6 +38,10 @@ evaluation function. Record runs do not pass through the RunEngine, so callbacks
 ``TiledWriter`` to the RunEngine and to the agent; the record run carries the problem's optimization
 UID in ``start["bluesky-adaptive"]["optimization_uid"]``.
 
+A callback that raises does not keep documents from the other callbacks: every callback receives every
+document, then the plan raises the first exception. Steps are recorded after the optimizer ingests
+their outcomes, so a failing callback ends the optimization without losing the step it interrupted.
+
 :func:`bluesky_adaptive.plans.optimize_in_run` is different: it runs the whole optimization inside
 one RunEngine run and writes the summary to that run's ``optimization`` stream.
 

@@ -1,6 +1,7 @@
 """Record an optimization as a Bluesky run composed with event-model, outside the RunEngine."""
 
 import copy
+import logging
 import time
 from collections.abc import Iterable, Mapping, Sequence
 from typing import Any, Literal, cast
@@ -11,9 +12,13 @@ from event_model import ComposeEvent, DataKey, compose_run
 
 from .protocols import ID_KEY, DocumentCallback
 
+logger = logging.getLogger(__name__)
+
 SUGGESTION_ID_FIELD: Literal["adaptive_suggestion_id"] = "adaptive_suggestion_id"
 ITERATION_FIELD: Literal["adaptive_iteration"] = "adaptive_iteration"
 ACQUISITION_UID_FIELD: Literal["adaptive_acquisition_uid"] = "adaptive_acquisition_uid"
+PARAMETERS_OBJECT_KEY: Literal["parameters"] = "parameters"
+OUTCOMES_OBJECT_KEY: Literal["outcomes"] = "outcomes"
 _RESERVED_PREFIX = "adaptive_"
 
 
@@ -46,8 +51,10 @@ class RunRecorder:
     parameters and outcomes. The descriptor's ``object_keys`` name the parameter fields under
     ``"parameters"`` and the outcome fields under ``"outcomes"``.
 
-    If a callback raises on the start document, the callbacks that already received it get a ``"fail"``
-    stop document and the exception propagates.
+    Every callback receives every later document even if another callback raises: the first exception
+    is raised once the documents have reached all callbacks, and later ones are logged. If a callback
+    raises on the start document, the callbacks that already received it get a ``"fail"`` stop document
+    and the exception propagates.
 
     Parameters
     ----------
@@ -70,14 +77,27 @@ class RunRecorder:
             try:
                 callback("start", start)
             except BaseException:
-                self.stop("fail", f"Callback {callback!r} failed on the start document")
+                self._stop_after_error("fail", f"Callback {callback!r} failed on the start document")
                 raise
             self._callbacks.append(callback)
 
-    def _emit(self, name: str, doc: Mapping[str, Any]) -> None:
-        document = cast(dict[str, Any], doc)
-        for callback in self._callbacks:
-            callback(name, document)
+    def _emit(self, *documents: tuple[str, Mapping[str, Any]]) -> None:
+        """Send the documents to every callback, then raise the first callback exception, if any."""
+        first_error: Exception | None = None
+        for name, doc in documents:
+            document = cast(dict[str, Any], doc)
+            for callback in self._callbacks:
+                try:
+                    callback(name, document)
+                except Exception as error:
+                    # Keep going, so that one failing callback does not keep documents from the others, such
+                    # as a TiledWriter that only writes its rows when it receives the stop document.
+                    if first_error is None:
+                        first_error = error
+                    else:
+                        logger.error("Callback %r also failed on a %s document", callback, name, exc_info=error)
+        if first_error is not None:
+            raise first_error
 
     def record(
         self, iteration: int, acquisition_uid: Any, suggestions: Sequence[Mapping], outcomes: Sequence[Mapping]
@@ -124,7 +144,7 @@ class RunRecorder:
             if shared:
                 raise ValueError(f"A parameter and an outcome must not share a name. Got {shared!r}.")
             if not object_keys:
-                object_keys = {"parameters": list(parameters), "outcomes": list(results)}
+                object_keys = {PARAMETERS_OBJECT_KEY: list(parameters), OUTCOMES_OBJECT_KEY: list(results)}
             rows.append(
                 {
                     SUGGESTION_ID_FIELD: str(suggestion[ID_KEY]),
@@ -157,12 +177,13 @@ class RunRecorder:
             self._fields = fields
         now = time.time()
         events = [self._compose_event(data=row, timestamps=dict.fromkeys(row, now), time=now) for row in rows]
+        documents: list[tuple[str, Mapping[str, Any]]] = []
         if descriptor is not None:
             # The event composer validates later events against this descriptor, and consumers such as
             # TiledWriter modify the descriptor they receive.
-            self._emit("descriptor", copy.deepcopy(descriptor))
-        for event in events:
-            self._emit("event", event)
+            documents.append(("descriptor", copy.deepcopy(descriptor)))
+        documents.extend(("event", event) for event in events)
+        self._emit(*documents)
 
     def stop(self, exit_status: Literal["success", "abort", "fail"] = "success", reason: str = "") -> None:
         """
@@ -178,7 +199,16 @@ class RunRecorder:
         if self._stopped:
             return
         self._stopped = True
-        self._emit("stop", self._compose_stop(exit_status=exit_status, reason=reason))
+        self._emit(("stop", self._compose_stop(exit_status=exit_status, reason=reason)))
+
+    def _stop_after_error(self, exit_status: Literal["success", "abort", "fail"], reason: str) -> None:
+        """Send the stop document of a run that an exception ends, logging callback exceptions instead."""
+        try:
+            self.stop(exit_status, reason)
+        except Exception:
+            # The caller re-raises the exception that ended the run; a callback failing on the stop document
+            # must not replace it.
+            logger.exception("A callback failed on the stop document")
 
     def stop_for(self, error: BaseException, iteration: int, suggestions: Sequence[Mapping]) -> None:
         """
@@ -187,7 +217,8 @@ class RunRecorder:
         :class:`bluesky.utils.RequestStop` stops with ``"success"``. :class:`bluesky.utils.RequestAbort` and
         exceptions that are not an :class:`Exception` (``GeneratorExit``, ``KeyboardInterrupt``) stop with
         ``"abort"``. Any other exception stops with ``"fail"``, with a reason naming the iteration and the
-        suggestion IDs.
+        suggestion IDs. Callback exceptions are logged instead of raised, so that the caller re-raises
+        ``error`` rather than a callback's exception.
 
         Parameters
         ----------
@@ -199,12 +230,12 @@ class RunRecorder:
             The suggestions of that iteration.
         """
         if isinstance(error, RequestStop):
-            self.stop("success", "Stop requested")
+            self._stop_after_error("success", "Stop requested")
         elif isinstance(error, RequestAbort) or not isinstance(error, Exception):
-            self.stop("abort", f"Aborted: {type(error).__name__}")
+            self._stop_after_error("abort", f"Aborted: {type(error).__name__}")
         else:
             suggestion_ids = [suggestion.get(ID_KEY) for suggestion in suggestions]
-            self.stop(
+            self._stop_after_error(
                 "fail",
                 f"Iteration {iteration} with suggestion IDs {suggestion_ids!r} failed: {type(error).__name__}: {error}",
             )

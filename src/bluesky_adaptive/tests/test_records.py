@@ -139,6 +139,39 @@ def test_run_recorder_failing_start_callback_stops_the_run_for_earlier_callbacks
     assert later_documents == []
 
 
+def test_run_recorder_start_failure_is_raised_when_an_earlier_callback_fails_on_stop():
+    def fails_on_stop(name, doc):
+        if name == "stop":
+            raise ConnectionError("stop failed")
+
+    def fails_on_start(name, doc):
+        raise RuntimeError("start failed")
+
+    with pytest.raises(RuntimeError, match="start failed"):
+        RunRecorder(callbacks=[fails_on_stop, fails_on_start], metadata={})
+
+
+def test_run_recorder_sends_every_document_to_every_callback_when_one_raises():
+    later, documents = _collector()
+
+    def failing(name, doc):
+        if name != "start":
+            raise RuntimeError(f"callback failed on {name}")
+
+    recorder = RunRecorder(callbacks=[failing, later], metadata={})
+    with pytest.raises(RuntimeError, match="failed on descriptor"):
+        recorder.record(
+            0,
+            "acquisition-uid",
+            [{"_id": 1, "x": 0.5}, {"_id": 2, "x": 0.7}],
+            [{"_id": 1, "y": 1.0}, {"_id": 2, "y": 2.0}],
+        )
+    with pytest.raises(RuntimeError, match="failed on stop"):
+        recorder.stop()
+
+    assert [name for name, _ in documents] == ["start", "descriptor", "event", "event", "stop"]
+
+
 def test_run_recorder_sends_one_stop():
     callback, documents = _collector()
     recorder = RunRecorder(callbacks=[callback], metadata={})

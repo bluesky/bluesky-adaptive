@@ -11,7 +11,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.text import Text
 
-from .._records import ITERATION_FIELD, SUGGESTION_ID_FIELD
+from .._records import ITERATION_FIELD, OUTCOMES_OBJECT_KEY, PARAMETERS_OBJECT_KEY, SUGGESTION_ID_FIELD
 from .utils import RunningStats
 
 # Styling constants
@@ -137,8 +137,8 @@ class OptimizationLogger(CallbackBase):
         """Cache the parameter and outcome fields named by the descriptor's ``object_keys``."""
         data_keys = doc.get("data_keys", {})
         object_keys = doc.get("object_keys", {})
-        self._parameter_keys = sorted(object_keys.get("parameters", []))
-        self._outcome_keys = sorted(object_keys.get("outcomes", []))
+        self._parameter_keys = sorted(object_keys.get(PARAMETERS_OBJECT_KEY, []))
+        self._outcome_keys = sorted(object_keys.get(OUTCOMES_OBJECT_KEY, []))
 
         # build header item for iteratively generated table
         table = Table(expand=True)
