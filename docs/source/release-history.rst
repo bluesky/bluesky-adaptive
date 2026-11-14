@@ -5,6 +5,19 @@ Release History
 Unreleased
 ----------
 
+Breaking Changes
+................
+* The Queue Server runner no longer listens to the Bluesky document stream. Right after submitting each plan, it
+  calls the evaluation function in a background thread with the queue item UID returned by ``item_add``. The
+  evaluation function should wait for its data and raise if the acquisition failed. ``OptimizationResult.uids``
+  holds queue item UIDs (`#76 <https://github.com/bluesky/bluesky-adaptive/issues/76>`_).
+* ``QueueserverAgent`` and ``QueueserverClient`` no longer accept ``document_dispatcher``. ``acquisition_run_filter``,
+  ``ConsumerCallback``, ``CORRELATION_UID_KEY``, and ``QueueserverClient.start_listener``/``stop_listener`` are
+  removed, and submitted plans no longer carry ``blop_correlation_uid``.
+* ``QueueserverOptimizationRunner.stop()`` and ``QueueserverAgent.stop()`` stop further submissions without
+  interrupting the in-flight evaluation. The future resolves with the partial result after that evaluation
+  returns and is ingested, instead of immediately.
+
 Features
 ........
 * ``OptimizationProblem`` and ``QueueserverOptimizationProblem`` gain ``optimization_uid``, which the ``optimize``,

@@ -46,10 +46,9 @@ flowchart
         bridge -->|writes| tiled
     end
 
-    agent["Bluesky Adaptive QueueserverAgent<br/>(suggests points, listens for completions, evaluates data)"]
+    agent["Bluesky Adaptive QueueserverAgent<br/>(suggests points, submits plans, evaluates data)"]
 
     agent -->|submit plans via REManagerAPI| rem
-    zmqp -->|document stream| agent
     tiled -->|read data| agent
 ```
 
@@ -59,8 +58,7 @@ flowchart
 1. The RE Manager executes the plan (moves motors, reads detectors)
 1. Bluesky documents are published via ZMQ to the proxy
 1. The ZMQ-Tiled bridge persists documents to the Tiled server (using [bluesky-tiled-plugins](https://blueskyproject.io/bluesky-tiled-plugins)'s `TiledWriter` callback)
-1. The agent's ZMQ listener detects plan completion
-1. The agent's evaluation function reads results from Tiled and computes objectives
+1. The evaluation function receives the queue item UID immediately after submission, waits until a run carrying it as `queue_server.queue_item_uid` appears in Tiled with its stop document, and computes objectives
 1. The optimizer ingests outcomes and suggests the next point
 
 ## Prerequisites
@@ -89,7 +87,7 @@ You should see all services in a "healthy" or "running" state. The services expo
 | Service | Port | Purpose |
 |---------|------|---------|
 | RE Manager | 60615 | ZMQ control channel (REManagerAPI connects here) |
-| ZMQ Proxy (out) | 5578 | Document stream (agent listens for plan completions) |
+| ZMQ Proxy (out) | 5578 | Document stream (the ZMQ-Tiled bridge subscribes here) |
 | Tiled | 8000 | Data access (evaluation function reads results) |
 | Redis | 6379 | Internal message broker for queueserver |
 
@@ -98,7 +96,6 @@ Once the containers are up, proceed with the tutorial below.
 ```{code-cell} ipython3
 import time
 
-from bluesky.callbacks.zmq import RemoteDispatcher
 from bluesky_queueserver_api.zmq import REManagerAPI
 
 RM = REManagerAPI(zmq_control_addr="tcp://localhost:60615")
@@ -206,66 +203,53 @@ sensors = ["himmel_det"]
 
 ## Writing the Evaluation Function
 
-The evaluation function is called each time a plan completes. Its general contract accepts a uid and a sequence of suggestion mappings, and returns a sequence of outcome mappings. This evaluator uses `blop_acquisition_order` to align detector values with IDs. The queueserver runner uses the Bluesky run UID, so this evaluator types `uid` as `str` before looking up the run in Tiled. Each outcome must contain the objective value(s) and an `_id` from that acquisition order.
+The runner calls the evaluation function in a background thread right after it submits each plan. It passes the plan's queue item UID, which the RE Manager returns when the plan is added to the queue, as `uid`, together with the submitted suggestions. The evaluation function returns a sequence of outcome mappings; each must contain the objective value(s) and an `_id`. This evaluator uses the run's `blop_acquisition_order` to align detector values with IDs.
 
-Because the agent and the ZMQ-Tiled bridge are separate subscribers to the same ZMQ stream, there is a race condition: the agent may receive the stop document before the bridge has finished writing data to Tiled. The evaluation function should poll Tiled until both the run and the detector data are available.
+Because the plan may still be queued or running when the evaluation function is called, the evaluator owns waiting for the data, selecting the run, and detecting failures. bluesky-queueserver 0.0.26 and newer record the queue item UID in the start document of every run the item opens, as `start["queue_server"]["queue_item_uid"]`, so this evaluator polls Tiled for such a run with a stop document and raises if the run did not succeed. With an older RE Manager, poll `RM.history_get()` until the item's entry appears instead, then look up the runs listed in its `result["run_uids"]`. Keep the wait bounded: `agent.stop()` takes effect only after the in-flight evaluation returns.
 
 ```{code-cell} ipython3
 from collections.abc import Mapping, Sequence
 
-import numpy as np
 from tiled.client.container import Container
+from tiled.queries import Key
 
 
 class HimmelblauEvaluation:
-    """Reads detector data from Tiled and computes the Himmelblau objective."""
+    """Waits for the queue item's run in Tiled and computes the Himmelblau objective."""
 
-    def __init__(self, tiled_client: Container, timeout: float = 30.0, poll_interval: float = 0.5):
+    def __init__(self, tiled_client: Container, timeout: float = 60.0, poll_interval: float = 0.5):
         self.tiled_client = tiled_client
         self.timeout = timeout
         self.poll_interval = poll_interval
 
-    def _wait_for_run(self, uid: str):
-        """Poll Tiled until the run with the given UID is available."""
-        deadline = time.time() + self.timeout
-        while time.time() < deadline:
-            try:
-                return self.tiled_client[uid]
-            except KeyError:
-                time.sleep(self.poll_interval)
+    def _wait_for_stopped_run(self, item_uid: str):
+        """Poll Tiled until a run opened by this queue item has its stop document."""
+        deadline = time.monotonic() + self.timeout
+        while time.monotonic() < deadline:
+            runs = self.tiled_client.search(Key("start.queue_server.queue_item_uid") == item_uid)
+            for run in runs.values():
+                if run.metadata.get("stop") is not None:
+                    return run
+            time.sleep(self.poll_interval)
         raise TimeoutError(
-            f"Run '{uid}' not found in Tiled after {self.timeout}s. "
-            "The ZMQ-Tiled bridge may not be running."
-        )
-
-    def _wait_for_detector_data(self, run, path: str):
-        """Poll Tiled until the detector data path is readable."""
-        deadline = time.time() + self.timeout
-        while time.time() < deadline:
-            try:
-                return run[path].read()
-            except KeyError:
-                time.sleep(self.poll_interval)
-        raise TimeoutError(
-            f"Data path '{path}' for run '{run.metadata['start']['uid']}' was not readable after {self.timeout}s. "
-            "The ZMQ-Tiled bridge may still be writing the run."
+            f"No stopped run for queue item {item_uid!r} in Tiled after {self.timeout}s. Check the queue "
+            "history for a failed plan and that the ZMQ-Tiled bridge is running."
         )
 
     def __call__(self, uid: str, suggestions: Sequence[Mapping]) -> Sequence[Mapping]:
-        run = self._wait_for_run(uid)
-
-        # Read the detector values from the primary data stream
-        himmel_values = self._wait_for_detector_data(run, "primary/himmel_det")
-
+        run = self._wait_for_stopped_run(uid)
+        stop = run.metadata["stop"]
+        if stop["exit_status"] != "success":
+            raise RuntimeError(
+                f"Acquisition run {run.metadata['start']['uid']!r} ended with status "
+                f"{stop['exit_status']!r}: {stop.get('reason') or '(no reason given)'}"
+            )
+        himmel_values = run["primary/himmel_det"].read()
         acquisition_order = run.metadata["start"]["blop_acquisition_order"]
-        outcomes = []
-        for idx, suggestion_id in enumerate(acquisition_order):
-            outcomes.append({
-                "_id": suggestion_id,
-                "himmelblau": float(himmel_values[idx]),
-            })
-
-        return outcomes
+        return [
+            {"_id": suggestion_id, "himmelblau": float(himmel_values[idx])}
+            for idx, suggestion_id in enumerate(acquisition_order)
+        ]
 ```
 
 ## Creating the Queueserver Agent
@@ -273,15 +257,11 @@ class HimmelblauEvaluation:
 Now we bring everything together. The `QueueserverAgent` needs:
 
 - `re_manager_api`: how to communicate with the queueserver (submit plans, check status)
-- `document_dispatcher`: a `RemoteDispatcher` that subscribes to the Bluesky document stream
 - The DOFs, objectives, sensors, and evaluation function
 
 ```{code-cell} ipython3
-document_dispatcher = RemoteDispatcher(("localhost", 5578))
-
 agent = QueueserverAgent(
     re_manager_api=RM,
-    document_dispatcher=document_dispatcher,
     sensors=sensors,
     dofs=dofs,
     objectives=objectives,
@@ -293,21 +273,16 @@ agent = QueueserverAgent(
 ```{note}
 The `re_manager_api` argument also accepts an HTTP-based client
 (`bluesky_queueserver_api.http.REManagerAPI`) for deployments that expose the
-queueserver over HTTP rather than ZMQ. Construct the `RemoteDispatcher` with
-whatever arguments your document stream requires, such as a ZMQ address or
-message prefix.
+queueserver over HTTP rather than ZMQ.
 ```
 
 ```{note}
-The agent evaluates the first run that carries its submitted metadata. If your acquisition plan opens
-additional runs with the same metadata, such as a dark-frame run that xpdAcq's `periodic_dark` inserts
-before the measurement, pass `acquisition_run_filter` to select the run to evaluate. For example,
-`acquisition_run_filter=lambda start: not start.get("dark_frame", False)` skips dark-frame runs.
+If the plan opens several runs (for example, xpdAcq dark frames), select the measurement run in the evaluator, for example by also checking `run.metadata["start"].get("dark_frame")`.
 ```
 
 ## Running the Optimization
 
-The `run()` method is **non-blocking** — it submits the first plan and returns immediately. The agent reacts asynchronously to plan completions via ZMQ callbacks.
+The `run()` method is **non-blocking** — it submits the first plan and returns immediately. A background thread submits plans and calls the evaluation function, which waits for the data in Tiled.
 
 ```{code-cell} ipython3
 future = agent.run(iterations=10, n_points=1)
@@ -322,7 +297,7 @@ print(f"Iterations completed : {result.iterations_completed}")
 print(f"Points per iteration : {result.num_points}")
 print(f"Total acquisitions   : {len(result.uids)}")
 print()
-print("Run UIDs:")
+print("Queue item UIDs:")
 for uid in result.uids:
     print(f"  {uid}")
 ```
@@ -361,7 +336,7 @@ docker compose down
 
 - **Distributed architecture**: The queueserver separates experiment execution from optimization logic, connected via ZMQ and Tiled
 - **String-based device references**: Since devices live in the remote process, DOFs, sensors, and plans are referenced by name
-- **Asynchronous operation**: `agent.run()` is non-blocking; the agent reacts to events via ZMQ callbacks
+- **Asynchronous operation**: `agent.run()` is non-blocking; a background thread submits plans and calls the evaluation function, which waits for data in Tiled
 - **Evaluation function**: Reads from Tiled (not direct device access) to compute objectives after each plan completes
 
 ## Next Steps

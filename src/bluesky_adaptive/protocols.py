@@ -7,7 +7,6 @@ from typing import Any, Generic, Literal, Protocol, TypeVar, runtime_checkable
 
 from bluesky.protocols import EventCollectable, EventPageCollectable, Flyable, HasName, Movable, Readable
 from bluesky.utils import MsgGenerator, plan
-from event_model import RunStart
 
 
 @runtime_checkable
@@ -391,17 +390,14 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
     sensors: Sequence[str]
         Names of objects that can produce data to acquire data from the beamline using the Bluesky RunEngine.
     evaluation_function: EvaluationFunction[str]
-        A callable that uses a Bluesky run UID to retrieve acquired data and produce outcomes.
+        Called with the queue item UID of each submitted plan right after submission. It waits until the data
+        it needs is available (for example, by polling ``history_get()`` until the item's entry lists its
+        ``run_uids``), raises if the acquisition failed, and returns outcomes.
     acquisition_plan: str, optional
         The name of a Bluesky plan to acquire data. If not provided, a default plan name will be used.
         The plan must match the arguments of :class:`AcquisitionPlan`.
     acquisition_plan_kwargs: Mapping[str, Any], optional
         Additional plan arguments to pass to the Bluesky plan.
-    acquisition_run_filter: Callable[[RunStart], bool], optional
-        Selects the run to evaluate when the acquisition plan opens more than one run carrying the
-        submitted metadata, such as a dark-frame run inserted before the measurement. Runs whose start
-        document does not satisfy the filter are ignored and do not complete the iteration. If not
-        provided, the first run carrying the metadata completes the iteration.
     optimization_uid: str, optional
         Identifier of the optimization. If not provided, a new UUID4 is generated.
 
@@ -414,4 +410,3 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
     """
 
     acquisition_plan_kwargs: Mapping[str, Any] | None = None
-    acquisition_run_filter: Callable[[RunStart], bool] | None = None

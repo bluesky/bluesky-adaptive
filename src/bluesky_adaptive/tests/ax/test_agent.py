@@ -5,7 +5,6 @@ import pytest
 from ax import Client
 from bluesky import plan_stubs as bps
 from bluesky.callbacks import CallbackBase
-from bluesky.callbacks.zmq import RemoteDispatcher
 from bluesky.run_engine import RunEngine
 
 from bluesky_adaptive.ax.agent import Agent
@@ -27,11 +26,6 @@ def mock_evaluation_function():
 @pytest.fixture(scope="function")
 def mock_acquisition_plan():
     return MagicMock(spec=AcquisitionPlan)
-
-
-@pytest.fixture(scope="function")
-def mock_document_dispatcher():
-    return MagicMock(spec=RemoteDispatcher)
 
 
 def test_agent_init(mock_evaluation_function, mock_acquisition_plan):

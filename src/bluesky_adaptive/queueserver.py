@@ -13,14 +13,10 @@ a queueserver, rather than directly through a RunEngine.
 
 import logging
 import threading
-import uuid
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from concurrent.futures import Future
 from dataclasses import dataclass, field
-from typing import Any, Literal
-
-from bluesky.callbacks import CallbackBase
-from bluesky.callbacks.zmq import RemoteDispatcher
+from typing import Any
 
 try:
     import bluesky_queueserver_api.http
@@ -31,7 +27,6 @@ except ImportError as e:
         "The queueserver integration requires additional dependencies. "
         "Install them with: pip install bluesky-adaptive[queueserver]"
     ) from e
-from event_model import RunStart, RunStop
 
 from .plans import default_acquire
 from .protocols import ID_KEY, CanRegisterSuggestions, QueueserverOptimizationProblem, TrialFaultAware
@@ -41,7 +36,6 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_ACQUIRE_PLAN_NAME: str = default_acquire.__name__
-CORRELATION_UID_KEY: Literal["blop_correlation_uid"] = "blop_correlation_uid"
 
 
 @dataclass(frozen=True)
@@ -63,9 +57,8 @@ class OptimizationResult:
     num_points : int
         The number of points suggested per iteration.
     uids : tuple[str, ...]
-        The Bluesky run UIDs for each completed acquisition, in order.
-        These can be used to retrieve raw data from a Tiled or databroker
-        catalog for post-hoc analysis.
+        The queue item UIDs of the completed acquisitions, in order. Each item's ``history_get()`` entry
+        lists the UIDs of the runs it opened in ``result["run_uids"]``.
     """
 
     iterations_completed: int
@@ -73,48 +66,12 @@ class OptimizationResult:
     uids: tuple[str, ...]
 
 
-class ConsumerCallback(CallbackBase):
-    """
-    A callback that caches the start document and invokes a callback on stop.
-
-    Parameters
-    ----------
-    callback : callable
-        Function to call when a stop document is received.
-        Signature: callback(start_doc, stop_doc)
-    """
-
-    def __init__(self, callback: Callable[[RunStart, RunStop], None] | None = None):
-        super().__init__()
-        self._start_doc_cache: dict[str, RunStart] = {}
-        self._callback = callback
-
-    def start(self, doc: RunStart) -> None:
-        """
-        Process the start document.
-
-        Caches the start document if it has the correlation UID injected by Bluesky Adaptive.
-        """
-        if doc.get(CORRELATION_UID_KEY):
-            self._start_doc_cache[doc["uid"]] = doc
-
-    def stop(self, doc: RunStop) -> None:
-        """
-        Process the stop document.
-
-        Calls the callback with the cached start document and stop document pair.
-        """
-        start_doc = self._start_doc_cache.pop(doc["run_start"], None)
-        if self._callback is not None and start_doc is not None:
-            self._callback(start_doc, doc)
-
-
 class QueueserverClient:
     """
     Handles communication with a Bluesky queueserver.
 
-    This class encapsulates queueserver communication, including plan submission
-    and event listening. The queue must be running or have autostart enabled.
+    This class encapsulates queueserver communication: plan submission and
+    environment checks. The queue must be running or have autostart enabled.
 
     .. warning::
 
@@ -125,19 +82,13 @@ class QueueserverClient:
     ----------
     re_manager_api : bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI
         Manager instance for communication with Bluesky Queueserver
-    document_dispatcher : bluesky.callbacks.zmq.RemoteDispatcher
-        Dispatcher for the Bluesky document stream.
     """
 
     def __init__(
         self,
         re_manager_api: bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI,
-        document_dispatcher: RemoteDispatcher,
     ):
         self._rm = re_manager_api
-        self._dispatcher = document_dispatcher
-        self._consumer_callback: ConsumerCallback | None = None
-        self._listener_thread: threading.Thread | None = None
 
     def check_environment(self) -> None:
         """
@@ -152,7 +103,7 @@ class QueueserverClient:
         if status is None or not status.get("worker_environment_exists", False):
             raise RuntimeError("The queueserver environment is not open")
 
-    def submit_plan(self, plan: BPlan) -> None:
+    def submit_plan(self, plan: BPlan) -> str:
         """
         Submit a plan to the queueserver queue.
 
@@ -160,45 +111,15 @@ class QueueserverClient:
         ----------
         plan : BPlan
             The plan to submit.
+
+        Returns
+        -------
+        str
+            The queue item UID assigned by the RE Manager.
         """
         response = self._rm.item_add(plan)
         logger.debug(f"Submitted plan to queue. Response: {response}")
-
-    def start_listener(
-        self,
-        on_stop: Callable[[RunStart, RunStop], None],
-    ) -> None:
-        """
-        Start listening for document events from the queueserver.
-
-        Parameters
-        ----------
-        on_stop : callable
-            Callback invoked when a stop document is received.
-            Signature: on_stop(start_doc, stop_doc)
-        """
-        if self._listener_thread is not None:
-            logger.warning("Listener already running")
-            return
-
-        self._consumer_callback = ConsumerCallback(callback=on_stop)
-        self._dispatcher.subscribe(self._consumer_callback)
-
-        logger.info("Starting document listener thread")
-        self._listener_thread = threading.Thread(
-            target=self._dispatcher.start,
-            name="qserver-document-consumer",
-            daemon=True,
-        )
-        self._listener_thread.start()
-
-    def stop_listener(self) -> None:
-        """Stop the document listener thread."""
-        if self._listener_thread is not None:
-            self._dispatcher.stop()
-        self._consumer_callback = None
-        self._listener_thread = None
-        logger.info("Stopped document listener")
+        return response["item"]["item_uid"]
 
 
 @dataclass
@@ -210,7 +131,6 @@ class _OptimizationState:
     checkpoint_interval: int | None = None
     current_iteration: int = 0
     current_suggestions: Sequence[Mapping] = field(default_factory=list)
-    current_uid: str | None = None
     uids: list[str] = field(default_factory=list)
 
     def build_result(self) -> OptimizationResult:
@@ -228,7 +148,7 @@ class QueueserverOptimizationRunner:
 
     This class coordinates the optimization workflow by getting suggestions from
     the optimizer, submitting acquisition plans to the queueserver, and ingesting
-    results when plans complete.
+    the outcomes the evaluation function returns for each submitted plan.
 
     .. warning::
 
@@ -242,8 +162,6 @@ class QueueserverOptimizationRunner:
         sensors, and evaluation function.
     queueserver_client : QueueserverClient
         Client for communicating with the queueserver.
-        The document listener is started once during runner construction so it
-        is ready before any submitted plan can emit documents.
     """
 
     def __init__(
@@ -258,9 +176,6 @@ class QueueserverOptimizationRunner:
         self._continuous = True
         self._state_lock = threading.RLock()
         self._current_future: Future[OptimizationResult] | None = None
-        self._client.start_listener(
-            on_stop=self._on_acquisition_complete,
-        )
 
     @property
     def optimization_problem(self) -> QueueserverOptimizationProblem:
@@ -280,8 +195,8 @@ class QueueserverOptimizationRunner:
         Run the optimization loop.
 
         Validates the queueserver state, then begins the suggest -> acquire -> ingest
-        cycle. This method returns immediately; the optimization runs asynchronously
-        via callbacks on the Bluesky document stream.
+        cycle. This method returns immediately; the optimization runs in a background
+        thread that calls the evaluation function with each submitted plan's queue item UID.
 
         Parameters
         ----------
@@ -298,9 +213,9 @@ class QueueserverOptimizationRunner:
         -------
         concurrent.futures.Future[OptimizationResult]
             A future that resolves to an :class:`OptimizationResult` when all
-            iterations complete, or when :meth:`stop` is called. If the
-            optimization loop raises an unhandled exception the future will
-            hold that exception and re-raise it on ``.result()``.
+            iterations complete, or after :meth:`stop` once the in-flight evaluation
+            returns. If the optimization loop raises an unhandled exception the future
+            will hold that exception and re-raise it on ``.result()``.
 
         Raises
         ------
@@ -318,25 +233,18 @@ class QueueserverOptimizationRunner:
         suggestions = self._problem.optimizer.suggest(num_points)
         with self._state_lock:
             plan = self._build_plan(suggestions)
-            logger.info(
-                f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations} "
-                f"with correlation uid: {self._state.current_uid}"
-            )
+            logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
             future: Future[OptimizationResult] = Future()
             self._current_future = future
-        try:
-            self._client.submit_plan(plan)
-        except Exception as exc:
-            with self._state_lock:
-                self._fail_future(exc)
-            raise
+        self._submit_and_start_worker(plan)
         return future
 
     def submit_suggestions(self, suggestions: Sequence[Mapping]) -> Future[OptimizationResult]:
         """
         Manually submit suggestions to the queue.
 
-        This method returns immediately; the optimization runs asynchronously via callbacks on the Bluesky document stream.
+        This method returns immediately; the optimization runs in a background thread that calls the evaluation
+        function with each submitted plan's queue item UID.
 
         Parameters
         ----------
@@ -371,34 +279,25 @@ class QueueserverOptimizationRunner:
 
         with self._state_lock:
             plan = self._build_plan(suggestions)
-            logger.info(f"Submitting manually specified suggestion(s) with correlation uid: {self._state.current_uid}")
+            logger.info("Submitting manually specified suggestion(s)")
             future: Future[OptimizationResult] = Future()
             self._current_future = future
-        try:
-            self._client.submit_plan(plan)
-        except Exception as exc:
-            with self._state_lock:
-                self._fail_future(exc)
-            raise
+        self._submit_and_start_worker(plan)
         return future
 
     def stop(self) -> None:
         """
         Stop the optimization loop gracefully.
 
-        The future returned by :meth:`run` or :meth:`submit_suggestions` will
-        be resolved with a partial :class:`OptimizationResult` containing however
-        many iterations completed before the stop.
+        No further plans are submitted, and the in-flight evaluation is not interrupted. The future
+        returned by :meth:`run` or :meth:`submit_suggestions` resolves with a partial
+        :class:`OptimizationResult` after that evaluation returns and is ingested, or holds its
+        exception if it raises. Plans already in the queue are not removed. Evaluation functions
+        should bound their waits so that a stop takes effect.
         """
         with self._state_lock:
             self._continuous = False
-            result = (
-                self._state.build_result()
-                if self._state is not None
-                else OptimizationResult(iterations_completed=0, num_points=0, uids=())
-            )
-            self._resolve_future(result)
-        logger.info("Optimization stopped")
+        logger.info("Optimization will stop after the in-flight acquisition is evaluated")
 
     def _resolve_future(self, result: OptimizationResult) -> None:
         """LOCKED: Resolve the current future with a result if it is not already done."""
@@ -416,8 +315,9 @@ class QueueserverOptimizationRunner:
             try:
                 self._problem.optimizer.register_failures(suggestions)
             except Exception:
+                # Logged, not raised: this runs at the top of the worker thread and the original error
+                # must still fail the future.
                 logger.exception("Failed to register trial failures with the optimizer")
-                raise
 
     def _validate(self) -> None:
         """LOCKED: Validate not already running, queueserver environment, devices, and plan availability."""
@@ -433,13 +333,9 @@ class QueueserverOptimizationRunner:
 
         self._state.current_iteration += 1
         self._state.current_suggestions = suggestions
-        self._state.current_uid = str(uuid.uuid4())
 
         # Build metadata
-        md: dict[str, Any] = {
-            CORRELATION_UID_KEY: self._state.current_uid,
-            "blop_suggestions": self._state.current_suggestions,
-        }
+        md: dict[str, Any] = {"blop_suggestions": self._state.current_suggestions}
 
         return BPlan(
             self._plan_name,
@@ -450,10 +346,22 @@ class QueueserverOptimizationRunner:
             **(self._problem.acquisition_plan_kwargs or {}),
         )
 
-    def _on_acquisition_complete(self, start_doc: RunStart, stop_doc: RunStop) -> None:
-        """When acquisition finishes, ingest results, and maybe continue."""
+    def _submit_and_start_worker(self, plan: BPlan) -> None:
+        """Submit the first plan and start the worker thread that evaluates it, failing the future on error."""
         try:
-            self._process_acquisition(start_doc, stop_doc)
+            item_uid = self._client.submit_plan(plan)
+        except Exception as exc:
+            with self._state_lock:
+                self._fail_future(exc)
+            raise
+        threading.Thread(target=self._run_loop, args=(item_uid,), name="qserver-optimization-runner", daemon=True).start()
+
+    def _run_loop(self, item_uid: str) -> None:
+        """Worker thread: evaluate, ingest, and resubmit until done, failing the future on error."""
+        try:
+            next_item_uid: str | None = item_uid
+            while next_item_uid is not None:
+                next_item_uid = self._process_acquisition(next_item_uid)
         except Exception as exc:
             logger.exception(
                 "Unhandled exception in optimization background thread. "
@@ -461,37 +369,25 @@ class QueueserverOptimizationRunner:
             )
             with self._state_lock:
                 suggestions = self._state.current_suggestions if self._state is not None else []
-                self._fail_future(exc)
+            # Register failures before failing the future so a caller that observes the failure sees the trials failed.
             self._try_register_failures(suggestions)
+            with self._state_lock:
+                self._fail_future(exc)
 
-    def _process_acquisition(self, start_doc: RunStart, stop_doc: RunStop) -> None:
-        """Core acquisition-complete logic (called from _on_acquisition_complete)."""
-        run_filter = self._problem.acquisition_run_filter
-        if run_filter is not None and not run_filter(start_doc):
-            logger.info(f"Ignoring run {start_doc['uid']!r}: excluded by acquisition_run_filter")
-            return
+    def _process_acquisition(self, item_uid: str) -> str | None:
+        """
+        Evaluate and ingest one acquisition.
+
+        Returns the next submitted queue item UID, or ``None`` after resolving the future.
+        """
         with self._state_lock:
             if self._state is None:
-                raise RuntimeError("_on_acquisition_complete called before run()")
-            if self._state.current_uid is None:
-                raise RuntimeError("current_uid not set")
-            exit_status = stop_doc.get("exit_status")
-            if self._state.current_uid != start_doc.get(CORRELATION_UID_KEY):
-                raise RuntimeError(
-                    "current_uid did not match start document. "
-                    f"Got: {start_doc.get(CORRELATION_UID_KEY)}, Expected: {self._state.current_uid}. "
-                    "If the acquisition plan opens more than one run with this metadata (for example, a "
-                    "dark-frame run), set acquisition_run_filter to select the run to evaluate."
-                )
-            if exit_status != "success":
-                reason = stop_doc.get("reason") or "(no reason given)"
-                raise RuntimeError(f"Acquisition run {start_doc['uid']!r} ended with status {exit_status!r}: {reason}")
-            logger.info(f"Acquisition complete for uid: {self._state.current_uid}")
+                raise RuntimeError("_process_acquisition called before run()")
             suggestions = self._state.current_suggestions
-            self._state.uids.append(start_doc["uid"])
 
-        # Evaluate the results
-        outcomes = self._problem.evaluation_function(uid=start_doc["uid"], suggestions=suggestions)
+        # Evaluate the results; the evaluation function waits for its data.
+        logger.info(f"Evaluating queue item {item_uid}")
+        outcomes = self._problem.evaluation_function(uid=item_uid, suggestions=suggestions)
         _validate_outcomes(outcomes, suggestions)
         logger.info(f"Evaluated {len(outcomes)} outcomes")
 
@@ -499,6 +395,7 @@ class QueueserverOptimizationRunner:
         self._problem.optimizer.ingest(outcomes)
 
         with self._state_lock:
+            self._state.uids.append(item_uid)
             # Ingested suggestions are no longer in flight.
             self._state.current_suggestions = []
             # Checkpoint optimizer, if applicable
@@ -508,9 +405,8 @@ class QueueserverOptimizationRunner:
             # Check if done
             if not self._continuous or self._state.current_iteration >= self._state.max_iterations:
                 logger.info(f"Optimization complete after {self._state.current_iteration} iterations")
-                result = self._state.build_result()
-                self._resolve_future(result)
-                return
+                self._resolve_future(self._state.build_result())
+                return None
 
             # Continue: get next suggestions and submit
             num_points = self._state.num_points
@@ -518,8 +414,5 @@ class QueueserverOptimizationRunner:
         suggestions = self._problem.optimizer.suggest(num_points)
         with self._state_lock:
             plan = self._build_plan(suggestions)
-            logger.info(
-                f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations} "
-                f"with correlation uid: {self._state.current_uid}"
-            )
-        self._client.submit_plan(plan)
+            logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
+        return self._client.submit_plan(plan)

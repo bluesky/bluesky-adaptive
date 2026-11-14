@@ -62,14 +62,14 @@ def _custom_identifier_acquisition_plan(suggestions, actuators, sensors, *args, 
 
 @dataclass
 class _DataclassAcquisitionUID:
-    correlation_uid: str
+    run_uid: str
     item_uid: str | None
     plan_name: str
     metadata: dict[str, object]
 
 
 _DATACLASS_ACQUISITION_UID = _DataclassAcquisitionUID(
-    correlation_uid="correlation-123",
+    run_uid="run-123",
     item_uid=None,
     plan_name="count",
     metadata={"stream": "primary"},
@@ -1046,14 +1046,14 @@ def test_default_acquire_merges_metadata(RE):
                 suggestions,
                 [movable],
                 [readable],
-                md={"blop_correlation_uid": "test-correlation-uid"},
+                md={"sample": "test-sample"},
             )
         )
     finally:
         RE.unsubscribe(callback)
 
     assert len(start_docs) == 1
-    assert start_docs[0]["blop_correlation_uid"] == "test-correlation-uid"
+    assert start_docs[0]["sample"] == "test-sample"
     assert start_docs[0]["blop_suggestions"] == suggestions
     assert start_docs[0]["run_key"] == "default_acquire"
 
