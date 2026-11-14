@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Ax Agent &#8212; Bluesky Adaptive 1.0.2.dev2 documentation</title>
+    <title>Ax Agent &#8212; Bluesky Adaptive 1.0.2.dev3 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=16ff9507"></script>
+    <script src="../../_static/documentation_options.js?v=b287111e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev2" />
+  <meta name="docsearch:version" content="1.0.2.dev3" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -1018,7 +1018,7 @@ explicit <code class="docutils literal notranslate"><span class="pre">parameteri
 
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.ax.queueserver_agent.QueueserverAgent">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.ax.queueserver_agent.</span></span><span class="sig-name descname"><span class="pre">QueueserverAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_manager_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_dispatcher</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dofs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_run_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/queueserver_agent.html#QueueserverAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.ax.queueserver_agent.</span></span><span class="sig-name descname"><span class="pre">QueueserverAgent</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_manager_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dofs</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">objectives</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">evaluation_function</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dof_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">outcome_constraints</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/queueserver_agent.html#QueueserverAgent"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">_AxAgentMixin</span></code></p>
 <p>An asynchronous interface that uses Ax as the backend for optimization and experiment tracking.</p>
 <p>Uses the bluesky-queueserver-api for scheduling plan execution.</p>
@@ -1033,8 +1033,6 @@ production use.</p>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>re_manager_api</strong><span class="classifier">bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI</span></dt><dd><p>The manager API for interaction with Bluesky queueserver.</p>
 </dd>
-<dt><strong>document_dispatcher</strong><span class="classifier">RemoteDispatcher</span></dt><dd><p>Dispatcher for consuming Bluesky documents from the remote server.</p>
-</dd>
 <dt><strong>sensors</strong><span class="classifier">Sequence[str]</span></dt><dd><p>The sensors to use for acquisition. These should be the minimal set
 of sensors that are needed to compute the objectives.</p>
 </dd>
@@ -1042,7 +1040,8 @@ of sensors that are needed to compute the objectives.</p>
 </dd>
 <dt><strong>objectives</strong><span class="classifier">Sequence[Objective]</span></dt><dd><p>The objectives which the agent will try to optimize.</p>
 </dd>
-<dt><strong>evaluation_function</strong><span class="classifier">EvaluationFunction</span></dt><dd><p>The function to evaluate acquired data and produce outcomes.</p>
+<dt><strong>evaluation_function</strong><span class="classifier">EvaluationFunction[str]</span></dt><dd><p>Called in a background thread with the queue item UID of each submitted plan. It must wait until
+the data it needs is ready, raise if the acquisition failed, and return outcomes.</p>
 </dd>
 <dt><strong>acquisition_plan</strong><span class="classifier">str | None, optional</span></dt><dd><p>The acquisition plan to use for acquiring data from the beamline. If not provided,
 <a class="reference internal" href="../plans.html#bluesky_adaptive.plans.default_acquire" title="bluesky_adaptive.plans.default_acquire"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.default_acquire()</span></code></a> will be assumed.</p>
@@ -1054,11 +1053,6 @@ of sensors that are needed to compute the objectives.</p>
 <dt><strong>checkpoint_path</strong><span class="classifier">str | None, optional</span></dt><dd><p>The path to the checkpoint file to save the optimizer’s state to.</p>
 </dd>
 <dt><strong>acquisition_plan_kwargs</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Additional arguments to pass to the acquisition plan.</p>
-</dd>
-<dt><strong>acquisition_run_filter</strong><span class="classifier">Callable[[RunStart], bool] | None, optional</span></dt><dd><p>Selects the run to evaluate when the acquisition plan opens more than one run carrying the
-submitted metadata. Runs whose start document does not satisfy the filter are ignored. For example,
-<code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">start:</span> <span class="pre">not</span> <span class="pre">start.get(&quot;dark_frame&quot;,</span> <span class="pre">False)</span></code> skips xpdAcq dark-frame runs. If not provided,
-the first run carrying the metadata is evaluated.</p>
 </dd>
 <dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to configure the Ax experiment.</p>
 </dd>
@@ -1109,7 +1103,8 @@ the first run carrying the metadata is evaluated.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.stop">
 <span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/queueserver_agent.html#QueueserverAgent.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.stop" title="Link to this definition">#</a></dt>
-<dd><p>Stop the queueserver runner.</p>
+<dd><p>Stop submitting plans; the future resolves after the in-flight evaluation returns.</p>
+<p>See <a class="reference internal" href="../queueserver.html#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop()</span></code></a>.</p>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -1133,8 +1128,8 @@ the first run carrying the metadata is evaluated.</p>
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/bluesky_adaptive/ax/queueserver_agent.html#QueueserverAgent.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.run" title="Link to this definition">#</a></dt>
 <dd><p>Start the optimization loop.</p>
 <p>Validates the queueserver state, then begins the suggest -&gt; acquire -&gt; ingest
-cycle. This method returns immediately; the optimization runs asynchronously
-via callbacks.</p>
+cycle. This method returns immediately; the optimization runs in a background
+thread.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -1151,9 +1146,9 @@ will not be saved. Optimizer must implement the
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>concurrent.futures.Future[OptimizationResult]</dt><dd><p>A future that resolves to an <a class="reference internal" href="../queueserver.html#bluesky_adaptive.queueserver.OptimizationResult" title="bluesky_adaptive.queueserver.OptimizationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationResult</span></code></a>
-when all iterations complete or when <a class="reference internal" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.stop" title="bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.stop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stop()</span></code></a> is called. If an
-unhandled exception occurs the future will hold it and re-raise on
-<code class="docutils literal notranslate"><span class="pre">.result()</span></code>.</p>
+when all iterations complete, or after <a class="reference internal" href="#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.stop" title="bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.stop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stop()</span></code></a> once the in-flight
+evaluation returns. If an unhandled exception occurs the future will hold
+it and re-raise on <code class="docutils literal notranslate"><span class="pre">.result()</span></code>.</p>
 </dd>
 </dl>
 </dd>

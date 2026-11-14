@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev2 documentation</title>
+    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev3 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=16ff9507"></script>
+    <script src="../../_static/documentation_options.js?v=b287111e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev2" />
+  <meta name="docsearch:version" content="1.0.2.dev3" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -852,7 +852,6 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">bluesky.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">EventCollectable</span><span class="p">,</span> <span class="n">EventPageCollectable</span><span class="p">,</span> <span class="n">Flyable</span><span class="p">,</span> <span class="n">HasName</span><span class="p">,</span> <span class="n">Movable</span><span class="p">,</span> <span class="n">Readable</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bluesky.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">MsgGenerator</span><span class="p">,</span> <span class="n">plan</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">event_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunStart</span>
 
 
 <div class="viewcode-block" id="MovableHasName">
@@ -1289,17 +1288,14 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    sensors: Sequence[str]</span>
 <span class="sd">        Names of objects that can produce data to acquire data from the beamline using the Bluesky RunEngine.</span>
 <span class="sd">    evaluation_function: EvaluationFunction[str]</span>
-<span class="sd">        A callable that uses a Bluesky run UID to retrieve acquired data and produce outcomes.</span>
+<span class="sd">        Called with the queue item UID of each submitted plan right after submission. It waits until the data</span>
+<span class="sd">        it needs is available (for example, by polling ``history_get()`` until the item's entry lists its</span>
+<span class="sd">        ``run_uids``), raises if the acquisition failed, and returns outcomes.</span>
 <span class="sd">    acquisition_plan: str, optional</span>
 <span class="sd">        The name of a Bluesky plan to acquire data. If not provided, a default plan name will be used.</span>
 <span class="sd">        The plan must match the arguments of :class:`AcquisitionPlan`.</span>
 <span class="sd">    acquisition_plan_kwargs: Mapping[str, Any], optional</span>
 <span class="sd">        Additional plan arguments to pass to the Bluesky plan.</span>
-<span class="sd">    acquisition_run_filter: Callable[[RunStart], bool], optional</span>
-<span class="sd">        Selects the run to evaluate when the acquisition plan opens more than one run carrying the</span>
-<span class="sd">        submitted metadata, such as a dark-frame run inserted before the measurement. Runs whose start</span>
-<span class="sd">        document does not satisfy the filter are ignored and do not complete the iteration. If not</span>
-<span class="sd">        provided, the first run carrying the metadata completes the iteration.</span>
 <span class="sd">    optimization_uid: str, optional</span>
 <span class="sd">        Identifier of the optimization. If not provided, a new UUID4 is generated.</span>
 
@@ -1311,8 +1307,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Runs the optimization loop using the bluesky-queueserver-api.</span>
 <span class="sd">    """</span>
 
-    <span class="n">acquisition_plan_kwargs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-    <span class="n">acquisition_run_filter</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">RunStart</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+    <span class="n">acquisition_plan_kwargs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
 
 </pre></div>
 

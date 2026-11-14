@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Asynchronous Optimization with Bluesky Queueserver &#8212; Bluesky Adaptive 1.0.2.dev2 documentation</title>
+    <title>Asynchronous Optimization with Bluesky Queueserver &#8212; Bluesky Adaptive 1.0.2.dev3 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=16ff9507"></script>
+    <script src="../_static/documentation_options.js?v=b287111e"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -423,7 +423,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev2" />
+  <meta name="docsearch:version" content="1.0.2.dev3" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -904,10 +904,9 @@ recommended for production use.</p>
         bridge --&gt;|writes| tiled
     end
 
-    agent[&quot;Bluesky Adaptive QueueserverAgent&lt;br/&gt;(suggests points, listens for completions, evaluates data)&quot;]
+    agent[&quot;Bluesky Adaptive QueueserverAgent&lt;br/&gt;(suggests points, submits plans, evaluates data)&quot;]
 
     agent --&gt;|submit plans via REManagerAPI| rem
-    zmqp --&gt;|document stream| agent
     tiled --&gt;|read data| agent
     </pre><p><strong>Data flow:</strong></p>
 <ol class="arabic simple">
@@ -915,8 +914,7 @@ recommended for production use.</p>
 <li><p>The RE Manager executes the plan (moves motors, reads detectors)</p></li>
 <li><p>Bluesky documents are published via ZMQ to the proxy</p></li>
 <li><p>The ZMQ-Tiled bridge persists documents to the Tiled server (using <a class="reference external" href="https://blueskyproject.io/bluesky-tiled-plugins">bluesky-tiled-plugins</a>’s <code class="docutils literal notranslate"><span class="pre">TiledWriter</span></code> callback)</p></li>
-<li><p>The agent’s ZMQ listener detects plan completion</p></li>
-<li><p>The agent’s evaluation function reads results from Tiled and computes objectives</p></li>
+<li><p>The evaluation function receives the queue item UID immediately after submission, waits until a run carrying it as <code class="docutils literal notranslate"><span class="pre">queue_server.queue_item_uid</span></code> appears in Tiled with its stop document, and computes objectives</p></li>
 <li><p>The optimizer ingests outcomes and suggests the next point</p></li>
 </ol>
 </section>
@@ -954,7 +952,7 @@ docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> 
 </tr>
 <tr class="row-odd"><td><p>ZMQ Proxy (out)</p></td>
 <td><p>5578</p></td>
-<td><p>Document stream (agent listens for plan completions)</p></td>
+<td><p>Document stream (the ZMQ-Tiled bridge subscribes here)</p></td>
 </tr>
 <tr class="row-even"><td><p>Tiled</p></td>
 <td><p>8000</p></td>
@@ -972,7 +970,6 @@ docker<span class="w"> </span>compose<span class="w"> </span>up<span class="w"> 
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">bluesky.callbacks.zmq</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemoteDispatcher</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bluesky_queueserver_api.zmq</span><span class="w"> </span><span class="kn">import</span> <span class="n">REManagerAPI</span>
 
 <span class="n">RM</span> <span class="o">=</span> <span class="n">REManagerAPI</span><span class="p">(</span><span class="n">zmq_control_addr</span><span class="o">=</span><span class="s2">"tcp://localhost:60615"</span><span class="p">)</span>
@@ -1093,7 +1090,7 @@ Worker environment exists: True
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/bluesky-adaptive/bluesky-adaptive/.pixi/envs/docs/lib/python3.13/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
   warnings.warn(
-[INFO 11-10 18:05:45] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.1.8
+[INFO 11-14 17:19:22] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.1.8
 </pre></div>
 </div>
 </div>
@@ -1101,65 +1098,52 @@ Worker environment exists: True
 </section>
 <section id="writing-the-evaluation-function">
 <h2>Writing the Evaluation Function<a class="headerlink" href="#writing-the-evaluation-function" title="Link to this heading">#</a></h2>
-<p>The evaluation function is called each time a plan completes. Its general contract accepts a uid and a sequence of suggestion mappings, and returns a sequence of outcome mappings. This evaluator uses <code class="docutils literal notranslate"><span class="pre">blop_acquisition_order</span></code> to align detector values with IDs. The queueserver runner uses the Bluesky run UID, so this evaluator types <code class="docutils literal notranslate"><span class="pre">uid</span></code> as <code class="docutils literal notranslate"><span class="pre">str</span></code> before looking up the run in Tiled. Each outcome must contain the objective value(s) and an <code class="docutils literal notranslate"><span class="pre">_id</span></code> from that acquisition order.</p>
-<p>Because the agent and the ZMQ-Tiled bridge are separate subscribers to the same ZMQ stream, there is a race condition: the agent may receive the stop document before the bridge has finished writing data to Tiled. The evaluation function should poll Tiled until both the run and the detector data are available.</p>
+<p>The runner calls the evaluation function in a background thread right after it submits each plan. It passes the plan’s queue item UID, which the RE Manager returns when the plan is added to the queue, as <code class="docutils literal notranslate"><span class="pre">uid</span></code>, together with the submitted suggestions. The evaluation function returns a sequence of outcome mappings; each must contain the objective value(s) and an <code class="docutils literal notranslate"><span class="pre">_id</span></code>. This evaluator uses the run’s <code class="docutils literal notranslate"><span class="pre">blop_acquisition_order</span></code> to align detector values with IDs.</p>
+<p>Because the plan may still be queued or running when the evaluation function is called, the evaluator owns waiting for the data, selecting the run, and detecting failures. bluesky-queueserver 0.0.26 and newer record the queue item UID in the start document of every run the item opens, as <code class="docutils literal notranslate"><span class="pre">start[&quot;queue_server&quot;][&quot;queue_item_uid&quot;]</span></code>, so this evaluator polls Tiled for such a run with a stop document and raises if the run did not succeed. With an older RE Manager, poll <code class="docutils literal notranslate"><span class="pre">RM.history_get()</span></code> until the item’s entry appears instead, then look up the runs listed in its <code class="docutils literal notranslate"><span class="pre">result[&quot;run_uids&quot;]</span></code>. Keep the wait bounded: <code class="docutils literal notranslate"><span class="pre">agent.stop()</span></code> takes effect only after the in-flight evaluation returns.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 
-<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">tiled.client.container</span><span class="w"> </span><span class="kn">import</span> <span class="n">Container</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">tiled.queries</span><span class="w"> </span><span class="kn">import</span> <span class="n">Key</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">HimmelblauEvaluation</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">"""Reads detector data from Tiled and computes the Himmelblau objective."""</span>
+<span class="w">    </span><span class="sd">"""Waits for the queue item's run in Tiled and computes the Himmelblau objective."""</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tiled_client</span><span class="p">:</span> <span class="n">Container</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span> <span class="n">poll_interval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">tiled_client</span><span class="p">:</span> <span class="n">Container</span><span class="p">,</span> <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">60.0</span><span class="p">,</span> <span class="n">poll_interval</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">tiled_client</span> <span class="o">=</span> <span class="n">tiled_client</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span> <span class="o">=</span> <span class="n">timeout</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">poll_interval</span> <span class="o">=</span> <span class="n">poll_interval</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_wait_for_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Poll Tiled until the run with the given UID is available."""</span>
-        <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
-        <span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">deadline</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiled_client</span><span class="p">[</span><span class="n">uid</span><span class="p">]</span>
-            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poll_interval</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wait_for_stopped_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_uid</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">"""Poll Tiled until a run opened by this queue item has its stop document."""</span>
+        <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
+        <span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">deadline</span><span class="p">:</span>
+            <span class="n">runs</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiled_client</span><span class="o">.</span><span class="n">search</span><span class="p">(</span><span class="n">Key</span><span class="p">(</span><span class="s2">"start.queue_server.queue_item_uid"</span><span class="p">)</span> <span class="o">==</span> <span class="n">item_uid</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">run</span> <span class="ow">in</span> <span class="n">runs</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">run</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"stop"</span><span class="p">)</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">run</span>
+            <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poll_interval</span><span class="p">)</span>
         <span class="k">raise</span> <span class="ne">TimeoutError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Run '</span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s2">' not found in Tiled after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="si">}</span><span class="s2">s. "</span>
-            <span class="s2">"The ZMQ-Tiled bridge may not be running."</span>
-        <span class="p">)</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">_wait_for_detector_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">run</span><span class="p">,</span> <span class="n">path</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">"""Poll Tiled until the detector data path is readable."""</span>
-        <span class="n">deadline</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">timeout</span>
-        <span class="k">while</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">deadline</span><span class="p">:</span>
-            <span class="k">try</span><span class="p">:</span>
-                <span class="k">return</span> <span class="n">run</span><span class="p">[</span><span class="n">path</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
-            <span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
-                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">poll_interval</span><span class="p">)</span>
-        <span class="k">raise</span> <span class="ne">TimeoutError</span><span class="p">(</span>
-            <span class="sa">f</span><span class="s2">"Data path '</span><span class="si">{</span><span class="n">path</span><span class="si">}</span><span class="s2">' for run '</span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">'start'</span><span class="p">][</span><span class="s1">'uid'</span><span class="p">]</span><span class="si">}</span><span class="s2">' was not readable after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="si">}</span><span class="s2">s. "</span>
-            <span class="s2">"The ZMQ-Tiled bridge may still be writing the run."</span>
+            <span class="sa">f</span><span class="s2">"No stopped run for queue item </span><span class="si">{</span><span class="n">item_uid</span><span class="si">!r}</span><span class="s2"> in Tiled after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">timeout</span><span class="si">}</span><span class="s2">s. Check the queue "</span>
+            <span class="s2">"history for a failed plan and that the ZMQ-Tiled bridge is running."</span>
         <span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">]:</span>
-        <span class="n">run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_run</span><span class="p">(</span><span class="n">uid</span><span class="p">)</span>
-
-        <span class="c1"># Read the detector values from the primary data stream</span>
-        <span class="n">himmel_values</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_detector_data</span><span class="p">(</span><span class="n">run</span><span class="p">,</span> <span class="s2">"primary/himmel_det"</span><span class="p">)</span>
-
+        <span class="n">run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wait_for_stopped_run</span><span class="p">(</span><span class="n">uid</span><span class="p">)</span>
+        <span class="n">stop</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"stop"</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">stop</span><span class="p">[</span><span class="s2">"exit_status"</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">"success"</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">"Acquisition run </span><span class="si">{</span><span class="n">run</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s1">'start'</span><span class="p">][</span><span class="s1">'uid'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> ended with status "</span>
+                <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">stop</span><span class="p">[</span><span class="s1">'exit_status'</span><span class="p">]</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">stop</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">'reason'</span><span class="p">)</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">'(no reason given)'</span><span class="si">}</span><span class="s2">"</span>
+            <span class="p">)</span>
+        <span class="n">himmel_values</span> <span class="o">=</span> <span class="n">run</span><span class="p">[</span><span class="s2">"primary/himmel_det"</span><span class="p">]</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="n">acquisition_order</span> <span class="o">=</span> <span class="n">run</span><span class="o">.</span><span class="n">metadata</span><span class="p">[</span><span class="s2">"start"</span><span class="p">][</span><span class="s2">"blop_acquisition_order"</span><span class="p">]</span>
-        <span class="n">outcomes</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">suggestion_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">acquisition_order</span><span class="p">):</span>
-            <span class="n">outcomes</span><span class="o">.</span><span class="n">append</span><span class="p">({</span>
-                <span class="s2">"_id"</span><span class="p">:</span> <span class="n">suggestion_id</span><span class="p">,</span>
-                <span class="s2">"himmelblau"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">himmel_values</span><span class="p">[</span><span class="n">idx</span><span class="p">]),</span>
-            <span class="p">})</span>
-
-        <span class="k">return</span> <span class="n">outcomes</span>
+        <span class="k">return</span> <span class="p">[</span>
+            <span class="p">{</span><span class="s2">"_id"</span><span class="p">:</span> <span class="n">suggestion_id</span><span class="p">,</span> <span class="s2">"himmelblau"</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">himmel_values</span><span class="p">[</span><span class="n">idx</span><span class="p">])}</span>
+            <span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">suggestion_id</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">acquisition_order</span><span class="p">)</span>
+        <span class="p">]</span>
 </pre></div>
 </div>
 </div>
@@ -1170,16 +1154,12 @@ Worker environment exists: True
 <p>Now we bring everything together. The <code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code> needs:</p>
 <ul class="simple">
 <li><p><code class="docutils literal notranslate"><span class="pre">re_manager_api</span></code>: how to communicate with the queueserver (submit plans, check status)</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">document_dispatcher</span></code>: a <code class="docutils literal notranslate"><span class="pre">RemoteDispatcher</span></code> that subscribes to the Bluesky document stream</p></li>
 <li><p>The DOFs, objectives, sensors, and evaluation function</p></li>
 </ul>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
-<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">document_dispatcher</span> <span class="o">=</span> <span class="n">RemoteDispatcher</span><span class="p">((</span><span class="s2">"localhost"</span><span class="p">,</span> <span class="mi">5578</span><span class="p">))</span>
-
-<span class="n">agent</span> <span class="o">=</span> <span class="n">QueueserverAgent</span><span class="p">(</span>
+<div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">agent</span> <span class="o">=</span> <span class="n">QueueserverAgent</span><span class="p">(</span>
     <span class="n">re_manager_api</span><span class="o">=</span><span class="n">RM</span><span class="p">,</span>
-    <span class="n">document_dispatcher</span><span class="o">=</span><span class="n">document_dispatcher</span><span class="p">,</span>
     <span class="n">sensors</span><span class="o">=</span><span class="n">sensors</span><span class="p">,</span>
     <span class="n">dofs</span><span class="o">=</span><span class="n">dofs</span><span class="p">,</span>
     <span class="n">objectives</span><span class="o">=</span><span class="n">objectives</span><span class="p">,</span>
@@ -1194,21 +1174,16 @@ Worker environment exists: True
 <p class="admonition-title">Note</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">re_manager_api</span></code> argument also accepts an HTTP-based client
 (<code class="docutils literal notranslate"><span class="pre">bluesky_queueserver_api.http.REManagerAPI</span></code>) for deployments that expose the
-queueserver over HTTP rather than ZMQ. Construct the <code class="docutils literal notranslate"><span class="pre">RemoteDispatcher</span></code> with
-whatever arguments your document stream requires, such as a ZMQ address or
-message prefix.</p>
+queueserver over HTTP rather than ZMQ.</p>
 </div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The agent evaluates the first run that carries its submitted metadata. If your acquisition plan opens
-additional runs with the same metadata, such as a dark-frame run that xpdAcq’s <code class="docutils literal notranslate"><span class="pre">periodic_dark</span></code> inserts
-before the measurement, pass <code class="docutils literal notranslate"><span class="pre">acquisition_run_filter</span></code> to select the run to evaluate. For example,
-<code class="docutils literal notranslate"><span class="pre">acquisition_run_filter=lambda</span> <span class="pre">start:</span> <span class="pre">not</span> <span class="pre">start.get(&quot;dark_frame&quot;,</span> <span class="pre">False)</span></code> skips dark-frame runs.</p>
+<p>If the plan opens several runs (for example, xpdAcq dark frames), select the measurement run in the evaluator, for example by also checking <code class="docutils literal notranslate"><span class="pre">run.metadata[&quot;start&quot;].get(&quot;dark_frame&quot;)</span></code>.</p>
 </div>
 </section>
 <section id="running-the-optimization">
 <h2>Running the Optimization<a class="headerlink" href="#running-the-optimization" title="Link to this heading">#</a></h2>
-<p>The <code class="docutils literal notranslate"><span class="pre">run()</span></code> method is <strong>non-blocking</strong> — it submits the first plan and returns immediately. The agent reacts asynchronously to plan completions via ZMQ callbacks.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">run()</span></code> method is <strong>non-blocking</strong> — it submits the first plan and returns immediately. A background thread submits plans and calls the evaluation function, which waits for the data in Tiled.</p>
 <div class="cell docutils container">
 <div class="cell_input docutils container">
 <div class="highlight-ipython3 notranslate"><div class="highlight"><pre><span></span><span class="n">future</span> <span class="o">=</span> <span class="n">agent</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">n_points</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
@@ -1216,8 +1191,8 @@ before the measurement, pass <code class="docutils literal notranslate"><span cl
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-10 18:05:46] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
-[INFO 11-10 18:05:46] ax.api.client: Generated new trial 0 with parameters {'motor1': 0.0, 'motor2': 0.0} using GenerationNode CenterOfSearchSpace.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-14 17:19:22] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
+[INFO 11-14 17:19:22] ax.api.client: Generated new trial 0 with parameters {'motor1': 0.0, 'motor2': 0.0} using GenerationNode CenterOfSearchSpace.
 </pre></div>
 </div>
 </div>
@@ -1231,7 +1206,7 @@ before the measurement, pass <code class="docutils literal notranslate"><span cl
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Points per iteration : </span><span class="si">{</span><span class="n">result</span><span class="o">.</span><span class="n">num_points</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Total acquisitions   : </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">uids</span><span class="p">)</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">"Run UIDs:"</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"Queue item UIDs:"</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">uid</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">uids</span><span class="p">:</span>
     <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"  </span><span class="si">{</span><span class="n">uid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 </pre></div>
@@ -1241,38 +1216,38 @@ before the measurement, pass <code class="docutils literal notranslate"><span cl
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Iterations completed : 10
 Points per iteration : 1
 Total acquisitions   : 10
-Run UIDs:
-  8ca96518-fa89-4a1f-8577-e68598d69caf
-  cc7c72b6-1007-43b6-b61a-5c239e3540c1
-  f070e272-a21f-48b7-aded-016640c0a28f
-  1beb78dd-f97d-4ec0-834a-3ca8525f9862
-  19d6ef37-70bc-40fd-bc6f-acd7287e6c1c
-  30e9e109-1cc5-4eed-b283-bf7a2b6e9431
-  3284c80c-81d9-45e7-8ece-e2d354e7080d
-  2bf097f0-4ee1-42d8-8c76-21512e6ccbe2
-  edd4bb1f-4b85-4ca8-8c08-7c2fc83dcdd5
-  cdc1a0e3-e48e-44ce-afb9-f21a7aa331eb
+Queue item UIDs:
+  33f99f1b-7dac-4968-94e7-dbd766ddd429
+  864c5b1f-cbe4-4ebf-9a57-918b49c1c24c
+  7a3b0bf6-edd5-42d0-8db4-2b5d62c53943
+  a33ef978-50cb-4e71-9765-536121ca8e46
+  5180cd4a-0dba-4996-bc64-25924810af12
+  19dfaebc-d834-4908-929f-6c86f05b3def
+  feb5bbd6-e3f3-4d42-a6cc-5faa7f560ef5
+  cfb9881f-1480-42f6-97f5-e2bf6885086e
+  186e2dcf-e9ff-45da-984b-382b0eb10a10
+  e363807d-9cad-4534-bedc-284e10d137a6
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-10 18:05:47] ax.api.client: Trial 0 marked COMPLETED.
-[INFO 11-10 18:05:47] ax.api.client: Generated new trial 1 with parameters {'motor1': -0.46041, 'motor2': 2.416958} using GenerationNode Sobol.
-[INFO 11-10 18:05:48] ax.api.client: Trial 1 marked COMPLETED.
-[INFO 11-10 18:05:48] ax.api.client: Generated new trial 2 with parameters {'motor1': 3.439285, 'motor2': -0.775381} using GenerationNode Sobol.
-[INFO 11-10 18:05:48] ax.api.client: Trial 2 marked COMPLETED.
-[INFO 11-10 18:05:48] ax.api.client: Generated new trial 3 with parameters {'motor1': 0.169641, 'motor2': 3.630706} using GenerationNode Sobol.
-[INFO 11-10 18:05:49] ax.api.client: Trial 3 marked COMPLETED.
-[INFO 11-10 18:05:49] ax.api.client: Generated new trial 4 with parameters {'motor1': -3.421197, 'motor2': -4.490432} using GenerationNode Sobol.
-[INFO 11-10 18:05:50] ax.api.client: Trial 4 marked COMPLETED.
-[INFO 11-10 18:05:51] ax.api.client: Generated new trial 5 with parameters {'motor1': 4.284294, 'motor2': -0.963165} using GenerationNode MBM.
-[INFO 11-10 18:05:51] ax.api.client: Trial 5 marked COMPLETED.
-[INFO 11-10 18:05:53] ax.api.client: Generated new trial 6 with parameters {'motor1': 3.312962, 'motor2': 0.029073} using GenerationNode MBM.
-[INFO 11-10 18:05:53] ax.api.client: Trial 6 marked COMPLETED.
-[INFO 11-10 18:05:54] ax.api.client: Generated new trial 7 with parameters {'motor1': 2.773895, 'motor2': -0.902506} using GenerationNode MBM.
-[INFO 11-10 18:05:55] ax.api.client: Trial 7 marked COMPLETED.
-[INFO 11-10 18:05:56] ax.api.client: Generated new trial 8 with parameters {'motor1': -2.116875, 'motor2': 3.147377} using GenerationNode MBM.
-[INFO 11-10 18:05:57] ax.api.client: Trial 8 marked COMPLETED.
-[INFO 11-10 18:05:58] ax.api.client: Generated new trial 9 with parameters {'motor1': -1.567228, 'motor2': 4.357675} using GenerationNode MBM.
-[INFO 11-10 18:05:58] ax.api.client: Trial 9 marked COMPLETED.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-14 17:19:23] ax.api.client: Trial 0 marked COMPLETED.
+[INFO 11-14 17:19:23] ax.api.client: Generated new trial 1 with parameters {'motor1': -2.977974, 'motor2': 2.127012} using GenerationNode Sobol.
+[INFO 11-14 17:19:24] ax.api.client: Trial 1 marked COMPLETED.
+[INFO 11-14 17:19:24] ax.api.client: Generated new trial 2 with parameters {'motor1': 0.297199, 'motor2': -0.020574} using GenerationNode Sobol.
+[INFO 11-14 17:19:25] ax.api.client: Trial 2 marked COMPLETED.
+[INFO 11-14 17:19:25] ax.api.client: Generated new trial 3 with parameters {'motor1': 3.912101, 'motor2': 2.819195} using GenerationNode Sobol.
+[INFO 11-14 17:19:25] ax.api.client: Trial 3 marked COMPLETED.
+[INFO 11-14 17:19:25] ax.api.client: Generated new trial 4 with parameters {'motor1': -1.855709, 'motor2': -4.955845} using GenerationNode Sobol.
+[INFO 11-14 17:19:26] ax.api.client: Trial 4 marked COMPLETED.
+[INFO 11-14 17:19:26] ax.api.client: Generated new trial 5 with parameters {'motor1': -5.0, 'motor2': 3.087747} using GenerationNode MBM.
+[INFO 11-14 17:19:27] ax.api.client: Trial 5 marked COMPLETED.
+[INFO 11-14 17:19:28] ax.api.client: Generated new trial 6 with parameters {'motor1': -2.100247, 'motor2': 2.653999} using GenerationNode MBM.
+[INFO 11-14 17:19:28] ax.api.client: Trial 6 marked COMPLETED.
+[INFO 11-14 17:19:29] ax.api.client: Generated new trial 7 with parameters {'motor1': -2.386644, 'motor2': 1.289767} using GenerationNode MBM.
+[INFO 11-14 17:19:29] ax.api.client: Trial 7 marked COMPLETED.
+[INFO 11-14 17:19:30] ax.api.client: Generated new trial 8 with parameters {'motor1': -2.55775, 'motor2': 4.292064} using GenerationNode MBM.
+[INFO 11-14 17:19:30] ax.api.client: Trial 8 marked COMPLETED.
+[INFO 11-14 17:19:31] ax.api.client: Generated new trial 9 with parameters {'motor1': -2.539833, 'motor2': 2.735448} using GenerationNode MBM.
+[INFO 11-14 17:19:31] ax.api.client: Trial 9 marked COMPLETED.
 </pre></div>
 </div>
 </div>
@@ -1332,9 +1307,9 @@ Run UIDs:
       <td>1_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>72.695009</td>
-      <td>-0.460410</td>
-      <td>2.416958</td>
+      <td>29.743894</td>
+      <td>-2.977974</td>
+      <td>2.127012</td>
     </tr>
     <tr>
       <th>2</th>
@@ -1342,9 +1317,9 @@ Run UIDs:
       <td>2_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>8.761473</td>
-      <td>3.439285</td>
-      <td>-0.775381</td>
+      <td>164.435871</td>
+      <td>0.297199</td>
+      <td>-0.020574</td>
     </tr>
     <tr>
       <th>3</th>
@@ -1352,9 +1327,9 @@ Run UIDs:
       <td>3_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>94.226863</td>
-      <td>0.169641</td>
-      <td>3.630706</td>
+      <td>74.366748</td>
+      <td>3.912101</td>
+      <td>2.819195</td>
     </tr>
     <tr>
       <th>4</th>
@@ -1362,9 +1337,9 @@ Run UIDs:
       <td>4_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>109.254358</td>
-      <td>-3.421197</td>
-      <td>-4.490432</td>
+      <td>403.192350</td>
+      <td>-1.855709</td>
+      <td>-4.955845</td>
     </tr>
     <tr>
       <th>5</th>
@@ -1372,9 +1347,9 @@ Run UIDs:
       <td>5_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>44.054820</td>
-      <td>4.284294</td>
-      <td>-0.963165</td>
+      <td>298.071358</td>
+      <td>-5.000000</td>
+      <td>3.087747</td>
     </tr>
     <tr>
       <th>6</th>
@@ -1382,9 +1357,9 @@ Run UIDs:
       <td>6_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>13.588039</td>
-      <td>3.312962</td>
-      <td>0.029073</td>
+      <td>19.713292</td>
+      <td>-2.100247</td>
+      <td>2.653999</td>
     </tr>
     <tr>
       <th>7</th>
@@ -1392,9 +1367,9 @@ Run UIDs:
       <td>7_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>29.346288</td>
-      <td>2.773895</td>
-      <td>-0.902506</td>
+      <td>75.760479</td>
+      <td>-2.386644</td>
+      <td>1.289767</td>
     </tr>
     <tr>
       <th>8</th>
@@ -1402,9 +1377,9 @@ Run UIDs:
       <td>8_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>11.989441</td>
-      <td>-2.116875</td>
-      <td>3.147377</td>
+      <td>78.599139</td>
+      <td>-2.557750</td>
+      <td>4.292064</td>
     </tr>
     <tr>
       <th>9</th>
@@ -1412,9 +1387,9 @@ Run UIDs:
       <td>9_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>126.143832</td>
-      <td>-1.567228</td>
-      <td>4.357675</td>
+      <td>7.521766</td>
+      <td>-2.539833</td>
+      <td>2.735448</td>
     </tr>
   </tbody>
 </table>
@@ -1450,7 +1425,7 @@ docker<span class="w"> </span>compose<span class="w"> </span>down
 <ul class="simple">
 <li><p><strong>Distributed architecture</strong>: The queueserver separates experiment execution from optimization logic, connected via ZMQ and Tiled</p></li>
 <li><p><strong>String-based device references</strong>: Since devices live in the remote process, DOFs, sensors, and plans are referenced by name</p></li>
-<li><p><strong>Asynchronous operation</strong>: <code class="docutils literal notranslate"><span class="pre">agent.run()</span></code> is non-blocking; the agent reacts to events via ZMQ callbacks</p></li>
+<li><p><strong>Asynchronous operation</strong>: <code class="docutils literal notranslate"><span class="pre">agent.run()</span></code> is non-blocking; a background thread submits plans and calls the evaluation function, which waits for data in Tiled</p></li>
 <li><p><strong>Evaluation function</strong>: Reads from Tiled (not direct device access) to compute objectives after each plan completes</p></li>
 </ul>
 </section>

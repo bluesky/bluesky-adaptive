@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Queueserver &#8212; Bluesky Adaptive 1.0.2.dev2 documentation</title>
+    <title>Queueserver &#8212; Bluesky Adaptive 1.0.2.dev3 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=16ff9507"></script>
+    <script src="../_static/documentation_options.js?v=b287111e"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev2" />
+  <meta name="docsearch:version" content="1.0.2.dev3" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -551,9 +551,8 @@ this reflects however many iterations completed before the stop.</p>
 </dd>
 <dt><strong>num_points</strong><span class="classifier">int</span></dt><dd><p>The number of points suggested per iteration.</p>
 </dd>
-<dt><strong>uids</strong><span class="classifier">tuple[str, …]</span></dt><dd><p>The Bluesky run UIDs for each completed acquisition, in order.
-These can be used to retrieve raw data from a Tiled or databroker
-catalog for post-hoc analysis.</p>
+<dt><strong>uids</strong><span class="classifier">tuple[str, …]</span></dt><dd><p>The queue item UIDs of the completed acquisitions, in order. Each item’s <code class="docutils literal notranslate"><span class="pre">history_get()</span></code> entry
+lists the UIDs of the runs it opened in <code class="docutils literal notranslate"><span class="pre">result[&quot;run_uids&quot;]</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -580,11 +579,11 @@ catalog for post-hoc analysis.</p>
 <h2>QueueserverClient<a class="headerlink" href="#queueserverclient" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverClient">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.queueserver.</span></span><span class="sig-name descname"><span class="pre">QueueserverClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_manager_api</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">document_dispatcher</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverClient" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.queueserver.</span></span><span class="sig-name descname"><span class="pre">QueueserverClient</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_manager_api</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverClient"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverClient" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Handles communication with a Bluesky queueserver.</p>
-<p>This class encapsulates queueserver communication, including plan submission
-and event listening. The queue must be running or have autostart enabled.</p>
+<p>This class encapsulates queueserver communication: plan submission and
+environment checks. The queue must be running or have autostart enabled.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This class is part of the <strong>experimental</strong> queueserver integration.
@@ -594,8 +593,6 @@ The API may change in future releases without a deprecation period.</p>
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
 <dt><strong>re_manager_api</strong><span class="classifier">bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI</span></dt><dd><p>Manager instance for communication with Bluesky Queueserver</p>
-</dd>
-<dt><strong>document_dispatcher</strong><span class="classifier">bluesky.callbacks.zmq.RemoteDispatcher</span></dt><dd><p>Dispatcher for the Bluesky document stream.</p>
 </dd>
 </dl>
 </dd>
@@ -625,29 +622,12 @@ The API may change in future releases without a deprecation period.</p>
 </dd>
 </dl>
 </dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverClient.start_listener">
-<span class="sig-name descname"><span class="pre">start_listener</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">on_stop</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverClient.start_listener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverClient.start_listener" title="Link to this definition">#</a></dt>
-<dd><p>Start listening for document events from the queueserver.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>on_stop</strong><span class="classifier">callable</span></dt><dd><p>Callback invoked when a stop document is received.
-Signature: on_stop(start_doc, stop_doc)</p>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>str</dt><dd><p>The queue item UID assigned by the RE Manager.</p>
 </dd>
 </dl>
 </dd>
-</dl>
-</dd></dl>
-
-<dl class="py method">
-<dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverClient.stop_listener">
-<span class="sig-name descname"><span class="pre">stop_listener</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverClient.stop_listener"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverClient.stop_listener" title="Link to this definition">#</a></dt>
-<dd><p>Stop the document listener thread.</p>
-<dl class="field-list simple">
 </dl>
 </dd></dl>
 
@@ -663,7 +643,7 @@ Signature: on_stop(start_doc, stop_doc)</p>
 <p>Runs optimization loops through a Bluesky queueserver.</p>
 <p>This class coordinates the optimization workflow by getting suggestions from
 the optimizer, submitting acquisition plans to the queueserver, and ingesting
-results when plans complete.</p>
+the outcomes the evaluation function returns for each submitted plan.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This class is part of the <strong>experimental</strong> queueserver integration.
@@ -675,9 +655,7 @@ The API may change in future releases without a deprecation period.</p>
 <dt><strong>optimization_problem</strong><span class="classifier">QueueserverOptimizationProblem</span></dt><dd><p>The optimization problem to solve, containing the optimizer, actuators,
 sensors, and evaluation function.</p>
 </dd>
-<dt><strong>queueserver_client</strong><span class="classifier">QueueserverClient</span></dt><dd><p>Client for communicating with the queueserver.
-The document listener is started once during runner construction so it
-is ready before any submitted plan can emit documents.</p>
+<dt><strong>queueserver_client</strong><span class="classifier">QueueserverClient</span></dt><dd><p>Client for communicating with the queueserver.</p>
 </dd>
 </dl>
 </dd>
@@ -699,8 +677,8 @@ is ready before any submitted plan can emit documents.</p>
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="Link to this definition">#</a></dt>
 <dd><p>Run the optimization loop.</p>
 <p>Validates the queueserver state, then begins the suggest -&gt; acquire -&gt; ingest
-cycle. This method returns immediately; the optimization runs asynchronously
-via callbacks on the Bluesky document stream.</p>
+cycle. This method returns immediately; the optimization runs in a background
+thread that calls the evaluation function with each submitted plan’s queue item UID.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -717,9 +695,9 @@ will not be saved. Optimizer must implement the
 <dt class="field-even">Returns<span class="colon">:</span></dt>
 <dd class="field-even"><dl class="simple">
 <dt>concurrent.futures.Future[OptimizationResult]</dt><dd><p>A future that resolves to an <a class="reference internal" href="#bluesky_adaptive.queueserver.OptimizationResult" title="bluesky_adaptive.queueserver.OptimizationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationResult</span></code></a> when all
-iterations complete, or when <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stop()</span></code></a> is called. If the
-optimization loop raises an unhandled exception the future will
-hold that exception and re-raise it on <code class="docutils literal notranslate"><span class="pre">.result()</span></code>.</p>
+iterations complete, or after <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stop()</span></code></a> once the in-flight evaluation
+returns. If the optimization loop raises an unhandled exception the future
+will hold that exception and re-raise it on <code class="docutils literal notranslate"><span class="pre">.result()</span></code>.</p>
 </dd>
 </dl>
 </dd>
@@ -738,7 +716,8 @@ hold that exception and re-raise it on <code class="docutils literal notranslate
 <dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions">
 <span class="sig-name descname"><span class="pre">submit_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.submit_suggestions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="Link to this definition">#</a></dt>
 <dd><p>Manually submit suggestions to the queue.</p>
-<p>This method returns immediately; the optimization runs asynchronously via callbacks on the Bluesky document stream.</p>
+<p>This method returns immediately; the optimization runs in a background thread that calls the evaluation
+function with each submitted plan’s queue item UID.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -765,9 +744,11 @@ will hold it and re-raise on <code class="docutils literal notranslate"><span cl
 <dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop">
 <span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop" title="Link to this definition">#</a></dt>
 <dd><p>Stop the optimization loop gracefully.</p>
-<p>The future returned by <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a> or <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions()</span></code></a> will
-be resolved with a partial <a class="reference internal" href="#bluesky_adaptive.queueserver.OptimizationResult" title="bluesky_adaptive.queueserver.OptimizationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationResult</span></code></a> containing however
-many iterations completed before the stop.</p>
+<p>No further plans are submitted, and the in-flight evaluation is not interrupted. The future
+returned by <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a> or <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions()</span></code></a> resolves with a partial
+<a class="reference internal" href="#bluesky_adaptive.queueserver.OptimizationResult" title="bluesky_adaptive.queueserver.OptimizationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationResult</span></code></a> after that evaluation returns and is ingested, or holds its
+exception if it raises. Plans already in the queue are not removed. Evaluation functions
+should bound their waits so that a stop takes effect.</p>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -837,8 +818,6 @@ many iterations completed before the stop.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverClient"><code class="docutils literal notranslate"><span class="pre">QueueserverClient</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverClient.check_environment"><code class="docutils literal notranslate"><span class="pre">QueueserverClient.check_environment()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverClient.submit_plan"><code class="docutils literal notranslate"><span class="pre">QueueserverClient.submit_plan()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverClient.start_listener"><code class="docutils literal notranslate"><span class="pre">QueueserverClient.start_listener()</span></code></a></li>
-<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverClient.stop_listener"><code class="docutils literal notranslate"><span class="pre">QueueserverClient.stop_listener()</span></code></a></li>
 </ul>
 </li>
 </ul>

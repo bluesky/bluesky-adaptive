@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>The Evaluation Function &#8212; Bluesky Adaptive 1.0.2.dev2 documentation</title>
+    <title>The Evaluation Function &#8212; Bluesky Adaptive 1.0.2.dev3 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=16ff9507"></script>
+    <script src="../_static/documentation_options.js?v=b287111e"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev2" />
+  <meta name="docsearch:version" content="1.0.2.dev3" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -540,13 +540,15 @@ plan returns a uid, and Bluesky Adaptive passes that same value to the evaluatio
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="k">class</span><span class="w"> </span><span class="nc">QueueAcquisitionUID</span><span class="p">:</span>
-    <span class="n">correlation_uid</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">item_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DarkCorrectedAcquisitionUID</span><span class="p">:</span>
+    <span class="n">light_run_uid</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">dark_run_uid</span><span class="p">:</span> <span class="nb">str</span>
 
-<span class="k">class</span><span class="w"> </span><span class="nc">QueueEvaluation</span><span class="p">(</span><span class="n">EvaluationFunction</span><span class="p">[</span><span class="n">QueueAcquisitionUID</span><span class="p">]):</span>
-    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">:</span> <span class="n">QueueAcquisitionUID</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">]:</span>
-        <span class="k">return</span> <span class="n">analyze_queue_data</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DarkCorrectedEvaluation</span><span class="p">(</span><span class="n">EvaluationFunction</span><span class="p">[</span><span class="n">DarkCorrectedAcquisitionUID</span><span class="p">]):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__call__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">uid</span><span class="p">:</span> <span class="n">DarkCorrectedAcquisitionUID</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">]:</span>
+        <span class="n">light_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiled_client</span><span class="p">[</span><span class="n">uid</span><span class="o">.</span><span class="n">light_run_uid</span><span class="p">]</span>
+        <span class="n">dark_run</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">tiled_client</span><span class="p">[</span><span class="n">uid</span><span class="o">.</span><span class="n">dark_run_uid</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">analyze_dark_corrected</span><span class="p">(</span><span class="n">light_run</span><span class="p">,</span> <span class="n">dark_run</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Although the interface is intentionally minimal, separating setup from

@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.2.dev2 documentation</title>
+    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.2.dev3 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=16ff9507"></script>
+    <script src="../../_static/documentation_options.js?v=b287111e"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev2" />
+  <meta name="docsearch:version" content="1.0.2.dev3" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -858,14 +858,10 @@ window.runMermaid = runMermaid;</script>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">Future</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Literal</span>
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">bluesky.callbacks</span><span class="w"> </span><span class="kn">import</span> <span class="n">CallbackBase</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">bluesky.callbacks.zmq</span><span class="w"> </span><span class="kn">import</span> <span class="n">RemoteDispatcher</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span><span class="w"> </span><span class="nn">bluesky_queueserver_api.http</span>
@@ -876,7 +872,6 @@ window.runMermaid = runMermaid;</script>
         <span class="s2">"The queueserver integration requires additional dependencies. "</span>
         <span class="s2">"Install them with: pip install bluesky-adaptive[queueserver]"</span>
     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">event_model</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunStart</span><span class="p">,</span> <span class="n">RunStop</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">.plans</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_acquire</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">ID_KEY</span><span class="p">,</span> <span class="n">CanRegisterSuggestions</span><span class="p">,</span> <span class="n">QueueserverOptimizationProblem</span><span class="p">,</span> <span class="n">TrialFaultAware</span>
@@ -886,7 +881,6 @@ window.runMermaid = runMermaid;</script>
 
 
 <span class="n">DEFAULT_ACQUIRE_PLAN_NAME</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">default_acquire</span><span class="o">.</span><span class="vm">__name__</span>
-<span class="n">CORRELATION_UID_KEY</span><span class="p">:</span> <span class="n">Literal</span><span class="p">[</span><span class="s2">"blop_correlation_uid"</span><span class="p">]</span> <span class="o">=</span> <span class="s2">"blop_correlation_uid"</span>
 
 
 <div class="viewcode-block" id="OptimizationResult">
@@ -910,9 +904,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    num_points : int</span>
 <span class="sd">        The number of points suggested per iteration.</span>
 <span class="sd">    uids : tuple[str, ...]</span>
-<span class="sd">        The Bluesky run UIDs for each completed acquisition, in order.</span>
-<span class="sd">        These can be used to retrieve raw data from a Tiled or databroker</span>
-<span class="sd">        catalog for post-hoc analysis.</span>
+<span class="sd">        The queue item UIDs of the completed acquisitions, in order. Each item's ``history_get()`` entry</span>
+<span class="sd">        lists the UIDs of the runs it opened in ``result["run_uids"]``.</span>
 <span class="sd">    """</span>
 
     <span class="n">iterations_completed</span><span class="p">:</span> <span class="nb">int</span>
@@ -921,50 +914,14 @@ window.runMermaid = runMermaid;</script>
 
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">ConsumerCallback</span><span class="p">(</span><span class="n">CallbackBase</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">"""</span>
-<span class="sd">    A callback that caches the start document and invokes a callback on stop.</span>
-
-<span class="sd">    Parameters</span>
-<span class="sd">    ----------</span>
-<span class="sd">    callback : callable</span>
-<span class="sd">        Function to call when a stop document is received.</span>
-<span class="sd">        Signature: callback(start_doc, stop_doc)</span>
-<span class="sd">    """</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">RunStart</span><span class="p">,</span> <span class="n">RunStop</span><span class="p">],</span> <span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
-        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_start_doc_cache</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RunStart</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span> <span class="o">=</span> <span class="n">callback</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">RunStart</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Process the start document.</span>
-
-<span class="sd">        Caches the start document if it has the correlation UID injected by Bluesky Adaptive.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CORRELATION_UID_KEY</span><span class="p">):</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_start_doc_cache</span><span class="p">[</span><span class="n">doc</span><span class="p">[</span><span class="s2">"uid"</span><span class="p">]]</span> <span class="o">=</span> <span class="n">doc</span>
-
-    <span class="k">def</span><span class="w"> </span><span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">doc</span><span class="p">:</span> <span class="n">RunStop</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Process the stop document.</span>
-
-<span class="sd">        Calls the callback with the cached start document and stop document pair.</span>
-<span class="sd">        """</span>
-        <span class="n">start_doc</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_doc_cache</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="n">doc</span><span class="p">[</span><span class="s2">"run_start"</span><span class="p">],</span> <span class="kc">None</span><span class="p">)</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">start_doc</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_callback</span><span class="p">(</span><span class="n">start_doc</span><span class="p">,</span> <span class="n">doc</span><span class="p">)</span>
-
-
 <div class="viewcode-block" id="QueueserverClient">
 <a class="viewcode-back" href="../../reference/queueserver.html#bluesky_adaptive.queueserver.QueueserverClient">[docs]</a>
 <span class="k">class</span><span class="w"> </span><span class="nc">QueueserverClient</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    Handles communication with a Bluesky queueserver.</span>
 
-<span class="sd">    This class encapsulates queueserver communication, including plan submission</span>
-<span class="sd">    and event listening. The queue must be running or have autostart enabled.</span>
+<span class="sd">    This class encapsulates queueserver communication: plan submission and</span>
+<span class="sd">    environment checks. The queue must be running or have autostart enabled.</span>
 
 <span class="sd">    .. warning::</span>
 
@@ -975,19 +932,13 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    ----------</span>
 <span class="sd">    re_manager_api : bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI</span>
 <span class="sd">        Manager instance for communication with Bluesky Queueserver</span>
-<span class="sd">    document_dispatcher : bluesky.callbacks.zmq.RemoteDispatcher</span>
-<span class="sd">        Dispatcher for the Bluesky document stream.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">re_manager_api</span><span class="p">:</span> <span class="n">bluesky_queueserver_api</span><span class="o">.</span><span class="n">zmq</span><span class="o">.</span><span class="n">REManagerAPI</span> <span class="o">|</span> <span class="n">bluesky_queueserver_api</span><span class="o">.</span><span class="n">http</span><span class="o">.</span><span class="n">REManagerAPI</span><span class="p">,</span>
-        <span class="n">document_dispatcher</span><span class="p">:</span> <span class="n">RemoteDispatcher</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_rm</span> <span class="o">=</span> <span class="n">re_manager_api</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dispatcher</span> <span class="o">=</span> <span class="n">document_dispatcher</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_consumer_callback</span><span class="p">:</span> <span class="n">ConsumerCallback</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_listener_thread</span><span class="p">:</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
 
 <div class="viewcode-block" id="QueueserverClient.check_environment">
 <a class="viewcode-back" href="../../reference/queueserver.html#bluesky_adaptive.queueserver.QueueserverClient.check_environment">[docs]</a>
@@ -1007,7 +958,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="QueueserverClient.submit_plan">
 <a class="viewcode-back" href="../../reference/queueserver.html#bluesky_adaptive.queueserver.QueueserverClient.submit_plan">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">submit_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plan</span><span class="p">:</span> <span class="n">BPlan</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submit_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plan</span><span class="p">:</span> <span class="n">BPlan</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Submit a plan to the queueserver queue.</span>
 
@@ -1015,51 +966,15 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        ----------</span>
 <span class="sd">        plan : BPlan</span>
 <span class="sd">            The plan to submit.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        str</span>
+<span class="sd">            The queue item UID assigned by the RE Manager.</span>
 <span class="sd">        """</span>
         <span class="n">response</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_rm</span><span class="o">.</span><span class="n">item_add</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Submitted plan to queue. Response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="QueueserverClient.start_listener">
-<a class="viewcode-back" href="../../reference/queueserver.html#bluesky_adaptive.queueserver.QueueserverClient.start_listener">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">start_listener</span><span class="p">(</span>
-        <span class="bp">self</span><span class="p">,</span>
-        <span class="n">on_stop</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">RunStart</span><span class="p">,</span> <span class="n">RunStop</span><span class="p">],</span> <span class="kc">None</span><span class="p">],</span>
-    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""</span>
-<span class="sd">        Start listening for document events from the queueserver.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        on_stop : callable</span>
-<span class="sd">            Callback invoked when a stop document is received.</span>
-<span class="sd">            Signature: on_stop(start_doc, stop_doc)</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listener_thread</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">"Listener already running"</span><span class="p">)</span>
-            <span class="k">return</span>
-
-        <span class="bp">self</span><span class="o">.</span><span class="n">_consumer_callback</span> <span class="o">=</span> <span class="n">ConsumerCallback</span><span class="p">(</span><span class="n">callback</span><span class="o">=</span><span class="n">on_stop</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_dispatcher</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_consumer_callback</span><span class="p">)</span>
-
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Starting document listener thread"</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_listener_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span>
-            <span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_dispatcher</span><span class="o">.</span><span class="n">start</span><span class="p">,</span>
-            <span class="n">name</span><span class="o">=</span><span class="s2">"qserver-document-consumer"</span><span class="p">,</span>
-            <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-        <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_listener_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
-
-
-<div class="viewcode-block" id="QueueserverClient.stop_listener">
-<a class="viewcode-back" href="../../reference/queueserver.html#bluesky_adaptive.queueserver.QueueserverClient.stop_listener">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">stop_listener</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Stop the document listener thread."""</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_listener_thread</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_dispatcher</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_consumer_callback</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_listener_thread</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Stopped document listener"</span><span class="p">)</span></div>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Submitted plan to queue. Response: </span><span class="si">{</span><span class="n">response</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">response</span><span class="p">[</span><span class="s2">"item"</span><span class="p">][</span><span class="s2">"item_uid"</span><span class="p">]</span></div>
 </div>
 
 
@@ -1073,7 +988,6 @@ window.runMermaid = runMermaid;</script>
     <span class="n">checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">current_iteration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="n">current_suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
-    <span class="n">current_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="n">uids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">build_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
@@ -1093,7 +1007,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    This class coordinates the optimization workflow by getting suggestions from</span>
 <span class="sd">    the optimizer, submitting acquisition plans to the queueserver, and ingesting</span>
-<span class="sd">    results when plans complete.</span>
+<span class="sd">    the outcomes the evaluation function returns for each submitted plan.</span>
 
 <span class="sd">    .. warning::</span>
 
@@ -1107,8 +1021,6 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        sensors, and evaluation function.</span>
 <span class="sd">    queueserver_client : QueueserverClient</span>
 <span class="sd">        Client for communicating with the queueserver.</span>
-<span class="sd">        The document listener is started once during runner construction so it</span>
-<span class="sd">        is ready before any submitted plan can emit documents.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
@@ -1123,9 +1035,6 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">RLock</span><span class="p">()</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_current_future</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">start_listener</span><span class="p">(</span>
-            <span class="n">on_stop</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_on_acquisition_complete</span><span class="p">,</span>
-        <span class="p">)</span>
 
     <span class="nd">@property</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">optimization_problem</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QueueserverOptimizationProblem</span><span class="p">:</span>
@@ -1147,8 +1056,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Run the optimization loop.</span>
 
 <span class="sd">        Validates the queueserver state, then begins the suggest -&gt; acquire -&gt; ingest</span>
-<span class="sd">        cycle. This method returns immediately; the optimization runs asynchronously</span>
-<span class="sd">        via callbacks on the Bluesky document stream.</span>
+<span class="sd">        cycle. This method returns immediately; the optimization runs in a background</span>
+<span class="sd">        thread that calls the evaluation function with each submitted plan's queue item UID.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1165,9 +1074,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        -------</span>
 <span class="sd">        concurrent.futures.Future[OptimizationResult]</span>
 <span class="sd">            A future that resolves to an :class:`OptimizationResult` when all</span>
-<span class="sd">            iterations complete, or when :meth:`stop` is called. If the</span>
-<span class="sd">            optimization loop raises an unhandled exception the future will</span>
-<span class="sd">            hold that exception and re-raise it on ``.result()``.</span>
+<span class="sd">            iterations complete, or after :meth:`stop` once the in-flight evaluation</span>
+<span class="sd">            returns. If the optimization loop raises an unhandled exception the future</span>
+<span class="sd">            will hold that exception and re-raise it on ``.result()``.</span>
 
 <span class="sd">        Raises</span>
 <span class="sd">        ------</span>
@@ -1185,18 +1094,10 @@ window.runMermaid = runMermaid;</script>
         <span class="n">suggestions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">suggest</span><span class="p">(</span><span class="n">num_points</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
             <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_plan</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Submitting iteration </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"with correlation uid: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Submitting iteration </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
             <span class="n">future</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_current_future</span> <span class="o">=</span> <span class="n">future</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">submit_plan</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_fail_future</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-            <span class="k">raise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_submit_and_start_worker</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">future</span></div>
 
 
@@ -1206,7 +1107,8 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Manually submit suggestions to the queue.</span>
 
-<span class="sd">        This method returns immediately; the optimization runs asynchronously via callbacks on the Bluesky document stream.</span>
+<span class="sd">        This method returns immediately; the optimization runs in a background thread that calls the evaluation</span>
+<span class="sd">        function with each submitted plan's queue item UID.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1241,15 +1143,10 @@ window.runMermaid = runMermaid;</script>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
             <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_plan</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Submitting manually specified suggestion(s) with correlation uid: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Submitting manually specified suggestion(s)"</span><span class="p">)</span>
             <span class="n">future</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]</span> <span class="o">=</span> <span class="n">Future</span><span class="p">()</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_current_future</span> <span class="o">=</span> <span class="n">future</span>
-        <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">submit_plan</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
-        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
-            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_fail_future</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
-            <span class="k">raise</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_submit_and_start_worker</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">future</span></div>
 
 
@@ -1259,19 +1156,15 @@ window.runMermaid = runMermaid;</script>
 <span class="w">        </span><span class="sd">"""</span>
 <span class="sd">        Stop the optimization loop gracefully.</span>
 
-<span class="sd">        The future returned by :meth:`run` or :meth:`submit_suggestions` will</span>
-<span class="sd">        be resolved with a partial :class:`OptimizationResult` containing however</span>
-<span class="sd">        many iterations completed before the stop.</span>
+<span class="sd">        No further plans are submitted, and the in-flight evaluation is not interrupted. The future</span>
+<span class="sd">        returned by :meth:`run` or :meth:`submit_suggestions` resolves with a partial</span>
+<span class="sd">        :class:`OptimizationResult` after that evaluation returns and is ingested, or holds its</span>
+<span class="sd">        exception if it raises. Plans already in the queue are not removed. Evaluation functions</span>
+<span class="sd">        should bound their waits so that a stop takes effect.</span>
 <span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="o">=</span> <span class="kc">False</span>
-            <span class="n">result</span> <span class="o">=</span> <span class="p">(</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">build_result</span><span class="p">()</span>
-                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
-                <span class="k">else</span> <span class="n">OptimizationResult</span><span class="p">(</span><span class="n">iterations_completed</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">uids</span><span class="o">=</span><span class="p">())</span>
-            <span class="p">)</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_future</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Optimization stopped"</span><span class="p">)</span></div>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Optimization will stop after the in-flight acquisition is evaluated"</span><span class="p">)</span></div>
 
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_resolve_future</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="n">OptimizationResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
@@ -1290,8 +1183,9 @@ window.runMermaid = runMermaid;</script>
             <span class="k">try</span><span class="p">:</span>
                 <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">register_failures</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
             <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Logged, not raised: this runs at the top of the worker thread and the original error</span>
+                <span class="c1"># must still fail the future.</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="s2">"Failed to register trial failures with the optimizer"</span><span class="p">)</span>
-                <span class="k">raise</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_validate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""LOCKED: Validate not already running, queueserver environment, devices, and plan availability."""</span>
@@ -1307,13 +1201,9 @@ window.runMermaid = runMermaid;</script>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span> <span class="o">=</span> <span class="n">suggestions</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
 
         <span class="c1"># Build metadata</span>
-        <span class="n">md</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-            <span class="n">CORRELATION_UID_KEY</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="p">,</span>
-            <span class="s2">"blop_suggestions"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span><span class="p">,</span>
-        <span class="p">}</span>
+        <span class="n">md</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"blop_suggestions"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span><span class="p">}</span>
 
         <span class="k">return</span> <span class="n">BPlan</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_plan_name</span><span class="p">,</span>
@@ -1324,10 +1214,22 @@ window.runMermaid = runMermaid;</script>
             <span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">acquisition_plan_kwargs</span> <span class="ow">or</span> <span class="p">{}),</span>
         <span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_on_acquisition_complete</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_doc</span><span class="p">:</span> <span class="n">RunStart</span><span class="p">,</span> <span class="n">stop_doc</span><span class="p">:</span> <span class="n">RunStop</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""When acquisition finishes, ingest results, and maybe continue."""</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_submit_and_start_worker</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">plan</span><span class="p">:</span> <span class="n">BPlan</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Submit the first plan and start the worker thread that evaluates it, failing the future on error."""</span>
         <span class="k">try</span><span class="p">:</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_process_acquisition</span><span class="p">(</span><span class="n">start_doc</span><span class="p">,</span> <span class="n">stop_doc</span><span class="p">)</span>
+            <span class="n">item_uid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">submit_plan</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fail_future</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+            <span class="k">raise</span>
+        <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">,</span> <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="n">item_uid</span><span class="p">,),</span> <span class="n">name</span><span class="o">=</span><span class="s2">"qserver-optimization-runner"</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_run_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_uid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Worker thread: evaluate, ingest, and resubmit until done, failing the future on error."""</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">next_item_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">item_uid</span>
+            <span class="k">while</span> <span class="n">next_item_uid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">next_item_uid</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_process_acquisition</span><span class="p">(</span><span class="n">next_item_uid</span><span class="p">)</span>
         <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span>
                 <span class="s2">"Unhandled exception in optimization background thread. "</span>
@@ -1335,37 +1237,25 @@ window.runMermaid = runMermaid;</script>
             <span class="p">)</span>
             <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
                 <span class="n">suggestions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[]</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_fail_future</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
+            <span class="c1"># Register failures before failing the future so a caller that observes the failure sees the trials failed.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_try_register_failures</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
+            <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_fail_future</span><span class="p">(</span><span class="n">exc</span><span class="p">)</span>
 
-    <span class="k">def</span><span class="w"> </span><span class="nf">_process_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_doc</span><span class="p">:</span> <span class="n">RunStart</span><span class="p">,</span> <span class="n">stop_doc</span><span class="p">:</span> <span class="n">RunStop</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Core acquisition-complete logic (called from _on_acquisition_complete)."""</span>
-        <span class="n">run_filter</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">acquisition_run_filter</span>
-        <span class="k">if</span> <span class="n">run_filter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">run_filter</span><span class="p">(</span><span class="n">start_doc</span><span class="p">):</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Ignoring run </span><span class="si">{</span><span class="n">start_doc</span><span class="p">[</span><span class="s1">'uid'</span><span class="p">]</span><span class="si">!r}</span><span class="s2">: excluded by acquisition_run_filter"</span><span class="p">)</span>
-            <span class="k">return</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_process_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_uid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Evaluate and ingest one acquisition.</span>
+
+<span class="sd">        Returns the next submitted queue item UID, or ``None`` after resolving the future.</span>
+<span class="sd">        """</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
             <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"_on_acquisition_complete called before run()"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"current_uid not set"</span><span class="p">)</span>
-            <span class="n">exit_status</span> <span class="o">=</span> <span class="n">stop_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"exit_status"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span> <span class="o">!=</span> <span class="n">start_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CORRELATION_UID_KEY</span><span class="p">):</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
-                    <span class="s2">"current_uid did not match start document. "</span>
-                    <span class="sa">f</span><span class="s2">"Got: </span><span class="si">{</span><span class="n">start_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">CORRELATION_UID_KEY</span><span class="p">)</span><span class="si">}</span><span class="s2">, Expected: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="si">}</span><span class="s2">. "</span>
-                    <span class="s2">"If the acquisition plan opens more than one run with this metadata (for example, a "</span>
-                    <span class="s2">"dark-frame run), set acquisition_run_filter to select the run to evaluate."</span>
-                <span class="p">)</span>
-            <span class="k">if</span> <span class="n">exit_status</span> <span class="o">!=</span> <span class="s2">"success"</span><span class="p">:</span>
-                <span class="n">reason</span> <span class="o">=</span> <span class="n">stop_doc</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"reason"</span><span class="p">)</span> <span class="ow">or</span> <span class="s2">"(no reason given)"</span>
-                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Acquisition run </span><span class="si">{</span><span class="n">start_doc</span><span class="p">[</span><span class="s1">'uid'</span><span class="p">]</span><span class="si">!r}</span><span class="s2"> ended with status </span><span class="si">{</span><span class="n">exit_status</span><span class="si">!r}</span><span class="s2">: </span><span class="si">{</span><span class="n">reason</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Acquisition complete for uid: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"_process_acquisition called before run()"</span><span class="p">)</span>
             <span class="n">suggestions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">uids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">start_doc</span><span class="p">[</span><span class="s2">"uid"</span><span class="p">])</span>
 
-        <span class="c1"># Evaluate the results</span>
-        <span class="n">outcomes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">evaluation_function</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="n">start_doc</span><span class="p">[</span><span class="s2">"uid"</span><span class="p">],</span> <span class="n">suggestions</span><span class="o">=</span><span class="n">suggestions</span><span class="p">)</span>
+        <span class="c1"># Evaluate the results; the evaluation function waits for its data.</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluating queue item </span><span class="si">{</span><span class="n">item_uid</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">outcomes</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">evaluation_function</span><span class="p">(</span><span class="n">uid</span><span class="o">=</span><span class="n">item_uid</span><span class="p">,</span> <span class="n">suggestions</span><span class="o">=</span><span class="n">suggestions</span><span class="p">)</span>
         <span class="n">_validate_outcomes</span><span class="p">(</span><span class="n">outcomes</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Evaluated </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span><span class="si">}</span><span class="s2"> outcomes"</span><span class="p">)</span>
 
@@ -1373,6 +1263,7 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">ingest</span><span class="p">(</span><span class="n">outcomes</span><span class="p">)</span>
 
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">uids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item_uid</span><span class="p">)</span>
             <span class="c1"># Ingested suggestions are no longer in flight.</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span> <span class="o">=</span> <span class="p">[]</span>
             <span class="c1"># Checkpoint optimizer, if applicable</span>
@@ -1382,9 +1273,8 @@ window.runMermaid = runMermaid;</script>
             <span class="c1"># Check if done</span>
             <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="p">:</span>
                 <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Optimization complete after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2"> iterations"</span><span class="p">)</span>
-                <span class="n">result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">build_result</span><span class="p">()</span>
-                <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_future</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-                <span class="k">return</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_resolve_future</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">build_result</span><span class="p">())</span>
+                <span class="k">return</span> <span class="kc">None</span>
 
             <span class="c1"># Continue: get next suggestions and submit</span>
             <span class="n">num_points</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">num_points</span>
@@ -1392,11 +1282,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">suggestions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">suggest</span><span class="p">(</span><span class="n">num_points</span><span class="p">)</span>
         <span class="k">with</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state_lock</span><span class="p">:</span>
             <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_plan</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
-            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
-                <span class="sa">f</span><span class="s2">"Submitting iteration </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="si">}</span><span class="s2"> "</span>
-                <span class="sa">f</span><span class="s2">"with correlation uid: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_uid</span><span class="si">}</span><span class="s2">"</span>
-            <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">submit_plan</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span></div>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Submitting iteration </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">submit_plan</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span></div>
 
 </pre></div>
 
