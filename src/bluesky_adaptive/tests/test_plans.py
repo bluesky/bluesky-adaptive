@@ -1324,6 +1324,7 @@ def test_optimize_stops_when_change_is_within_tolerance(RE):
         RE.unsubscribe(callback)
 
     assert evaluation_function.call_count == 2
+    assert len(events) == 2
 
 
 def test_optimize_emits_checkpoints_per_iteration(RE):
@@ -1387,3 +1388,82 @@ def test_optimization_runs_duplicate_released_metadata_at_top_level(RE):
     assert start["actuators"] == ["x1"]
     for key in ("evaluation_function", "acquisition_plan", "optimizer", "sensors", "actuators"):
         assert start["bluesky-adaptive"][key] == start[key]
+
+
+class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+
+def test_optimize_invalid_outcomes_mark_trials_failed(RE):
+    suggestions = [{"x1": 0.0, "_id": 0}]
+    optimizer = MagicMock(spec=FaultAwareOptimizer)
+    optimizer.suggest.return_value = suggestions
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 1}]),
+        acquisition_plan=_test_acquisition_plan,
+    )
+
+    with pytest.raises(ValueError, match="same IDs"):
+        RE(optimize(problem))
+
+    optimizer.register_failures.assert_called_once_with(suggestions)
+    optimizer.ingest.assert_not_called()
+
+
+def test_sample_suggestions_failure_registers_failures(RE):
+    suggestions = [{"x1": 0.0, "_id": 0}]
+    optimizer = MagicMock(spec=FaultAwareOptimizer)
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(side_effect=RuntimeError("evaluation failed")),
+        acquisition_plan=_test_acquisition_plan,
+    )
+
+    with pytest.raises(RuntimeError, match="evaluation failed"):
+        RE(sample_suggestions(problem, suggestions))
+
+    optimizer.register_failures.assert_called_once_with(suggestions)
+    optimizer.ingest.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    ("suggestions", "outcomes", "message"),
+    [
+        ([{"x1": 0.0, "_id": 0}, {"x1": 1.0, "_id": 0}], [{"objective": 0.0, "_id": 0}], "unique '_id'"),
+        ([{"x1": 0.0, "_id": 0}], [{"objective": 0.0, "_id": 1}], "same IDs"),
+    ],
+    ids=["duplicate-suggestion-ids", "mismatched-outcome-ids"],
+)
+def test_sample_suggestions_validates_suggestions_and_outcomes(RE, suggestions, outcomes, message):
+    optimizer = MagicMock(spec=Optimizer)
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=outcomes),
+        acquisition_plan=_test_acquisition_plan,
+    )
+
+    with pytest.raises(ValueError, match=message):
+        RE(sample_suggestions(problem, suggestions))
+
+    optimizer.ingest.assert_not_called()
+
+
+def test_acquire_baseline_rejects_mismatched_outcomes(RE):
+    optimizer = MagicMock(spec=Optimizer)
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": "other"}]),
+    )
+
+    with pytest.raises(ValueError, match="same IDs"):
+        RE(acquire_baseline(problem, {"x1": 0.0}))
+
+    optimizer.ingest.assert_not_called()

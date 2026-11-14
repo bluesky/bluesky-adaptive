@@ -100,31 +100,30 @@ class OptimizationLogger(CallbackBase):
         # Build the header content
         lines = Text()
         lines.append("Optimizer  ", style=_DIM_STYLE)
-        lines.append(f"{optimizer}\n", style=_HEADER_STYLE)
-        lines.append("Actuators  ", style=_DIM_STYLE)
-        lines.append(f"{', '.join(actuators) if actuators else 'N/A'}\n")
-        lines.append("Sensors    ", style=_DIM_STYLE)
-        lines.append(f"{', '.join(sensors) if sensors else 'N/A'}\n")
-        lines.append("Iterations ", style=_DIM_STYLE)
+        lines.append(f"{optimizer}", style=_HEADER_STYLE)
+        lines.append("\nActuators  ", style=_DIM_STYLE)
+        lines.append(f"{', '.join(actuators) if actuators else 'N/A'}")
+        lines.append("\nSensors    ", style=_DIM_STYLE)
+        lines.append(f"{', '.join(sensors) if sensors else 'N/A'}")
+        if "iterations" in doc:
+            lines.append("\nIterations ", style=_DIM_STYLE)
+            if iterations is None:
+                lines.append("Until stopping criterion")
+                if self._base_iteration > 0:
+                    lines.append(f" ({self._base_iteration} completed)")
+            elif self._base_iteration > 0:
+                lines.append(f"{iterations} more ({self._base_iteration} completed, ")
+                lines.append(f"{self._total_iterations} total)")
+            else:
+                lines.append(f"{iterations}")
 
-        if iterations is None:
-            lines.append("Until stopping criterion")
-            if self._base_iteration > 0:
-                lines.append(f" ({self._base_iteration} completed)")
-        elif self._base_iteration > 0:
-            lines.append(f"{iterations} more ({self._base_iteration} completed, ")
-            lines.append(f"{self._total_iterations} total)")
-        else:
-            lines.append(f"{iterations}")
-
-        if n_points and n_points > 1:
-            lines.append("  ")
-            lines.append("Points/iter ", style=_DIM_STYLE)
-            lines.append(f"{n_points}")
+            if n_points and n_points > 1:
+                lines.append("  ")
+                lines.append("Points/iter ", style=_DIM_STYLE)
+                lines.append(f"{n_points}")
 
         if run_uid:
-            lines.append("\n")
-            lines.append("Run UID    ", style=_DIM_STYLE)
+            lines.append("\nRun UID    ", style=_DIM_STYLE)
             lines.append(run_uid)
 
         panel = Panel(
