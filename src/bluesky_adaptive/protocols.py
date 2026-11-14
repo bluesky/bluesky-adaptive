@@ -1,7 +1,8 @@
 """Protocols that bridge between optimizer backends and Bluesky."""
 
-from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+import uuid
+from collections.abc import Callable, Mapping, Sequence
+from dataclasses import dataclass, field
 from typing import Any, Generic, Literal, Protocol, TypeVar, runtime_checkable
 
 from bluesky.protocols import EventCollectable, EventPageCollectable, Flyable, HasName, Movable, Readable
@@ -25,6 +26,8 @@ class MovableHasName(Movable, HasName, Protocol):
 ID_KEY: Literal["_id"] = "_id"
 Actuator = MovableHasName | Flyable
 Sensor = Readable | EventCollectable | EventPageCollectable
+DocumentCallback = Callable[[str, dict[str, Any]], Any]
+"""A Bluesky document callback, e.g. a :class:`bluesky.callbacks.CallbackBase` instance."""
 
 TActuator = TypeVar("TActuator")
 """Actuator generic type"""
@@ -328,6 +331,7 @@ class BaseOptimizationProblem(Generic[TActuator, TSensor, TUid, TPlan]):
     sensors: Sequence[TSensor]
     evaluation_function: EvaluationFunction[TUid]
     acquisition_plan: TPlan | None = None
+    optimization_uid: str = field(default_factory=lambda: str(uuid.uuid4()), kw_only=True)
 
 
 @dataclass(frozen=True)
@@ -352,6 +356,9 @@ class OptimizationProblem(BaseOptimizationProblem[Actuator, Sensor, TUid, Acquis
         A callable that uses an acquisition UID to retrieve acquired data and produce outcomes.
     acquisition_plan: AcquisitionPlan[TUid], optional
         A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.
+    optimization_uid: str, optional
+        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in optimization
+        runs. If not provided, a new UUID4 is generated.
 
     See Also
     --------
@@ -391,6 +398,8 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
         The plan must match the arguments of :class:`AcquisitionPlan`.
     acquisition_plan_kwargs: Mapping[str, Any], optional
         Additional plan arguments to pass to the Bluesky plan.
+    optimization_uid: str, optional
+        Identifier of the optimization. If not provided, a new UUID4 is generated.
 
     See Also
     --------

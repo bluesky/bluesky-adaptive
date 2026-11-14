@@ -1,6 +1,7 @@
 """Agent interface for optimization with Ax as the backend."""
 
 import logging
+import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, Generic, cast
 
@@ -231,6 +232,8 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         The path to the checkpoint file to save the optimizer's state to.
     stopping_strategy : BaseGlobalStoppingStrategy | None, optional
         A stopping strategy that decides when/if optimization should halt early.
+    optimization_uid : str | None, optional
+        Identifier of the optimization. If None, a new UUID4 is generated.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -262,6 +265,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         outcome_constraints: Sequence[OutcomeConstraint] | None = None,
         checkpoint_path: str | None = None,
         stopping_strategy: BaseGlobalStoppingStrategy | None = None,
+        optimization_uid: str | None = None,
         **kwargs: Any,
     ):
         if any(isinstance(dof.actuator, str) for dof in dofs):
@@ -287,6 +291,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         self._readable_cache: dict[str, InferredReadable] = {}
         self._callbacks: list[CallbackBase] = [OptimizationLogger()]
         self._callback_router = OptimizationCallbackRouter(self._callbacks)
+        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
 
     @classmethod
     def from_checkpoint(
@@ -296,6 +301,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         sensors: Sequence[Sensor],
         evaluation_function: EvaluationFunction[TUid],
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
+        optimization_uid: str | None = None,
     ) -> "Agent[TUid]":
         """
         Load an agent from the optimizer's checkpoint file.
@@ -318,6 +324,8 @@ class Agent(_AxAgentMixin, Generic[TUid]):
             A callable that uses an acquisition identifier to retrieve acquired data and produce outcomes.
         acquisition_plan: AcquisitionPlan, optional
             A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.
+        optimization_uid : str | None, optional
+            Identifier of the optimization to continue. If None, a new UUID4 is generated.
         """
         instance = object.__new__(cls)
         instance._optimizer = AxOptimizer.from_checkpoint(checkpoint_path)
@@ -328,6 +336,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         instance._readable_cache = {}
         instance._callbacks = [OptimizationLogger()]
         instance._callback_router = OptimizationCallbackRouter(instance._callbacks)
+        instance._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
 
         return instance
 
@@ -396,6 +405,11 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         """The acquisition plan for acquiring data, or ``None`` if using the default."""
         return self._acquisition_plan
 
+    @property
+    def optimization_uid(self) -> str:
+        """Identifier of this agent's optimization."""
+        return self._optimization_uid
+
     def to_optimization_problem(self) -> OptimizationProblem[TUid]:
         """
         Construct an optimization problem from the agent.
@@ -420,6 +434,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
             sensors=self.sensors,
             evaluation_function=self.evaluation_function,
             acquisition_plan=self.acquisition_plan,
+            optimization_uid=self._optimization_uid,
         )
 
     def acquire_baseline(self, parameterization: dict[str, Any] | None = None) -> MsgGenerator[None]:

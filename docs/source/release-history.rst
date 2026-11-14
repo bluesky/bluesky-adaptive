@@ -18,6 +18,16 @@ Breaking Changes
   interrupting the in-flight evaluation. The future resolves with the partial result after that evaluation
   returns and is ingested, instead of immediately.
 
+Features
+........
+* ``OptimizationProblem`` and ``QueueserverOptimizationProblem`` gain ``optimization_uid``, which the ``optimize``,
+  ``optimize_in_run``, and ``sample_suggestions`` runs record as ``start["bluesky-adaptive"]["optimization_uid"]``.
+  ``Agent`` and ``Scipy`` generate one, expose it, and accept it to continue an optimization
+  (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
+* Optimization run metadata is also recorded under ``"bluesky-adaptive"`` in start documents, duplicating
+  ``evaluation_function``, ``acquisition_plan``, ``optimizer``, ``sensors``, and ``actuators``. The top-level keys
+  are kept for backwards compatibility.
+
 v1.0.1 (2026-11-07)
 -------------------
 
