@@ -60,7 +60,7 @@ class RunEventBuffer(CallbackBase):
         KeyError
             If the run is not buffered.
         ValueError
-            If the run does not have one ``"primary"`` event per suggestion.
+            If the number of ``"primary"`` events differs from the number of suggestion IDs.
         """
         if uid not in self._events:
             raise KeyError(
@@ -73,9 +73,4 @@ class RunEventBuffer(CallbackBase):
         self._primary_descriptors = {
             descriptor_uid: run_uid for descriptor_uid, run_uid in self._primary_descriptors.items() if run_uid != uid
         }
-        if len(events) != len(acquisition_order):
-            raise ValueError(
-                f"Run {uid!r} has {len(events)} {_PRIMARY_STREAM!r} events but {len(acquisition_order)} suggestion IDs "
-                f"in {_ACQUISITION_ORDER_KEY!r}; RunEventBuffer expects exactly one event per suggestion."
-            )
         return dict(zip(acquisition_order, events, strict=True))

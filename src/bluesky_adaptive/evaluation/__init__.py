@@ -1,7 +1,7 @@
 """Helpers for building evaluation functions."""
 
 import functools
-from collections.abc import Callable, Hashable, Mapping, Sequence
+from collections.abc import Callable, Mapping, Sequence
 from typing import Any, TypeVar
 
 from ..protocols import ID_KEY, EvaluationFunction, TUid
@@ -10,7 +10,7 @@ _TData = TypeVar("_TData")
 
 
 def per_suggestion(
-    fetch: Callable[[TUid], Mapping[Hashable, _TData]],
+    fetch: Callable[[TUid], Mapping[Any, _TData]],
 ) -> Callable[[Callable[[_TData], Mapping[str, Any]]], EvaluationFunction[TUid]]:
     """Build a decorator that turns a function of one suggestion's data into an evaluation function.
 
@@ -19,7 +19,7 @@ def per_suggestion(
 
     Parameters
     ----------
-    fetch : Callable[[TUid], Mapping[Hashable, _TData]]
+    fetch : Callable[[TUid], Mapping[Any, _TData]]
         Returns each suggestion's data keyed by suggestion ID, e.g.
         :meth:`RunEventBuffer.pop <bluesky_adaptive.evaluation.documents.RunEventBuffer.pop>`.
 

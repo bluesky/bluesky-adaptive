@@ -63,5 +63,5 @@ def test_run_event_buffer_rejects_more_than_one_event_per_suggestion(RE):
         default_acquire([{"x1": 1.0, "_id": 0}], [MovableSignal("x1")], [ReadableSignal("det")], per_step=read_twice)
     )
 
-    with pytest.raises(ValueError, match="exactly one event per suggestion"):
+    with pytest.raises(ValueError):
         buffer.pop(uid)
