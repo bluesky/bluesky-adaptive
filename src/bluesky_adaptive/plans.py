@@ -125,6 +125,34 @@ def default_acquire(
     )
 
 
+def _acquire_and_evaluate(
+    optimization_problem: OptimizationProblem[TUid],
+    suggestions: Sequence[Mapping],
+    *args: Any,
+    **kwargs: Any,
+) -> MsgGenerator[tuple[TUid, Sequence[Mapping]]]:
+    """Acquire and evaluate suggestions, then validate the outcomes.
+
+    Any failure marks the suggestions failed on a ``TrialFaultAware`` optimizer before it is re-raised.
+    """
+    if optimization_problem.acquisition_plan is None:
+        acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
+    else:
+        acquisition_plan = optimization_problem.acquisition_plan
+    optimizer = optimization_problem.optimizer
+    try:
+        uid = yield from acquisition_plan(
+            suggestions, optimization_problem.actuators, optimization_problem.sensors, *args, **kwargs
+        )
+        outcomes = optimization_problem.evaluation_function(uid, suggestions)
+        _validate_outcomes(outcomes, suggestions)
+    except Exception:
+        if isinstance(optimizer, TrialFaultAware):
+            optimizer.register_failures(suggestions)
+        raise
+    return uid, outcomes
+
+
 @plan
 def optimize_step(
     optimization_problem: OptimizationProblem[TUid],
@@ -147,25 +175,11 @@ def optimize_step(
     tuple[TUid, Sequence[Mapping], Sequence[Mapping]]
         The acquisition UID, suggestions, and outcomes of the step.
     """
-    if optimization_problem.acquisition_plan is None:
-        acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
-    else:
-        acquisition_plan = optimization_problem.acquisition_plan
     optimizer = optimization_problem.optimizer
-    actuators = optimization_problem.actuators
     suggestions = optimizer.suggest(n_points)
     _validate_suggestions(suggestions)
-    try:
-        uid = yield from acquisition_plan(suggestions, actuators, optimization_problem.sensors, *args, **kwargs)
-        outcomes = optimization_problem.evaluation_function(uid, suggestions)
-    except Exception:
-        if isinstance(optimizer, TrialFaultAware):
-            optimizer.register_failures(suggestions)
-        raise
-
-    _validate_outcomes(outcomes, suggestions)
+    uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, *args, **kwargs)
     optimizer.ingest(outcomes)
-
     return uid, suggestions, outcomes
 
 
@@ -240,15 +254,15 @@ def optimize(
             # Perform a single step of the optimization
             uid, suggestions, outcomes = yield from optimize_step(optimization_problem, n_points, **kwargs)
 
+            # Read the optimization step into the Bluesky and emit events for each suggestion and outcome
+            yield from read_step(uid, suggestions, outcomes, iteration=i, readable_cache=readable_cache)
+
             if isinstance(optimizer, SupportsStoppingCriteria):
                 stop_now, stop_reason = optimizer.should_stop()
                 if stop_now:
                     reason = stop_reason if stop_reason is not None else "No reason provided"
                     logger.info(f"Global stopping triggered at iteration {i + 1}: {reason}")
                     return
-
-            # Read the optimization step into the Bluesky and emit events for each suggestion and outcome
-            yield from read_step(uid, suggestions, outcomes, iteration=i, readable_cache=readable_cache)
 
             # Possibly take a checkpoint of the optimizer state
             _maybe_checkpoint(optimizer, checkpoint_interval, i)
@@ -397,7 +411,8 @@ def sample_suggestions(
     Raises
     ------
     ValueError
-        If suggestions lack "_id" and optimizer doesn't implement CanRegisterSuggestions.
+        If suggestions lack "_id" and optimizer doesn't implement CanRegisterSuggestions, if their "_id" values are
+        not unique and hashable, or if the outcomes do not carry the same "_id" values.
 
     See Also
     --------
@@ -415,6 +430,7 @@ def sample_suggestions(
         )
     elif isinstance(optimization_problem.optimizer, CanRegisterSuggestions):
         suggestions = optimization_problem.optimizer.register_suggestions(suggestions)
+    _validate_suggestions(suggestions)
 
     # Collect the metadata for the run
     _md = collect_optimization_metadata(optimization_problem)
@@ -431,14 +447,7 @@ def sample_suggestions(
     def _inner_sample_suggestions() -> MsgGenerator[tuple[TUid, Sequence[Mapping], Sequence[Mapping]]]:
 
         # Acquire data, evaluate, and ingest outcomes
-        if optimization_problem.acquisition_plan is None:
-            acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
-        else:
-            acquisition_plan = optimization_problem.acquisition_plan
-        uid = yield from acquisition_plan(
-            suggestions, optimization_problem.actuators, optimization_problem.sensors, **kwargs
-        )
-        outcomes = optimization_problem.evaluation_function(uid, suggestions)
+        uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, **kwargs)
         optimization_problem.optimizer.ingest(outcomes)
 
         # Emit a Bluesky event
@@ -484,7 +493,9 @@ def acquire_baseline(
         acquisition_plan = cast(AcquisitionPlan[TUid], default_acquire)
     else:
         acquisition_plan = optimization_problem.acquisition_plan
-    uid = yield from acquisition_plan([parameterization_copy], actuators, optimization_problem.sensors, **kwargs)
-    outcome = optimization_problem.evaluation_function(uid, [parameterization_copy])[0]
-    data = {**outcome, **parameterization_copy}
-    optimizer.ingest([data])
+    points = [parameterization_copy]
+    # The baseline becomes a trial only when it is ingested, so no failures are registered.
+    uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, **kwargs)
+    outcomes = optimization_problem.evaluation_function(uid, points)
+    _validate_outcomes(outcomes, points)
+    optimizer.ingest([{**outcomes[0], **parameterization_copy}])
