@@ -802,7 +802,7 @@ def test_optimize_step_default(RE):
 
 
 def test_optimize_event_document_structure(RE):
-    """Validate a record-run event document in detail."""
+    """Validate an optimization-run event document in detail."""
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.5, "_id": 0}]
     evaluation_function = MagicMock(spec=EvaluationFunction, return_value=[{"objective": 1.25, "_id": 0}])

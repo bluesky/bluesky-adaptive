@@ -177,7 +177,7 @@ agent = Scipy(
     evaluation_function=Himmelblau2DEvaluation(tiled_client=tiled_client),
     name="test_experiment",
 )
-# Store the agent's record runs in Tiled to view the results below
+# Store the agent's optimization runs in Tiled to view the results below
 agent.subscribe(tiled_writer)
 RE(agent.optimize(20, n_points=2))
 ```

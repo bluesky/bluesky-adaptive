@@ -144,7 +144,7 @@ class Scipy(Generic[TUid]):
     def callbacks(self) -> list[DocumentCallback]:
         """The list of active optimization callbacks.
 
-        Callbacks in this list receive the documents of the agent's record runs. The default list
+        Callbacks in this list receive the documents of the agent's optimization runs. The default list
         contains an :class:`~bluesky_adaptive.callbacks.logger.OptimizationLogger`.
 
         The list can be mutated directly, or use :meth:`subscribe` /

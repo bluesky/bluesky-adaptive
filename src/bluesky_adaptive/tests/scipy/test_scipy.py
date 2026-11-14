@@ -418,7 +418,7 @@ def test_optimize_with_prev_final(secoundary_agent_prep):
 
 
 def test_optimize_run_records_optimization_uid(secoundary_agent_prep):
-    """A Scipy agent's record runs record its optimization UID."""
+    """The optimization run of a Scipy agent records the agent's optimization UID."""
     documents = []
     secoundary_agent_prep.subscribe(lambda name, doc: documents.append((name, doc)))
 

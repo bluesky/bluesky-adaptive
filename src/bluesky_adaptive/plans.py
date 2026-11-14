@@ -211,7 +211,7 @@ def optimize(
         will not be saved. Optimizer must implement the
         :class:`bluesky_adaptive.protocols.Checkpointable` protocol.
     callbacks : Iterable[DocumentCallback], optional
-        Callbacks that receive the optimization's record run.
+        Callbacks that receive the optimization run's documents.
     **kwargs : Any
         Additional keyword arguments to pass to the acquisition plan.
 
@@ -393,7 +393,7 @@ def sample_suggestions(
         - Manual points (without "_id", requires CanRegisterSuggestions protocol)
 
     callbacks : Iterable[DocumentCallback], optional
-        Callbacks that receive the optimization's record run.
+        Callbacks that receive the optimization run's documents.
     **kwargs : Any
         Additional arguments for acquisition plan.
 
@@ -467,7 +467,7 @@ def acquire_baseline(
     parameterization : dict[str, Any] | None = None
         Move the DOFs to the given parameterization, if provided.
     callbacks : Iterable[DocumentCallback], optional
-        Callbacks that receive the optimization's record run.
+        Callbacks that receive the optimization run's documents.
 
     See Also
     --------

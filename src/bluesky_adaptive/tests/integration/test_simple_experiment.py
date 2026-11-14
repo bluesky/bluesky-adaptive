@@ -117,12 +117,12 @@ def test_simple_experiment_tiled_round_trip() -> None:
         assert all(outcome["himmelblau_2d"] >= 0 for outcome in evaluation.outcomes)
         assert len(agent.ax_client.summarize()) == 4
 
-        records = tiled_client.search(Key("start.bluesky-adaptive.optimization_uid") == agent.optimization_uid)
-        assert len(records) == 1
-        record = records.values().first()
-        assert record.start["plan_name"] == "optimize"
-        assert len(record["primary/adaptive_suggestion_id"].read()) == 4
-        assert set(record["primary/adaptive_acquisition_uid"].read()) == set(evaluation.uids)
+        runs = tiled_client.search(Key("start.bluesky-adaptive.optimization_uid") == agent.optimization_uid)
+        assert len(runs) == 1
+        run = runs.values().first()
+        assert run.start["plan_name"] == "optimize"
+        assert len(run["primary/adaptive_suggestion_id"].read()) == 4
+        assert set(run["primary/adaptive_acquisition_uid"].read()) == set(evaluation.uids)
     finally:
         tiled_server.close()
 

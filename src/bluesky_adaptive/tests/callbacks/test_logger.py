@@ -292,8 +292,8 @@ def test_stop_without_events(logger, console):
     assert console.rule.call_count >= 1
 
 
-def test_record_run_lifecycle():
-    """The logger shows a record run's parameters and outcomes by kind and hides its bookkeeping fields."""
+def test_optimization_run_lifecycle():
+    """The logger shows an optimization run's parameters and outcomes by kind and hides its bookkeeping fields."""
     console = Console(file=io.StringIO(), width=120, record=True)
     recorder = RunRecorder(
         callbacks=[OptimizationLogger(console=console)],
