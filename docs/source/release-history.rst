@@ -27,6 +27,11 @@ Features
 * Optimization run metadata is also recorded under ``"bluesky-adaptive"`` in start documents, duplicating
   ``evaluation_function``, ``acquisition_plan``, ``optimizer``, ``sensors``, and ``actuators``. The top-level keys
   are kept for backwards compatibility.
+* New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(fetch)`` turns a function that evaluates the data of
+  one suggestion into an evaluation function and sets the ``"_id"`` of each outcome.
+  ``bluesky_adaptive.evaluation.documents.RunEventBuffer``, subscribed with ``RE.subscribe(buffer)``, buffers the
+  ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(buffer.pop)`` can evaluate them
+  (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
 
 v1.0.1 (2026-11-07)
 -------------------

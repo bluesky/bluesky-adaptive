@@ -61,3 +61,8 @@ Where possible, keep the actual objective calculation in a separate function
 that operates on a single sample or suggestion. This separation makes the
 analysis logic easier to test, reuse, and maintain independently of the data
 retrieval code.
+
+:func:`bluesky_adaptive.evaluation.per_suggestion` builds the evaluation function from such a function and sets the
+``_id`` of each outcome. For runs from :func:`bluesky_adaptive.plans.default_acquire`,
+:class:`bluesky_adaptive.evaluation.documents.RunEventBuffer` collects the ``"primary"`` event data of each suggestion
+from the RunEngine documents, so readings recorded in the events need no data retrieval code.
