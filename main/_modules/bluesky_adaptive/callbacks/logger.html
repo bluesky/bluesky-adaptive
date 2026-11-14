@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.callbacks.logger &#8212; Bluesky Adaptive 1.0.2.dev3 documentation</title>
+    <title>bluesky_adaptive.callbacks.logger &#8212; Bluesky Adaptive 1.0.2.dev4 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../../_static/documentation_options.js?v=b287111e"></script>
+    <script src="../../../_static/documentation_options.js?v=790e81d3"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev3" />
+  <meta name="docsearch:version" content="1.0.2.dev4" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -949,31 +949,30 @@ window.runMermaid = runMermaid;</script>
         <span class="c1"># Build the header content</span>
         <span class="n">lines</span> <span class="o">=</span> <span class="n">Text</span><span class="p">()</span>
         <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Optimizer  "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">optimizer</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_HEADER_STYLE</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Actuators  "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">actuators</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">actuators</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'N/A'</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Sensors    "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sensors</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">sensors</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'N/A'</span><span class="si">}</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Iterations "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">optimizer</span><span class="si">}</span><span class="s2">"</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_HEADER_STYLE</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Actuators  "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">actuators</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">actuators</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'N/A'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Sensors    "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
+        <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="s1">', '</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sensors</span><span class="p">)</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">sensors</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">'N/A'</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="s2">"iterations"</span> <span class="ow">in</span> <span class="n">doc</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Iterations "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">iterations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Until stopping criterion"</span><span class="p">)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span><span class="si">}</span><span class="s2"> completed)"</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">iterations</span><span class="si">}</span><span class="s2"> more (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span><span class="si">}</span><span class="s2"> completed, "</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_total_iterations</span><span class="si">}</span><span class="s2"> total)"</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">iterations</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
-        <span class="k">if</span> <span class="n">iterations</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Until stopping criterion"</span><span class="p">)</span>
-            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">" (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span><span class="si">}</span><span class="s2"> completed)"</span><span class="p">)</span>
-        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">iterations</span><span class="si">}</span><span class="s2"> more (</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_base_iteration</span><span class="si">}</span><span class="s2"> completed, "</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_total_iterations</span><span class="si">}</span><span class="s2"> total)"</span><span class="p">)</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">iterations</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
-
-        <span class="k">if</span> <span class="n">n_points</span> <span class="ow">and</span> <span class="n">n_points</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  "</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Points/iter "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_points</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">n_points</span> <span class="ow">and</span> <span class="n">n_points</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"  "</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Points/iter "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">n_points</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
         <span class="k">if</span> <span class="n">run_uid</span><span class="p">:</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">"</span><span class="p">)</span>
-            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"Run UID    "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Run UID    "</span><span class="p">,</span> <span class="n">style</span><span class="o">=</span><span class="n">_DIM_STYLE</span><span class="p">)</span>
             <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">run_uid</span><span class="p">)</span>
 
         <span class="n">panel</span> <span class="o">=</span> <span class="n">Panel</span><span class="p">(</span>
