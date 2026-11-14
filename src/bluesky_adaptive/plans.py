@@ -40,6 +40,8 @@ SAMPLE_SUGGESTIONS_RUN_KEY: Literal["sample_suggestions"] = "sample_suggestions"
 OPTIMIZE_RUN_KEY: Literal["optimize"] = "optimize"
 OPTIMIZE_IN_RUN_KEY: Literal["optimize_in_run"] = "optimize_in_run"
 OPTIMIZE_IN_RUN_TRACKING_STREAM: Literal["optimization"] = "optimization"
+# Key under ``start["bluesky-adaptive"]`` of the suggestion IDs in scan order.
+ACQUISITION_ORDER_KEY: Literal["acquisition_order"] = "acquisition_order"
 
 
 @plan
@@ -55,9 +57,9 @@ def default_acquire(
     """
     Acquire data for optimization. Simply a list scan.
 
-    Includes ``"blop_suggestions"`` metadata containing the routed suggestions for
-    backwards compatibility and ``"blop_acquisition_order"`` containing IDs in actual scan order.
-    Use those IDs, rather than positions in ``suggestions``, to associate acquired rows.
+    Records the suggestion IDs in actual scan order as ``start["bluesky-adaptive"]["acquisition_order"]``.
+    Use those IDs, rather than positions in ``suggestions``, to associate acquired rows. For backwards
+    compatibility, ``"blop_acquisition_order"`` duplicates them and ``"blop_suggestions"`` holds the routed suggestions.
 
     Parameters
     ----------
@@ -98,11 +100,14 @@ def default_acquire(
             current_position = None
         suggestions = route_suggestions(suggestions, starting_position=current_position)
 
+    acquisition_order = [suggestion[ID_KEY] for suggestion in suggestions]
     run_md = dict(md or {})
     run_md.update(
         {
+            # Top-level "blop_" keys are kept for back-compat; new keys go under "bluesky-adaptive".
             "blop_suggestions": suggestions,
-            "blop_acquisition_order": [suggestion[ID_KEY] for suggestion in suggestions],
+            "blop_acquisition_order": acquisition_order,
+            "bluesky-adaptive": {**run_md.get("bluesky-adaptive", {}), ACQUISITION_ORDER_KEY: acquisition_order},
             "run_key": _DEFAULT_ACQUIRE_RUN_KEY,
         }
     )

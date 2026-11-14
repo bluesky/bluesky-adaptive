@@ -6,7 +6,8 @@ from typing import Any, Literal
 from bluesky.callbacks import CallbackBase
 from event_model import Event, EventDescriptor, RunStart
 
-_ACQUISITION_ORDER_KEY: Literal["blop_acquisition_order"] = "blop_acquisition_order"
+from ..plans import ACQUISITION_ORDER_KEY
+
 _PRIMARY_STREAM: Literal["primary"] = "primary"
 
 
@@ -14,7 +15,7 @@ class RunEventBuffer(CallbackBase):
     """Buffer the ``"primary"`` event data of acquisition runs by suggestion ID.
 
     Subscribe with ``RE.subscribe(buffer)`` and pass :meth:`pop` to :func:`~bluesky_adaptive.evaluation.per_suggestion`.
-    Buffers runs whose start document has ``"blop_acquisition_order"``, such as from
+    Buffers runs that record ``start["bluesky-adaptive"]["acquisition_order"]``, such as from
     :func:`~bluesky_adaptive.plans.default_acquire`, pairing the n-th event with the n-th suggestion ID.
     """
 
@@ -25,9 +26,10 @@ class RunEventBuffer(CallbackBase):
         self._primary_descriptors: dict[str, str] = {}
 
     def start(self, doc: RunStart) -> None:
-        """Begin buffering the run if it has ``"blop_acquisition_order"``."""
-        if _ACQUISITION_ORDER_KEY in doc:
-            self._acquisition_orders[doc["uid"]] = list(doc[_ACQUISITION_ORDER_KEY])
+        """Begin buffering the run if it records its acquisition order."""
+        acquisition_order = doc.get("bluesky-adaptive", {}).get(ACQUISITION_ORDER_KEY)
+        if acquisition_order is not None:
+            self._acquisition_orders[doc["uid"]] = list(acquisition_order)
             self._events[doc["uid"]] = []
 
     def descriptor(self, doc: EventDescriptor) -> None:
@@ -64,9 +66,9 @@ class RunEventBuffer(CallbackBase):
         """
         if uid not in self._events:
             raise KeyError(
-                f"No buffered run with uid {uid!r}. RunEventBuffer buffers runs whose start document records "
-                f"{_ACQUISITION_ORDER_KEY!r}, such as default_acquire runs, must be subscribed with "
-                "RE.subscribe(buffer), and returns each run once."
+                f"No buffered run with uid {uid!r}. RunEventBuffer buffers runs that record "
+                f"start['bluesky-adaptive'][{ACQUISITION_ORDER_KEY!r}], such as default_acquire runs, must be "
+                "subscribed with RE.subscribe(buffer), and returns each run once."
             )
         acquisition_order = self._acquisition_orders.pop(uid)
         events = self._events.pop(uid)
