@@ -1,5 +1,6 @@
 """Unit tests for the OptimizationLogger callback."""
 
+import io
 import math
 import re
 from unittest.mock import MagicMock
@@ -11,10 +12,9 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.table import Table
 
+from bluesky_adaptive._records import ITERATION_FIELD, RunRecorder
 from bluesky_adaptive.callbacks.logger import OptimizationLogger
 from bluesky_adaptive.callbacks.utils import RunningStats
-from bluesky_adaptive.plan_stubs import _ITERATION_KEY
-from bluesky_adaptive.utils import Source
 
 
 @pytest.fixture()
@@ -33,17 +33,20 @@ def _make_start(**overrides) -> RunStart:
     return RunStart(**doc)
 
 
-def _make_descriptor(data_keys: dict | None = None, **overrides) -> EventDescriptor:
+def _make_descriptor(data_keys: dict | None = None, object_keys: dict | None = None, **overrides) -> EventDescriptor:
     if data_keys is None:
         data_keys = {
-            "x": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-            "y": {"dtype": "number", "shape": [], "source": Source.OUTCOME.value},
+            "x": {"dtype": "number", "shape": [], "source": "test"},
+            "y": {"dtype": "number", "shape": [], "source": "test"},
         }
+    if object_keys is None:
+        object_keys = {"parameters": ["x"], "outcomes": ["y"]}
     doc = {
         "uid": "desc-001",
         "time": 0.0,
         "run_start": "start-001",
         "data_keys": data_keys,
+        "object_keys": object_keys,
     }
     doc.update(overrides)
     return EventDescriptor(**doc)
@@ -73,9 +76,9 @@ def _make_stop(exit_status: str = "success", **overrides) -> RunStop:
     return RunStop(**doc)
 
 
-def _setup_descriptor(logger, data_keys=None):
+def _setup_descriptor(logger, data_keys=None, object_keys=None):
     """Feed a descriptor so the logger knows about param/outcome keys."""
-    logger.descriptor(_make_descriptor(data_keys=data_keys))
+    logger.descriptor(_make_descriptor(data_keys=data_keys, object_keys=object_keys))
 
 
 def _run_to_stop(logger, exit_status="success", reason=""):
@@ -162,18 +165,21 @@ def test_start_without_iterations_omits_iterations_line(logger, console):
     assert "Run UID" in header
 
 
-def test_descriptor(logger):
-    """descriptor() should accept a well-formed EventDescriptor without error."""
+def test_descriptor_shows_parameter_then_outcome_columns(logger, console):
     logger.descriptor(
         _make_descriptor(
             data_keys={
-                "x1": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-                "x2": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-                "y": {"dtype": "number", "shape": [], "source": Source.OUTCOME.value},
-                "other": {"dtype": "string", "shape": [], "source": Source.OTHER.value},
-            }
+                "x1": {"dtype": "number", "shape": [], "source": "test"},
+                "x2": {"dtype": "number", "shape": [], "source": "test"},
+                "y": {"dtype": "number", "shape": [], "source": "test"},
+                "other": {"dtype": "string", "shape": [], "source": "test"},
+            },
+            object_keys={"parameters": ["x1", "x2"], "outcomes": ["y"]},
         )
     )
+
+    header = console.print.call_args_list[-1].args[0]
+    assert [column.header for column in header.columns] == ["Suggestion ID", "x1", "x2", "y"]
 
 
 def test_event_empty_data_returns_early(logger, console):
@@ -225,7 +231,7 @@ def test_event_multiple_iterations(logger, console):
     logger.start(_make_start(iterations=8))
     _setup_descriptor(logger)
     for i in range(8):
-        logger.event(_make_event(data={_ITERATION_KEY: i}))
+        logger.event(_make_event(data={ITERATION_FIELD: i}))
     assert console.print.call_count >= 1
     assert console.rule.call_count >= 1
     rule_values = _collect_ruler_info(console.rule.call_args_list[0])
@@ -238,9 +244,10 @@ def test_event_non_numeric_data(logger, console):
     _setup_descriptor(
         logger,
         data_keys={
-            "x": {"dtype": "number", "shape": [], "source": Source.PARAMETER.value},
-            "label": {"dtype": "string", "shape": [], "source": Source.OUTCOME.value},
+            "x": {"dtype": "number", "shape": [], "source": "test"},
+            "label": {"dtype": "string", "shape": [], "source": "test"},
         },
+        object_keys={"parameters": ["x"], "outcomes": ["label"]},
     )
     doc = _make_event(data={"x": 1.0, "label": "good"})
     result = logger.event(doc)
@@ -251,7 +258,7 @@ def test_event_null_iterations(logger, console):
     logger.start(_make_start(iterations=10))
     _setup_descriptor(logger)
     for _ in range(5):
-        logger.event(_make_event(data={_ITERATION_KEY: -1}))
+        logger.event(_make_event(data={ITERATION_FIELD: -1}))
         logger.event(_make_event(data={}))
     assert console.print.call_count >= 1
     assert console.rule.call_count >= 1
@@ -285,48 +292,38 @@ def test_stop_without_events(logger, console):
     assert console.rule.call_count >= 1
 
 
-def test_full_lifecycle(logger, console):
-    """Run through the full document sequence without error."""
-    logger.start(
-        _make_start(
-            iterations=3,
-            n_points=2,
-            optimizer="BoTorch",
-            actuators=["x"],
-            sensors=["y"],
-        )
+def test_record_run_lifecycle():
+    """The logger shows a record run's parameters and outcomes by kind and hides its bookkeeping fields."""
+    console = Console(file=io.StringIO(), width=120, record=True)
+    recorder = RunRecorder(
+        callbacks=[OptimizationLogger(console=console)],
+        metadata={"plan_name": "optimize", "iterations": 1, "n_points": 2},
     )
-    logger.descriptor(_make_descriptor())
 
-    for i in range(3):
-        logger.event(
-            _make_event(
-                data={
-                    "x": [float(i), float(i) + 0.5],
-                    "y": [float(i) * 10, float(i) * 10 + 5],
-                    "suggestion_ids": [f"s{2 * i}", f"s{2 * i + 1}"],
-                },
-                seq_num=i + 1,
-                uid=f"event-{i:03d}",
-            )
-        )
+    recorder.record(
+        0,
+        "acquisition-uid",
+        [{"_id": "a", "x1": 0.5, "x2": 1.5}, {"_id": "b", "x1": 0.7, "x2": 1.7}],
+        [{"_id": "a", "loss": 2.0}, {"_id": "b", "loss": 3.0}],
+    )
+    recorder.stop()
 
-    logger.stop(_make_stop())
-
-    assert console.print.call_count >= 1
-    assert console.rule.call_count >= 1
+    text = console.export_text()
+    summary_kinds = dict(re.findall(r"^\W*(\w+)\W+(param|outcome)\W", text, re.MULTILINE))
+    assert summary_kinds == {"x1": "param", "x2": "param", "loss": "outcome"}
+    assert "adaptive_" not in text
 
 
 def test_multi_run_accumulates_iterations(logger, console):
     """Calling start() twice should bump the internal iteration bookkeeping by how many iterations have been recorded"""
     logger.start(_make_start(iterations=5))
     logger.descriptor(_make_descriptor())
-    logger.event(_make_event(data={"x": -1.5, "y": -3.14, _ITERATION_KEY: 0}))
+    logger.event(_make_event(data={"x": -1.5, "y": -3.14, ITERATION_FIELD: 0}))
     logger.stop(_make_stop())
     logger.start(_make_start(iterations=5))
     # logger.descriptor(_make_descriptor())
     for i in range(3):
-        doc = _make_event(data={"x": 1.5 * i, "y": 3.14, _ITERATION_KEY: i})
+        doc = _make_event(data={"x": 1.5 * i, "y": 3.14, ITERATION_FIELD: i})
         logger.event(doc)
     logger.stop(_make_stop())
     logger.start(_make_start(iterations=3))
@@ -338,6 +335,18 @@ def test_multi_run_accumulates_iterations(logger, console):
 
     iter_metadata = _collect_iterations_from_header(call_list[-1])
     assert iter_metadata == [3, 4, 7]
+
+
+def test_unbounded_run_reports_iterations_completed_by_earlier_runs(logger, console):
+    logger.start(_make_start(iterations=2))
+    _setup_descriptor(logger)
+    for i in range(2):
+        logger.event(_make_event(data={"x": 1.0, "y": 2.0, ITERATION_FIELD: i}))
+    logger.stop(_make_stop())
+    logger.start(_make_start(iterations=None))
+
+    header = str(console.print.call_args_list[-1].args[0].renderable)
+    assert "Until stopping criterion (2 completed)" in header
 
 
 def test_running_stats_empty():

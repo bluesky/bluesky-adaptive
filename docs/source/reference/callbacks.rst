@@ -1,14 +1,6 @@
 Callbacks
 =========
 
-OptimizationCallbackRouter
---------------------------
-
-.. autoclass:: bluesky_adaptive.callbacks.OptimizationCallbackRouter
-   :members:
-   :undoc-members:
-   :show-inheritance:
-
 OptimizationLogger
 ------------------
 
