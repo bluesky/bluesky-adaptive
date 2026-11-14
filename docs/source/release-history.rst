@@ -9,9 +9,7 @@ Breaking Changes
 ................
 * The Queue Server runner no longer listens to the Bluesky document stream. Right after submitting each plan, it
   calls the evaluation function in a background thread with the queue item UID returned by ``item_add``. The
-  evaluation function waits for its data, selects the run, and raises if the acquisition failed; the item's
-  ``history_get()`` entry lists its run UIDs. ``OptimizationResult.uids`` holds queue item UIDs. The
-  ``queueserver`` extra requires ``bluesky-queueserver-api>=0.0.14``
+  evaluation function should wait for its data and raises if the acquisition failed
   (`#76 <https://github.com/bluesky/bluesky-adaptive/issues/76>`_).
 * ``QueueserverAgent`` and ``QueueserverClient`` no longer accept ``document_dispatcher``. ``acquisition_run_filter``,
   ``ConsumerCallback``, ``CORRELATION_UID_KEY``, and ``QueueserverClient.start_listener``/``stop_listener`` are

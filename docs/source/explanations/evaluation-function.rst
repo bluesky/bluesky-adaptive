@@ -36,13 +36,15 @@ For a custom plan that returns a richer UID, use that concrete type in both the 
     from dataclasses import dataclass
 
     @dataclass(frozen=True)
-    class QueueAcquisitionUID:
-        correlation_uid: str
-        item_uid: str | None
+    class DarkCorrectedAcquisitionUID:
+        light_run_uid: str
+        dark_run_uid: str
 
-    class QueueEvaluation(EvaluationFunction[QueueAcquisitionUID]):
-        def __call__(self, uid: QueueAcquisitionUID, suggestions: Sequence[Mapping]) -> Sequence[Mapping]:
-            return analyze_queue_data(uid, suggestions)
+    class DarkCorrectedEvaluation(EvaluationFunction[DarkCorrectedAcquisitionUID]):
+        def __call__(self, uid: DarkCorrectedAcquisitionUID, suggestions: Sequence[Mapping]) -> Sequence[Mapping]:
+            light_run = self.tiled_client[uid.light_run_uid]
+            dark_run = self.tiled_client[uid.dark_run_uid]
+            return analyze_dark_corrected(light_run, dark_run, suggestions)
 
 Although the interface is intentionally minimal, separating setup from
 execution is recommended.
