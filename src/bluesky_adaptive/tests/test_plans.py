@@ -1071,13 +1071,15 @@ def test_default_acquire_records_acquisition_order(RE):
 
     RE.subscribe(callback)
     try:
-        RE(default_acquire(suggestions, [movable], [readable]))
+        # Caller metadata under "bluesky-adaptive" must be kept alongside the acquisition order.
+        RE(default_acquire(suggestions, [movable], [readable], md={"bluesky-adaptive": {"optimization_uid": "abc"}}))
     finally:
         RE.unsubscribe(callback)
 
     assert len(start_docs) == 1
     assert start_docs[0]["blop_suggestions"] == [suggestions[1], suggestions[0]]
     assert start_docs[0]["blop_acquisition_order"] == ["near", "far"]
+    assert start_docs[0]["bluesky-adaptive"] == {"optimization_uid": "abc", "acquisition_order": ["near", "far"]}
 
 
 def test_default_acquire_multiple_movables_readables(RE):

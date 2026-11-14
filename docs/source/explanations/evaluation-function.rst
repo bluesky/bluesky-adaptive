@@ -61,3 +61,5 @@ Where possible, keep the actual objective calculation in a separate function
 that operates on a single sample or suggestion. This separation makes the
 analysis logic easier to test, reuse, and maintain independently of the data
 retrieval code.
+
+.. note:: For helpers that build evaluation functions, see :doc:`../reference/evaluation`.
