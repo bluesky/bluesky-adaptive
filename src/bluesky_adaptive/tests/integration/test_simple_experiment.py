@@ -117,7 +117,7 @@ def test_simple_experiment_tiled_round_trip() -> None:
         assert all(outcome["himmelblau_2d"] >= 0 for outcome in evaluation.outcomes)
         assert len(agent.ax_client.summarize()) == 4
 
-        records = tiled_client.search(Key("start.adaptive.optimization_uid") == agent.optimization_uid)
+        records = tiled_client.search(Key("start.bluesky-adaptive.optimization_uid") == agent.optimization_uid)
         assert len(records) == 1
         record = records.values().first()
         assert record.start["plan_name"] == "optimize"

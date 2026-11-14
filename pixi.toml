@@ -6,7 +6,7 @@ authors = [
 channels = ["conda-forge"]
 name = "bluesky-adaptive"
 platforms = ["linux-64", "osx-arm64"]
-version = "1.0.0"
+version = "1.0.1"
 requires-pixi = ">=0.82.1"
 
 [dependencies]

@@ -288,11 +288,16 @@ def collect_optimization_metadata(optimization_problem: OptimizationProblem) -> 
         acquisition_plan_name = optimization_problem.acquisition_plan.__name__  # type: ignore[attr-defined]
     else:
         acquisition_plan_name = optimization_problem.acquisition_plan.__class__.__name__
-    return {
+    metadata = {
         "evaluation_function": evaluation_function_name,
         "acquisition_plan": acquisition_plan_name,
         "optimizer": optimization_problem.optimizer.__class__.__name__,
         "sensors": [sensor.name for sensor in optimization_problem.sensors],
         "actuators": [actuator.name for actuator in optimization_problem.actuators],
-        "adaptive": {"optimization_uid": optimization_problem.optimization_uid},
+    }
+    # Duplicate to preserve back-compat. Change only on v2 release. All new keys added here
+    # should go under "bluesky-adaptive".
+    return {
+        **metadata,
+        "bluesky-adaptive": {"optimization_uid": optimization_problem.optimization_uid, **metadata},
     }

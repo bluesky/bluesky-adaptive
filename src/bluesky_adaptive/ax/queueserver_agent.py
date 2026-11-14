@@ -1,6 +1,6 @@
 """Agent interface for asynchronous optimization using Bluesky Queueserver and Ax."""
 
-from collections.abc import Callable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from concurrent.futures import Future
 from typing import Any
 
@@ -12,8 +12,6 @@ except ImportError as e:
         "The queueserver integration requires additional dependencies. "
         "Install them with: pip install bluesky-adaptive[queueserver]"
     ) from e
-from bluesky.callbacks.zmq import RemoteDispatcher
-from event_model import RunStart
 
 from ..protocols import (
     Actuator,
@@ -43,8 +41,6 @@ class QueueserverAgent(_AxAgentMixin):
     ----------
     re_manager_api : bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI
         The manager API for interaction with Bluesky queueserver.
-    document_dispatcher : RemoteDispatcher
-        Dispatcher for consuming Bluesky documents from the remote server.
     sensors : Sequence[str]
         The sensors to use for acquisition. These should be the minimal set
         of sensors that are needed to compute the objectives.
@@ -52,8 +48,9 @@ class QueueserverAgent(_AxAgentMixin):
         The degrees of freedom that the agent can control, which determine the search space.
     objectives : Sequence[Objective]
         The objectives which the agent will try to optimize.
-    evaluation_function : EvaluationFunction
-        The function to evaluate acquired data and produce outcomes.
+    evaluation_function : EvaluationFunction[str]
+        Called in a background thread with the queue item UID of each submitted plan. It must wait until
+        the data it needs is ready, raise if the acquisition failed, and return outcomes.
     acquisition_plan : str | None, optional
         The acquisition plan to use for acquiring data from the beamline. If not provided,
         :func:`bluesky_adaptive.plans.default_acquire` will be assumed.
@@ -65,11 +62,6 @@ class QueueserverAgent(_AxAgentMixin):
         The path to the checkpoint file to save the optimizer's state to.
     acquisition_plan_kwargs : Mapping[str, Any] | None, optional
         Additional arguments to pass to the acquisition plan.
-    acquisition_run_filter : Callable[[RunStart], bool] | None, optional
-        Selects the run to evaluate when the acquisition plan opens more than one run carrying the
-        submitted metadata. Runs whose start document does not satisfy the filter are ignored. For example,
-        ``lambda start: not start.get("dark_frame", False)`` skips xpdAcq dark-frame runs. If not provided,
-        the first run carrying the metadata is evaluated.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -86,7 +78,6 @@ class QueueserverAgent(_AxAgentMixin):
     def __init__(
         self,
         re_manager_api: bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI,
-        document_dispatcher: RemoteDispatcher,
         sensors: Sequence[str],
         dofs: Sequence[DOF],
         objectives: Sequence[Objective],
@@ -96,7 +87,6 @@ class QueueserverAgent(_AxAgentMixin):
         outcome_constraints: Sequence[OutcomeConstraint] | None = None,
         checkpoint_path: str | None = None,
         acquisition_plan_kwargs: Mapping[str, Any] | None = None,
-        acquisition_run_filter: Callable[[RunStart], bool] | None = None,
         **kwargs: Any,
     ):
         self._sensors = sensors
@@ -110,7 +100,6 @@ class QueueserverAgent(_AxAgentMixin):
         self._evaluation_function = evaluation_function
         self._acquisition_plan = acquisition_plan
         self._acquisition_plan_kwargs = acquisition_plan_kwargs or {}
-        self._acquisition_run_filter = acquisition_run_filter
         self._optimizer = AxOptimizer(
             parameters=[dof.to_ax_parameter_config() for dof in dofs],
             objective=to_ax_objective_str(objectives),
@@ -123,7 +112,7 @@ class QueueserverAgent(_AxAgentMixin):
         )
         self._runner = QueueserverOptimizationRunner(
             self.to_optimization_problem(),
-            QueueserverClient(re_manager_api, document_dispatcher),
+            QueueserverClient(re_manager_api),
         )
 
     @property
@@ -147,7 +136,11 @@ class QueueserverAgent(_AxAgentMixin):
         return self._acquisition_plan
 
     def stop(self) -> None:
-        """Stop the queueserver runner."""
+        """
+        Stop submitting plans; the future resolves after the in-flight evaluation returns.
+
+        See :meth:`bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop`.
+        """
         self._runner.stop()
 
     @property
@@ -164,7 +157,6 @@ class QueueserverAgent(_AxAgentMixin):
             evaluation_function=self._evaluation_function,
             acquisition_plan=self._acquisition_plan,
             acquisition_plan_kwargs=self._acquisition_plan_kwargs,
-            acquisition_run_filter=self._acquisition_run_filter,
         )
 
     def run(
@@ -174,8 +166,8 @@ class QueueserverAgent(_AxAgentMixin):
         Start the optimization loop.
 
         Validates the queueserver state, then begins the suggest -> acquire -> ingest
-        cycle. This method returns immediately; the optimization runs asynchronously
-        via callbacks.
+        cycle. This method returns immediately; the optimization runs in a background
+        thread.
 
         Parameters
         ----------
@@ -192,9 +184,9 @@ class QueueserverAgent(_AxAgentMixin):
         -------
         concurrent.futures.Future[OptimizationResult]
             A future that resolves to an :class:`~bluesky_adaptive.queueserver.OptimizationResult`
-            when all iterations complete or when :meth:`stop` is called. If an
-            unhandled exception occurs the future will hold it and re-raise on
-            ``.result()``.
+            when all iterations complete, or after :meth:`stop` once the in-flight
+            evaluation returns. If an unhandled exception occurs the future will hold
+            it and re-raise on ``.result()``.
 
         Raises
         ------

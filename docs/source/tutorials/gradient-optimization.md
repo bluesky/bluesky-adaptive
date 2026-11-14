@@ -192,7 +192,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 from tiled.queries import Key
 
-res_client = tiled_client.search(Key("start.adaptive.optimization_uid") == agent.optimization_uid).values().first()
+res_client = tiled_client.search(Key("start.bluesky-adaptive.optimization_uid") == agent.optimization_uid).values().first()
 data = res_client["primary"].read().to_dataframe()
 
 fig, ax = plt.subplots(figsize=(12, 8))

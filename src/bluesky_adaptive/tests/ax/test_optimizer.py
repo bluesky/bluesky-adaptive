@@ -226,6 +226,53 @@ def test_ax_optimizer_register_failures():
     assert trial_df.trial_status.eq("FAILED").all()
 
 
+def _single_parameter_optimizer() -> AxOptimizer:
+    return AxOptimizer(
+        parameters=[RangeParameterConfig(name="x1", bounds=(-5.0, 5.0), parameter_type="float")],
+        objective="y1",
+    )
+
+
+def test_ax_optimizer_register_suggestions_attaches_trials_only_for_suggestions_without_id():
+    optimizer = _single_parameter_optimizer()
+    suggestions = optimizer.suggest(num_points=2)
+
+    registered = optimizer.register_suggestions([{"x1": -4.0}, suggestions[0], {"x1": 4.0}, suggestions[1]])
+
+    assert registered == [{"_id": 2, "x1": -4.0}, suggestions[0], {"_id": 3, "x1": 4.0}, suggestions[1]]
+    assert len(optimizer.ax_client.summarize()) == 4
+
+
+def _unknown_id(optimizer, suggestion):
+    return {**suggestion, "_id": 99}
+
+
+def _edited_parameters(optimizer, suggestion):
+    return {**suggestion, "x1": suggestion["x1"] + 1.0}
+
+
+def _completed_trial(optimizer, suggestion):
+    optimizer.ingest([{**suggestion, "y1": 0.0}])
+    return suggestion
+
+
+def _failed_trial(optimizer, suggestion):
+    optimizer.register_failures([suggestion])
+    return suggestion
+
+
+@pytest.mark.parametrize("make_suggestion", [_unknown_id, _edited_parameters, _completed_trial, _failed_trial])
+def test_ax_optimizer_register_suggestions_rejects_ids_not_awaiting_results(make_suggestion):
+    optimizer = _single_parameter_optimizer()
+    suggestion = make_suggestion(optimizer, optimizer.suggest(num_points=1)[0])
+
+    with pytest.raises(ValueError):
+        optimizer.register_suggestions([{"x1": 1.0}, suggestion])
+
+    # The valid manual point before the rejected one must not leave a pending trial behind.
+    assert len(optimizer.ax_client.summarize()) == 1
+
+
 def test_ax_optimizer_checkpoint_no_path():
     optimizer = AxOptimizer(
         parameters=[

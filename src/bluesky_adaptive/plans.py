@@ -10,7 +10,7 @@ import bluesky.preprocessors as bpp
 from bluesky.protocols import Readable
 from bluesky.utils import Msg, MsgGenerator, plan
 
-from ._records import RecordRun
+from ._records import RunRecorder
 from .plan_stubs import list_scan_in_run, read_step, seq_read
 from .protocols import (
     ID_KEY,
@@ -128,7 +128,7 @@ def default_acquire(
 def _acquire_and_evaluate(
     optimization_problem: OptimizationProblem[TUid],
     suggestions: Sequence[Mapping],
-    record: RecordRun | None,
+    recorder: RunRecorder | None,
     iteration: int,
     *args: Any,
     **kwargs: Any,
@@ -148,8 +148,8 @@ def _acquire_and_evaluate(
         )
         outcomes = optimization_problem.evaluation_function(uid, suggestions)
         _validate_outcomes(outcomes, suggestions)
-        if record is not None:
-            record.record(iteration, uid, suggestions, outcomes)
+        if recorder is not None:
+            recorder.record(iteration, uid, suggestions, outcomes)
     except Exception:
         if isinstance(optimizer, TrialFaultAware):
             optimizer.register_failures(suggestions)
@@ -234,7 +234,7 @@ def optimize(
     optimizer = optimization_problem.optimizer
     if iterations is None and not isinstance(optimizer, SupportsStoppingCriteria):
         raise ValueError("iterations=None requires an optimizer that implements SupportsStoppingCriteria")
-    record = RecordRun(
+    recorder = RunRecorder(
         callbacks=callbacks,
         metadata={
             **collect_optimization_metadata(optimization_problem),
@@ -251,7 +251,7 @@ def optimize(
             suggestions = []  # a failing suggest() must not report the previous iteration's IDs
             suggestions = optimizer.suggest(n_points)
             _validate_suggestions(suggestions)
-            _, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, record, iteration, **kwargs)
+            _, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, recorder, iteration, **kwargs)
             optimizer.ingest(outcomes)
 
             if isinstance(optimizer, SupportsStoppingCriteria):
@@ -259,7 +259,7 @@ def optimize(
                 if stop_now:
                     reason = f"Stopping criterion met at iteration {iteration}: {stop_reason or 'No reason provided'}"
                     logger.info(reason)
-                    record.stop("success", reason)
+                    recorder.stop("success", reason)
                     return
 
             # Possibly take a checkpoint of the optimizer state
@@ -268,9 +268,9 @@ def optimize(
             # Bluesky checkpoint for mid-optimization pauses
             yield Msg("checkpoint")
     except BaseException as error:
-        record.stop_for(error, iteration, suggestions)
+        recorder.stop_for(error, iteration, suggestions)
         raise
-    record.stop()
+    recorder.stop()
 
 
 @plan
@@ -431,7 +431,7 @@ def sample_suggestions(
         suggestions = optimization_problem.optimizer.register_suggestions(suggestions)
     _validate_suggestions(suggestions)
 
-    record = RecordRun(
+    recorder = RunRecorder(
         callbacks=callbacks,
         metadata={
             **collect_optimization_metadata(optimization_problem),
@@ -440,12 +440,12 @@ def sample_suggestions(
         },
     )
     try:
-        uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, record, -1, **kwargs)
+        uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, recorder, -1, **kwargs)
         optimization_problem.optimizer.ingest(outcomes)
     except BaseException as error:
-        record.stop_for(error, -1, suggestions)
+        recorder.stop_for(error, -1, suggestions)
         raise
-    record.stop()
+    recorder.stop()
     return uid, suggestions, outcomes
 
 
@@ -489,7 +489,7 @@ def acquire_baseline(
     else:
         acquisition_plan = optimization_problem.acquisition_plan
     points = [parameterization_copy]
-    record = RecordRun(
+    recorder = RunRecorder(
         callbacks=callbacks,
         metadata={
             **collect_optimization_metadata(optimization_problem),
@@ -502,9 +502,9 @@ def acquire_baseline(
         uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, **kwargs)
         outcomes = optimization_problem.evaluation_function(uid, points)
         _validate_outcomes(outcomes, points)
-        record.record(-1, uid, points, outcomes)
+        recorder.record(-1, uid, points, outcomes)
         optimizer.ingest([{**outcomes[0], **parameterization_copy}])
     except BaseException as error:
-        record.stop_for(error, -1, points)
+        recorder.stop_for(error, -1, points)
         raise
-    record.stop()
+    recorder.stop()

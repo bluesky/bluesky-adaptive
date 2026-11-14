@@ -62,14 +62,14 @@ def _custom_identifier_acquisition_plan(suggestions, actuators, sensors, *args, 
 
 @dataclass
 class _DataclassAcquisitionUID:
-    correlation_uid: str
+    run_uid: str
     item_uid: str | None
     plan_name: str
     metadata: dict[str, object]
 
 
 _DATACLASS_ACQUISITION_UID = _DataclassAcquisitionUID(
-    correlation_uid="correlation-123",
+    run_uid="run-123",
     item_uid=None,
     plan_name="count",
     metadata={"stream": "primary"},
@@ -992,14 +992,14 @@ def test_default_acquire_merges_metadata(RE):
                 suggestions,
                 [movable],
                 [readable],
-                md={"blop_correlation_uid": "test-correlation-uid"},
+                md={"sample": "test-sample"},
             )
         )
     finally:
         RE.unsubscribe(callback)
 
     assert len(start_docs) == 1
-    assert start_docs[0]["blop_correlation_uid"] == "test-correlation-uid"
+    assert start_docs[0]["sample"] == "test-sample"
     assert start_docs[0]["blop_suggestions"] == suggestions
     assert start_docs[0]["run_key"] == "default_acquire"
 
@@ -1323,7 +1323,27 @@ def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, pla
     RE(run_plan(problem, callback))
 
     start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == plan_name)
-    assert start["adaptive"]["optimization_uid"] == problem.optimization_uid
+    assert start["bluesky-adaptive"]["optimization_uid"] == problem.optimization_uid
+
+
+def test_optimization_runs_duplicate_released_metadata_at_top_level(RE):
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(return_value=[{"objective": 0.0, "_id": 0}]),
+    )
+    callback, documents = _collect_documents()
+
+    RE(optimize(problem, iterations=1, callbacks=[callback]))
+
+    start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == "optimize")
+    assert start["sensors"] == ["objective"]
+    assert start["actuators"] == ["x1"]
+    for key in ("evaluation_function", "acquisition_plan", "optimizer", "sensors", "actuators"):
+        assert start["bluesky-adaptive"][key] == start[key]
 
 
 class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...

@@ -425,4 +425,4 @@ def test_optimize_run_records_optimization_uid(secoundary_agent_prep):
     list(secoundary_agent_prep.optimize(0))
 
     start = next(doc for name, doc in documents if name == "start")
-    assert start["adaptive"]["optimization_uid"] == secoundary_agent_prep.optimization_uid
+    assert start["bluesky-adaptive"]["optimization_uid"] == secoundary_agent_prep.optimization_uid

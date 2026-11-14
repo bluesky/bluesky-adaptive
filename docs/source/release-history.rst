@@ -7,17 +7,24 @@ Unreleased
 
 Breaking Changes
 ................
-* ``QueueserverClient`` no longer enables queue autostart and no longer accepts ``autostart``. Start the queue or
-  call ``re_manager_api.queue_autostart(True)`` yourself
-  (`#84 <https://github.com/bluesky/bluesky-adaptive/issues/84>`_).
+* The Queue Server runner no longer listens to the Bluesky document stream. Right after submitting each plan, it
+  calls the evaluation function in a background thread with the queue item UID returned by ``item_add``. The
+  evaluation function should wait for its data and raise if the acquisition failed. ``OptimizationResult.uids``
+  holds queue item UIDs (`#76 <https://github.com/bluesky/bluesky-adaptive/issues/76>`_).
+* ``QueueserverAgent`` and ``QueueserverClient`` no longer accept ``document_dispatcher``. ``acquisition_run_filter``,
+  ``ConsumerCallback``, ``CORRELATION_UID_KEY``, and ``QueueserverClient.start_listener``/``stop_listener`` are
+  removed, and submitted plans no longer carry ``blop_correlation_uid``.
+* ``QueueserverOptimizationRunner.stop()`` and ``QueueserverAgent.stop()`` stop further submissions without
+  interrupting the in-flight evaluation. The future resolves with the partial result after that evaluation
+  returns and is ingested, instead of immediately.
 * ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` send the record of each evaluated point to the
   callbacks passed in the new ``callbacks`` argument instead of writing it through the RunEngine. Each call
   composes one record run: a ``start`` document, a ``primary`` descriptor, one event per evaluated point, and a
   ``stop`` document. ``Agent`` and ``Scipy`` pass the callbacks registered with ``subscribe``. ``optimize`` and
   ``sample_suggestions`` no longer open an outer RunEngine run, so callbacks subscribed with ``RE.subscribe`` see
   only acquisition runs and ``RE(agent.optimize())`` returns only acquisition run UIDs. To store record runs in
-  Tiled, also subscribe the ``TiledWriter`` to the agent; find them by ``start["adaptive"]["optimization_uid"]``
-  (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
+  Tiled, also subscribe the ``TiledWriter`` to the agent; find them by
+  ``start["bluesky-adaptive"]["optimization_uid"]`` (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
 * Record-run events name their bookkeeping fields ``adaptive_suggestion_id`` (a string), ``adaptive_iteration``,
   and ``adaptive_acquisition_uid`` instead of ``suggestion_ids``, ``iteration``, and ``acquisition_uid``.
   Acquisition UIDs that are not strings, including tuples and arrays, are stored as their ``repr``. The
@@ -30,24 +37,53 @@ Breaking Changes
 
 Features
 ........
-* ``QueueserverAgent`` and ``QueueserverOptimizationProblem`` accept ``acquisition_run_filter``, a predicate on
-  the start document that selects the run to evaluate when the acquisition plan opens more than one run with
-  the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
-  completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``.
 * ``OptimizationProblem`` and ``QueueserverOptimizationProblem`` gain ``optimization_uid``, which the ``optimize``,
-  ``optimize_in_run``, and ``sample_suggestions`` runs record as ``start["adaptive"]["optimization_uid"]``.
+  ``optimize_in_run``, and ``sample_suggestions`` runs record as ``start["bluesky-adaptive"]["optimization_uid"]``.
   ``Agent`` and ``Scipy`` generate one, expose it, and accept it to continue an optimization
   (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
+* Optimization run metadata is also recorded under ``"bluesky-adaptive"`` in start documents, duplicating
+  ``evaluation_function``, ``acquisition_plan``, ``optimizer``, ``sensors``, and ``actuators``. The top-level keys
+  are kept for backwards compatibility.
 
 Bug Fixes
 .........
-* The Queue Server runner validates suggestions and outcomes like ``optimize`` instead of ingesting mismatched
-  outcomes (`#85 <https://github.com/bluesky/bluesky-adaptive/issues/85>`_).
 * ``optimize`` and ``optimize_step`` mark a step's trials failed on a ``TrialFaultAware`` optimizer when its
   outcomes fail validation, as they already did for acquisition and evaluation errors.
 * ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like
   ``optimize`` instead of ingesting mismatched outcomes.
 * ``optimize`` records the step that meets the stopping criterion.
+
+v1.0.1 (2026-11-07)
+-------------------
+
+Breaking Changes
+................
+* ``CanRegisterSuggestions.register_suggestions`` returns already-registered suggestions unchanged instead of
+  assigning them a new ``"_id"``. ``AxOptimizer`` and ``XoptOptimizer`` raise ``ValueError`` if an ``"_id"`` is no
+  longer awaiting outcomes or its parameters differ, and ``AxOptimizer`` also rejects an unknown ``"_id"``. Remove
+  the ``"_id"`` to register the suggestion as new (`#83 <https://github.com/bluesky/bluesky-adaptive/issues/83>`_).
+* ``QueueserverAgent`` and ``QueueserverClient`` no longer enable queue autostart, and ``QueueserverClient`` no
+  longer accepts ``autostart``. Start the queue or call ``re_manager_api.queue_autostart(True)`` yourself
+  (`#84 <https://github.com/bluesky/bluesky-adaptive/issues/84>`_).
+
+Features
+........
+* ``QueueserverAgent`` and ``QueueserverOptimizationProblem`` accept ``acquisition_run_filter``, a predicate on
+  the start document that selects the run to evaluate when the acquisition plan opens more than one run with
+  the submitted metadata (for example, a dark-frame run before the measurement). Previously the first such run
+  completed the iteration and the next one stopped the campaign with ``current_uid did not match start document``
+  (`#86 <https://github.com/bluesky/bluesky-adaptive/pull/86>`_).
+
+Bug Fixes
+.........
+* ``AxOptimizer`` and ``XoptOptimizer`` no longer register suggestions from ``suggest()`` a second time
+  (`#83 <https://github.com/bluesky/bluesky-adaptive/issues/83>`_).
+* The Queue Server runner validates suggestions and outcomes like ``optimize`` instead of ingesting mismatched
+  outcomes (`#85 <https://github.com/bluesky/bluesky-adaptive/issues/85>`_).
+* ``XoptOptimizer.from_checkpoint`` restores Bayesian generators with a fitted model. ``checkpoint()`` previously
+  saved the model's repr, which restore rejected (`#78 <https://github.com/bluesky/bluesky-adaptive/issues/78>`_).
+
+`Full Changelog <https://github.com/bluesky/bluesky-adaptive/compare/v1.0.0...v1.0.1>`__
 
 v1.0.0 (2026-10-26)
 -------------------

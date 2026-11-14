@@ -36,7 +36,7 @@ suggestion identifier, the acquisition UID, the parameter values, and the outcom
 evaluation function. Record runs do not pass through the RunEngine, so callbacks subscribed with
 ``RE.subscribe`` receive only the acquisition runs. To store both in Tiled, subscribe the same
 ``TiledWriter`` to the RunEngine and to the agent; the record run carries the problem's optimization
-UID in ``start["adaptive"]["optimization_uid"]``.
+UID in ``start["bluesky-adaptive"]["optimization_uid"]``.
 
 :func:`bluesky_adaptive.plans.optimize_in_run` is different: it runs the whole optimization inside
 one RunEngine run and writes the summary to that run's ``optimization`` stream.
