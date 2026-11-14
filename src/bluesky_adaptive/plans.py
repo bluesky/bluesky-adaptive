@@ -411,7 +411,8 @@ def sample_suggestions(
     Raises
     ------
     ValueError
-        If suggestions lack "_id" and optimizer doesn't implement CanRegisterSuggestions.
+        If suggestions lack "_id" and optimizer doesn't implement CanRegisterSuggestions, if their "_id" values are
+        not unique and hashable, or if the outcomes do not carry the same "_id" values.
 
     See Also
     --------

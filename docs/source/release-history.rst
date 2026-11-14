@@ -51,7 +51,11 @@ Bug Fixes
   outcomes fail validation, as they already did for acquisition and evaluation errors.
 * ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like
   ``optimize`` instead of ingesting mismatched outcomes.
+* ``sample_suggestions`` marks its suggestions failed on a ``TrialFaultAware`` optimizer when acquisition,
+  evaluation, or outcome validation fails, like ``optimize``.
 * ``optimize`` records the step that meets the stopping criterion.
+* ``OptimizationLogger`` omits the Iterations line for runs whose start document has no ``iterations``, such as
+  ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
 
 v1.0.1 (2026-11-07)
 -------------------

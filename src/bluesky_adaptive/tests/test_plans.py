@@ -1507,6 +1507,24 @@ def test_sample_suggestions_records_points(RE):
     optimizer.ingest.assert_called_once_with(outcomes)
 
 
+def test_sample_suggestions_failure_registers_failures(RE):
+    suggestions = [{"x1": 0.0, "_id": 0}]
+    optimizer = MagicMock(spec=FaultAwareOptimizer)
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(side_effect=RuntimeError("evaluation failed")),
+        acquisition_plan=_test_acquisition_plan,
+    )
+
+    with pytest.raises(RuntimeError, match="evaluation failed"):
+        RE(sample_suggestions(problem, suggestions))
+
+    optimizer.register_failures.assert_called_once_with(suggestions)
+    optimizer.ingest.assert_not_called()
+
+
 @pytest.mark.parametrize(
     ("suggestions", "outcomes", "message"),
     [
