@@ -27,6 +27,11 @@ Features
 * Optimization run metadata is also recorded under ``"bluesky-adaptive"`` in start documents, duplicating
   ``evaluation_function``, ``acquisition_plan``, ``optimizer``, ``sensors``, and ``actuators``. The top-level keys
   are kept for backwards compatibility.
+* ``QueueserverOptimizationRunner`` runs its loop as an asyncio coroutine instead of in a dedicated thread guarded by
+  a lock. ``run_async()`` and ``submit_suggestions_async()`` on the runner and on ``QueueserverAgent`` run it on the
+  caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
+  on a shared background event loop; cancelling that future cancels the loop. Interpreter exit now waits for an
+  in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
 
 Bug Fixes
 .........

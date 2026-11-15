@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Queueserver &#8212; Bluesky Adaptive 1.0.2.dev5 documentation</title>
+    <title>Queueserver &#8212; Bluesky Adaptive 1.0.2.dev6 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=dd7605ca"></script>
+    <script src="../_static/documentation_options.js?v=ea8e8fa0"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev5" />
+  <meta name="docsearch:version" content="1.0.2.dev6" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -644,6 +644,11 @@ The API may change in future releases without a deprecation period.</p>
 <p>This class coordinates the optimization workflow by getting suggestions from
 the optimizer, submitting acquisition plans to the queueserver, and ingesting
 the outcomes the evaluation function returns for each submitted plan.</p>
+<p>The loop is an asyncio coroutine. <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_async()</span></code></a> and <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions_async()</span></code></a> run it on the
+caller’s event loop; <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a> and <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions()</span></code></a> start it on a shared background event loop
+and return a <a class="reference external" href="https://docs.python.org/3/library/concurrent.futures.html#concurrent.futures.Future" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">concurrent.futures.Future</span></code></a>. Queueserver requests, optimizer calls, and the evaluation
+function are synchronous, so they run in worker threads via <a class="reference external" href="https://docs.python.org/3/library/asyncio-task.html#asyncio.to_thread" title="(in Python v3.15)"><code class="xref py py-func docutils literal notranslate"><span class="pre">asyncio.to_thread()</span></code></a> and never block the
+event loop. A runner executes one loop at a time.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>This class is part of the <strong>experimental</strong> queueserver integration.
@@ -676,9 +681,9 @@ sensors, and evaluation function.</p>
 <dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run">
 <span class="sig-name descname"><span class="pre">run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="Link to this definition">#</a></dt>
 <dd><p>Run the optimization loop.</p>
-<p>Validates the queueserver state, then begins the suggest -&gt; acquire -&gt; ingest
-cycle. This method returns immediately; the optimization runs in a background
-thread that calls the evaluation function with each submitted plan’s queue item UID.</p>
+<p>Validates the queueserver state and submits the first plan, then returns while the
+suggest -&gt; acquire -&gt; ingest cycle continues on a background event loop that calls the evaluation
+function with each submitted plan’s queue item UID. <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_async()</span></code></a> is the coroutine version.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -697,7 +702,8 @@ will not be saved. Optimizer must implement the
 <dt>concurrent.futures.Future[OptimizationResult]</dt><dd><p>A future that resolves to an <a class="reference internal" href="#bluesky_adaptive.queueserver.OptimizationResult" title="bluesky_adaptive.queueserver.OptimizationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationResult</span></code></a> when all
 iterations complete, or after <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">stop()</span></code></a> once the in-flight evaluation
 returns. If the optimization loop raises an unhandled exception the future
-will hold that exception and re-raise it on <code class="docutils literal notranslate"><span class="pre">.result()</span></code>.</p>
+will hold that exception and re-raise it on <code class="docutils literal notranslate"><span class="pre">.result()</span></code>. Cancelling the
+future cancels the loop like cancelling <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_async()</span></code></a>.</p>
 </dd>
 </dl>
 </dd>
@@ -713,11 +719,24 @@ will hold that exception and re-raise it on <code class="docutils literal notran
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">run_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.run_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async" title="Link to this definition">#</a></dt>
+<dd><p>Run the optimization loop on the running event loop and return its result.</p>
+<p>Coroutine version of <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a> for callers with a running event loop, such as Jupyter or a
+service; parameters and errors are the same, and loop errors are raised instead of held in a
+future. Cancelling it abandons the in-flight acquisition: its plan stays queued, its evaluation
+runs to completion in its worker thread, and its outcomes are not ingested.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions">
 <span class="sig-name descname"><span class="pre">submit_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.submit_suggestions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="Link to this definition">#</a></dt>
 <dd><p>Manually submit suggestions to the queue.</p>
-<p>This method returns immediately; the optimization runs in a background thread that calls the evaluation
-function with each submitted plan’s queue item UID.</p>
+<p>This method returns once the plan is submitted; a background event loop calls the evaluation function
+with the plan’s queue item UID and ingests the outcomes. <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions_async()</span></code></a> is the coroutine
+version.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -741,14 +760,25 @@ will hold it and re-raise on <code class="docutils literal notranslate"><span cl
 </dd></dl>
 
 <dl class="py method">
+<dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async">
+<span class="property"><span class="k"><span class="pre">async</span></span><span class="w"> </span></span><span class="sig-name descname"><span class="pre">submit_suggestions_async</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.submit_suggestions_async"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async" title="Link to this definition">#</a></dt>
+<dd><p>Manually submit suggestions to the queue on the running event loop and return the result.</p>
+<p>Coroutine version of <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions()</span></code></a> for callers with a running event loop, such as
+Jupyter or a service; parameters and errors are the same.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
 <dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop">
 <span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop" title="Link to this definition">#</a></dt>
 <dd><p>Stop the optimization loop gracefully.</p>
-<p>No further plans are submitted, and the in-flight evaluation is not interrupted. The future
-returned by <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a> or <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions()</span></code></a> resolves with a partial
-<a class="reference internal" href="#bluesky_adaptive.queueserver.OptimizationResult" title="bluesky_adaptive.queueserver.OptimizationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationResult</span></code></a> after that evaluation returns and is ingested, or holds its
-exception if it raises. Plans already in the queue are not removed. Evaluation functions
-should bound their waits so that a stop takes effect.</p>
+<p>No further plans are submitted, and the in-flight evaluation is not interrupted. After that evaluation
+returns and is ingested, the future returned by <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a> or <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions()</span></code></a> resolves (and
+<a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run_async()</span></code></a> or <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions_async()</span></code></a> returns) with a partial <a class="reference internal" href="#bluesky_adaptive.queueserver.OptimizationResult" title="bluesky_adaptive.queueserver.OptimizationResult"><code class="xref py py-class docutils literal notranslate"><span class="pre">OptimizationResult</span></code></a>,
+or with the evaluation’s exception. Plans already in the queue are not removed. Evaluation functions should
+bound their waits so that a stop takes effect. This method only sets a flag, so it can be called from any
+thread.</p>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -827,7 +857,9 @@ should bound their waits so that a stop takes effect.</p>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.optimization_problem"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner.optimization_problem</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.current_iteration"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner.current_iteration</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner.run()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner.run_async()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner.submit_suggestions()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions_async"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner.submit_suggestions_async()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.stop"><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner.stop()</span></code></a></li>
 </ul>
 </li>

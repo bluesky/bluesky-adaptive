@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.ax.queueserver_agent &#8212; Bluesky Adaptive 1.0.2.dev5 documentation</title>
+    <title>bluesky_adaptive.ax.queueserver_agent &#8212; Bluesky Adaptive 1.0.2.dev6 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../../_static/documentation_options.js?v=dd7605ca"></script>
+    <script src="../../../_static/documentation_options.js?v=ea8e8fa0"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev5" />
+  <meta name="docsearch:version" content="1.0.2.dev6" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -1021,8 +1021,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Start the optimization loop.</span>
 
 <span class="sd">        Validates the queueserver state, then begins the suggest -&gt; acquire -&gt; ingest</span>
-<span class="sd">        cycle. This method returns immediately; the optimization runs in a background</span>
-<span class="sd">        thread.</span>
+<span class="sd">        cycle. This method returns immediately; the optimization runs on a background</span>
+<span class="sd">        event loop. :meth:`run_async` is the coroutine version.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1053,6 +1053,22 @@ window.runMermaid = runMermaid;</script>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runner</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">iterations</span><span class="o">=</span><span class="n">iterations</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="n">n_points</span><span class="p">,</span> <span class="n">checkpoint_interval</span><span class="o">=</span><span class="n">checkpoint_interval</span><span class="p">)</span></div>
 
 
+<div class="viewcode-block" id="QueueserverAgent.run_async">
+<a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.run_async">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">run_async</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">n_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="n">checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Run the optimization loop on the running event loop and return its result.</span>
+
+<span class="sd">        Coroutine version of :meth:`run` for callers with a running event loop, such as Jupyter or a</span>
+<span class="sd">        service; parameters and errors are the same, and loop errors are raised instead of held in a future.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runner</span><span class="o">.</span><span class="n">run_async</span><span class="p">(</span>
+            <span class="n">iterations</span><span class="o">=</span><span class="n">iterations</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="n">n_points</span><span class="p">,</span> <span class="n">checkpoint_interval</span><span class="o">=</span><span class="n">checkpoint_interval</span>
+        <span class="p">)</span></div>
+
+
 <div class="viewcode-block" id="QueueserverAgent.submit_suggestions">
 <a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.submit_suggestions">[docs]</a>
     <span class="k">def</span><span class="w"> </span><span class="nf">submit_suggestions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Future</span><span class="p">[</span><span class="n">OptimizationResult</span><span class="p">]:</span>
@@ -1060,7 +1076,8 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        Evaluate specific parameter combinations.</span>
 
 <span class="sd">        Acquires data for given suggestions and ingests results. Supports both</span>
-<span class="sd">        optimizer suggestions and manual points.</span>
+<span class="sd">        optimizer suggestions and manual points. :meth:`submit_suggestions_async`</span>
+<span class="sd">        is the coroutine version.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
@@ -1078,6 +1095,18 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        run : Run the full optimization loop.</span>
 <span class="sd">        """</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runner</span><span class="o">.</span><span class="n">submit_suggestions</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QueueserverAgent.submit_suggestions_async">
+<a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.submit_suggestions_async">[docs]</a>
+    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">submit_suggestions_async</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""</span>
+<span class="sd">        Evaluate specific parameter combinations on the running event loop and return the result.</span>
+
+<span class="sd">        Coroutine version of :meth:`submit_suggestions` for callers with a running event loop, such as</span>
+<span class="sd">        Jupyter or a service; parameters and errors are the same.</span>
+<span class="sd">        """</span>
+        <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_runner</span><span class="o">.</span><span class="n">submit_suggestions_async</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span></div>
 </div>
 
 </pre></div>
