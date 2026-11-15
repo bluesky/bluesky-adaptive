@@ -1,7 +1,6 @@
 """Agent interface for optimization with Ax as the backend."""
 
 import logging
-import uuid
 from collections.abc import Mapping, Sequence
 from typing import Any, Generic, cast
 
@@ -12,13 +11,12 @@ from ax.core.types import TParamValue
 from ax.global_stopping.strategies.base import BaseGlobalStoppingStrategy
 from bluesky.utils import MsgGenerator
 
-from ..callbacks.logger import OptimizationLogger
+from .._agent import _BaseAgent
 from ..plan_stubs import navigate_to_best
 from ..plans import acquire_baseline, optimize, sample_suggestions
 from ..protocols import (
     AcquisitionPlan,
     Actuator,
-    DocumentCallback,
     EvaluationFunction,
     OptimizationProblem,
     Sensor,
@@ -199,7 +197,7 @@ class _AxAgentMixin:
         self._optimizer.reconfigure_search_space({dof.parameter_name: update for dof, update in dof_mappings.items()})
 
 
-class Agent(_AxAgentMixin, Generic[TUid]):
+class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
     """
     An interface that uses Ax as the backend for optimization and experiment tracking.
 
@@ -285,8 +283,7 @@ class Agent(_AxAgentMixin, Generic[TUid]):
             stopping_strategy=stopping_strategy,
             **kwargs,
         )
-        self._callbacks: list[DocumentCallback] = [OptimizationLogger()]
-        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
+        super().__init__(optimization_uid=optimization_uid)
 
     @classmethod
     def from_checkpoint(
@@ -328,54 +325,9 @@ class Agent(_AxAgentMixin, Generic[TUid]):
         instance._sensors = sensors
         instance._evaluation_function = evaluation_function
         instance._acquisition_plan = acquisition_plan
-        instance._callbacks = [OptimizationLogger()]
-        instance._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
+        _BaseAgent.__init__(instance, optimization_uid=optimization_uid)
 
         return instance
-
-    @property
-    def callbacks(self) -> list[DocumentCallback]:
-        """The list of active optimization callbacks.
-
-        Callbacks in this list receive the documents of the agent's optimization runs. The default list
-        contains an :class:`~bluesky_adaptive.callbacks.logger.OptimizationLogger`.
-
-        The list can be mutated directly, or use :meth:`subscribe` /
-        :meth:`unsubscribe` for convenience.
-        """
-        return self._callbacks
-
-    def subscribe(self, callback: DocumentCallback) -> None:
-        """Subscribe a callback to receive optimization run documents.
-
-        Parameters
-        ----------
-        callback : DocumentCallback
-            A Bluesky document callback, e.g. a :class:`bluesky.callbacks.CallbackBase` instance.
-
-        Raises
-        ------
-        ValueError
-            If *callback* is already subscribed.
-        """
-        if callback in self._callbacks:
-            raise ValueError(f"Callback {callback!r} is already subscribed.")
-        self._callbacks.append(callback)
-
-    def unsubscribe(self, callback: DocumentCallback) -> None:
-        """Unsubscribe a previously subscribed callback.
-
-        Parameters
-        ----------
-        callback : DocumentCallback
-            The callback to remove.
-
-        Raises
-        ------
-        ValueError
-            If *callback* is not subscribed.
-        """
-        self._callbacks.remove(callback)
 
     @property
     def sensors(self) -> Sequence[Sensor]:
@@ -396,11 +348,6 @@ class Agent(_AxAgentMixin, Generic[TUid]):
     def acquisition_plan(self) -> AcquisitionPlan[TUid] | None:
         """The acquisition plan for acquiring data, or ``None`` if using the default."""
         return self._acquisition_plan
-
-    @property
-    def optimization_uid(self) -> str:
-        """Identifier of this agent's optimization."""
-        return self._optimization_uid
 
     def to_optimization_problem(self) -> OptimizationProblem[TUid]:
         """
