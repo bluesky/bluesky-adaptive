@@ -35,11 +35,11 @@ measures the points. Callbacks subscribed with ``RE.subscribe`` receive only the
 To store optimization runs in Tiled, subscribe the ``TiledWriter`` to the agent as well; see
 :doc:`/how-to-guides/use-tiled`.
 
-A callback that raises stops the optimization, but the other callbacks still receive the rest of
-the run, including its ``stop`` document.
+A callback that raises ends the optimization run, but the other callbacks still receive the rest
+of it, including its ``stop`` document.
 
-:func:`bluesky_adaptive.plans.optimize_in_run` is different: it runs the whole optimization inside
-one RunEngine run and writes the summary to that run's ``optimization`` stream.
+:func:`bluesky_adaptive.plans.optimize_in_run` is different: its optimization run is a RunEngine run
+that holds the acquired data, with the summary in its ``optimization`` stream.
 
 What a callback sees
 --------------------

@@ -404,7 +404,7 @@ def test_suggest_after_final_optimization(secoundary_agent_prep):
 
 
 def test_optimize_with_prev_final(secoundary_agent_prep):
-    """An optimization with a prior final result starts from that result."""
+    """An optimization run starts from the final result of the previous run."""
     secoundary_agent_prep.optimizer.final = ScipyResult(
         x=[7.0],
         fun=0.95,

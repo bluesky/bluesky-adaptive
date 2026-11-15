@@ -1,4 +1,4 @@
-"""Record an optimization as a Bluesky run composed with event-model, outside the RunEngine."""
+"""Record optimization runs as Bluesky runs composed with event-model, outside the RunEngine."""
 
 import copy
 import logging
@@ -44,7 +44,7 @@ def _infer_data_key(value: Any) -> DataKey:
 
 class RunRecorder:
     """
-    Records an optimization as one Bluesky run composed with event-model, without a RunEngine.
+    Records one optimization run as a Bluesky run composed with event-model, without a RunEngine.
 
     The start document is sent to the callbacks on construction. Each evaluated point becomes one
     ``primary`` event holding its suggestion ID, iteration, and acquisition UID, followed by its
