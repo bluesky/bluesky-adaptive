@@ -166,8 +166,8 @@ class QueueserverAgent(_AxAgentMixin):
         Start the optimization loop.
 
         Validates the queueserver state, then begins the suggest -> acquire -> ingest
-        cycle. This method returns immediately; the optimization runs in a background
-        thread.
+        cycle. This method returns immediately; the optimization runs on a background
+        event loop. :meth:`run_async` is the coroutine version.
 
         Parameters
         ----------
@@ -197,12 +197,26 @@ class QueueserverAgent(_AxAgentMixin):
         """
         return self._runner.run(iterations=iterations, num_points=n_points, checkpoint_interval=checkpoint_interval)
 
+    async def run_async(
+        self, iterations: int = 1, n_points: int = 1, checkpoint_interval: int | None = None
+    ) -> OptimizationResult:
+        """
+        Run the optimization loop on the running event loop and return its result.
+
+        Coroutine version of :meth:`run` for callers with a running event loop, such as Jupyter or a
+        service; parameters and errors are the same, and loop errors are raised instead of held in a future.
+        """
+        return await self._runner.run_async(
+            iterations=iterations, num_points=n_points, checkpoint_interval=checkpoint_interval
+        )
+
     def submit_suggestions(self, suggestions: Sequence[Mapping]) -> Future[OptimizationResult]:
         """
         Evaluate specific parameter combinations.
 
         Acquires data for given suggestions and ingests results. Supports both
-        optimizer suggestions and manual points.
+        optimizer suggestions and manual points. :meth:`submit_suggestions_async`
+        is the coroutine version.
 
         Parameters
         ----------
@@ -220,3 +234,12 @@ class QueueserverAgent(_AxAgentMixin):
         run : Run the full optimization loop.
         """
         return self._runner.submit_suggestions(suggestions)
+
+    async def submit_suggestions_async(self, suggestions: Sequence[Mapping]) -> OptimizationResult:
+        """
+        Evaluate specific parameter combinations on the running event loop and return the result.
+
+        Coroutine version of :meth:`submit_suggestions` for callers with a running event loop, such as
+        Jupyter or a service; parameters and errors are the same.
+        """
+        return await self._runner.submit_suggestions_async(suggestions)
