@@ -1,3 +1,5 @@
+import importlib
+import sys
 import time
 from unittest.mock import MagicMock
 
@@ -40,3 +42,26 @@ def test_tiled_run_poller_rejects_rows_that_do_not_match_the_acquisition_order()
 
     with pytest.raises(ValueError):
         poller("uid")
+
+
+def test_tiled_run_poller_rejects_runs_without_an_acquisition_order():
+    run = tiled_run(["near"], [0.5])
+    # Plans other than default_acquire, e.g. bluesky.plans.scan, do not record the acquisition order.
+    run.metadata["start"] = {"plan_name": "scan"}
+
+    with pytest.raises(KeyError):
+        TiledRunPoller({"uid": run})("uid")
+
+
+@pytest.mark.parametrize("settings", [{"poll_interval": 0}, {"timeout": -1}])
+def test_tiled_run_poller_rejects_invalid_polling_settings(settings):
+    with pytest.raises(ValueError):
+        TiledRunPoller({}, **settings)
+
+
+def test_tiled_run_poller_import_names_the_tiled_extra_when_tiled_is_missing(monkeypatch):
+    monkeypatch.setitem(sys.modules, "tiled.client.container", None)
+    monkeypatch.delitem(sys.modules, "bluesky_adaptive.evaluation.tiled")
+
+    with pytest.raises(ImportError, match=r"pip install bluesky-adaptive\[tiled\]"):
+        importlib.import_module("bluesky_adaptive.evaluation.tiled")
