@@ -28,9 +28,8 @@ spaces.
   and GP models. Excluded from `pyright` — treat as legacy; prefer `ax/` for
   new work.
 - `src/bluesky_adaptive/plans.py` — Bluesky plans. Key entry points: `optimize`,
-  `optimize_step`, `sample_suggestions`, `acquire_baseline`, and
-  `default_acquire` for the standard "move actuators, read detectors"
-  cycle.
+  `sample_suggestions`, `acquire_baseline`, and `default_acquire` for the
+  standard "move actuators, read detectors" cycle.
 - `src/bluesky_adaptive/plan_stubs.py` — reusable plan fragments.
 - `src/bluesky_adaptive/protocols.py` — `Actuator`, `OptimizationProblem`, `ID_KEY`, and
   other typing protocols. Use these in new public APIs instead of `Any`.

@@ -31,8 +31,9 @@ Breaking Changes
   fields instead of ``DataKey`` ``source`` values. Parameter and outcome names must not start with ``adaptive_``,
   and a parameter and an outcome must not share a name. The ``optimization`` stream of ``optimize_in_run`` is
   unchanged.
-* Removed ``OptimizationCallbackRouter``, the ``readable_cache`` argument of ``optimize`` and
-  ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
+* Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
+  ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
+  ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
 
 Features
 ........
@@ -46,8 +47,8 @@ Features
 
 Bug Fixes
 .........
-* ``optimize`` and ``optimize_step`` mark a step's trials failed on a ``TrialFaultAware`` optimizer when its
-  outcomes fail validation, as they already did for acquisition and evaluation errors.
+* ``optimize`` marks a step's trials failed on a ``TrialFaultAware`` optimizer when its outcomes fail validation,
+  as it already did for acquisition and evaluation errors.
 * ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like
   ``optimize`` instead of ingesting mismatched outcomes.
 * ``sample_suggestions`` marks its suggestions failed on a ``TrialFaultAware`` optimizer when acquisition,

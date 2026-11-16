@@ -128,7 +128,6 @@ def default_acquire(
 def _acquire_and_evaluate(
     optimization_problem: OptimizationProblem[TUid],
     suggestions: Sequence[Mapping],
-    *args: Any,
     **kwargs: Any,
 ) -> MsgGenerator[tuple[TUid, Sequence[Mapping]]]:
     """Acquire and evaluate suggestions, then validate the outcomes.
@@ -142,7 +141,7 @@ def _acquire_and_evaluate(
     optimizer = optimization_problem.optimizer
     try:
         uid = yield from acquisition_plan(
-            suggestions, optimization_problem.actuators, optimization_problem.sensors, *args, **kwargs
+            suggestions, optimization_problem.actuators, optimization_problem.sensors, **kwargs
         )
         outcomes = optimization_problem.evaluation_function(uid, suggestions)
         _validate_outcomes(outcomes, suggestions)
@@ -151,36 +150,6 @@ def _acquire_and_evaluate(
             optimizer.register_failures(suggestions)
         raise
     return uid, outcomes
-
-
-@plan
-def optimize_step(
-    optimization_problem: OptimizationProblem[TUid],
-    n_points: int = 1,
-    *args: Any,
-    **kwargs: Any,
-) -> MsgGenerator[tuple[TUid, Sequence[Mapping], Sequence[Mapping]]]:
-    """
-    Single step of the optimization loop.
-
-    Parameters
-    ----------
-    optimization_problem : OptimizationProblem
-        The optimization problem to solve.
-    n_points : int, optional
-        The number of points to suggest.
-
-    Returns
-    -------
-    tuple[TUid, Sequence[Mapping], Sequence[Mapping]]
-        The acquisition UID, suggestions, and outcomes of the step.
-    """
-    optimizer = optimization_problem.optimizer
-    suggestions = optimizer.suggest(n_points)
-    _validate_suggestions(suggestions)
-    uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, *args, **kwargs)
-    optimizer.ingest(outcomes)
-    return uid, suggestions, outcomes
 
 
 @plan
@@ -225,7 +194,6 @@ def optimize(
     --------
     bluesky_adaptive.protocols.OptimizationProblem : The problem to solve.
     bluesky_adaptive.protocols.Checkpointable : The protocol for checkpointable objects.
-    optimize_step : The plan to execute a single step of the optimization.
     """
     optimizer = optimization_problem.optimizer
     if iterations is None and not isinstance(optimizer, SupportsStoppingCriteria):
@@ -414,7 +382,7 @@ def sample_suggestions(
 
     See Also
     --------
-    optimize_step : Standard optimizer-driven step.
+    optimize : Standard optimizer-driven loop.
     bluesky_adaptive.protocols.CanRegisterSuggestions : Protocol for manual suggestions.
     """
     # Ensure the suggestions have an ID_KEY or register them with the optimizer

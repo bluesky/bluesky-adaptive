@@ -6,7 +6,6 @@ from .plans import (
     default_acquire,
     optimize,
     optimize_in_run,
-    optimize_step,
     sample_suggestions,
 )
 
@@ -22,6 +21,5 @@ __all__ = [
     "list_scan_in_run",
     "optimize",
     "optimize_in_run",
-    "optimize_step",
     "sample_suggestions",
 ]
