@@ -29,11 +29,11 @@ Features
   are kept for backwards compatibility.
 * ``default_acquire`` records the suggestion IDs in scan order as ``start["bluesky-adaptive"]["acquisition_order"]``.
   ``"blop_acquisition_order"`` is kept for backwards compatibility.
-* New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(fetch)`` turns a function that evaluates the data of
-  one suggestion into an evaluation function and sets the ``"_id"`` of each outcome.
+* New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(evaluate, fetch)`` builds an evaluation function from a
+  function that evaluates the data of one suggestion and sets the ``"_id"`` of each outcome.
   ``bluesky_adaptive.evaluation.documents.RunEventBuffer``, subscribed with ``RE.subscribe(buffer)``, buffers the
-  ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(buffer.pop)`` can evaluate them
-  (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+  ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(evaluate, buffer.pop)`` can evaluate
+  them (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
 
 v1.0.1 (2026-11-07)
 -------------------

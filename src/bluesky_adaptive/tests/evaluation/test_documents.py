@@ -29,7 +29,7 @@ def test_per_suggestion_scores_each_suggestion_from_its_primary_event(RE):
         optimizer=optimizer,
         actuators=[MovableSignal("x1", initial_value=0.0)],
         sensors=[ReadableSignal("det")],
-        evaluation_function=per_suggestion(buffer.pop)(lambda data: {"objective": 10 * data["x1"]}),
+        evaluation_function=per_suggestion(lambda data: {"objective": 10 * data["x1"]}, buffer.pop),
     )
 
     RE(optimize(problem, iterations=2, n_points=2))
