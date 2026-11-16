@@ -1,3 +1,5 @@
+import asyncio
+import itertools
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -8,6 +10,7 @@ from bluesky_adaptive.ax.dof import RangeDOF
 from bluesky_adaptive.ax.objective import Objective
 from bluesky_adaptive.ax.queueserver_agent import QueueserverAgent
 from bluesky_adaptive.protocols import AcquisitionPlan, EvaluationFunction
+from bluesky_adaptive.queueserver import OptimizationResult
 
 from ..conftest import MovableSignal
 
@@ -191,3 +194,44 @@ def test_queueserver_agent_stop(
 
     agent.stop()
     mock_queueserver_runner_cls.return_value.stop.assert_called_once()
+
+
+def _open_queue_agent(re_manager_api, evaluation_function, **kwargs):
+    """Create an agent whose RE Manager has an open environment and returns queue item UIDs "item-0", "item-1", ..."""
+    uids = (f"item-{i}" for i in itertools.count())
+    re_manager_api.status.return_value = {"worker_environment_exists": True}
+    re_manager_api.item_add.side_effect = lambda plan: {"success": True, "item": {"item_uid": next(uids)}}
+    return QueueserverAgent(
+        re_manager_api,
+        ["det"],
+        [RangeDOF(actuator="test_motor1", bounds=(0, 10), parameter_type="float")],
+        [Objective(name="obj1", minimize=False)],
+        evaluation_function,
+        **kwargs,
+    )
+
+
+def _evaluate(uid, suggestions):
+    return [{"_id": suggestion["_id"], "obj1": suggestion["test_motor1"]} for suggestion in suggestions]
+
+
+def test_queueserver_agent_run_async(mock_re_manager_api, tmp_path):
+    """run_async() runs iterations of n_points each, checkpoints every checkpoint_interval, and returns the result."""
+    checkpoint_path = tmp_path / "agent.json"
+    agent = _open_queue_agent(mock_re_manager_api, _evaluate, checkpoint_path=str(checkpoint_path))
+
+    result = asyncio.run(agent.run_async(iterations=2, n_points=3, checkpoint_interval=1))
+
+    assert result == OptimizationResult(iterations_completed=2, num_points=3, uids=("item-0", "item-1"))
+    assert checkpoint_path.exists()
+
+
+def test_queueserver_agent_submit_suggestions_async(mock_re_manager_api):
+    """submit_suggestions_async() registers and evaluates manual points, then returns the result."""
+    evaluation_function = MagicMock(side_effect=_evaluate)
+    agent = _open_queue_agent(mock_re_manager_api, evaluation_function)
+
+    result = asyncio.run(agent.submit_suggestions_async([{"test_motor1": 2.5}]))
+
+    assert result == OptimizationResult(iterations_completed=1, num_points=1, uids=("item-0",))
+    assert [suggestion["test_motor1"] for suggestion in evaluation_function.call_args.kwargs["suggestions"]] == [2.5]
