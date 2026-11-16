@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Asynchronous Optimization with Bluesky Queueserver &#8212; Bluesky Adaptive 1.0.2.dev7 documentation</title>
+    <title>Asynchronous Optimization with Bluesky Queueserver &#8212; Bluesky Adaptive 1.0.2.dev8 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=4ef60bb9"></script>
+    <script src="../_static/documentation_options.js?v=a6eca87b"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -423,7 +423,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev7" />
+  <meta name="docsearch:version" content="1.0.2.dev8" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -1090,7 +1090,7 @@ Worker environment exists: True
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/bluesky-adaptive/bluesky-adaptive/.pixi/envs/docs/lib/python3.13/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
   warnings.warn(
-[INFO 11-16 20:09:30] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.1.8
+[INFO 11-16 21:01:37] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.1.8
 </pre></div>
 </div>
 </div>
@@ -1191,8 +1191,8 @@ queueserver over HTTP rather than ZMQ.</p>
 </div>
 </div>
 <div class="cell_output docutils container">
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-16 20:09:30] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
-[INFO 11-16 20:09:30] ax.api.client: Generated new trial 0 with parameters {'motor1': 0.0, 'motor2': 0.0} using GenerationNode CenterOfSearchSpace.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-16 21:01:37] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
+[INFO 11-16 21:01:37] ax.api.client: Generated new trial 0 with parameters {'motor1': 0.0, 'motor2': 0.0} using GenerationNode CenterOfSearchSpace.
 </pre></div>
 </div>
 </div>
@@ -1217,16 +1217,16 @@ queueserver over HTTP rather than ZMQ.</p>
 Points per iteration : 1
 Total acquisitions   : 10
 Queue item UIDs:
-  3fa7da47-752d-4298-a857-c3ff4e114b06
-  1222ed00-eb6a-43bd-8757-1f22506cdaa2
-  1f1eac9a-4f9b-4ad4-850e-95cac711be7b
-  81e01f83-862f-4d57-aacd-d13217571606
-  35f741a5-70ca-4ee9-930b-daa1b37ca537
-  e3ca873c-11b7-49db-a736-fcd531057024
-  b1b05a5c-1530-475b-8306-7ea2392f1169
-  fc0e45e4-104c-407e-bfb2-1f6f2cb49480
-  a6de2c9c-cb90-4845-9f3a-a26a1294f040
-  da44c597-d0e0-43ca-8fc7-97e553c29c0d
+  af95ba55-9162-4a94-85b0-937b6098b994
+  8b840270-f384-493b-9696-07c6721ec8a5
+  dec0f39f-0961-4d51-881e-5910805374d3
+  3ea43bc0-b8ac-494c-8410-f8eed9ff16f7
+  192bf9c9-4da3-408b-a7b1-699aef5bff86
+  feec8351-7c37-44dc-9502-b5546e493b8c
+  e24e99ff-742a-4920-ae2b-8eaea48e59d1
+  6d486d65-d054-4a2a-8ae1-738f534ae16a
+  3dfd46c8-766c-40ed-92bc-8fa730e58327
+  fdf5efd6-080f-4b44-bcf2-c114be90d8d6
 </pre></div>
 </div>
 </div>
@@ -1286,9 +1286,9 @@ Queue item UIDs:
       <td>1_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>76.574985</td>
-      <td>-2.746433</td>
-      <td>1.143311</td>
+      <td>9.974001</td>
+      <td>-3.325559</td>
+      <td>-3.217397</td>
     </tr>
     <tr>
       <th>2</th>
@@ -1296,9 +1296,9 @@ Queue item UIDs:
       <td>2_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>122.378981</td>
-      <td>4.794398</td>
-      <td>-2.924108</td>
+      <td>43.268297</td>
+      <td>1.763619</td>
+      <td>3.126111</td>
     </tr>
     <tr>
       <th>3</th>
@@ -1306,9 +1306,9 @@ Queue item UIDs:
       <td>3_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>259.351891</td>
-      <td>0.645633</td>
-      <td>4.616568</td>
+      <td>41.610078</td>
+      <td>4.216387</td>
+      <td>-0.731765</td>
     </tr>
     <tr>
       <th>4</th>
@@ -1316,9 +1316,9 @@ Queue item UIDs:
       <td>4_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>135.562938</td>
-      <td>-1.736554</td>
-      <td>-1.315995</td>
+      <td>148.674472</td>
+      <td>-0.779560</td>
+      <td>0.659399</td>
     </tr>
     <tr>
       <th>5</th>
@@ -1326,9 +1326,9 @@ Queue item UIDs:
       <td>5_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>89.421780</td>
-      <td>-3.886750</td>
-      <td>1.891021</td>
+      <td>126.001259</td>
+      <td>-4.775040</td>
+      <td>-4.506290</td>
     </tr>
     <tr>
       <th>6</th>
@@ -1336,9 +1336,9 @@ Queue item UIDs:
       <td>6_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>125.236531</td>
-      <td>-3.752424</td>
-      <td>0.023081</td>
+      <td>56.638771</td>
+      <td>-2.557498</td>
+      <td>-2.677384</td>
     </tr>
     <tr>
       <th>7</th>
@@ -1346,9 +1346,9 @@ Queue item UIDs:
       <td>7_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>3.329966</td>
-      <td>-2.922392</td>
-      <td>2.853158</td>
+      <td>65.369669</td>
+      <td>-3.563886</td>
+      <td>-1.574714</td>
     </tr>
     <tr>
       <th>8</th>
@@ -1356,9 +1356,9 @@ Queue item UIDs:
       <td>8_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>67.125955</td>
-      <td>-2.771735</td>
-      <td>4.232438</td>
+      <td>96.735906</td>
+      <td>-3.040297</td>
+      <td>-4.224689</td>
     </tr>
     <tr>
       <th>9</th>
@@ -1366,9 +1366,9 @@ Queue item UIDs:
       <td>9_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>36.863634</td>
-      <td>-3.039338</td>
-      <td>1.993032</td>
+      <td>119.628701</td>
+      <td>-5.000000</td>
+      <td>-3.202473</td>
     </tr>
   </tbody>
 </table>

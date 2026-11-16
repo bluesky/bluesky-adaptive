@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Index &#8212; Bluesky Adaptive 1.0.2.dev7 documentation</title>
+    <title>Index &#8212; Bluesky Adaptive 1.0.2.dev8 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=4ef60bb9"></script>
+    <script src="_static/documentation_options.js?v=a6eca87b"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev7" />
+  <meta name="docsearch:version" content="1.0.2.dev8" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -995,10 +995,14 @@ window.runMermaid = runMermaid;</script>
 </li>
       <li><a href="reference/ax/dof.html#bluesky_adaptive.ax.dof.ChoiceDOF.dependent_parameters">dependent_parameters (bluesky_adaptive.ax.dof.ChoiceDOF attribute)</a>
 </li>
+      <li><a href="reference/callbacks.html#bluesky_adaptive.callbacks.logger.OptimizationLogger.descriptor">descriptor() (bluesky_adaptive.callbacks.logger.OptimizationLogger method)</a>
+
+      <ul>
+        <li><a href="reference/evaluation.html#bluesky_adaptive.evaluation.documents.RunEventBuffer.descriptor">(bluesky_adaptive.evaluation.documents.RunEventBuffer method)</a>
+</li>
+      </ul></li>
   </ul></td>
   <td style="width: 33%; vertical-align: top;"><ul>
-      <li><a href="reference/callbacks.html#bluesky_adaptive.callbacks.logger.OptimizationLogger.descriptor">descriptor() (bluesky_adaptive.callbacks.logger.OptimizationLogger method)</a>
-</li>
       <li><a href="reference/ax/dof.html#bluesky_adaptive.ax.dof.DOF">DOF (class in bluesky_adaptive.ax.dof)</a>
 </li>
       <li><a href="reference/ax/dof-constraint.html#bluesky_adaptive.ax.dof.DOFConstraint">DOFConstraint (class in bluesky_adaptive.ax.dof)</a>
@@ -1026,7 +1030,11 @@ window.runMermaid = runMermaid;</script>
       <li><a href="reference/protocols.html#bluesky_adaptive.protocols.EvaluationFunction">EvaluationFunction (class in bluesky_adaptive.protocols)</a>
 </li>
       <li><a href="reference/callbacks.html#bluesky_adaptive.callbacks.logger.OptimizationLogger.event">event() (bluesky_adaptive.callbacks.logger.OptimizationLogger method)</a>
+
+      <ul>
+        <li><a href="reference/evaluation.html#bluesky_adaptive.evaluation.documents.RunEventBuffer.event">(bluesky_adaptive.evaluation.documents.RunEventBuffer method)</a>
 </li>
+      </ul></li>
   </ul></td>
 </tr></table>
 
@@ -1203,20 +1211,24 @@ window.runMermaid = runMermaid;</script>
         <li><a href="reference/ax/dof.html#bluesky_adaptive.ax.dof.RangeDOF.parameter_name">(bluesky_adaptive.ax.dof.RangeDOF property)</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li><a href="reference/ax/dof.html#bluesky_adaptive.ax.dof.ChoiceDOF.parameter_type">parameter_type (bluesky_adaptive.ax.dof.ChoiceDOF attribute)</a>
 
       <ul>
         <li><a href="reference/ax/dof.html#bluesky_adaptive.ax.dof.RangeDOF.parameter_type">(bluesky_adaptive.ax.dof.RangeDOF attribute)</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
+      <li><a href="reference/evaluation.html#bluesky_adaptive.evaluation.per_suggestion">per_suggestion() (in module bluesky_adaptive.evaluation)</a>
+</li>
       <li><a href="reference/ax/agent.html#bluesky_adaptive.ax.Agent.plot_objective">plot_objective() (bluesky_adaptive.ax.Agent method)</a>
 
       <ul>
         <li><a href="reference/ax/agent.html#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent.plot_objective">(bluesky_adaptive.ax.queueserver_agent.QueueserverAgent method)</a>
 </li>
       </ul></li>
+      <li><a href="reference/evaluation.html#bluesky_adaptive.evaluation.documents.RunEventBuffer.pop">pop() (bluesky_adaptive.evaluation.documents.RunEventBuffer method)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -1281,6 +1293,8 @@ window.runMermaid = runMermaid;</script>
         <li><a href="reference/queueserver.html#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run_async">(bluesky_adaptive.queueserver.QueueserverOptimizationRunner method)</a>
 </li>
       </ul></li>
+      <li><a href="reference/evaluation.html#bluesky_adaptive.evaluation.documents.RunEventBuffer">RunEventBuffer (class in bluesky_adaptive.evaluation.documents)</a>
+</li>
   </ul></td>
 </tr></table>
 
@@ -1314,7 +1328,11 @@ window.runMermaid = runMermaid;</script>
       <li><a href="reference/ax/optimizer.html#bluesky_adaptive.ax.optimizer.AxOptimizer.should_stop">should_stop() (bluesky_adaptive.ax.optimizer.AxOptimizer method)</a>
 </li>
       <li><a href="reference/callbacks.html#bluesky_adaptive.callbacks.logger.OptimizationLogger.start">start() (bluesky_adaptive.callbacks.logger.OptimizationLogger method)</a>
+
+      <ul>
+        <li><a href="reference/evaluation.html#bluesky_adaptive.evaluation.documents.RunEventBuffer.start">(bluesky_adaptive.evaluation.documents.RunEventBuffer method)</a>
 </li>
+      </ul></li>
       <li><a href="reference/ax/dof.html#bluesky_adaptive.ax.dof.RangeDOF.step_size">step_size (bluesky_adaptive.ax.dof.RangeDOF attribute)</a>
 </li>
   </ul></td>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Plans &#8212; Bluesky Adaptive 1.0.2.dev7 documentation</title>
+    <title>Plans &#8212; Bluesky Adaptive 1.0.2.dev8 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=4ef60bb9"></script>
+    <script src="../_static/documentation_options.js?v=a6eca87b"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev7" />
+  <meta name="docsearch:version" content="1.0.2.dev8" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -458,6 +458,7 @@
 <li class="toctree-l1 current active"><a aria-current="page" class="current reference internal" href="#">Plans</a></li>
 <li class="toctree-l1"><a class="reference internal" href="plan_stubs.html">Plan Stubs</a></li>
 <li class="toctree-l1"><a class="reference internal" href="protocols.html">Protocols</a></li>
+<li class="toctree-l1"><a class="reference internal" href="evaluation.html">Evaluation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="callbacks.html">Callbacks</a></li>
 <li class="toctree-l1"><a class="reference internal" href="queueserver.html">Queueserver</a></li>
 </ul>
@@ -602,9 +603,9 @@ If None, a new cache will be created.</p>
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.default_acquire">
 <span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">default_acquire</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">actuators</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">sensors</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">md</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">per_step</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#default_acquire"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.default_acquire" title="Link to this definition">#</a></dt>
 <dd><p>Acquire data for optimization. Simply a list scan.</p>
-<p>Includes <code class="docutils literal notranslate"><span class="pre">&quot;blop_suggestions&quot;</span></code> metadata containing the routed suggestions for
-backwards compatibility and <code class="docutils literal notranslate"><span class="pre">&quot;blop_acquisition_order&quot;</span></code> containing IDs in actual scan order.
-Use those IDs, rather than positions in <code class="docutils literal notranslate"><span class="pre">suggestions</span></code>, to associate acquired rows.</p>
+<p>Records the suggestion IDs in actual scan order as <code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;acquisition_order&quot;]</span></code>.
+Use those IDs, rather than positions in <code class="docutils literal notranslate"><span class="pre">suggestions</span></code>, to associate acquired rows. For backwards
+compatibility, <code class="docutils literal notranslate"><span class="pre">&quot;blop_acquisition_order&quot;</span></code> duplicates them and <code class="docutils literal notranslate"><span class="pre">&quot;blop_suggestions&quot;</span></code> holds the routed suggestions.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
