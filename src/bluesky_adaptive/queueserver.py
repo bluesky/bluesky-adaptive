@@ -11,10 +11,11 @@ This module provides components for running optimization loops remotely through
 a queueserver, rather than directly through a RunEngine.
 """
 
+import asyncio
 import logging
 import threading
-from collections.abc import Mapping, Sequence
-from concurrent.futures import Future
+from collections.abc import Awaitable, Callable, Mapping, Sequence
+from concurrent.futures import FIRST_COMPLETED, Future, wait
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -36,6 +37,20 @@ logger = logging.getLogger(__name__)
 
 
 DEFAULT_ACQUIRE_PLAN_NAME: str = default_acquire.__name__
+
+_background_loop_lock = threading.Lock()
+_background_loop: asyncio.AbstractEventLoop | None = None
+
+
+def _get_background_loop() -> asyncio.AbstractEventLoop:
+    """Return the event loop that runs optimizations started from synchronous code, starting it on first use."""
+    global _background_loop
+    with _background_loop_lock:
+        if _background_loop is None:
+            loop = asyncio.new_event_loop()
+            threading.Thread(target=loop.run_forever, name="qserver-optimization-runner", daemon=True).start()
+            _background_loop = loop
+        return _background_loop
 
 
 @dataclass(frozen=True)
@@ -150,6 +165,12 @@ class QueueserverOptimizationRunner:
     the optimizer, submitting acquisition plans to the queueserver, and ingesting
     the outcomes the evaluation function returns for each submitted plan.
 
+    The loop is an asyncio coroutine. :meth:`run_async` and :meth:`submit_suggestions_async` run it on the
+    caller's event loop; :meth:`run` and :meth:`submit_suggestions` start it on a shared background event loop
+    and return a :class:`concurrent.futures.Future`. Queueserver requests, optimizer calls, and the evaluation
+    function are synchronous, so they run in worker threads via :func:`asyncio.to_thread` and never block the
+    event loop. A runner executes one loop at a time.
+
     .. warning::
 
         This class is part of the **experimental** queueserver integration.
@@ -174,8 +195,7 @@ class QueueserverOptimizationRunner:
         self._plan_name = optimization_problem.acquisition_plan or DEFAULT_ACQUIRE_PLAN_NAME
         self._state: _OptimizationState | None = None
         self._continuous = True
-        self._state_lock = threading.RLock()
-        self._current_future: Future[OptimizationResult] | None = None
+        self._running = False
 
     @property
     def optimization_problem(self) -> QueueserverOptimizationProblem:
@@ -185,8 +205,7 @@ class QueueserverOptimizationRunner:
     @property
     def current_iteration(self) -> int:
         """The current iteration number (0 if not running)."""
-        with self._state_lock:
-            return self._state.current_iteration if self._state else 0
+        return self._state.current_iteration if self._state else 0
 
     def run(
         self, iterations: int = 1, num_points: int = 1, checkpoint_interval: int | None = None
@@ -194,9 +213,9 @@ class QueueserverOptimizationRunner:
         """
         Run the optimization loop.
 
-        Validates the queueserver state, then begins the suggest -> acquire -> ingest
-        cycle. This method returns immediately; the optimization runs in a background
-        thread that calls the evaluation function with each submitted plan's queue item UID.
+        Validates the queueserver state and submits the first plan, then returns while the
+        suggest -> acquire -> ingest cycle continues on a background event loop that calls the evaluation
+        function with each submitted plan's queue item UID. :meth:`run_async` is the coroutine version.
 
         Parameters
         ----------
@@ -215,7 +234,8 @@ class QueueserverOptimizationRunner:
             A future that resolves to an :class:`OptimizationResult` when all
             iterations complete, or after :meth:`stop` once the in-flight evaluation
             returns. If the optimization loop raises an unhandled exception the future
-            will hold that exception and re-raise it on ``.result()``.
+            will hold that exception and re-raise it on ``.result()``. Cancelling the
+            future cancels the loop like cancelling :meth:`run_async`.
 
         Raises
         ------
@@ -224,27 +244,28 @@ class QueueserverOptimizationRunner:
         ValueError
             If required devices or plans are not available, or the suggestions are invalid.
         """
-        with self._state_lock:
-            self._validate()
-            self._state = _OptimizationState(
-                max_iterations=iterations, num_points=num_points, checkpoint_interval=checkpoint_interval
-            )
-            self._continuous = True
-        suggestions = self._problem.optimizer.suggest(num_points)
-        with self._state_lock:
-            plan = self._build_plan(suggestions)
-            logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
-            future: Future[OptimizationResult] = Future()
-            self._current_future = future
-        self._submit_and_start_worker(plan)
-        return future
+        return self._run_in_background(lambda: self._start_run(iterations, num_points, checkpoint_interval))
+
+    async def run_async(
+        self, iterations: int = 1, num_points: int = 1, checkpoint_interval: int | None = None
+    ) -> OptimizationResult:
+        """
+        Run the optimization loop on the running event loop and return its result.
+
+        Coroutine version of :meth:`run` for callers with a running event loop, such as Jupyter or a
+        service; parameters and errors are the same, and loop errors are raised instead of held in a
+        future. Cancelling it abandons the in-flight acquisition: its plan stays queued, its evaluation
+        runs to completion in its worker thread, and its outcomes are not ingested.
+        """
+        return await self._run(lambda: self._start_run(iterations, num_points, checkpoint_interval))
 
     def submit_suggestions(self, suggestions: Sequence[Mapping]) -> Future[OptimizationResult]:
         """
         Manually submit suggestions to the queue.
 
-        This method returns immediately; the optimization runs in a background thread that calls the evaluation
-        function with each submitted plan's queue item UID.
+        This method returns once the plan is submitted; a background event loop calls the evaluation function
+        with the plan's queue item UID and ingests the outcomes. :meth:`submit_suggestions_async` is the coroutine
+        version.
 
         Parameters
         ----------
@@ -261,10 +282,79 @@ class QueueserverOptimizationRunner:
             acquisition completes. If an unhandled exception occurs the future
             will hold it and re-raise on ``.result()``.
         """
-        with self._state_lock:
-            self._validate()
-            self._state = _OptimizationState(max_iterations=1, num_points=len(suggestions))
-            self._continuous = False
+        return self._run_in_background(lambda: self._start_submit(suggestions))
+
+    async def submit_suggestions_async(self, suggestions: Sequence[Mapping]) -> OptimizationResult:
+        """
+        Manually submit suggestions to the queue on the running event loop and return the result.
+
+        Coroutine version of :meth:`submit_suggestions` for callers with a running event loop, such as
+        Jupyter or a service; parameters and errors are the same.
+        """
+        return await self._run(lambda: self._start_submit(suggestions))
+
+    def stop(self) -> None:
+        """
+        Stop the optimization loop gracefully.
+
+        No further plans are submitted, and the in-flight evaluation is not interrupted. After that evaluation
+        returns and is ingested, the future returned by :meth:`run` or :meth:`submit_suggestions` resolves (and
+        :meth:`run_async` or :meth:`submit_suggestions_async` returns) with a partial :class:`OptimizationResult`,
+        or with the evaluation's exception. Plans already in the queue are not removed. Evaluation functions should
+        bound their waits so that a stop takes effect. This method only sets a flag, so it can be called from any
+        thread.
+        """
+        self._continuous = False
+        logger.info("Optimization will stop after the in-flight acquisition is evaluated")
+
+    def _claim(self) -> None:
+        """Mark the runner as running, raising if a loop is already running."""
+        if self._running:
+            raise RuntimeError("Optimization loop is already running.")
+        self._running = True
+
+    def _run_in_background(self, start: Callable[[], Awaitable[str]]) -> Future[OptimizationResult]:
+        """Run a loop on the background event loop, raising here any error before its first plan is submitted."""
+        started: Future[None] = Future()
+        future = asyncio.run_coroutine_threadsafe(self._run(start, started), _get_background_loop())
+        pending: list[Future[Any]] = [started, future]
+        try:
+            wait(pending, return_when=FIRST_COMPLETED)
+        except KeyboardInterrupt:
+            future.cancel()  # Interrupted before the first plan was submitted, so abandon the run.
+            raise
+        if not started.done():
+            future.result()  # The run failed before submitting its first plan.
+        return future
+
+    async def _run(self, start: Callable[[], Awaitable[str]], started: Future[None] | None = None) -> OptimizationResult:
+        """Claim the runner, submit the first plan with ``start``, and run the loop, releasing the runner at the end."""
+        self._claim()
+        try:
+            item_uid = await start()
+            if started is not None:
+                started.set_result(None)
+            return await self._run_loop(item_uid)
+        finally:
+            self._running = False
+
+    async def _start_run(self, iterations: int, num_points: int, checkpoint_interval: int | None) -> str:
+        """Check the environment and submit the first plan of a run, returning its queue item UID."""
+        await asyncio.to_thread(self._client.check_environment)
+        self._state = _OptimizationState(
+            max_iterations=iterations, num_points=num_points, checkpoint_interval=checkpoint_interval
+        )
+        self._continuous = True
+        suggestions = await asyncio.to_thread(self._problem.optimizer.suggest, num_points)
+        plan = self._build_plan(suggestions)
+        logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
+        return await asyncio.to_thread(self._client.submit_plan, plan)
+
+    async def _start_submit(self, suggestions: Sequence[Mapping]) -> str:
+        """Check the environment and submit a plan for manual suggestions, returning its queue item UID."""
+        await asyncio.to_thread(self._client.check_environment)
+        self._state = _OptimizationState(max_iterations=1, num_points=len(suggestions))
+        self._continuous = False
         # Ensure all suggestions have an ID_KEY or register them with the optimizer
         if not isinstance(self.optimization_problem.optimizer, CanRegisterSuggestions) and any(
             ID_KEY not in suggestion for suggestion in suggestions
@@ -275,39 +365,11 @@ class QueueserverOptimizationRunner:
                 f"implementation. Got suggestions: {suggestions}"
             )
         elif isinstance(self.optimization_problem.optimizer, CanRegisterSuggestions):
-            suggestions = self.optimization_problem.optimizer.register_suggestions(suggestions)
+            suggestions = await asyncio.to_thread(self.optimization_problem.optimizer.register_suggestions, suggestions)
 
-        with self._state_lock:
-            plan = self._build_plan(suggestions)
-            logger.info("Submitting manually specified suggestion(s)")
-            future: Future[OptimizationResult] = Future()
-            self._current_future = future
-        self._submit_and_start_worker(plan)
-        return future
-
-    def stop(self) -> None:
-        """
-        Stop the optimization loop gracefully.
-
-        No further plans are submitted, and the in-flight evaluation is not interrupted. The future
-        returned by :meth:`run` or :meth:`submit_suggestions` resolves with a partial
-        :class:`OptimizationResult` after that evaluation returns and is ingested, or holds its
-        exception if it raises. Plans already in the queue are not removed. Evaluation functions
-        should bound their waits so that a stop takes effect.
-        """
-        with self._state_lock:
-            self._continuous = False
-        logger.info("Optimization will stop after the in-flight acquisition is evaluated")
-
-    def _resolve_future(self, result: OptimizationResult) -> None:
-        """LOCKED: Resolve the current future with a result if it is not already done."""
-        if self._current_future is not None and not self._current_future.done():
-            self._current_future.set_result(result)
-
-    def _fail_future(self, exc: Exception) -> None:
-        """LOCKED: Resolve the current future with an exception if it is not already done."""
-        if self._current_future is not None and not self._current_future.done():
-            self._current_future.set_exception(exc)
+        plan = self._build_plan(suggestions)
+        logger.info("Submitting manually specified suggestion(s)")
+        return await asyncio.to_thread(self._client.submit_plan, plan)
 
     def _try_register_failures(self, suggestions: Sequence[Mapping]) -> None:
         """Notify a TrialFaultAware optimizer of failed suggestions, if supported."""
@@ -315,18 +377,11 @@ class QueueserverOptimizationRunner:
             try:
                 self._problem.optimizer.register_failures(suggestions)
             except Exception:
-                # Logged, not raised: this runs at the top of the worker thread and the original error
-                # must still fail the future.
+                # Logged, not raised: the original error must still propagate to the caller.
                 logger.exception("Failed to register trial failures with the optimizer")
 
-    def _validate(self) -> None:
-        """LOCKED: Validate not already running, queueserver environment, devices, and plan availability."""
-        if self._current_future is not None and not self._current_future.done():
-            raise RuntimeError("Optimization loop is already running.")
-        self._client.check_environment()
-
     def _build_plan(self, suggestions: Sequence[Mapping]) -> BPlan:
-        """LOCKED: Build the plan to submit and update current state."""
+        """Build the plan to submit and update current state."""
         if self._state is None:
             raise RuntimeError("_build_plan() called before run() or submit_suggestions()")
         _validate_suggestions(suggestions)
@@ -346,73 +401,58 @@ class QueueserverOptimizationRunner:
             **(self._problem.acquisition_plan_kwargs or {}),
         )
 
-    def _submit_and_start_worker(self, plan: BPlan) -> None:
-        """Submit the first plan and start the worker thread that evaluates it, failing the future on error."""
-        try:
-            item_uid = self._client.submit_plan(plan)
-        except Exception as exc:
-            with self._state_lock:
-                self._fail_future(exc)
-            raise
-        threading.Thread(target=self._run_loop, args=(item_uid,), name="qserver-optimization-runner", daemon=True).start()
-
-    def _run_loop(self, item_uid: str) -> None:
-        """Worker thread: evaluate, ingest, and resubmit until done, failing the future on error."""
+    async def _run_loop(self, item_uid: str) -> OptimizationResult:
+        """Evaluate, ingest, and resubmit until done, registering the in-flight suggestions as failed on error."""
+        state = self._state
+        if state is None:
+            raise RuntimeError("_run_loop() called before run() or submit_suggestions()")
         try:
             next_item_uid: str | None = item_uid
             while next_item_uid is not None:
-                next_item_uid = self._process_acquisition(next_item_uid)
-        except Exception as exc:
-            logger.exception(
-                "Unhandled exception in optimization background thread. "
-                "Optimization has been stopped. Inspect the future's exception for details."
-            )
-            with self._state_lock:
-                suggestions = self._state.current_suggestions if self._state is not None else []
-            # Register failures before failing the future so a caller that observes the failure sees the trials failed.
-            self._try_register_failures(suggestions)
-            with self._state_lock:
-                self._fail_future(exc)
+                next_item_uid = await self._process_acquisition(next_item_uid)
+        except Exception:
+            logger.exception("Unhandled exception in the optimization loop. Optimization has been stopped.")
+            # Register failures before re-raising so a caller that observes the failure sees the trials failed.
+            await asyncio.to_thread(self._try_register_failures, state.current_suggestions)
+            raise
+        return state.build_result()
 
-    def _process_acquisition(self, item_uid: str) -> str | None:
+    async def _process_acquisition(self, item_uid: str) -> str | None:
         """
         Evaluate and ingest one acquisition.
 
-        Returns the next submitted queue item UID, or ``None`` after resolving the future.
+        Returns the next submitted queue item UID, or ``None`` when the loop is done.
         """
-        with self._state_lock:
-            if self._state is None:
-                raise RuntimeError("_process_acquisition called before run()")
-            suggestions = self._state.current_suggestions
+        if self._state is None:
+            raise RuntimeError("_process_acquisition called before run()")
+        suggestions = self._state.current_suggestions
 
         # Evaluate the results; the evaluation function waits for its data.
         logger.info(f"Evaluating queue item {item_uid}")
-        outcomes = self._problem.evaluation_function(uid=item_uid, suggestions=suggestions)
+        outcomes = await asyncio.to_thread(self._problem.evaluation_function, uid=item_uid, suggestions=suggestions)
         _validate_outcomes(outcomes, suggestions)
         logger.info(f"Evaluated {len(outcomes)} outcomes")
 
         # Ingest into optimizer
-        self._problem.optimizer.ingest(outcomes)
+        await asyncio.to_thread(self._problem.optimizer.ingest, outcomes)
 
-        with self._state_lock:
-            self._state.uids.append(item_uid)
-            # Ingested suggestions are no longer in flight.
-            self._state.current_suggestions = []
-            # Checkpoint optimizer, if applicable
-            _maybe_checkpoint(
-                self._problem.optimizer, self._state.checkpoint_interval, iteration=self._state.current_iteration
-            )
-            # Check if done
-            if not self._continuous or self._state.current_iteration >= self._state.max_iterations:
-                logger.info(f"Optimization complete after {self._state.current_iteration} iterations")
-                self._resolve_future(self._state.build_result())
-                return None
+        self._state.uids.append(item_uid)
+        # Ingested suggestions are no longer in flight.
+        self._state.current_suggestions = []
+        # Checkpoint optimizer, if applicable
+        await asyncio.to_thread(
+            _maybe_checkpoint,
+            self._problem.optimizer,
+            self._state.checkpoint_interval,
+            iteration=self._state.current_iteration,
+        )
+        # Check if done
+        if not self._continuous or self._state.current_iteration >= self._state.max_iterations:
+            logger.info(f"Optimization complete after {self._state.current_iteration} iterations")
+            return None
 
-            # Continue: get next suggestions and submit
-            num_points = self._state.num_points
-
-        suggestions = self._problem.optimizer.suggest(num_points)
-        with self._state_lock:
-            plan = self._build_plan(suggestions)
-            logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
-        return self._client.submit_plan(plan)
+        # Continue: get next suggestions and submit
+        suggestions = await asyncio.to_thread(self._problem.optimizer.suggest, self._state.num_points)
+        plan = self._build_plan(suggestions)
+        logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
+        return await asyncio.to_thread(self._client.submit_plan, plan)

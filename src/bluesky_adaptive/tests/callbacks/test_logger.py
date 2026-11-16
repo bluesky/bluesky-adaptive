@@ -154,6 +154,14 @@ def test_start_with_full_metadata(logger, console):
     assert all(sense in data_points["sensors"] for sense in bdict["sensors"])
 
 
+def test_start_without_iterations_omits_iterations_line(logger, console):
+    logger.start(_make_start(optimizer="BoTorch", actuators=["x"], sensors=["y"]))
+
+    header = str(console.print.call_args_list[0].args[0].renderable)
+    assert "Iterations" not in header
+    assert "Run UID" in header
+
+
 def test_descriptor(logger):
     """descriptor() should accept a well-formed EventDescriptor without error."""
     logger.descriptor(
