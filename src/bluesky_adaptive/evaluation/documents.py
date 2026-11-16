@@ -66,9 +66,9 @@ class RunEventBuffer(CallbackBase):
         """
         if uid not in self._events:
             raise KeyError(
-                f"No buffered run with uid {uid!r}. RunEventBuffer buffers runs that record "
-                f"start['bluesky-adaptive'][{ACQUISITION_ORDER_KEY!r}], such as default_acquire runs, must be "
-                "subscribed with RE.subscribe(buffer), and returns each run once."
+                f"No buffered run with uid {uid!r}. Check that the buffer is subscribed with RE.subscribe(buffer), "
+                f"that the run's start document records start['bluesky-adaptive'][{ACQUISITION_ORDER_KEY!r}] "
+                "(as default_acquire does), and that the run was not already popped."
             )
         acquisition_order = self._acquisition_orders.pop(uid)
         events = self._events.pop(uid)
