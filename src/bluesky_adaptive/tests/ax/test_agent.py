@@ -441,15 +441,20 @@ def test_agent_optimization_runs_share_optimization_uid(agent):
         {"_id": suggestion["_id"], "obj": 1.0} for suggestion in suggestions
     ]
     agent.callbacks.clear()
-    documents = []
+    agent_documents = []
+    agent.subscribe(lambda name, doc: agent_documents.append((name, doc)))
+    run_documents = []
     RE = RunEngine({})
-    RE.subscribe(lambda name, doc: documents.append((name, doc)))
+    RE.subscribe(lambda name, doc: run_documents.append((name, doc)))
 
+    RE(agent.acquire_baseline({"x1": 1.0}))
     RE(agent.optimize(1))
+    RE(agent.sample_suggestions([{"x1": 2.0}]))
     RE(optimize_in_run(agent.to_optimization_problem()))
 
-    run_uids = [doc["bluesky-adaptive"]["optimization_uid"] for name, doc in documents if name == "start"]
-    assert run_uids == [agent.optimization_uid] * 2
+    starts = [doc for name, doc in agent_documents + run_documents if name == "start"]
+    assert [doc["plan_name"] for doc in starts] == ["acquire_baseline", "optimize", "sample_suggestions", "optimize_in_run"]
+    assert {doc["bluesky-adaptive"]["optimization_uid"] for doc in starts} == {agent.optimization_uid}
 
 
 def test_agent_get_best_points_single_objective(mock_evaluation_function):

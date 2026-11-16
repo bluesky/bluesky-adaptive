@@ -6,6 +6,7 @@ from bluesky.run_engine import RunEngine
 from bluesky_tiled_plugins import TiledWriter
 from tiled.client import from_uri
 from tiled.client.container import Container
+from tiled.queries import Key
 from tiled.server import SimpleTiledServer
 
 from bluesky_adaptive.ax import Agent, Objective, RangeDOF
@@ -105,6 +106,7 @@ def test_simple_experiment_tiled_round_trip() -> None:
             name="integration-simple-experiment",
             description="Scheduled integration test for the simple experiment",
         )
+        agent.subscribe(tiled_writer)
 
         RE(agent.optimize(iterations=2, n_points=2))
 
@@ -114,6 +116,13 @@ def test_simple_experiment_tiled_round_trip() -> None:
         assert len({outcome["_id"] for outcome in evaluation.outcomes}) == 4
         assert all(outcome["himmelblau_2d"] >= 0 for outcome in evaluation.outcomes)
         assert len(agent.ax_client.summarize()) == 4
+
+        runs = tiled_client.search(Key("start.bluesky-adaptive.optimization_uid") == agent.optimization_uid)
+        assert len(runs) == 1
+        run = runs.values().first()
+        assert run.start["plan_name"] == "optimize"
+        assert len(run["primary/adaptive_suggestion_id"].read()) == 4
+        assert set(run["primary/adaptive_acquisition_uid"].read()) == set(evaluation.uids)
     finally:
         tiled_server.close()
 
