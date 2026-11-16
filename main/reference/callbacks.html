@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Callbacks &#8212; Bluesky Adaptive 1.0.2.dev6 documentation</title>
+    <title>Callbacks &#8212; Bluesky Adaptive 1.0.2.dev7 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=ea8e8fa0"></script>
+    <script src="../_static/documentation_options.js?v=4ef60bb9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev6" />
+  <meta name="docsearch:version" content="1.0.2.dev7" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -522,30 +522,6 @@
                   
   <section id="callbacks">
 <h1>Callbacks<a class="headerlink" href="#callbacks" title="Link to this heading">#</a></h1>
-<section id="optimizationcallbackrouter">
-<h2>OptimizationCallbackRouter<a class="headerlink" href="#optimizationcallbackrouter" title="Link to this heading">#</a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="bluesky_adaptive.callbacks.OptimizationCallbackRouter">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.callbacks.</span></span><span class="sig-name descname"><span class="pre">OptimizationCallbackRouter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">callbacks</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/callbacks/router.html#OptimizationCallbackRouter"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.callbacks.OptimizationCallbackRouter" title="Link to this definition">#</a></dt>
-<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
-<p>Routes documents from optimization runs to a list of callbacks.</p>
-<p>Acts as a Bluesky callback that filters documents by <code class="docutils literal notranslate"><span class="pre">run_key</span></code>,
-forwarding only those from <code class="docutils literal notranslate"><span class="pre">&quot;optimize&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;sample_suggestions&quot;</span></code>
-runs to the registered callbacks.</p>
-<p>The router holds a <em>reference</em> to the provided list, so external
-mutations (e.g. <code class="docutils literal notranslate"><span class="pre">callbacks.append(cb)</span></code>) take effect on the next run.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>callbacks</strong><span class="classifier">list[CallbackBase]</span></dt><dd><p>A mutable list of callback instances. The router reads from this
-list at the start of each matching run.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-</section>
 <section id="optimizationlogger">
 <h2>OptimizationLogger<a class="headerlink" href="#optimizationlogger" title="Link to this heading">#</a></h2>
 <dl class="py class">
@@ -583,7 +559,7 @@ and statistics.</p>
 <dl class="py method">
 <dt class="sig sig-object py" id="bluesky_adaptive.callbacks.logger.OptimizationLogger.descriptor">
 <span class="sig-name descname"><span class="pre">descriptor</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/callbacks/logger.html#OptimizationLogger.descriptor"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.callbacks.logger.OptimizationLogger.descriptor" title="Link to this definition">#</a></dt>
-<dd><p>Cache data keys and group by their source.</p>
+<dd><p>Cache the parameter and outcome fields named by the descriptor’s <code class="docutils literal notranslate"><span class="pre">object_keys</span></code>.</p>
 <dl class="field-list simple">
 </dl>
 </dd></dl>
@@ -658,10 +634,6 @@ and statistics.</p>
   </div>
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimizationcallbackrouter">OptimizationCallbackRouter</a><ul class="nav section-nav flex-column">
-<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.callbacks.OptimizationCallbackRouter"><code class="docutils literal notranslate"><span class="pre">OptimizationCallbackRouter</span></code></a></li>
-</ul>
-</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#optimizationlogger">OptimizationLogger</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.callbacks.logger.OptimizationLogger"><code class="docutils literal notranslate"><span class="pre">OptimizationLogger</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.callbacks.logger.OptimizationLogger.start"><code class="docutils literal notranslate"><span class="pre">OptimizationLogger.start()</span></code></a></li>

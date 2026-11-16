@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Protocols for Optimization &#8212; Bluesky Adaptive 1.0.2.dev6 documentation</title>
+    <title>Protocols for Optimization &#8212; Bluesky Adaptive 1.0.2.dev7 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=ea8e8fa0"></script>
+    <script src="../_static/documentation_options.js?v=4ef60bb9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev6" />
+  <meta name="docsearch:version" content="1.0.2.dev7" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -539,7 +539,7 @@ Bluesky plans. Immutability is important to ensure that the optimization problem
 </ol>
 <a class="reference internal image-reference" href="../_images/protocol-data-flow.png"><img alt="Data Flow Diagram" class="align-center" src="../_images/protocol-data-flow.png" style="width: 100%;" />
 </a>
-<p>The Bluesky RunEngine is used to execute each optimization workflow step using <a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.optimize" title="bluesky_adaptive.plans.optimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.optimize()</span></code></a> and <a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.optimize_step" title="bluesky_adaptive.plans.optimize_step"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.optimize_step()</span></code></a>.</p>
+<p>The Bluesky RunEngine is used to execute each optimization workflow step using <a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.optimize" title="bluesky_adaptive.plans.optimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.optimize()</span></code></a>.</p>
 <p>These plans are compatible with any <code class="docutils literal notranslate"><span class="pre">NamedMovable</span></code> or <code class="docutils literal notranslate"><span class="pre">Flyable</span></code> as a <a class="reference internal" href="../reference/protocols.html#bluesky_adaptive.protocols.Actuator" title="bluesky_adaptive.protocols.Actuator"><code class="xref py py-class docutils literal notranslate"><span class="pre">bluesky_adaptive.protocols.Actuator</span></code></a> as well as <code class="docutils literal notranslate"><span class="pre">Readable</span></code> and <code class="docutils literal notranslate"><span class="pre">Collectable</span></code> as a <a class="reference internal" href="../reference/protocols.html#bluesky_adaptive.protocols.Sensor" title="bluesky_adaptive.protocols.Sensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">bluesky_adaptive.protocols.Sensor</span></code></a>. All of these are <a class="reference external" href="https://blueskyproject.io/bluesky/main/hardware.html">Bluesky protocols</a>. For example, <a class="reference external" href="https://github.com/bluesky/ophyd">Ophyd</a> signals can be used directly with Bluesky Adaptive since they implement both the <code class="docutils literal notranslate"><span class="pre">NamedMovable</span></code> and <code class="docutils literal notranslate"><span class="pre">Readable</span></code> protocols.</p>
 <p>Furthermore, fly-scanning acquisition plans are supported with a custom <a class="reference internal" href="../reference/protocols.html#bluesky_adaptive.protocols.AcquisitionPlan" title="bluesky_adaptive.protocols.AcquisitionPlan"><code class="xref py py-class docutils literal notranslate"><span class="pre">bluesky_adaptive.protocols.AcquisitionPlan</span></code></a> that uses <code class="docutils literal notranslate"><span class="pre">actuators</span></code> and <code class="docutils literal notranslate"><span class="pre">sensors</span></code> that implement the <code class="docutils literal notranslate"><span class="pre">Flyable</span></code> and <code class="docutils literal notranslate"><span class="pre">Collectable</span></code> protocols, respectively.</p>
 <p>For more information on the differences between step-scanning and fly-scanning in Bluesky, see <a class="reference external" href="https://blueskyproject.io/ophyd-async/main/explanations/fly-scanning.html">the explanation in ophyd-async</a>.</p>

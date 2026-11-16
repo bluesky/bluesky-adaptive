@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Plans &#8212; Bluesky Adaptive 1.0.2.dev6 documentation</title>
+    <title>Plans &#8212; Bluesky Adaptive 1.0.2.dev7 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=ea8e8fa0"></script>
+    <script src="../_static/documentation_options.js?v=4ef60bb9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev6" />
+  <meta name="docsearch:version" content="1.0.2.dev7" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -524,7 +524,7 @@
 <h1>Plans<a class="headerlink" href="#plans" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.optimize">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#optimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.optimize" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#optimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.optimize" title="Link to this definition">#</a></dt>
 <dd><p>Solve the optimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -541,10 +541,9 @@ the optimizer’s stopping criterion is met. An optimizer implementing
 will not be saved. Optimizer must implement the
 <a class="reference internal" href="protocols.html#bluesky_adaptive.protocols.Checkpointable" title="bluesky_adaptive.protocols.Checkpointable"><code class="xref py py-class docutils literal notranslate"><span class="pre">bluesky_adaptive.protocols.Checkpointable</span></code></a> protocol.</p>
 </dd>
-<dt><strong>readable_cache: dict[str, InferredReadable] | None = None</strong></dt><dd><p>Cache of readable objects to store the suggestions and outcomes as events.
-If None, a new cache will be created.</p>
+<dt><strong>callbacks</strong><span class="classifier">Iterable[DocumentCallback], optional</span></dt><dd><p>Callbacks that receive the optimization run’s documents.</p>
 </dd>
-<dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to pass to the <a class="reference internal" href="#bluesky_adaptive.plans.optimize_step" title="bluesky_adaptive.plans.optimize_step"><code class="xref py py-func docutils literal notranslate"><span class="pre">optimize_step()</span></code></a> plan.</p>
+<dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to pass to the acquisition plan.</p>
 </dd>
 </dl>
 </dd>
@@ -562,8 +561,6 @@ If None, a new cache will be created.</p>
 <dt><a class="reference internal" href="protocols.html#bluesky_adaptive.protocols.OptimizationProblem" title="bluesky_adaptive.protocols.OptimizationProblem"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bluesky_adaptive.protocols.OptimizationProblem</span></code></a></dt><dd><p>The problem to solve.</p>
 </dd>
 <dt><a class="reference internal" href="protocols.html#bluesky_adaptive.protocols.Checkpointable" title="bluesky_adaptive.protocols.Checkpointable"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bluesky_adaptive.protocols.Checkpointable</span></code></a></dt><dd><p>The protocol for checkpointable objects.</p>
-</dd>
-<dt><a class="reference internal" href="#bluesky_adaptive.plans.optimize_step" title="bluesky_adaptive.plans.optimize_step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_step</span></code></a></dt><dd><p>The plan to execute a single step of the optimization.</p>
 </dd>
 </dl>
 </div>
@@ -595,28 +592,6 @@ will not be saved. Optimizer must implement the
 If None, a new cache will be created.</p>
 </dd>
 <dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to pass to the acquisition plan.</p>
-</dd>
-</dl>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="bluesky_adaptive.plans.optimize_step">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">optimize_step</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#optimize_step"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.optimize_step" title="Link to this definition">#</a></dt>
-<dd><p>Single step of the optimization loop.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><dl class="simple">
-<dt><strong>optimization_problem</strong><span class="classifier">OptimizationProblem</span></dt><dd><p>The optimization problem to solve.</p>
-</dd>
-<dt><strong>n_points</strong><span class="classifier">int, optional</span></dt><dd><p>The number of points to suggest.</p>
-</dd>
-</dl>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><dl class="simple">
-<dt>tuple[TUid, Sequence[Mapping], Sequence[Mapping]]</dt><dd><p>The acquisition UID, suggestions, and outcomes of the step.</p>
 </dd>
 </dl>
 </dd>
@@ -667,7 +642,7 @@ data with its suggestion.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.acquire_baseline">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">acquire_baseline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameterization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#acquire_baseline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.acquire_baseline" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">acquire_baseline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameterization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#acquire_baseline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.acquire_baseline" title="Link to this definition">#</a></dt>
 <dd><p>Acquire a baseline reading. Useful for relative outcome constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -675,6 +650,8 @@ data with its suggestion.</p>
 <dt><strong>optimization_problem</strong><span class="classifier">OptimizationProblem</span></dt><dd><p>The optimization problem to solve.</p>
 </dd>
 <dt><strong>parameterization</strong><span class="classifier">dict[str, Any] | None = None</span></dt><dd><p>Move the DOFs to the given parameterization, if provided.</p>
+</dd>
+<dt><strong>callbacks</strong><span class="classifier">Iterable[DocumentCallback], optional</span></dt><dd><p>Callbacks that receive the optimization run’s documents.</p>
 </dd>
 </dl>
 </dd>
@@ -690,7 +667,7 @@ data with its suggestion.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.sample_suggestions">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">sample_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#sample_suggestions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.sample_suggestions" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">sample_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#sample_suggestions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.sample_suggestions" title="Link to this definition">#</a></dt>
 <dd><p>Evaluate specific parameter combinations.</p>
 <p>This plan acquires data for given suggestions and ingests results into the optimizer.
 Supports both optimizer-generated suggestions (with “_id”) and manual points
@@ -706,7 +683,7 @@ Supports both optimizer-generated suggestions (with “_id”) and manual points
 <li><p>Manual points (without “_id”, requires CanRegisterSuggestions protocol)</p></li>
 </ul>
 </dd>
-<dt><strong>readable_cache</strong><span class="classifier">dict[str, InferredReadable] | None</span></dt><dd><p>Cache for storing suggestions/outcomes as events.</p>
+<dt><strong>callbacks</strong><span class="classifier">Iterable[DocumentCallback], optional</span></dt><dd><p>Callbacks that receive the optimization run’s documents.</p>
 </dd>
 <dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional arguments for acquisition plan.</p>
 </dd>
@@ -733,7 +710,7 @@ not unique and hashable, or if the outcomes do not carry the same “_id” valu
 <div class="admonition seealso">
 <p class="admonition-title">See also</p>
 <dl class="simple">
-<dt><a class="reference internal" href="#bluesky_adaptive.plans.optimize_step" title="bluesky_adaptive.plans.optimize_step"><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize_step</span></code></a></dt><dd><p>Standard optimizer-driven step.</p>
+<dt><a class="reference internal" href="#bluesky_adaptive.plans.optimize" title="bluesky_adaptive.plans.optimize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">optimize</span></code></a></dt><dd><p>Standard optimizer-driven loop.</p>
 </dd>
 <dt><a class="reference internal" href="protocols.html#bluesky_adaptive.protocols.CanRegisterSuggestions" title="bluesky_adaptive.protocols.CanRegisterSuggestions"><code class="xref py py-obj docutils literal notranslate"><span class="pre">bluesky_adaptive.protocols.CanRegisterSuggestions</span></code></a></dt><dd><p>Protocol for manual suggestions.</p>
 </dd>
@@ -792,7 +769,6 @@ not unique and hashable, or if the outcomes do not carry the same “_id” valu
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.plans.optimize"><code class="docutils literal notranslate"><span class="pre">optimize()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.plans.optimize_in_run"><code class="docutils literal notranslate"><span class="pre">optimize_in_run()</span></code></a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.plans.optimize_step"><code class="docutils literal notranslate"><span class="pre">optimize_step()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.plans.default_acquire"><code class="docutils literal notranslate"><span class="pre">default_acquire()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.plans.acquire_baseline"><code class="docutils literal notranslate"><span class="pre">acquire_baseline()</span></code></a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.plans.sample_suggestions"><code class="docutils literal notranslate"><span class="pre">sample_suggestions()</span></code></a></li>

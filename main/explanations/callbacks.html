@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Optimization Callbacks &#8212; Bluesky Adaptive 1.0.2.dev6 documentation</title>
+    <title>Optimization Callbacks &#8212; Bluesky Adaptive 1.0.2.dev7 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=ea8e8fa0"></script>
+    <script src="../_static/documentation_options.js?v=4ef60bb9"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev6" />
+  <meta name="docsearch:version" content="1.0.2.dev7" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -530,38 +530,38 @@ optimization and reacts to the Bluesky documents it emits.</p>
 model. It formats optimization progress for the console, but it does not choose
 points, move hardware, or compute objectives.</p>
 </section>
-<section id="how-bluesky-adaptive-routes-documents">
-<h2>How Bluesky Adaptive routes documents<a class="headerlink" href="#how-bluesky-adaptive-routes-documents" title="Link to this heading">#</a></h2>
+<section id="how-bluesky-adaptive-emits-documents">
+<h2>How Bluesky Adaptive emits documents<a class="headerlink" href="#how-bluesky-adaptive-emits-documents" title="Link to this heading">#</a></h2>
 <p>Bluesky Adaptive builds on the standard Bluesky callback model: callbacks receive
-<code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>, <code class="docutils literal notranslate"><span class="pre">event</span></code>, and <code class="docutils literal notranslate"><span class="pre">stop</span></code> documents. When
-<a class="reference internal" href="../reference/ax/agent.html#bluesky_adaptive.ax.Agent.optimize" title="bluesky_adaptive.ax.Agent.optimize"><code class="xref py py-meth docutils literal notranslate"><span class="pre">bluesky_adaptive.ax.Agent.optimize()</span></code></a> runs, Bluesky Adaptive wraps the plan with an optimization
-callback router. The router forwards only runs whose <code class="docutils literal notranslate"><span class="pre">run_key</span></code> marks them as
-optimization-related: <code class="docutils literal notranslate"><span class="pre">&quot;optimize&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;sample_suggestions&quot;</span></code>.</p>
-<p>The optimization run and the acquisition run are related but distinct. The
-acquisition run records what happened at the beamline for a suggested point.
-The optimization run records the optimization-facing summary of that step: the
-suggestion identifiers, the acquisition UID, the parameter values, and the
-outcomes returned by the evaluation function.</p>
+<code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>, <code class="docutils literal notranslate"><span class="pre">event</span></code>, and <code class="docutils literal notranslate"><span class="pre">stop</span></code> documents. Each call to
+<a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.optimize" title="bluesky_adaptive.plans.optimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.optimize()</span></code></a>, <a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.sample_suggestions" title="bluesky_adaptive.plans.sample_suggestions"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.sample_suggestions()</span></code></a>, or
+<a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.acquire_baseline" title="bluesky_adaptive.plans.acquire_baseline"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.acquire_baseline()</span></code></a> produces one <em>optimization run</em> summarizing the
+evaluated points and sends its documents to the callbacks registered with
+<a class="reference internal" href="../reference/ax/agent.html#bluesky_adaptive.ax.Agent.subscribe" title="bluesky_adaptive.ax.Agent.subscribe"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Agent.subscribe</span></code></a> or passed in the plan’s
+<code class="docutils literal notranslate"><span class="pre">callbacks</span></code> argument.</p>
+<p>Optimization runs are separate from the acquisition runs that the RunEngine produces when it
+measures the points. Callbacks subscribed with <code class="docutils literal notranslate"><span class="pre">RE.subscribe</span></code> receive only the acquisition runs.
+To store optimization runs in Tiled, subscribe the <code class="docutils literal notranslate"><span class="pre">TiledWriter</span></code> to the agent as well; see
+<a class="reference internal" href="../how-to-guides/use-tiled.html"><span class="doc">Tiled with Bluesky Adaptive</span></a>.</p>
+<p>A callback that raises ends the optimization run, but the other callbacks still receive the rest
+of it, including its <code class="docutils literal notranslate"><span class="pre">stop</span></code> document.</p>
+<p><a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.optimize_in_run" title="bluesky_adaptive.plans.optimize_in_run"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.optimize_in_run()</span></code></a> is different: its optimization run is a RunEngine run
+that holds the acquired data, with the summary in its <code class="docutils literal notranslate"><span class="pre">optimization</span></code> stream.</p>
 </section>
 <section id="what-a-callback-sees">
 <h2>What a callback sees<a class="headerlink" href="#what-a-callback-sees" title="Link to this heading">#</a></h2>
-<p>Optimization callbacks see the same document types as other Bluesky callbacks,
-but the contents are optimization-focused.</p>
+<p>An optimization run contains the same document types as any other Bluesky run:</p>
 <dl class="simple">
-<dt><code class="docutils literal notranslate"><span class="pre">start</span></code></dt><dd><p>Run-level context such as optimizer description, actuator names, sensor
-names, number of iterations, and <code class="docutils literal notranslate"><span class="pre">n_points</span></code>.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">start</span></code></dt><dd><p>Run-level context such as the plan name and arguments, the optimizer, actuator and sensor
+names, and the optimization UID.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">descriptor</span></code></dt><dd><p>Field descriptions. Bluesky Adaptive marks optimization fields with a <code class="docutils literal notranslate"><span class="pre">source</span></code> value,
-distinguishing parameters, outcomes, suggestion identifiers, acquisition
-UIDs, and other values.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">descriptor</span></code></dt><dd><p>One <code class="docutils literal notranslate"><span class="pre">primary</span></code> stream. Its <code class="docutils literal notranslate"><span class="pre">object_keys</span></code> name the parameter fields under <code class="docutils literal notranslate"><span class="pre">&quot;parameters&quot;</span></code>
+and the outcome fields under <code class="docutils literal notranslate"><span class="pre">&quot;outcomes&quot;</span></code>.</p>
 </dd>
-<dt><code class="docutils literal notranslate"><span class="pre">event</span></code></dt><dd><p>Per-step values such as <code class="docutils literal notranslate"><span class="pre">suggestion_ids</span></code>, <code class="docutils literal notranslate"><span class="pre">acquisition_uid</span></code>, parameter
-values, and outcome values.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">event</span></code></dt><dd><p>One event per evaluated point: its parameter and outcome values, its suggestion ID
+(<code class="docutils literal notranslate"><span class="pre">adaptive_suggestion_id</span></code>), its iteration (<code class="docutils literal notranslate"><span class="pre">adaptive_iteration</span></code>), and the UID returned by
+the acquisition plan (<code class="docutils literal notranslate"><span class="pre">adaptive_acquisition_uid</span></code>).</p>
 </dd>
-</dl>
-<p>For <code class="docutils literal notranslate"><span class="pre">acquisition_uid</span></code>, native array-like UIDs are stored directly. Other UIDs are
-stored using their <code class="docutils literal notranslate"><span class="pre">repr</span></code>; the evaluation function still receives the original value.</p>
-<dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">stop</span></code></dt><dd><p>Completion status and reason, useful for summaries or cleanup.</p>
 </dd>
 </dl>
@@ -641,7 +641,7 @@ were acquired or how the outcomes were computed. For a runnable example, see
   <nav id="pst-page-toc-nav" class="page-toc" aria-labelledby="pst-page-navigation-heading-2">
     <ul class="pst-show_toc_level nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#why-callbacks-exist">Why callbacks exist</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-bluesky-adaptive-routes-documents">How Bluesky Adaptive routes documents</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#how-bluesky-adaptive-emits-documents">How Bluesky Adaptive emits documents</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-a-callback-sees">What a callback sees</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#what-belongs-in-a-callback">What belongs in a callback</a></li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#writing-custom-callbacks">Writing custom callbacks</a></li>
