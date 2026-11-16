@@ -51,7 +51,6 @@ Bug Fixes
 * ``optimize`` records the step that meets the stopping criterion.
 * ``OptimizationLogger`` omits the Iterations line for runs whose start document has no ``iterations``, such as
   ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
->>>>>>> 3390e3390071d31088a61c9979d6eb44d880416d
 
 v1.0.1 (2026-11-07)
 -------------------
