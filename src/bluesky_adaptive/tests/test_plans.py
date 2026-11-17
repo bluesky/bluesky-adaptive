@@ -13,7 +13,6 @@ from bluesky_adaptive.plans import (
     default_acquire,
     optimize,
     optimize_in_run,
-    optimize_step,
     sample_suggestions,
 )
 from bluesky_adaptive.protocols import (
@@ -267,7 +266,7 @@ def test_evaluation_failure_registers_suggestions(RE):
     )
 
     with pytest.raises(RuntimeError, match="evaluation failed"):
-        RE(optimize_step(optimization_problem))
+        RE(optimize(optimization_problem))
 
     optimizer.register_failures.assert_called_once_with(suggestions)
     optimizer.ingest.assert_not_called()
@@ -686,7 +685,7 @@ def test_optimize_in_run_registers_failures(RE):
     optimizer.ingest.assert_not_called()
 
 
-def test_optimize_step_rejects_suggestion_without_id(RE):
+def test_optimize_rejects_suggestion_without_id(RE):
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.0}]
     evaluation_function = MagicMock(return_value=[{"objective": 0.0, "_id": 0}])
@@ -699,7 +698,7 @@ def test_optimize_step_rejects_suggestion_without_id(RE):
     )
 
     with pytest.raises(ValueError, match="All suggestions must contain an '_id' key"):
-        RE(optimize_step(optimization_problem))
+        RE(optimize(optimization_problem))
 
     evaluation_function.assert_not_called()
     optimizer.ingest.assert_not_called()
@@ -726,7 +725,7 @@ def test_optimize_step_rejects_suggestion_without_id(RE):
         ),
     ],
 )
-def test_optimize_step_rejects_invalid_outcome_ids(RE, outcomes, error_type, message):
+def test_optimize_rejects_invalid_outcome_ids(RE, outcomes, error_type, message):
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.0, "_id": "a"}, {"x1": 1.0, "_id": "b"}]
     evaluation_function = MagicMock(return_value=outcomes)
@@ -739,7 +738,7 @@ def test_optimize_step_rejects_invalid_outcome_ids(RE, outcomes, error_type, mes
     )
 
     with pytest.raises(error_type, match=message):
-        RE(optimize_step(optimization_problem, n_points=2))
+        RE(optimize(optimization_problem, n_points=2))
 
     evaluation_function.assert_called_once()
     optimizer.ingest.assert_not_called()
@@ -781,24 +780,6 @@ def test_optimize_in_run_checkpoints(RE):
     RE(optimize_in_run(optimization_problem, iterations=3, checkpoint_interval=2))
 
     assert optimizer.checkpoint.call_count == 1
-
-
-def test_optimize_step_default(RE):
-    optimizer = MagicMock(spec=Optimizer)
-    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
-    evaluation_function = MagicMock(spec=EvaluationFunction, return_value=[{"objective": 0.0, "_id": 0}])
-    optimization_problem = OptimizationProblem(
-        optimizer=optimizer,
-        actuators=[MovableSignal("x1", initial_value=-1.0)],
-        sensors=[ReadableSignal("objective")],
-        evaluation_function=evaluation_function,
-    )
-
-    RE(optimize_step(optimization_problem))
-
-    optimizer.suggest.assert_called_once_with(1)
-    optimizer.ingest.assert_called_once_with([{"objective": 0.0, "_id": 0}])
-    assert evaluation_function.call_count == 1
 
 
 def test_optimize_event_document_structure(RE):
@@ -931,7 +912,7 @@ def test_optimize_with_array_rejecting_uid_uses_repr(RE):
     assert events[0]["data"]["adaptive_acquisition_uid"] == "ArrayRejectingAcquisitionUID()"
 
 
-def test_optimize_step_custom_acquisition_plan(RE):
+def test_optimize_custom_acquisition_plan(RE):
     acquisition_plan = MagicMock(spec=AcquisitionPlan)
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
@@ -946,7 +927,7 @@ def test_optimize_step_custom_acquisition_plan(RE):
         acquisition_plan=acquisition_plan,
     )
 
-    RE(optimize_step(optimization_problem))
+    RE(optimize(optimization_problem))
     optimizer.suggest.assert_called_once_with(1)
     acquisition_plan.assert_called_once_with(
         [{"x1": 0.0, "_id": 0}],
@@ -1017,13 +998,15 @@ def test_default_acquire_records_acquisition_order(RE):
 
     RE.subscribe(callback)
     try:
-        RE(default_acquire(suggestions, [movable], [readable]))
+        # Caller metadata under "bluesky-adaptive" must be kept alongside the acquisition order.
+        RE(default_acquire(suggestions, [movable], [readable], md={"bluesky-adaptive": {"optimization_uid": "abc"}}))
     finally:
         RE.unsubscribe(callback)
 
     assert len(start_docs) == 1
     assert start_docs[0]["blop_suggestions"] == [suggestions[1], suggestions[0]]
     assert start_docs[0]["blop_acquisition_order"] == ["near", "far"]
+    assert start_docs[0]["bluesky-adaptive"] == {"optimization_uid": "abc", "acquisition_order": ["near", "far"]}
 
 
 def test_default_acquire_multiple_movables_readables(RE):

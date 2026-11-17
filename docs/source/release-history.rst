@@ -31,8 +31,9 @@ Breaking Changes
   fields instead of ``DataKey`` ``source`` values. Parameter and outcome names must not start with ``adaptive_``,
   and a parameter and an outcome must not share a name. The ``optimization`` stream of ``optimize_in_run`` is
   unchanged.
-* Removed ``OptimizationCallbackRouter``, the ``readable_cache`` argument of ``optimize`` and
-  ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
+* Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
+  ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
+  ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
 
 Features
 ........
@@ -43,11 +44,23 @@ Features
 * Optimization run metadata is also recorded under ``"bluesky-adaptive"`` in start documents, duplicating
   ``evaluation_function``, ``acquisition_plan``, ``optimizer``, ``sensors``, and ``actuators``. The top-level keys
   are kept for backwards compatibility.
+* ``default_acquire`` records the suggestion IDs in scan order as ``start["bluesky-adaptive"]["acquisition_order"]``.
+  ``"blop_acquisition_order"`` is kept for backwards compatibility.
+* New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(evaluate, fetch)`` builds an evaluation function from a
+  function that evaluates the data of one suggestion and sets the ``"_id"`` of each outcome.
+  ``bluesky_adaptive.evaluation.documents.RunEventBuffer``, subscribed with ``RE.subscribe(buffer)``, buffers the
+  ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(evaluate, buffer.pop)`` can evaluate
+  them (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+* ``QueueserverOptimizationRunner`` runs its loop as an asyncio coroutine instead of in a dedicated thread guarded by
+  a lock. ``run_async()`` and ``submit_suggestions_async()`` on the runner and on ``QueueserverAgent`` run it on the
+  caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
+  on a shared background event loop; cancelling that future cancels the loop. Interpreter exit now waits for an
+  in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
 
 Bug Fixes
 .........
-* ``optimize`` and ``optimize_step`` mark a step's trials failed on a ``TrialFaultAware`` optimizer when its
-  outcomes fail validation, as they already did for acquisition and evaluation errors.
+* ``optimize`` marks a step's trials failed on a ``TrialFaultAware`` optimizer when its outcomes fail validation,
+  as it already did for acquisition and evaluation errors.
 * ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like
   ``optimize`` instead of ingesting mismatched outcomes.
 * ``sample_suggestions`` marks its suggestions failed on a ``TrialFaultAware`` optimizer when acquisition,
