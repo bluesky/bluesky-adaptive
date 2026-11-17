@@ -19,42 +19,45 @@ The built-in :class:`bluesky_adaptive.callbacks.logger.OptimizationLogger` follo
 model. It formats optimization progress for the console, but it does not choose
 points, move hardware, or compute objectives.
 
-How Bluesky Adaptive routes documents
--------------------------------------
+How Bluesky Adaptive emits documents
+------------------------------------
 
 Bluesky Adaptive builds on the standard Bluesky callback model: callbacks receive
-``start``, ``descriptor``, ``event``, and ``stop`` documents. When
-:meth:`bluesky_adaptive.ax.Agent.optimize` runs, Bluesky Adaptive wraps the plan with an optimization
-callback router. The router forwards only runs whose ``run_key`` marks them as
-optimization-related: ``"optimize"`` or ``"sample_suggestions"``.
+``start``, ``descriptor``, ``event``, and ``stop`` documents. Each call to
+:func:`bluesky_adaptive.plans.optimize`, :func:`bluesky_adaptive.plans.sample_suggestions`, or
+:func:`bluesky_adaptive.plans.acquire_baseline` produces one *optimization run* summarizing the
+evaluated points and sends its documents to the callbacks registered with
+:meth:`Agent.subscribe <bluesky_adaptive.ax.Agent.subscribe>` or passed in the plan's
+``callbacks`` argument.
 
-The optimization run and the acquisition run are related but distinct. The
-acquisition run records what happened at the beamline for a suggested point.
-The optimization run records the optimization-facing summary of that step: the
-suggestion identifiers, the acquisition UID, the parameter values, and the
-outcomes returned by the evaluation function.
+Optimization runs are separate from the acquisition runs that the RunEngine produces when it
+measures the points. Callbacks subscribed with ``RE.subscribe`` receive only the acquisition runs.
+To store optimization runs in Tiled, subscribe the ``TiledWriter`` to the agent as well; see
+:doc:`/how-to-guides/use-tiled`.
+
+A callback that raises ends the optimization run, but the other callbacks still receive the rest
+of it, including its ``stop`` document.
+
+:func:`bluesky_adaptive.plans.optimize_in_run` is different: its optimization run is a RunEngine run
+that holds the acquired data, with the summary in its ``optimization`` stream.
 
 What a callback sees
 --------------------
 
-Optimization callbacks see the same document types as other Bluesky callbacks,
-but the contents are optimization-focused.
+An optimization run contains the same document types as any other Bluesky run:
 
 ``start``
-    Run-level context such as optimizer description, actuator names, sensor
-    names, number of iterations, and ``n_points``.
+    Run-level context such as the plan name and arguments, the optimizer, actuator and sensor
+    names, and the optimization UID.
 
 ``descriptor``
-    Field descriptions. Bluesky Adaptive marks optimization fields with a ``source`` value,
-    distinguishing parameters, outcomes, suggestion identifiers, acquisition
-    UIDs, and other values.
+    One ``primary`` stream. Its ``object_keys`` name the parameter fields under ``"parameters"``
+    and the outcome fields under ``"outcomes"``.
 
 ``event``
-    Per-step values such as ``suggestion_ids``, ``acquisition_uid``, parameter
-    values, and outcome values.
-
-For ``acquisition_uid``, native array-like UIDs are stored directly. Other UIDs are
-stored using their ``repr``; the evaluation function still receives the original value.
+    One event per evaluated point: its parameter and outcome values, its suggestion ID
+    (``adaptive_suggestion_id``), its iteration (``adaptive_iteration``), and the UID returned by
+    the acquisition plan (``adaptive_acquisition_uid``).
 
 ``stop``
     Completion status and reason, useful for summaries or cleanup.

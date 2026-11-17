@@ -17,6 +17,23 @@ Breaking Changes
 * ``QueueserverOptimizationRunner.stop()`` and ``QueueserverAgent.stop()`` stop further submissions without
   interrupting the in-flight evaluation. The future resolves with the partial result after that evaluation
   returns and is ingested, instead of immediately.
+* ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` send the record of each evaluated point to the
+  callbacks passed in the new ``callbacks`` argument instead of writing it through the RunEngine. ``Agent`` and
+  ``Scipy`` pass the callbacks registered with ``subscribe``. ``optimize`` and ``sample_suggestions`` no longer
+  open an outer RunEngine run, so callbacks subscribed with ``RE.subscribe`` see only acquisition runs and
+  ``RE(agent.optimize())`` returns only acquisition run UIDs. To store optimization runs in Tiled, also subscribe
+  the ``TiledWriter`` to the agent; find them by ``start["bluesky-adaptive"]["optimization_uid"]``
+  (`#82 <https://github.com/bluesky/bluesky-adaptive/issues/82>`_).
+* Optimization-run events name their bookkeeping fields ``adaptive_suggestion_id`` (a string),
+  ``adaptive_iteration``, and ``adaptive_acquisition_uid`` instead of ``suggestion_ids``, ``iteration``, and
+  ``acquisition_uid``. Acquisition UIDs that are not strings, including tuples and arrays, are stored as their
+  ``repr``. The descriptor's ``object_keys`` name the parameter (``"parameters"``) and outcome (``"outcomes"``)
+  fields instead of ``DataKey`` ``source`` values. Parameter and outcome names must not start with ``adaptive_``,
+  and a parameter and an outcome must not share a name. The ``optimization`` stream of ``optimize_in_run`` is
+  unchanged.
+* Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
+  ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
+  ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
 
 Features
 ........
@@ -29,15 +46,32 @@ Features
   are kept for backwards compatibility.
 * ``default_acquire`` records the suggestion IDs in scan order as ``start["bluesky-adaptive"]["acquisition_order"]``.
   ``"blop_acquisition_order"`` is kept for backwards compatibility.
-* New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(fetch)`` turns a function that evaluates the data of
-  one suggestion into an evaluation function and sets the ``"_id"`` of each outcome.
+* New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(evaluate, fetch)`` builds an evaluation function from a
+  function that evaluates the data of one suggestion and sets the ``"_id"`` of each outcome.
   ``bluesky_adaptive.evaluation.documents.RunEventBuffer``, subscribed with ``RE.subscribe(buffer)``, buffers the
-  ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(buffer.pop)`` can evaluate them
-  (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+  ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(evaluate, buffer.pop)`` can evaluate
+  them (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
 * ``bluesky_adaptive.evaluation.tiled.TiledRunPoller(client)`` reads the ``"primary"`` data of ``default_acquire``
-  runs from Tiled so that ``per_suggestion(TiledRunPoller(client))`` can evaluate them. Each call polls Tiled until
-  the run has a stop document, raising ``TimeoutError`` after ``timeout`` seconds. It needs the new ``tiled`` extra,
-  which ``all`` includes (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+  runs from Tiled so that ``per_suggestion(evaluate, TiledRunPoller(client))`` can evaluate them. Each call polls
+  Tiled until the run has a stop document, raising ``TimeoutError`` after ``timeout`` seconds. It needs the new
+  ``tiled`` extra, which ``all`` includes (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+* ``QueueserverOptimizationRunner`` runs its loop as an asyncio coroutine instead of in a dedicated thread guarded by
+  a lock. ``run_async()`` and ``submit_suggestions_async()`` on the runner and on ``QueueserverAgent`` run it on the
+  caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
+  on a shared background event loop; cancelling that future cancels the loop. Interpreter exit now waits for an
+  in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
+
+Bug Fixes
+.........
+* ``optimize`` marks a step's trials failed on a ``TrialFaultAware`` optimizer when its outcomes fail validation,
+  as it already did for acquisition and evaluation errors.
+* ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like
+  ``optimize`` instead of ingesting mismatched outcomes.
+* ``sample_suggestions`` marks its suggestions failed on a ``TrialFaultAware`` optimizer when acquisition,
+  evaluation, or outcome validation fails, like ``optimize``.
+* ``optimize`` records the step that meets the stopping criterion.
+* ``OptimizationLogger`` omits the Iterations line for runs whose start document has no ``iterations``, such as
+  ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
 
 v1.0.1 (2026-11-07)
 -------------------

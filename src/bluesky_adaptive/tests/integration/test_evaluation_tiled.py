@@ -35,8 +35,8 @@ def test_tiled_run_poller_scores_each_suggestion_from_its_primary_row() -> None:
             optimizer=optimizer,
             actuators=[MovableSignal("x1", initial_value=0.0)],
             sensors=[ReadableSignal("det")],
-            evaluation_function=per_suggestion(TiledRunPoller(tiled_client, timeout=10))(
-                lambda data: {"objective": 10 * data["x1"]}
+            evaluation_function=per_suggestion(
+                lambda data: {"objective": 10 * data["x1"]}, TiledRunPoller(tiled_client, timeout=10)
             ),
         )
 

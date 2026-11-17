@@ -1,3 +1,4 @@
+import asyncio
 import itertools
 import threading
 from dataclasses import replace
@@ -326,6 +327,50 @@ def test_runner_submit_suggestions_twice_fails():
     first_future.result(timeout=5)
 
 
+def test_runner_cancelled_run_releases_runner(mock_optimization_problem):
+    """Cancelling run_async() during an evaluation lets the runner start a new loop."""
+    evaluating = threading.Event()
+    release = threading.Event()
+
+    def evaluate(**kwargs):
+        evaluating.set()
+        assert release.wait(timeout=5)
+        return [{"_id": 0, "objective": 1.0}]
+
+    problem = replace(mock_optimization_problem, evaluation_function=MagicMock(side_effect=evaluate))
+    mock_client = MagicMock(spec=QueueserverClient)
+    mock_client.submit_plan.side_effect = (f"item-{i}" for i in itertools.count())
+    runner = QueueserverOptimizationRunner(optimization_problem=problem, queueserver_client=mock_client)
+
+    async def cancel_then_rerun():
+        first_run = asyncio.create_task(runner.run_async(iterations=10))
+        assert await asyncio.to_thread(evaluating.wait, 5)
+        first_run.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await first_run
+        release.set()
+        return await runner.run_async(iterations=1)
+
+    result = asyncio.run(cancel_then_rerun())
+
+    assert result == OptimizationResult(iterations_completed=1, num_points=1, uids=("item-1",))
+
+
+def test_runner_submit_suggestions_async_returns_result(mock_optimization_problem):
+    """submit_suggestions_async() evaluates and ingests the submitted suggestions, then returns the result."""
+    suggestions = [{"_id": 0, "motor1": 1.0, "motor2": 2.0}]
+    mock_client = MagicMock(spec=QueueserverClient)
+    mock_client.submit_plan.return_value = "item-0"
+    runner = QueueserverOptimizationRunner(optimization_problem=mock_optimization_problem, queueserver_client=mock_client)
+
+    result = asyncio.run(runner.submit_suggestions_async(suggestions))
+
+    assert result == OptimizationResult(iterations_completed=1, num_points=1, uids=("item-0",))
+    mock_optimization_problem.evaluation_function.assert_called_once_with(uid="item-0", suggestions=suggestions)
+    mock_optimization_problem.optimizer.ingest.assert_called_once_with([{"_id": 0, "objective": 1.0}])
+    mock_optimization_problem.optimizer.suggest.assert_not_called()
+
+
 def _start_runner(problem, iterations=3, num_points=1, checkpoint_interval=None):
     """Start a runner whose client returns queue item UIDs "item-0", "item-1", ..."""
     mock_client = MagicMock(spec=QueueserverClient)
@@ -508,8 +553,8 @@ def test_runner_invalid_next_suggestions_fail_future_without_failing_ingested_tr
     mock_client.submit_plan.assert_called_once()
 
 
-def test_runner_run_submit_error_fails_future_and_reraises(mock_optimization_problem):
-    """An exception from submit_plan in run() fails the future and re-raises."""
+def test_runner_run_submit_error_reraises(mock_optimization_problem):
+    """An exception from submit_plan in run() propagates to the caller."""
     error = RuntimeError("connection refused")
     mock_client = MagicMock(spec=QueueserverClient)
     mock_client.submit_plan.side_effect = error
@@ -522,14 +567,9 @@ def test_runner_run_submit_error_fails_future_and_reraises(mock_optimization_pro
     with pytest.raises(RuntimeError, match="connection refused"):
         runner.run(iterations=1, num_points=1)
 
-    future = runner._current_future
-    assert future is not None
-    assert future.done()
-    assert future.exception() is error
 
-
-def test_runner_submit_suggestions_submit_error_fails_future_and_reraises(mock_optimization_problem):
-    """An exception from submit_plan in submit_suggestions() fails the future and re-raises."""
+def test_runner_submit_suggestions_submit_error_reraises(mock_optimization_problem):
+    """An exception from submit_plan in submit_suggestions() propagates to the caller."""
     error = RuntimeError("connection refused")
     mock_client = MagicMock(spec=QueueserverClient)
     mock_client.submit_plan.side_effect = error
@@ -543,10 +583,34 @@ def test_runner_submit_suggestions_submit_error_fails_future_and_reraises(mock_o
     with pytest.raises(RuntimeError, match="connection refused"):
         runner.submit_suggestions(suggestions)
 
-    future = runner._current_future
-    assert future is not None
-    assert future.done()
-    assert future.exception() is error
+
+def test_runner_run_interrupted_before_first_submission_abandons_run(mock_optimization_problem):
+    """A KeyboardInterrupt while run() waits for its first submission cancels the run before it submits a plan."""
+    checking = threading.Event()
+    release = threading.Event()
+
+    def check_environment():
+        checking.set()
+        assert release.wait(timeout=5)
+
+    def interrupted_wait(*args, **kwargs):
+        assert checking.wait(timeout=5)
+        raise KeyboardInterrupt
+
+    mock_client = MagicMock(spec=QueueserverClient)
+    mock_client.check_environment.side_effect = check_environment
+    mock_client.submit_plan.side_effect = (f"item-{i}" for i in itertools.count())
+    runner = QueueserverOptimizationRunner(optimization_problem=mock_optimization_problem, queueserver_client=mock_client)
+
+    with patch("bluesky_adaptive.queueserver.wait", side_effect=interrupted_wait), pytest.raises(KeyboardInterrupt):
+        runner.run(iterations=5)
+    release.set()
+
+    # The interrupted run submitted nothing and released the runner, so a new run gets the first queue item.
+    result = runner.run(iterations=1).result(timeout=5)
+
+    assert result.uids == ("item-0",)
+    mock_client.submit_plan.assert_called_once()
 
 
 def test_runner_checkpoints(mock_optimization_problem):

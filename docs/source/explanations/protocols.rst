@@ -30,7 +30,7 @@ The data flow for a typical optimization workflow is as follows:
    :width: 100%
    :align: center
 
-The Bluesky RunEngine is used to execute each optimization workflow step using :func:`bluesky_adaptive.plans.optimize` and :func:`bluesky_adaptive.plans.optimize_step`.
+The Bluesky RunEngine is used to execute each optimization workflow step using :func:`bluesky_adaptive.plans.optimize`.
 
 These plans are compatible with any ``NamedMovable`` or ``Flyable`` as a :class:`bluesky_adaptive.protocols.Actuator` as well as ``Readable`` and ``Collectable`` as a :class:`bluesky_adaptive.protocols.Sensor`. All of these are `Bluesky protocols <https://blueskyproject.io/bluesky/main/hardware.html>`_. For example, `Ophyd <https://github.com/bluesky/ophyd>`_ signals can be used directly with Bluesky Adaptive since they implement both the ``NamedMovable`` and ``Readable`` protocols.
 
