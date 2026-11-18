@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.ax.agent &#8212; Bluesky Adaptive 1.0.2.dev8 documentation</title>
+    <title>bluesky_adaptive.ax.agent &#8212; Bluesky Adaptive 1.0.2.dev9 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../../_static/documentation_options.js?v=a6eca87b"></script>
+    <script src="../../../_static/documentation_options.js?v=02942c62"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev8" />
+  <meta name="docsearch:version" content="1.0.2.dev9" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -846,7 +846,6 @@ window.runMermaid = runMermaid;</script>
 <span></span><span class="sd">"""Agent interface for optimization with Ax as the backend."""</span>
 
 <span class="kn">import</span><span class="w"> </span><span class="nn">logging</span>
-<span class="kn">import</span><span class="w"> </span><span class="nn">uuid</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Generic</span><span class="p">,</span> <span class="n">cast</span>
 
@@ -857,13 +856,12 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">ax.global_stopping.strategies.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseGlobalStoppingStrategy</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">bluesky.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">MsgGenerator</span>
 
-<span class="kn">from</span><span class="w"> </span><span class="nn">..callbacks.logger</span><span class="w"> </span><span class="kn">import</span> <span class="n">OptimizationLogger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">_BaseAgent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..plan_stubs</span><span class="w"> </span><span class="kn">import</span> <span class="n">navigate_to_best</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..plans</span><span class="w"> </span><span class="kn">import</span> <span class="n">acquire_baseline</span><span class="p">,</span> <span class="n">optimize</span><span class="p">,</span> <span class="n">sample_suggestions</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">AcquisitionPlan</span><span class="p">,</span>
     <span class="n">Actuator</span><span class="p">,</span>
-    <span class="n">DocumentCallback</span><span class="p">,</span>
     <span class="n">EvaluationFunction</span><span class="p">,</span>
     <span class="n">OptimizationProblem</span><span class="p">,</span>
     <span class="n">Sensor</span><span class="p">,</span>
@@ -1046,7 +1044,7 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="Agent">
 <a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.Agent">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">Agent</span><span class="p">(</span><span class="n">_AxAgentMixin</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TUid</span><span class="p">]):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">Agent</span><span class="p">(</span><span class="n">_AxAgentMixin</span><span class="p">,</span> <span class="n">_BaseAgent</span><span class="p">,</span> <span class="n">Generic</span><span class="p">[</span><span class="n">TUid</span><span class="p">]):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    An interface that uses Ax as the backend for optimization and experiment tracking.</span>
 
@@ -1132,8 +1130,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">stopping_strategy</span><span class="o">=</span><span class="n">stopping_strategy</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">DocumentCallback</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">OptimizationLogger</span><span class="p">()]</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_optimization_uid</span> <span class="o">=</span> <span class="n">optimization_uid</span> <span class="k">if</span> <span class="n">optimization_uid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">optimization_uid</span><span class="o">=</span><span class="n">optimization_uid</span><span class="p">)</span>
 
 <div class="viewcode-block" id="Agent.from_checkpoint">
 <a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.Agent.from_checkpoint">[docs]</a>
@@ -1177,60 +1174,9 @@ window.runMermaid = runMermaid;</script>
         <span class="n">instance</span><span class="o">.</span><span class="n">_sensors</span> <span class="o">=</span> <span class="n">sensors</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_evaluation_function</span> <span class="o">=</span> <span class="n">evaluation_function</span>
         <span class="n">instance</span><span class="o">.</span><span class="n">_acquisition_plan</span> <span class="o">=</span> <span class="n">acquisition_plan</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_callbacks</span> <span class="o">=</span> <span class="p">[</span><span class="n">OptimizationLogger</span><span class="p">()]</span>
-        <span class="n">instance</span><span class="o">.</span><span class="n">_optimization_uid</span> <span class="o">=</span> <span class="n">optimization_uid</span> <span class="k">if</span> <span class="n">optimization_uid</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="nb">str</span><span class="p">(</span><span class="n">uuid</span><span class="o">.</span><span class="n">uuid4</span><span class="p">())</span>
+        <span class="n">_BaseAgent</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">instance</span><span class="p">,</span> <span class="n">optimization_uid</span><span class="o">=</span><span class="n">optimization_uid</span><span class="p">)</span>
 
         <span class="k">return</span> <span class="n">instance</span></div>
-
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">callbacks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">DocumentCallback</span><span class="p">]:</span>
-<span class="w">        </span><span class="sd">"""The list of active optimization callbacks.</span>
-
-<span class="sd">        Callbacks in this list receive the documents of the agent's optimization runs. The default list</span>
-<span class="sd">        contains an :class:`~bluesky_adaptive.callbacks.logger.OptimizationLogger`.</span>
-
-<span class="sd">        The list can be mutated directly, or use :meth:`subscribe` /</span>
-<span class="sd">        :meth:`unsubscribe` for convenience.</span>
-<span class="sd">        """</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span>
-
-<div class="viewcode-block" id="Agent.subscribe">
-<a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.Agent.subscribe">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">subscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">DocumentCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Subscribe a callback to receive optimization run documents.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        callback : DocumentCallback</span>
-<span class="sd">            A Bluesky document callback, e.g. a :class:`bluesky.callbacks.CallbackBase` instance.</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            If *callback* is already subscribed.</span>
-<span class="sd">        """</span>
-        <span class="k">if</span> <span class="n">callback</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Callback </span><span class="si">{</span><span class="n">callback</span><span class="si">!r}</span><span class="s2"> is already subscribed."</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span></div>
-
-
-<div class="viewcode-block" id="Agent.unsubscribe">
-<a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.Agent.unsubscribe">[docs]</a>
-    <span class="k">def</span><span class="w"> </span><span class="nf">unsubscribe</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">:</span> <span class="n">DocumentCallback</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Unsubscribe a previously subscribed callback.</span>
-
-<span class="sd">        Parameters</span>
-<span class="sd">        ----------</span>
-<span class="sd">        callback : DocumentCallback</span>
-<span class="sd">            The callback to remove.</span>
-
-<span class="sd">        Raises</span>
-<span class="sd">        ------</span>
-<span class="sd">        ValueError</span>
-<span class="sd">            If *callback* is not subscribed.</span>
-<span class="sd">        """</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span></div>
 
 
     <span class="nd">@property</span>
@@ -1252,11 +1198,6 @@ window.runMermaid = runMermaid;</script>
     <span class="k">def</span><span class="w"> </span><span class="nf">acquisition_plan</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AcquisitionPlan</span><span class="p">[</span><span class="n">TUid</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""The acquisition plan for acquiring data, or ``None`` if using the default."""</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_acquisition_plan</span>
-
-    <span class="nd">@property</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">optimization_uid</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<span class="w">        </span><span class="sd">"""Identifier of this agent's optimization."""</span>
-        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_optimization_uid</span>
 
 <div class="viewcode-block" id="Agent.to_optimization_problem">
 <a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.Agent.to_optimization_problem">[docs]</a>
