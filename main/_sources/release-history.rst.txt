@@ -51,6 +51,10 @@ Features
   ``bluesky_adaptive.evaluation.documents.RunEventBuffer``, subscribed with ``RE.subscribe(buffer)``, buffers the
   ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(evaluate, buffer.pop)`` can evaluate
   them (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+* ``bluesky_adaptive.evaluation.tiled.TiledRunPoller(client)`` reads the ``"primary"`` data of ``default_acquire``
+  runs from Tiled so that ``per_suggestion(evaluate, TiledRunPoller(client))`` can evaluate them. Each call polls
+  Tiled until the run has a stop document, raising ``TimeoutError`` after ``timeout`` seconds. It needs the new
+  ``tiled`` extra, which ``all`` includes (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
 * ``QueueserverOptimizationRunner`` runs its loop as an asyncio coroutine instead of in a dedicated thread guarded by
   a lock. ``run_async()`` and ``submit_suggestions_async()`` on the runner and on ``QueueserverAgent`` run it on the
   caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it

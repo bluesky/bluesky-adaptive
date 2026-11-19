@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Installation &#8212; Bluesky Adaptive 1.0.2.dev9 documentation</title>
+    <title>Installation &#8212; Bluesky Adaptive 1.0.2.dev10 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=02942c62"></script>
+    <script src="_static/documentation_options.js?v=481c52a7"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev9" />
+  <meta name="docsearch:version" content="1.0.2.dev10" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -542,15 +542,19 @@
 <td><p><code class="docutils literal notranslate"><span class="pre">bluesky-queueserver-api</span></code></p></td>
 <td><p>Transport layer only; pair with <code class="docutils literal notranslate"><span class="pre">[ax]</span></code> for <code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code></p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[cpu]</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[tiled]</span></code></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">bluesky-tiled-plugins</span></code></p></td>
+<td><p>Client only; needed by <code class="docutils literal notranslate"><span class="pre">TiledRunPoller</span></code></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[cpu]</span></code></p></td>
 <td><p><em>(uv index routing)</em></p></td>
 <td><p>Routes <code class="docutils literal notranslate"><span class="pre">torch</span></code> to the CPU-only PyTorch index; requires <code class="docutils literal notranslate"><span class="pre">uv</span></code></p></td>
 </tr>
-<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[all]</span></code></p></td>
-<td><p>All backends + <code class="docutils literal notranslate"><span class="pre">[queueserver]</span></code></p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[all]</span></code></p></td>
+<td><p>All backends + <code class="docutils literal notranslate"><span class="pre">[queueserver]</span></code> + <code class="docutils literal notranslate"><span class="pre">[tiled]</span></code></p></td>
 <td><p>No dev tooling; will grow as new backends are added</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[dev]</span></code></p></td>
+<tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[dev]</span></code></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">bluesky-adaptive[all]</span></code> + dev tooling</p></td>
 <td><p>For contributors</p></td>
 </tr>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluation &#8212; Bluesky Adaptive 1.0.2.dev9 documentation</title>
+    <title>Evaluation &#8212; Bluesky Adaptive 1.0.2.dev10 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=02942c62"></script>
+    <script src="../_static/documentation_options.js?v=481c52a7"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev9" />
+  <meta name="docsearch:version" content="1.0.2.dev10" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -627,6 +627,70 @@ Buffers runs that record <code class="docutils literal notranslate"><span class=
 </dd></dl>
 
 </section>
+<section id="tiledrunpoller">
+<h2>TiledRunPoller<a class="headerlink" href="#tiledrunpoller" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluesky_adaptive.evaluation.tiled.TiledRunPoller">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.evaluation.tiled.</span></span><span class="sig-name descname"><span class="pre">TiledRunPoller</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">client</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">poll_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60.0</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/tiled.html#TiledRunPoller"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.tiled.TiledRunPoller" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
+<p>Poll Tiled for a stopped acquisition run and return its <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> data by suggestion ID.</p>
+<p>Pass an instance to <a class="reference internal" href="#bluesky_adaptive.evaluation.per_suggestion" title="bluesky_adaptive.evaluation.per_suggestion"><code class="xref py py-func docutils literal notranslate"><span class="pre">per_suggestion()</span></code></a>. Every call polls Tiled until the run has a
+stop document, so the run’s documents may reach Tiled after the acquisition plan returns, e.g. through a separate
+<code class="docutils literal notranslate"><span class="pre">TiledWriter</span></code> service. Reads runs that record <code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;acquisition_order&quot;]</span></code>, such as from
+<a class="reference internal" href="plans.html#bluesky_adaptive.plans.default_acquire" title="bluesky_adaptive.plans.default_acquire"><code class="xref py py-func docutils literal notranslate"><span class="pre">default_acquire()</span></code></a>, pairing the n-th <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> row with the n-th suggestion ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>client</strong><span class="classifier">Container</span></dt><dd><p>Tiled container keyed by run UID that a <code class="docutils literal notranslate"><span class="pre">TiledWriter</span></code> writes to, e.g. <code class="docutils literal notranslate"><span class="pre">tiled.client.from_uri(...)</span></code> or a
+<code class="docutils literal notranslate"><span class="pre">CatalogOfBlueskyRuns</span></code>.</p>
+</dd>
+<dt><strong>poll_interval</strong><span class="classifier">float, optional</span></dt><dd><p>Seconds between polls. Default is 0.5.</p>
+</dd>
+<dt><strong>timeout</strong><span class="classifier">float | None, optional</span></dt><dd><p>Seconds to wait for the run’s stop document before raising <a class="reference external" href="https://docs.python.org/3/builtins/exceptions.html#TimeoutError" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">TimeoutError</span></code></a>, or <code class="docutils literal notranslate"><span class="pre">None</span></code> to wait
+indefinitely. Default is 60.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>ValueError</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">poll_interval</span></code> is not positive or <code class="docutils literal notranslate"><span class="pre">timeout</span></code> is negative.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluesky_adaptive.evaluation.tiled.TiledRunPoller.__call__">
+<span class="sig-name descname"><span class="pre">__call__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/tiled.html#TiledRunPoller.__call__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.tiled.TiledRunPoller.__call__" title="Link to this definition">#</a></dt>
+<dd><p>Wait for a run to stop and return its <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> data keyed by suggestion ID.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>uid</strong><span class="classifier">str</span></dt><dd><p>Run UID returned by the acquisition plan.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>dict[Hashable, dict[str, Any]]</dt><dd><p>Each <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> row as a mapping of data key to value, keyed by suggestion ID in acquisition order.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>TimeoutError</dt><dd><p>If the run has no stop document in Tiled within <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds.</p>
+</dd>
+<dt>KeyError</dt><dd><p>If the run does not record its acquisition order.</p>
+</dd>
+<dt>ValueError</dt><dd><p>If the number of <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> rows differs from the number of suggestion IDs.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
 </section>
 
 
@@ -686,6 +750,13 @@ Buffers runs that record <code class="docutils literal notranslate"><span class=
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.descriptor"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer.descriptor()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.event"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer.event()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.pop"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer.pop()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#tiledrunpoller">TiledRunPoller</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.tiled.TiledRunPoller"><code class="docutils literal notranslate"><span class="pre">TiledRunPoller</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.tiled.TiledRunPoller.__call__"><code class="docutils literal notranslate"><span class="pre">TiledRunPoller.__call__()</span></code></a></li>
 </ul>
 </li>
 </ul>
