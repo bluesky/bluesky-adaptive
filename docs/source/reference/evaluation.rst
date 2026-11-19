@@ -13,3 +13,12 @@ RunEventBuffer
    :members:
    :undoc-members:
    :show-inheritance:
+
+TiledRunPoller
+--------------
+
+.. autoclass:: bluesky_adaptive.evaluation.tiled.TiledRunPoller
+   :members:
+   :undoc-members:
+   :show-inheritance:
+   :special-members: __call__
