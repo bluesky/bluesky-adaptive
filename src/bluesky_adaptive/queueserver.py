@@ -390,7 +390,10 @@ class QueueserverOptimizationRunner:
         self._state.current_suggestions = suggestions
 
         # Build metadata
-        md: dict[str, Any] = {"blop_suggestions": self._state.current_suggestions}
+        md: dict[str, Any] = {
+            "blop_suggestions": self._state.current_suggestions,
+            "bluesky-adaptive": {"optimization_uid": self._problem.optimization_uid},
+        }
 
         return BPlan(
             self._plan_name,

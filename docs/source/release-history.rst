@@ -60,6 +60,9 @@ Features
   caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
   on a shared background event loop; cancelling that future cancels the loop. Interpreter exit now waits for an
   in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
+* ``QueueserverOptimizationRunner`` passes the problem's ``optimization_uid`` to submitted plans in
+  ``md["bluesky-adaptive"]``, so ``default_acquire`` records it as ``start["bluesky-adaptive"]["optimization_uid"]``.
+  ``QueueserverAgent`` generates one, exposes it, and accepts it.
 
 Bug Fixes
 .........

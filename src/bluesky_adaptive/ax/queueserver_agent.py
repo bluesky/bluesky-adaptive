@@ -1,5 +1,6 @@
 """Agent interface for asynchronous optimization using Bluesky Queueserver and Ax."""
 
+import uuid
 from collections.abc import Mapping, Sequence
 from concurrent.futures import Future
 from typing import Any
@@ -62,6 +63,9 @@ class QueueserverAgent(_AxAgentMixin):
         The path to the checkpoint file to save the optimizer's state to.
     acquisition_plan_kwargs : Mapping[str, Any] | None, optional
         Additional arguments to pass to the acquisition plan.
+    optimization_uid : str | None, optional
+        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in the runs of
+        submitted plans. If None, a new UUID4 is generated.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -87,6 +91,7 @@ class QueueserverAgent(_AxAgentMixin):
         outcome_constraints: Sequence[OutcomeConstraint] | None = None,
         checkpoint_path: str | None = None,
         acquisition_plan_kwargs: Mapping[str, Any] | None = None,
+        optimization_uid: str | None = None,
         **kwargs: Any,
     ):
         self._sensors = sensors
@@ -110,6 +115,7 @@ class QueueserverAgent(_AxAgentMixin):
             checkpoint_path=checkpoint_path,
             **kwargs,
         )
+        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
         self._runner = QueueserverOptimizationRunner(
             self.to_optimization_problem(),
             QueueserverClient(re_manager_api),
@@ -135,6 +141,11 @@ class QueueserverAgent(_AxAgentMixin):
         """Acquisition plan name used during acquisition."""
         return self._acquisition_plan
 
+    @property
+    def optimization_uid(self) -> str:
+        """Identifier of this agent's optimization."""
+        return self._optimization_uid
+
     def stop(self) -> None:
         """
         Stop submitting plans; the future resolves after the in-flight evaluation returns.
@@ -157,6 +168,7 @@ class QueueserverAgent(_AxAgentMixin):
             evaluation_function=self._evaluation_function,
             acquisition_plan=self._acquisition_plan,
             acquisition_plan_kwargs=self._acquisition_plan_kwargs,
+            optimization_uid=self._optimization_uid,
         )
 
     def run(
