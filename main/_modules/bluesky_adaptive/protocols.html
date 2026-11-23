@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev10 documentation</title>
+    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev11 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=481c52a7"></script>
+    <script src="../../_static/documentation_options.js?v=ec64d6be"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev10" />
+  <meta name="docsearch:version" content="1.0.2.dev11" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -1094,7 +1094,9 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">    Notes</span>
 <span class="sd">    -----</span>
-<span class="sd">    The evaluation function is called after data acquisition to compute outcomes.</span>
+<span class="sd">    The evaluation function is called in a worker thread after data acquisition</span>
+<span class="sd">    to compute outcomes. Give blocking data access a timeout: a callback that</span>
+<span class="sd">    has already started can continue running after the RunEngine aborts a plan.</span>
 <span class="sd">    It uses the uid returned by the acquisition plan to retrieve or identify</span>
 <span class="sd">    the relevant data and associate each acquired row with a suggestion by its</span>
 <span class="sd">    ``"_id"``. The uid type is evaluator-defined; it may be a Bluesky run UID,</span>
