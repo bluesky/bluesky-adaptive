@@ -50,7 +50,15 @@ Features
   function that evaluates the data of one suggestion and sets the ``"_id"`` of each outcome.
   ``bluesky_adaptive.evaluation.documents.RunEventBuffer``, subscribed with ``RE.subscribe(buffer)``, buffers the
   ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(evaluate, buffer.pop)`` can evaluate
-  them (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+  them. ``pop`` also drops runs that started earlier, ``optimization_uid`` restricts the buffer to one
+  optimization's runs, and the buffer may be fed by a dispatcher thread
+  (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+* ``per_run(evaluate, run_uid)`` builds an evaluation function from one that takes another UID, such as a Bluesky run
+  UID. ``bluesky_adaptive.evaluation.documents.QueueItemRuns``, subscribed to the Queue Server's document stream,
+  resolves queue item UIDs to the UIDs of the runs they open, so that
+  ``per_run(per_suggestion(evaluate, buffer.pop), runs.run_uid)`` can evaluate the runs of the Queue Server runner's
+  plans. It selects runs by ``optimization_uid`` and an optional ``run_filter``, and raises if the run fails or does
+  not stop within ``timeout`` seconds.
 * ``bluesky_adaptive.evaluation.tiled.TiledRunPoller(client)`` reads the ``"primary"`` data of ``default_acquire``
   runs from Tiled so that ``per_suggestion(evaluate, TiledRunPoller(client))`` can evaluate them. Each call polls
   Tiled until the run has a stop document, raising ``TimeoutError`` after ``timeout`` seconds. It needs the new

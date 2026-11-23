@@ -6,10 +6,23 @@ per_suggestion
 
 .. autofunction:: bluesky_adaptive.evaluation.per_suggestion
 
+per_run
+-------
+
+.. autofunction:: bluesky_adaptive.evaluation.per_run
+
 RunEventBuffer
 --------------
 
 .. autoclass:: bluesky_adaptive.evaluation.documents.RunEventBuffer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+QueueItemRuns
+-------------
+
+.. autoclass:: bluesky_adaptive.evaluation.documents.QueueItemRuns
    :members:
    :undoc-members:
    :show-inheritance:
