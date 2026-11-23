@@ -1,4 +1,5 @@
 from dataclasses import dataclass
+from threading import Event
 from typing import cast
 from unittest.mock import MagicMock, patch
 
@@ -191,6 +192,26 @@ def test_optimize(RE):
     assert data["x1"] == 0.0
     assert data["objective"] == 0.0
     assert data["adaptive_acquisition_uid"] and isinstance(data["adaptive_acquisition_uid"], str)
+
+
+def test_optimize_keeps_run_engine_responsive_during_evaluation(RE):
+    responded = Event()
+
+    def evaluate(uid, suggestions):
+        RE.loop.call_soon_threadsafe(responded.set)
+        assert responded.wait(2), "evaluation blocked the RunEngine loop"
+        return [{"objective": 1.0, "_id": suggestions[0]["_id"]}]
+
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=evaluate,
+    )
+    RE(optimize(problem))
+    optimizer.ingest.assert_called_once_with([{"objective": 1.0, "_id": 0}])
 
 
 def test_optimize_accepts_unhashable_acquisition_reference(RE):

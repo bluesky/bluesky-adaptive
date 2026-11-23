@@ -10,6 +10,7 @@ import bluesky.preprocessors as bpp
 from bluesky.protocols import Readable
 from bluesky.utils import Msg, MsgGenerator, plan
 
+from ._compat import call_in_thread
 from ._records import RunRecorder
 from .plan_stubs import list_scan_in_run, read_step, seq_read
 from .protocols import (
@@ -148,7 +149,7 @@ def _acquire_and_evaluate(
         uid = yield from acquisition_plan(
             suggestions, optimization_problem.actuators, optimization_problem.sensors, **kwargs
         )
-        outcomes = optimization_problem.evaluation_function(uid, suggestions)
+        outcomes = yield from call_in_thread(optimization_problem.evaluation_function, uid, suggestions)
         _validate_outcomes(outcomes, suggestions)
     except Exception:
         if isinstance(optimizer, TrialFaultAware):
@@ -309,7 +310,7 @@ def optimize_in_run(
                 uid = yield from _reject_child_run_messages(
                     acquisition_plan(suggestions, actuators, optimization_problem.sensors, **kwargs)
                 )
-                outcomes = optimization_problem.evaluation_function(uid, suggestions)
+                outcomes = yield from call_in_thread(optimization_problem.evaluation_function, uid, suggestions)
                 _validate_outcomes(outcomes, suggestions)
             except Exception:
                 if isinstance(optimizer, TrialFaultAware):
@@ -474,7 +475,7 @@ def acquire_baseline(
     # The baseline becomes a trial only when it is ingested, so no failures are registered.
     try:
         uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, **kwargs)
-        outcomes = optimization_problem.evaluation_function(uid, points)
+        outcomes = yield from call_in_thread(optimization_problem.evaluation_function, uid, points)
         _validate_outcomes(outcomes, points)
         optimizer.ingest([{**outcomes[0], **parameterization_copy}])
         # Recorded after ingesting, so that a failing callback cannot cost the optimizer the baseline.
