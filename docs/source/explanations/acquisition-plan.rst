@@ -10,6 +10,11 @@ For many experiments, the optimizer's degrees of freedom map directly onto
 physical actuators. In these cases, the provided ``default_acquire`` plan is
 sufficient and requires no customization.
 
+The optimization plans call the acquisition plan with only the suggestions,
+actuators, and sensors. To pass other arguments, such as ``md`` or ``per_step``,
+bind them with :func:`functools.partial`, for example
+``acquisition_plan=partial(default_acquire, md={"sample": "s1"})``.
+
 More complex experiments may do things such as optimize over a *virtual* parameter space rather
 than directly controlling hardware. Examples include:
 

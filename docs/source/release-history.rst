@@ -34,6 +34,12 @@ Breaking Changes
 * Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
   ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
   ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
+* ``optimize``, ``optimize_in_run``, ``sample_suggestions``, and ``acquire_baseline`` no longer pass extra keyword
+  arguments to the acquisition plan. Bind them to the plan instead, for example
+  ``acquisition_plan=functools.partial(default_acquire, per_step=my_per_step)``. ``AcquisitionPlan`` takes ``md`` as
+  keyword-only, so a plan with ``md`` bound this way satisfies it, and start documents record the name of the
+  function a ``functools.partial`` wraps as ``acquisition_plan`` and ``evaluation_function``
+  (`#106 <https://github.com/bluesky/bluesky-adaptive/pull/106>`_).
 
 Features
 ........
@@ -60,6 +66,8 @@ Features
   caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
   on a shared background event loop; cancelling that future cancels the loop. Interpreter exit now waits for an
   in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
+* ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` accept ``metadata`` for the optimization run's start
+  document, such as ``tiled_access_tags``. ``Agent`` and ``Scipy`` accept it and expose it as ``agent.metadata``.
 
 Bug Fixes
 .........

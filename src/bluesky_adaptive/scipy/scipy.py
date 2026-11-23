@@ -33,6 +33,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
         evaluation_function: EvaluationFunction[TUid],
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
         optimization_uid: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
         **kwargs: Any,
     ):
         if config.optimizer not in list(SCP):
@@ -54,7 +55,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
         self.timeout = kwargs.pop("timeout", 200)
         self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
         self.optimizer.force_resiliance = self.resiliance = kwargs.pop("resiliance", True)
-        super().__init__(optimization_uid=optimization_uid)
+        super().__init__(optimization_uid=optimization_uid, metadata=metadata)
         self.sessioning = kwargs.pop("sessioning", True)
 
     @classmethod
@@ -215,6 +216,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
             iterations=iterations,
             n_points=n_points,
             callbacks=self._callbacks,
+            metadata=self._metadata,
         )
         if self.sessioning:
             with self.optimizer:

@@ -3,6 +3,7 @@
 import time
 from collections.abc import Hashable, Mapping, Sequence
 from enum import StrEnum
+from functools import partial
 from typing import Any, cast
 
 import bluesky.preprocessors as bpp
@@ -278,16 +279,17 @@ def route_suggestions(suggestions: Sequence[Mapping], starting_position: dict | 
     return [suggestions[i] for i in _get_route_index(points=points, starting_point=starting_point)]
 
 
+def _callable_name(obj: object) -> str:
+    """Return the name of ``obj``, or of the callable a ``functools.partial`` wraps, falling back to the class name."""
+    while isinstance(obj, partial):
+        obj = obj.func
+    return getattr(obj, "__name__", obj.__class__.__name__)
+
+
 def collect_optimization_metadata(optimization_problem: OptimizationProblem) -> dict[str, Any]:
     """Collect the metadata for the optimization problem."""
-    if hasattr(optimization_problem.evaluation_function, "__name__"):
-        evaluation_function_name = optimization_problem.evaluation_function.__name__  # type: ignore[attr-defined]
-    else:
-        evaluation_function_name = optimization_problem.evaluation_function.__class__.__name__
-    if hasattr(optimization_problem.acquisition_plan, "__name__"):
-        acquisition_plan_name = optimization_problem.acquisition_plan.__name__  # type: ignore[attr-defined]
-    else:
-        acquisition_plan_name = optimization_problem.acquisition_plan.__class__.__name__
+    evaluation_function_name = _callable_name(optimization_problem.evaluation_function)
+    acquisition_plan_name = _callable_name(optimization_problem.acquisition_plan)
     metadata = {
         "evaluation_function": evaluation_function_name,
         "acquisition_plan": acquisition_plan_name,

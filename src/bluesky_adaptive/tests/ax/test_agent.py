@@ -457,6 +457,39 @@ def test_agent_optimization_runs_share_optimization_uid(agent):
     assert {doc["bluesky-adaptive"]["optimization_uid"] for doc in starts} == {agent.optimization_uid}
 
 
+def test_agent_metadata_reaches_later_optimization_runs(mock_evaluation_function):
+    """Agent metadata reaches the start documents of later optimization runs, without changing earlier ones."""
+
+    def acquisition_plan(suggestions, actuators, sensors=None, md=None):
+        yield from bps.null()
+        return "uid"
+
+    agent = Agent(
+        sensors=[],
+        dofs=[RangeDOF(name="x1", bounds=(0, 10), parameter_type="float")],
+        objectives=[Objective(name="obj", minimize=False)],
+        evaluation_function=mock_evaluation_function,
+        acquisition_plan=acquisition_plan,
+        metadata={"tiled_access_tags": ["proposal-1"]},
+    )
+    mock_evaluation_function.side_effect = lambda _uid, suggestions: [
+        {"_id": suggestion["_id"], "obj": 1.0} for suggestion in suggestions
+    ]
+    agent.callbacks.clear()
+    documents = []
+    agent.subscribe(lambda name, doc: documents.append((name, doc)))
+    RE = RunEngine({})
+
+    RE(agent.acquire_baseline({"x1": 1.0}))
+    RE(agent.optimize(1))
+    agent.metadata["tiled_access_tags"].append("proposal-2")
+    RE(agent.sample_suggestions([{"x1": 2.0}]))
+
+    starts = [doc for name, doc in documents if name == "start"]
+    assert [doc["plan_name"] for doc in starts] == ["acquire_baseline", "optimize", "sample_suggestions"]
+    assert [doc["tiled_access_tags"] for doc in starts] == [["proposal-1"], ["proposal-1"], ["proposal-1", "proposal-2"]]
+
+
 def test_agent_get_best_points_single_objective(mock_evaluation_function):
     """Agent.get_best_points returns the best trial for single-objective."""
     movable1 = MovableSignal(name="test_movable1")
