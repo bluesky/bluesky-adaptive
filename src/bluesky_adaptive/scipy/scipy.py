@@ -208,6 +208,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
         """Optimization plan wrapper used by the agent interface."""
         if self.optimizer.final is not None:
             self.config.initial = self.optimizer.final.x
+            self.optimizer.close()
             self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
             self.optimizer.force_resiliance = self.resiliance
         optimize_plan = optimize(

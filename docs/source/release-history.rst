@@ -34,6 +34,10 @@ Breaking Changes
 * Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
   ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
   ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
+* ``InteractiveOptimizer.suggest()`` and ``session()`` block until scipy requests a point and raise ``TimeoutError``
+  if none arrives within ``SUGGESTION_TIMEOUT`` seconds, instead of returning ``[]`` after a fixed short wait.
+  ``final`` is set as soon as scipy converges. Once the optimizer thread stops, its pending points are dropped, so
+  ingesting one raises ``ValueError`` unless ``force_resiliance`` is set.
 
 Features
 ........
@@ -72,6 +76,10 @@ Bug Fixes
 * ``optimize`` records the step that meets the stopping criterion.
 * ``OptimizationLogger`` omits the Iterations line for runs whose start document has no ``iterations``, such as
   ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
+* ``InteractiveOptimizer`` no longer loses or skips scipy's requested points when its optimizer thread is slow.
+  With ``threads`` set, each finite-difference batch is suggested at once, in chunks of at most ``threads`` points.
+  ``close()`` stops and joins the optimizer thread, ``session()`` closes the previous one, and ``Scipy.optimize``
+  closes the optimizer it replaces.
 
 v1.0.1 (2026-11-07)
 -------------------

@@ -1,10 +1,9 @@
 """Core Scipy optimizer porting scipy algorithms."""
 
-from collections import OrderedDict
-from collections.abc import Mapping, Sequence
-from concurrent.futures import Future, ThreadPoolExecutor
+from collections import deque
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass
-from threading import Event, Thread
+from threading import Condition, Thread
 from typing import Any, cast
 
 import numpy as np
@@ -17,55 +16,64 @@ from bluesky_adaptive.scipy.normalizers import InnerOptimizer, ScipyResult
 
 @dataclass
 class _Request:
-    args: tuple
-    future: Future
+    """A point scipy is waiting on; ``ingest`` fills in ``outcome``."""
+
+    x: np.ndarray
+    outcome: Any = None
+
+
+class _Stop(BaseException):
+    """Unwinds the optimizer thread out of scipy when the session is closed or a point times out.
+
+    A ``BaseException`` because scipy wrappers such as shgo's ``FieldWrapper`` swallow ``Exception``.
+    """
 
 
 class InteractiveOptimizer(Optimizer):
-    """An optimizer object to supply an interactive interface for the scipy optimizers, with some caveats."""
+    """An optimizer object to supply an interactive interface for the scipy optimizers, with some caveats.
+
+    Scipy runs on a background thread. Every objective evaluation it requests becomes a pending point that
+    ``suggest`` returns and ``ingest`` answers. ``_cond`` guards all state shared with that thread.
+    """
 
     def __init__(self, optimizer: InnerOptimizer, config: ScipyCFG | None = None, timeout: int | None = 200):
         self.optimizer = optimizer
+        self._thread: Thread | None = None
         self.session(config=config if config else optimizer.config, timeout=timeout)
 
     def session(self, config: ScipyCFG, timeout: int | None = None):
         """
-        Through path for initialization and stateful reinitialization of optimization.
+        Start a fresh optimization, closing the previous optimizer thread first.
 
-        derived so that mutiple initializations and lifetimes can be used for optimization.
-        Such as the standard ScipyOptimizer(...) call or a following "with"
+        Returns once scipy has requested its first point, so errors raised while scipy starts up propagate here.
+        Used both by the constructor and to restart an existing optimizer.
         """
+        if self._thread is not None:
+            self.close()
         self._params: list[str] = [dof.parameter_name for dof in config.dofs]
-        self._increment: int = 0
         self._objective: Objective = config.objective
         self.force_resiliance = False  # kinda hidden for now
         self._scale = np.ones(len(config.dofs))
-        self._active: dict[int, _Request] = OrderedDict()
-        self.intermediate: OptimizeResult | ScipyResult | None = None
-        self.final: OptimizeResult | ScipyResult | None = None
-        self.SUGGESTION_TIMEOUT = timeout
-        self.thread_monitor = Future()
-        self.thread_start = Event()
-
         if config.rescale is not None:
             if isinstance(config.rescale, list):
                 self._scale = config.rescale
             else:
                 self._scale *= config.rescale
+        self.SUGGESTION_TIMEOUT = timeout
+        self.intermediate: OptimizeResult | ScipyResult | None = None
+        self.final: OptimizeResult | ScipyResult | None = None
 
-        def cost(x):  # thread safety needs timeout so there is not infinite hang on programs
-            """Cooperative thread that defers evaluation of cost call by scipy to the run engine."""
-            req = _Request(args=x, future=Future())
-            self._active[self._increment] = req
-            self.thread_start.set()
-            self._increment += 1
-            res = req.future.result(timeout=self.SUGGESTION_TIMEOUT)
-            if res is None:
-                raise ValueError("return value is not present")
-            return res
+        self._cond = Condition()
+        self._active: dict[int, _Request] = {}
+        self._increment: int = 0
+        self._closed = False
+        self._finished = False
+        self._converged = False
+        self._error: Exception | None = None
+        self._batch_size = config.threads or 1
+        self._prefetched: deque[tuple[np.ndarray, Any]] = deque()
 
-        kw: dict = {}
-        self._thread_pool = None
+        kw: dict[str, Any] = {}
         if config.max_iter is not None:
             if config.optimizer is not SCP.TRUST_CONSTR:
                 kw["max_iter"] = config.max_iter
@@ -73,45 +81,13 @@ class InteractiveOptimizer(Optimizer):
                 kw["maxiter"] = config.max_iter
         if config.eps is not None:
             kw["eps"] = config.eps
+        if config.threads:
+            kw["workers"] = self._map
 
-        def default_callback(intermediate_result: OptimizeResult):
-            if self.intermediate and self.intermediate.fun < intermediate_result.fun:
-                return
-            self.intermediate = intermediate_result
-            self.intermediate.nit = self._increment
-
-        def mini_worker():
-            try:
-                if config.threads:
-                    with ThreadPoolExecutor(max_workers=config.threads) as pool:
-                        kw["workers"] = pool.map
-                        res = self.optimizer.call(cost, default_callback, kws=kw)
-                else:
-                    res = self.optimizer.call(cost, default_callback, kws=kw)
-                self.thread_monitor.set_result(res)
-
-            except (KeyboardInterrupt, TimeoutError):
-                # have to have timeout, so made it that it can be restored to its state on agent auto reboot
-                if self.final:
-                    ...
-                if self.intermediate:
-                    self.final = self.intermediate
-                else:
-                    self.final = ScipyResult(list(self.optimizer.x0), np.nan, nit=self._increment)
-                # self.thread_monitor.set_result(self.final)
-                return
-            except Exception as e:
-                self.thread_monitor.set_exception(e)
-
-        self._t = Thread(target=mini_worker, name="optimizer")
-        self._t.start()
-        if not self.thread_start.wait(timeout=0.1):
-            try:
-                err = self.thread_monitor.exception(timeout=0.01)
-                if err:
-                    raise err
-            except TimeoutError:
-                ...
+        self._thread = Thread(target=self._run, args=(kw,), name="optimizer", daemon=True)
+        self._thread.start()
+        with self._cond:
+            self._wait_for_worker()
         return self
 
     def __enter__(self):
@@ -126,8 +102,8 @@ class InteractiveOptimizer(Optimizer):
         """
         Provide a set of points in the input space, to be evaulated next.
 
-        The "_id" key is optional and can be used to identify suggested trials for later evaluation
-        and ingestion.
+        Blocks until scipy has requested points or stopped. Once scipy has stopped, the only suggestion is its final
+        point.
 
         Parameters
         ----------
@@ -139,30 +115,24 @@ class InteractiveOptimizer(Optimizer):
         Sequence[Mapping]
             A sequence of mappings, each containing a parameterization of a point to evaluate next.
             Each mapping must contain a unique "_id" key to identify each parameterization.
+
+        Raises
+        ------
+        RuntimeError
+            Scipy converged and ``force_resiliance`` is off.
+        TimeoutError
+            Scipy requested no point within ``SUGGESTION_TIMEOUT`` seconds.
+        Exception
+            Any error raised by the wrapped scipy optimizer.
         """
-        try:
-            self.final = self.thread_monitor.result(timeout=0.01)
-            if not self.force_resiliance:
-                print(self.final)
+        with self._cond:
+            self._wait_for_worker()
+            if self._converged and not self.force_resiliance:
                 raise RuntimeError("The optimizer has suspended or reached convergence")
-        except TimeoutError:
-            ...
-
-        if self.final is not None:
-            vector = [x_n * s for s, x_n in zip(self._scale, self.final.x, strict=True)]
-            suggestion = dict(zip(self._params, vector, strict=True))
-            suggestion[ID_KEY] = self.final.nit
-            return [suggestion]
-
-        suggestions = []
-        for id in list(self._active.keys())[: num_points if num_points is not None else 1]:
-            x = self._active[id].args
-            vector = [x_n * s for s, x_n in zip(self._scale, x, strict=True)]
-
-            suggestion = dict(zip(self._params, vector, strict=True))
-            suggestion[ID_KEY] = id
-            suggestions.append(suggestion)
-        return suggestions
+            if self.final is not None:
+                return [self._suggestion(self.final.x, self.final.nit)]
+            pending = list(self._active.items())[: 1 if num_points is None else num_points]
+            return [self._suggestion(request.x, trial_id) for trial_id, request in pending]
 
     def ingest(self, points: Sequence[Mapping]) -> None:
         """
@@ -175,13 +145,16 @@ class InteractiveOptimizer(Optimizer):
         points : Sequence[Mapping]
             A sequence of mappings containing the outcomes of each suggested parameterization.
         """
-        for res in points:
-            y = res[self._objective.name]
-            if res[ID_KEY] not in self._active:
-                if not self.force_resiliance:
-                    raise ValueError("optimizer did not expect to receive an update")
-                continue
-            self._active.pop(res[ID_KEY]).future.set_result(y)
+        with self._cond:
+            for res in points:
+                y = res[self._objective.name]
+                request = self._active.pop(res[ID_KEY], None)
+                if request is None:
+                    if not self.force_resiliance:
+                        raise ValueError("optimizer did not expect to receive an update")
+                    continue
+                request.outcome = y
+                self._cond.notify_all()
 
     def get_best_points(self) -> list[tuple[Any, Mapping, Mapping]]:
         """
@@ -214,6 +187,100 @@ class InteractiveOptimizer(Optimizer):
         return cart
 
     def close(self):
-        """Clear out futures to allow cleanup of threads."""
-        for ind in list(self._active.keys()):
-            self._active.pop(ind).future.set_exception(KeyboardInterrupt("Execution has been suspended"))
+        """
+        Stop the optimizer thread and wait for it to exit.
+
+        Pending points are dropped. ``final`` keeps the best point seen (or the start point) so a new session can
+        resume from it. Calling ``close`` again has no further effect.
+        """
+        with self._cond:
+            self._closed = True
+            self._cond.notify_all()
+        if self._thread is not None:
+            self._thread.join()
+
+    def _wait_for_worker(self) -> None:
+        """Block until scipy has pending points or has stopped, re-raising its error; the caller holds ``_cond``."""
+        if not self._cond.wait_for(lambda: self._active or self._finished, timeout=self.SUGGESTION_TIMEOUT):
+            raise TimeoutError(f"The optimizer requested no point within {self.SUGGESTION_TIMEOUT} s")
+        if self._error is not None:
+            raise self._error
+
+    def _run(self, kws: dict[str, Any]) -> None:
+        """Optimizer-thread body: run scipy, then publish how it ended."""
+        final: OptimizeResult | ScipyResult | None = None
+        converged = False
+        error: Exception | None = None
+        try:
+            final = self.optimizer.call(self._cost, self._record_intermediate, kws=kws)
+            converged = True
+        except _Stop:
+            # Closed or timed out: keep the best point seen so a new session can restart from it.
+            final = self.intermediate
+            if final is None:
+                final = ScipyResult(list(self.optimizer.x0), np.nan, nit=self._increment)
+        except Exception as e:  # handed to the caller by suggest() and session()
+            error = e
+        with self._cond:
+            self._finished = True
+            self._converged = converged
+            self._error = error
+            if error is None:
+                self.final = final
+            self._active.clear()
+            self._cond.notify_all()
+
+    def _evaluate(self, xs: Sequence[np.ndarray]) -> list[Any]:
+        """Publish ``xs`` as pending points and block until all are ingested; runs on the optimizer thread."""
+        with self._cond:
+            if self._closed:
+                raise _Stop
+            batch = {self._increment + i: _Request(np.asarray(x)) for i, x in enumerate(xs)}
+            self._active.update(batch)
+            self._increment += len(batch)
+            self._cond.notify_all()
+            self._cond.wait_for(
+                lambda: self._closed or batch.keys().isdisjoint(self._active), timeout=self.SUGGESTION_TIMEOUT
+            )
+            # A fully ingested batch is still returned to scipy if close() raced the last ingest.
+            if not batch.keys().isdisjoint(self._active):
+                raise _Stop
+        outcomes = [request.outcome for request in batch.values()]
+        if any(outcome is None for outcome in outcomes):
+            raise ValueError("return value is not present")
+        return outcomes
+
+    def _cost(self, x: np.ndarray) -> Any:
+        """Objective handed to scipy: replay the next measured batch outcome, else measure ``x`` alone."""
+        if self._prefetched:
+            expected, outcome = self._prefetched.popleft()
+            if not np.array_equal(x, expected):
+                raise RuntimeError(f"scipy evaluated {x} where the batched point {expected} was expected")
+            return outcome
+        return self._evaluate([x])[0]
+
+    def _map(self, fun: Callable[[np.ndarray], Any], xs: Iterable[np.ndarray]) -> list[Any]:
+        """
+        Map-like ``workers`` for scipy that publishes up to ``threads`` points at once.
+
+        Each batch is measured through ``_evaluate`` first; ``fun`` (scipy's wrapper around ``_cost``) then receives
+        the measured outcomes in order, so scipy's own bookkeeping still runs.
+        """
+        xs = list(xs)
+        for start in range(0, len(xs), self._batch_size):
+            batch = xs[start : start + self._batch_size]
+            self._prefetched.extend(zip(batch, self._evaluate(batch), strict=True))
+        return [fun(x) for x in xs]
+
+    def _record_intermediate(self, intermediate_result: OptimizeResult | ScipyResult) -> None:
+        """Scipy callback keeping the best intermediate result; runs on the optimizer thread."""
+        if self.intermediate is not None and self.intermediate.fun < intermediate_result.fun:
+            return
+        intermediate_result.nit = self._increment
+        self.intermediate = intermediate_result
+
+    def _suggestion(self, x: Iterable[float], trial_id: int) -> dict[str, Any]:
+        """Map a point in scipy's scaled space to a parameterization tagged with ``trial_id``."""
+        suggestion: dict[str, Any] = {name: x_n * s for name, s, x_n in zip(self._params, self._scale, x, strict=True)}
+        suggestion[ID_KEY] = trial_id
+        return suggestion
