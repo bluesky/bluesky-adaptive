@@ -135,7 +135,7 @@ def test_collect_optimization_metadata_names_the_callables_wrapped_by_partial():
         acquisition_plan=partial(acquire, md={"sample": "s1"}),
     )
 
-    metadata = collect_optimization_metadata(problem)
+    metadata = collect_optimization_metadata(problem, "optimize")
 
     assert metadata["evaluation_function"] == "evaluate"
     assert metadata["acquisition_plan"] == "acquire"
