@@ -34,8 +34,10 @@ Breaking Changes
 * Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
   ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
   ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
-* ``optimize``, ``optimize_in_run``, ``sample_suggestions``, and ``acquire_baseline`` no longer pass extra keyword
-  arguments to the acquisition plan. Bind them to the plan instead, for example
+* ``optimize``, ``optimize_in_run``, ``sample_suggestions``, and ``acquire_baseline`` take the acquisition plan's
+  extra keyword arguments as a mapping in ``acquisition_plan_kwargs`` instead of as ``**kwargs``. ``Agent``'s
+  ``acquire_baseline``, ``optimize``, and ``sample_suggestions`` and ``Scipy.optimize`` accept it too. Arguments that
+  never change can instead be bound to the plan, for example
   ``acquisition_plan=functools.partial(default_acquire, per_step=my_per_step)``. ``AcquisitionPlan`` takes ``md`` as
   keyword-only, so a plan with ``md`` bound this way satisfies it, and start documents record the name of the
   function a ``functools.partial`` wraps as ``acquisition_plan`` and ``evaluation_function``

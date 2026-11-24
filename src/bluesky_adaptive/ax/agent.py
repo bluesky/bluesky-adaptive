@@ -382,7 +382,9 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
             optimization_uid=self._optimization_uid,
         )
 
-    def acquire_baseline(self, parameterization: dict[str, Any] | None = None) -> MsgGenerator[None]:
+    def acquire_baseline(
+        self, parameterization: dict[str, Any] | None = None, *, acquisition_plan_kwargs: Mapping[str, Any] | None = None
+    ) -> MsgGenerator[None]:
         """
         Acquire a baseline reading for reference.
 
@@ -394,6 +396,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         parameterization : dict[str, Any] | None, optional
             The DOF values to move to before acquiring baseline. If None, acquires
             at current positions.
+        acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+            Keyword arguments passed to the acquisition plan.
 
         Yields
         ------
@@ -409,9 +413,12 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
             parameterization=parameterization,
             callbacks=self._callbacks,
             metadata=self._metadata,
+            acquisition_plan_kwargs=acquisition_plan_kwargs,
         )
 
-    def optimize(self, iterations: int | None = 1, n_points: int = 1) -> MsgGenerator[None]:
+    def optimize(
+        self, iterations: int | None = 1, n_points: int = 1, *, acquisition_plan_kwargs: Mapping[str, Any] | None = None
+    ) -> MsgGenerator[None]:
         """
         Run Bayesian optimization.
 
@@ -428,6 +435,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         n_points : int, optional
             The number of points to evaluate per iteration. Default is 1. Higher values
             enable batch optimization but may reduce optimization efficiency per iteration.
+        acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+            Keyword arguments passed to the acquisition plan on every acquisition of this call.
 
         Yields
         ------
@@ -458,10 +467,11 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
             n_points=n_points,
             callbacks=self._callbacks,
             metadata=self._metadata,
+            acquisition_plan_kwargs=acquisition_plan_kwargs,
         )
 
     def sample_suggestions(
-        self, suggestions: Sequence[Mapping]
+        self, suggestions: Sequence[Mapping], *, acquisition_plan_kwargs: Mapping[str, Any] | None = None
     ) -> MsgGenerator[tuple[TUid, Sequence[Mapping], Sequence[Mapping]]]:
         """
         Evaluate specific parameter combinations.
@@ -473,6 +483,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         ----------
         suggestions : Sequence[Mapping]
             Either optimizer suggestions (with "_id") or manual points (without "_id").
+        acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+            Keyword arguments passed to the acquisition plan.
 
         Returns
         -------
@@ -490,6 +502,7 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
                 suggestions=suggestions,
                 callbacks=self._callbacks,
                 metadata=self._metadata,
+                acquisition_plan_kwargs=acquisition_plan_kwargs,
             )
         )
 

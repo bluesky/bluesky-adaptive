@@ -1368,6 +1368,45 @@ def test_record_runs_add_caller_metadata_to_start(RE, run_plan, plan_name):
     assert start["plan_name"] == plan_name
 
 
+@pytest.mark.parametrize(
+    ("run_plan", "acquisitions"),
+    [
+        (lambda problem, kwargs: optimize(problem, iterations=2, acquisition_plan_kwargs=kwargs), 2),
+        (lambda problem, kwargs: optimize_in_run(problem, iterations=2, acquisition_plan_kwargs=kwargs), 2),
+        (
+            lambda problem, kwargs: sample_suggestions(problem, [{"x1": 1.0, "_id": 0}], acquisition_plan_kwargs=kwargs),
+            1,
+        ),
+        (lambda problem, kwargs: acquire_baseline(problem, {"x1": 1.0}, acquisition_plan_kwargs=kwargs), 1),
+    ],
+    ids=["optimize", "optimize_in_run", "sample_suggestions", "acquire_baseline"],
+)
+def test_acquisition_plan_kwargs_reach_every_acquisition_of_the_call(RE, run_plan, acquisitions):
+    received = []
+
+    @plan
+    def acquisition_plan(suggestions, actuators, sensors=None, *, md=None, resolution=1e-3):
+        received.append(resolution)
+        yield from bps.null()
+        return "uid"
+
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(
+            side_effect=lambda uid, suggestions: [{"objective": 0.0, "_id": s["_id"]} for s in suggestions]
+        ),
+        acquisition_plan=acquisition_plan,
+    )
+
+    RE(run_plan(problem, {"resolution": 1e-5}))
+
+    assert received == [1e-5] * acquisitions
+
+
 def test_optimization_runs_duplicate_released_metadata_at_top_level(RE):
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]

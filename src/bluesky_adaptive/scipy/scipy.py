@@ -205,8 +205,12 @@ class Scipy(_BaseAgent, Generic[TUid]):
         """
         self.optimizer.ingest(points)
 
-    def optimize(self, iterations=10, n_points=1):
-        """Optimization plan wrapper used by the agent interface."""
+    def optimize(self, iterations=10, n_points=1, *, acquisition_plan_kwargs: Mapping[str, Any] | None = None):
+        """
+        Optimization plan wrapper used by the agent interface.
+
+        ``acquisition_plan_kwargs`` are passed to the acquisition plan on every acquisition of this call.
+        """
         if self.optimizer.final is not None:
             self.config.initial = self.optimizer.final.x
             self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
@@ -217,6 +221,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
             n_points=n_points,
             callbacks=self._callbacks,
             metadata=self._metadata,
+            acquisition_plan_kwargs=acquisition_plan_kwargs,
         )
         if self.sessioning:
             with self.optimizer:

@@ -10,10 +10,16 @@ For many experiments, the optimizer's degrees of freedom map directly onto
 physical actuators. In these cases, the provided ``default_acquire`` plan is
 sufficient and requires no customization.
 
-The optimization plans call the acquisition plan with only the suggestions,
-actuators, and sensors. To pass other arguments, such as ``md`` or ``per_step``,
-bind them with :func:`functools.partial`, for example
-``acquisition_plan=partial(default_acquire, md={"sample": "s1"})``.
+The optimization plans call the acquisition plan with the suggestions,
+actuators, and sensors. Pass arguments for one call, such as a plan-specific
+``resolution``, in ``acquisition_plan_kwargs``, for example
+``RE(agent.optimize(5, acquisition_plan_kwargs={"resolution": 1e-5}))``; every
+acquisition of that call receives them. Bind arguments that never change, such
+as ``md`` or ``per_step``, with :func:`functools.partial`, for example
+``acquisition_plan=partial(default_acquire, md={"sample": "s1"})``. If an
+argument changes the measurement noise, have the evaluation function return
+each outcome as a ``(value, sem)`` tuple so that the Ax backend can weight
+points acquired with different settings.
 
 More complex experiments may do things such as optimize over a *virtual* parameter space rather
 than directly controlling hardware. Examples include:
