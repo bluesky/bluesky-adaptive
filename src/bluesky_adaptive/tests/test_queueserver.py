@@ -787,8 +787,38 @@ def test_runner_cancelled_run_aborts_optimization_run(mock_optimization_problem)
     assert documents[-1][1]["exit_status"] == "abort"
 
 
+def test_runner_cancel_during_delivery_stops_after_the_delivered_documents(mock_optimization_problem):
+    """Callbacks run on the event loop, so a cancel requested while one runs aborts the run only after the delivery."""
+    mock_client = MagicMock(spec=QueueserverClient)
+    mock_client.submit_plan.side_effect = (f"item-{i}" for i in itertools.count())
+    documents = []
+
+    async def cancel_during_event():
+        loop = asyncio.get_running_loop()
+        task = None
+
+        def callback(name, doc):
+            documents.append((name, threading.get_ident(), doc))
+            if name == "event":
+                loop.call_soon_threadsafe(task.cancel)
+
+        runner = QueueserverOptimizationRunner(
+            optimization_problem=mock_optimization_problem, queueserver_client=mock_client, callbacks=[callback]
+        )
+        task = asyncio.create_task(runner.run_async(iterations=3))
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(cancel_during_event())
+
+    assert [name for name, _, _ in documents] == ["start", "descriptor", "event", "stop"]
+    assert {thread for _, thread, _ in documents} == {threading.get_ident()}
+    assert documents[-1][2]["exit_status"] == "abort"
+    mock_client.submit_plan.assert_called_once()
+
+
 def test_runner_callback_error_fails_run_without_failing_ingested_trials():
-    """A callback that fails on an event fails the run without failing the ingested trials."""
+    """A callback that fails on an event fails the run, naming the ingested trials without failing them."""
 
     class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
 
@@ -801,9 +831,13 @@ def test_runner_callback_error_fails_run_without_failing_ingested_trials():
     problem.optimizer.suggest.return_value = [{"_id": 0, "motor1": 5.0}]
     error = RuntimeError("callback failed")
 
+    stop_documents = []
+
     def callback(name, doc):
         if name == "event":
             raise error
+        if name == "stop":
+            stop_documents.append(doc)
 
     runner, mock_client, future = _start_runner(problem, iterations=2, callbacks=[callback])
 
@@ -811,6 +845,9 @@ def test_runner_callback_error_fails_run_without_failing_ingested_trials():
     problem.optimizer.ingest.assert_called_once()
     problem.optimizer.register_failures.assert_not_called()
     mock_client.submit_plan.assert_called_once()
+    assert [(doc["exit_status"], doc["reason"]) for doc in stop_documents] == [
+        ("fail", "Iteration 0 with suggestion IDs [0] failed: RuntimeError: callback failed")
+    ]
 
 
 def test_runner_adds_caller_metadata_to_optimization_runs(mock_optimization_problem):

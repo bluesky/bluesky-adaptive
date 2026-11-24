@@ -153,7 +153,10 @@ class _OptimizationState:
     checkpoint_interval: int | None = None
     manual: bool = False
     current_iteration: int = 0
+    # In flight until ingested; registered as failed if the loop fails.
     current_suggestions: Sequence[Mapping] = field(default_factory=list)
+    # The current iteration's suggestions, named in the stop reason if the loop fails.
+    iteration_suggestions: Sequence[Mapping] = field(default_factory=list)
     uids: list[str] = field(default_factory=list)
 
     @property
@@ -197,7 +200,8 @@ class QueueserverOptimizationRunner:
     queueserver_client : QueueserverClient
         Client for communicating with the queueserver.
     callbacks : Sequence[DocumentCallback], optional
-        Receive one optimization run per :meth:`run` or :meth:`submit_suggestions` call. Called in worker threads.
+        Receive one optimization run per :meth:`run` or :meth:`submit_suggestions` call. Called on the event loop, so
+        slow callbacks should buffer, for example with :class:`bluesky.callbacks.buffer.BufferingWrapper`.
     metadata : Mapping[str, Any] | None, optional
         Extra start document metadata for those runs, such as ``tiled_access_tags``. Read when each loop starts.
     """
@@ -362,9 +366,7 @@ class QueueserverOptimizationRunner:
         except BaseException as error:
             # Set only after start() created this loop's state, so the state belongs to this loop too.
             if self._recorder is not None and self._state is not None:
-                await asyncio.to_thread(
-                    self._recorder.stop_for, error, self._state.record_iteration, self._state.current_suggestions
-                )
+                self._recorder.stop_for(error, self._state.record_iteration, self._state.iteration_suggestions)
             raise
         finally:
             self._running = False
@@ -376,7 +378,7 @@ class QueueserverOptimizationRunner:
             max_iterations=iterations, num_points=num_points, checkpoint_interval=checkpoint_interval
         )
         self._continuous = True
-        await self._start_recording(
+        self._start_recording(
             "QueueserverOptimizationRunner.run",
             {"iterations": iterations, "n_points": num_points, "checkpoint_interval": checkpoint_interval},
         )
@@ -405,15 +407,15 @@ class QueueserverOptimizationRunner:
 
         self._state.current_iteration += 1
         plan = self._build_plan(suggestions)
-        await self._start_recording("QueueserverOptimizationRunner.submit_suggestions", {"suggestions": suggestions})
+        self._start_recording("QueueserverOptimizationRunner.submit_suggestions", {"suggestions": suggestions})
         logger.info("Submitting manually specified suggestion(s)")
         return await asyncio.to_thread(self._client.submit_plan, plan)
 
-    async def _start_recording(self, entry_point: str, run_metadata: Mapping[str, Any]) -> None:
+    def _start_recording(self, entry_point: str, run_metadata: Mapping[str, Any]) -> None:
         """Start this loop's optimization run."""
         problem = replace(self._problem, acquisition_plan=self._plan_name)
         metadata = {**(self._metadata or {}), **collect_optimization_metadata(problem, entry_point), **run_metadata}
-        self._recorder = await asyncio.to_thread(RunRecorder, callbacks=self._callbacks, metadata=metadata)
+        self._recorder = RunRecorder(callbacks=self._callbacks, metadata=metadata)
 
     def _try_register_failures(self, suggestions: Sequence[Mapping]) -> None:
         """Notify a TrialFaultAware optimizer of failed suggestions, if supported."""
@@ -431,6 +433,7 @@ class QueueserverOptimizationRunner:
         _validate_suggestions(suggestions)
 
         self._state.current_suggestions = suggestions
+        self._state.iteration_suggestions = suggestions
 
         # Build metadata
         md: dict[str, Any] = {"blop_suggestions": self._state.current_suggestions}
@@ -459,7 +462,7 @@ class QueueserverOptimizationRunner:
             # Register failures before re-raising so a caller that observes the failure sees the trials failed.
             await asyncio.to_thread(self._try_register_failures, state.current_suggestions)
             raise
-        await asyncio.to_thread(recorder.stop)
+        recorder.stop()
         return state.build_result()
 
     async def _process_acquisition(self, item_uid: str) -> str | None:
@@ -485,7 +488,7 @@ class QueueserverOptimizationRunner:
         # Ingested suggestions are no longer in flight.
         self._state.current_suggestions = []
         # Recorded after ingesting, so that a failing callback cannot cost the optimizer an evaluated step.
-        await asyncio.to_thread(self._recorder.record, self._state.record_iteration, item_uid, suggestions, outcomes)
+        self._recorder.record(self._state.record_iteration, item_uid, suggestions, outcomes)
         # Checkpoint optimizer, if applicable; _maybe_checkpoint takes the 0-based iteration, like optimize passes.
         await asyncio.to_thread(
             _maybe_checkpoint,
@@ -500,6 +503,7 @@ class QueueserverOptimizationRunner:
 
         # Continue: start the next iteration, get its suggestions, and submit
         self._state.current_iteration += 1
+        self._state.iteration_suggestions = []
         suggestions = await asyncio.to_thread(self._problem.optimizer.suggest, self._state.num_points)
         plan = self._build_plan(suggestions)
         logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")

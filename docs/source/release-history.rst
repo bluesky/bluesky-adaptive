@@ -80,7 +80,8 @@ Features
 * ``QueueserverOptimizationRunner`` accepts ``callbacks`` and ``metadata``. Each ``run()`` or
   ``submit_suggestions()`` loop, and its ``_async`` version, sends one optimization run to the callbacks. Its start
   document records the problem like ``optimize`` runs, plus ``metadata``. Each evaluated point is one event whose
-  ``adaptive_acquisition_uid`` is its queue item UID.
+  ``adaptive_acquisition_uid`` is its queue item UID. Like ``RunEngine`` callbacks, they are called on the runner's
+  event loop, so slow callbacks should buffer, for example with ``bluesky.callbacks.buffer.BufferingWrapper``.
   ``QueueserverAgent`` does not pass callbacks or metadata to its runner yet.
 
 Bug Fixes
