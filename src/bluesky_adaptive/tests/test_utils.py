@@ -1,8 +1,17 @@
+from functools import partial
+from unittest.mock import MagicMock
+
 import numpy as np
 import pytest
 
-from bluesky_adaptive.protocols import ID_KEY
-from bluesky_adaptive.utils import InferredReadable, Source, _infer_data_key, route_suggestions
+from bluesky_adaptive.protocols import ID_KEY, OptimizationProblem, Optimizer
+from bluesky_adaptive.utils import (
+    InferredReadable,
+    Source,
+    _infer_data_key,
+    collect_optimization_metadata,
+    route_suggestions,
+)
 
 # InferredReadable tests
 
@@ -106,3 +115,27 @@ def test_infer_data_key_source_is_enum_value(source):
     data_key = _infer_data_key(source, 1.0)
     assert data_key["source"] == source.value
     assert "Source." not in data_key["source"]
+
+
+# collect_optimization_metadata tests
+
+
+def test_collect_optimization_metadata_names_the_callables_wrapped_by_partial():
+    def evaluate(uid, suggestions, *, client):
+        return []
+
+    def acquire(suggestions, actuators, sensors=None, *, md=None):
+        return "uid"
+
+    problem = OptimizationProblem(
+        optimizer=MagicMock(spec=Optimizer),
+        actuators=[],
+        sensors=[],
+        evaluation_function=partial(evaluate, client=None),
+        acquisition_plan=partial(acquire, md={"sample": "s1"}),
+    )
+
+    metadata = collect_optimization_metadata(problem)
+
+    assert metadata["evaluation_function"] == "evaluate"
+    assert metadata["acquisition_plan"] == "acquire"

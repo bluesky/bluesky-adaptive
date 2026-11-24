@@ -134,7 +134,7 @@ def default_acquire(
 def _acquire_and_evaluate(
     optimization_problem: OptimizationProblem[TUid],
     suggestions: Sequence[Mapping],
-    **kwargs: Any,
+    acquisition_plan_kwargs: Mapping[str, Any],
 ) -> MsgGenerator[tuple[TUid, Sequence[Mapping]]]:
     """Acquire and evaluate suggestions, then validate the outcomes.
 
@@ -147,7 +147,7 @@ def _acquire_and_evaluate(
     optimizer = optimization_problem.optimizer
     try:
         uid = yield from acquisition_plan(
-            suggestions, optimization_problem.actuators, optimization_problem.sensors, **kwargs
+            suggestions, optimization_problem.actuators, optimization_problem.sensors, **acquisition_plan_kwargs
         )
         outcomes = yield from call_in_thread(optimization_problem.evaluation_function, uid, suggestions)
         _validate_outcomes(outcomes, suggestions)
@@ -166,7 +166,8 @@ def optimize(
     checkpoint_interval: int | None = None,
     *,
     callbacks: Iterable[DocumentCallback] = (),
-    **kwargs: Any,
+    metadata: Mapping[str, Any] | None = None,
+    acquisition_plan_kwargs: Mapping[str, Any] | None = None,
 ) -> MsgGenerator[None]:
     """
     Solve the optimization problem.
@@ -187,8 +188,10 @@ def optimize(
         :class:`bluesky_adaptive.protocols.Checkpointable` protocol.
     callbacks : Iterable[DocumentCallback], optional
         Callbacks that receive the optimization run's documents.
-    **kwargs : Any
-        Additional keyword arguments to pass to the acquisition plan.
+    metadata : Mapping[str, Any] | None, optional
+        Extra start document metadata for the optimization run. Keys the plan records take precedence.
+    acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+        Keyword arguments passed to the acquisition plan on every acquisition of this call.
 
     Raises
     ------
@@ -207,6 +210,7 @@ def optimize(
     recorder = RunRecorder(
         callbacks=callbacks,
         metadata={
+            **(metadata or {}),
             **collect_optimization_metadata(optimization_problem),
             "plan_name": "optimize",
             "iterations": iterations,
@@ -221,7 +225,9 @@ def optimize(
             suggestions = []  # a failing suggest() must not report the previous iteration's IDs
             suggestions = optimizer.suggest(n_points)
             _validate_suggestions(suggestions)
-            uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, **kwargs)
+            uid, outcomes = yield from _acquire_and_evaluate(
+                optimization_problem, suggestions, acquisition_plan_kwargs or {}
+            )
             optimizer.ingest(outcomes)
             # Recorded after ingesting, so that a failing callback cannot cost the optimizer an evaluated step.
             recorder.record(iteration, uid, suggestions, outcomes)
@@ -252,7 +258,8 @@ def optimize_in_run(
     n_points: int = 1,
     checkpoint_interval: int | None = None,
     readable_cache: dict[str, InferredReadable] | None = None,
-    **kwargs: Any,
+    *,
+    acquisition_plan_kwargs: Mapping[str, Any] | None = None,
 ) -> MsgGenerator[None]:
     """Solve an optimization problem by evaluating acquisition documents inside one run.
 
@@ -276,8 +283,8 @@ def optimize_in_run(
     readable_cache: dict[str, InferredReadable] | None = None
         Cache of readable objects to store the suggestions and outcomes as optimization events.
         If None, a new cache will be created.
-    **kwargs : Any
-        Additional keyword arguments to pass to the acquisition plan.
+    acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+        Keyword arguments passed to the acquisition plan on every acquisition of this call.
     """
     _md = collect_optimization_metadata(optimization_problem)
     _md.update(
@@ -291,6 +298,7 @@ def optimize_in_run(
         }
     )
     readable_cache = readable_cache or {}
+    plan_kwargs = acquisition_plan_kwargs or {}
 
     optimizer = optimization_problem.optimizer
     actuators = optimization_problem.actuators
@@ -308,7 +316,7 @@ def optimize_in_run(
             _validate_suggestions(suggestions)
             try:
                 uid = yield from _reject_child_run_messages(
-                    acquisition_plan(suggestions, actuators, optimization_problem.sensors, **kwargs)
+                    acquisition_plan(suggestions, actuators, optimization_problem.sensors, **plan_kwargs)
                 )
                 outcomes = yield from call_in_thread(optimization_problem.evaluation_function, uid, suggestions)
                 _validate_outcomes(outcomes, suggestions)
@@ -347,7 +355,8 @@ def sample_suggestions(
     suggestions: Sequence[Mapping],
     *,
     callbacks: Iterable[DocumentCallback] = (),
-    **kwargs: Any,
+    metadata: Mapping[str, Any] | None = None,
+    acquisition_plan_kwargs: Mapping[str, Any] | None = None,
 ) -> MsgGenerator[tuple[TUid, Sequence[Mapping], Sequence[Mapping]]]:
     """
     Evaluate specific parameter combinations.
@@ -368,8 +377,10 @@ def sample_suggestions(
 
     callbacks : Iterable[DocumentCallback], optional
         Callbacks that receive the optimization run's documents.
-    **kwargs : Any
-        Additional arguments for acquisition plan.
+    metadata : Mapping[str, Any] | None, optional
+        Extra start document metadata for the optimization run. Keys the plan records take precedence.
+    acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+        Keyword arguments passed to the acquisition plan.
 
     Returns
     -------
@@ -407,13 +418,14 @@ def sample_suggestions(
     recorder = RunRecorder(
         callbacks=callbacks,
         metadata={
+            **(metadata or {}),
             **collect_optimization_metadata(optimization_problem),
             "plan_name": "sample_suggestions",
             "suggestions": suggestions,
         },
     )
     try:
-        uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, **kwargs)
+        uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, acquisition_plan_kwargs or {})
         optimization_problem.optimizer.ingest(outcomes)
         # Recorded after ingesting, so that a failing callback cannot cost the optimizer the evaluated points.
         recorder.record(-1, uid, suggestions, outcomes)
@@ -429,7 +441,8 @@ def acquire_baseline(
     parameterization: Mapping[str, Any] | None = None,
     *,
     callbacks: Iterable[DocumentCallback] = (),
-    **kwargs: Any,
+    metadata: Mapping[str, Any] | None = None,
+    acquisition_plan_kwargs: Mapping[str, Any] | None = None,
 ) -> MsgGenerator[None]:
     """
     Acquire a baseline reading. Useful for relative outcome constraints.
@@ -442,6 +455,10 @@ def acquire_baseline(
         Move the DOFs to the given parameterization, if provided.
     callbacks : Iterable[DocumentCallback], optional
         Callbacks that receive the optimization run's documents.
+    metadata : Mapping[str, Any] | None, optional
+        Extra start document metadata for the optimization run. Keys the plan records take precedence.
+    acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+        Keyword arguments passed to the acquisition plan.
 
     See Also
     --------
@@ -467,6 +484,7 @@ def acquire_baseline(
     recorder = RunRecorder(
         callbacks=callbacks,
         metadata={
+            **(metadata or {}),
             **collect_optimization_metadata(optimization_problem),
             "plan_name": "acquire_baseline",
             "suggestions": points,
@@ -474,7 +492,7 @@ def acquire_baseline(
     )
     # The baseline becomes a trial only when it is ingested, so no failures are registered.
     try:
-        uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, **kwargs)
+        uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, **(acquisition_plan_kwargs or {}))
         outcomes = yield from call_in_thread(optimization_problem.evaluation_function, uid, points)
         _validate_outcomes(outcomes, points)
         optimizer.ingest([{**outcomes[0], **parameterization_copy}])

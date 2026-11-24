@@ -61,11 +61,11 @@ class RunRecorder:
     callbacks : Iterable[DocumentCallback]
         The callbacks that receive the documents.
     metadata : Mapping[str, Any]
-        Start document metadata.
+        Start document metadata, deep-copied.
     """
 
     def __init__(self, *, callbacks: Iterable[DocumentCallback], metadata: Mapping[str, Any]) -> None:
-        bundle = compose_run(metadata=dict(metadata))
+        bundle = compose_run(metadata=copy.deepcopy(dict(metadata)))
         self._compose_descriptor = bundle.compose_descriptor
         self._compose_stop = bundle.compose_stop
         self._compose_event: ComposeEvent | None = None

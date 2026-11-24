@@ -282,6 +282,7 @@ class AcquisitionPlan(Protocol[_TUid_co]):
         suggestions: Sequence[Mapping],
         actuators: Sequence[Actuator],
         sensors: Sequence[Sensor] | None = None,
+        *,
         md: Mapping[str, Any] | None = None,
     ) -> MsgGenerator[_TUid_co]:
         """
