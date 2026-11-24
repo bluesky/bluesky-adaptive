@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Plans &#8212; Bluesky Adaptive 1.0.2.dev11 documentation</title>
+    <title>Plans &#8212; Bluesky Adaptive 1.0.2.dev12 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=ec64d6be"></script>
+    <script src="../_static/documentation_options.js?v=db9c5cd4"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev11" />
+  <meta name="docsearch:version" content="1.0.2.dev12" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -525,7 +525,7 @@
 <h1>Plans<a class="headerlink" href="#plans" title="Link to this heading">#</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.optimize">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#optimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.optimize" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">optimize</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#optimize"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.optimize" title="Link to this definition">#</a></dt>
 <dd><p>Solve the optimization problem.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -544,7 +544,9 @@ will not be saved. Optimizer must implement the
 </dd>
 <dt><strong>callbacks</strong><span class="classifier">Iterable[DocumentCallback], optional</span></dt><dd><p>Callbacks that receive the optimization run’s documents.</p>
 </dd>
-<dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to pass to the acquisition plan.</p>
+<dt><strong>metadata</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Extra start document metadata for the optimization run. Keys the plan records take precedence.</p>
+</dd>
+<dt><strong>acquisition_plan_kwargs</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Keyword arguments passed to the acquisition plan on every acquisition of this call.</p>
 </dd>
 </dl>
 </dd>
@@ -569,7 +571,7 @@ will not be saved. Optimizer must implement the
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.optimize_in_run">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">optimize_in_run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#optimize_in_run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.optimize_in_run" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">optimize_in_run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">iterations</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">n_points</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">checkpoint_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">readable_cache</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#optimize_in_run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.optimize_in_run" title="Link to this definition">#</a></dt>
 <dd><p>Solve an optimization problem by evaluating acquisition documents inside one run.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
@@ -592,7 +594,7 @@ will not be saved. Optimizer must implement the
 <dt><strong>readable_cache: dict[str, InferredReadable] | None = None</strong></dt><dd><p>Cache of readable objects to store the suggestions and outcomes as optimization events.
 If None, a new cache will be created.</p>
 </dd>
-<dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional keyword arguments to pass to the acquisition plan.</p>
+<dt><strong>acquisition_plan_kwargs</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Keyword arguments passed to the acquisition plan on every acquisition of this call.</p>
 </dd>
 </dl>
 </dd>
@@ -643,7 +645,7 @@ data with its suggestion.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.acquire_baseline">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">acquire_baseline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameterization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#acquire_baseline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.acquire_baseline" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">acquire_baseline</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">parameterization</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#acquire_baseline"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.acquire_baseline" title="Link to this definition">#</a></dt>
 <dd><p>Acquire a baseline reading. Useful for relative outcome constraints.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -653,6 +655,10 @@ data with its suggestion.</p>
 <dt><strong>parameterization</strong><span class="classifier">dict[str, Any] | None = None</span></dt><dd><p>Move the DOFs to the given parameterization, if provided.</p>
 </dd>
 <dt><strong>callbacks</strong><span class="classifier">Iterable[DocumentCallback], optional</span></dt><dd><p>Callbacks that receive the optimization run’s documents.</p>
+</dd>
+<dt><strong>metadata</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Extra start document metadata for the optimization run. Keys the plan records take precedence.</p>
+</dd>
+<dt><strong>acquisition_plan_kwargs</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Keyword arguments passed to the acquisition plan.</p>
 </dd>
 </dl>
 </dd>
@@ -668,7 +674,7 @@ data with its suggestion.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="bluesky_adaptive.plans.sample_suggestions">
-<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">sample_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#sample_suggestions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.sample_suggestions" title="Link to this definition">#</a></dt>
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.plans.</span></span><span class="sig-name descname"><span class="pre">sample_suggestions</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">suggestions</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">acquisition_plan_kwargs</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/plans.html#sample_suggestions"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.plans.sample_suggestions" title="Link to this definition">#</a></dt>
 <dd><p>Evaluate specific parameter combinations.</p>
 <p>This plan acquires data for given suggestions and ingests results into the optimizer.
 Supports both optimizer-generated suggestions (with “_id”) and manual points
@@ -686,7 +692,9 @@ Supports both optimizer-generated suggestions (with “_id”) and manual points
 </dd>
 <dt><strong>callbacks</strong><span class="classifier">Iterable[DocumentCallback], optional</span></dt><dd><p>Callbacks that receive the optimization run’s documents.</p>
 </dd>
-<dt><strong>**kwargs</strong><span class="classifier">Any</span></dt><dd><p>Additional arguments for acquisition plan.</p>
+<dt><strong>metadata</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Extra start document metadata for the optimization run. Keys the plan records take precedence.</p>
+</dd>
+<dt><strong>acquisition_plan_kwargs</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Keyword arguments passed to the acquisition plan.</p>
 </dd>
 </dl>
 </dd>

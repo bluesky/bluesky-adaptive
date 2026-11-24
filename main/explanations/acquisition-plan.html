@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Acquisition Plans &#8212; Bluesky Adaptive 1.0.2.dev11 documentation</title>
+    <title>Acquisition Plans &#8212; Bluesky Adaptive 1.0.2.dev12 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=ec64d6be"></script>
+    <script src="../_static/documentation_options.js?v=db9c5cd4"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev11" />
+  <meta name="docsearch:version" content="1.0.2.dev12" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -522,6 +522,16 @@ evaluate each suggestion.</p>
 <p>For many experiments, the optimizer’s degrees of freedom map directly onto
 physical actuators. In these cases, the provided <code class="docutils literal notranslate"><span class="pre">default_acquire</span></code> plan is
 sufficient and requires no customization.</p>
+<p>The optimization plans call the acquisition plan with the suggestions,
+actuators, and sensors. Pass arguments for one call, such as a plan-specific
+<code class="docutils literal notranslate"><span class="pre">resolution</span></code>, in <code class="docutils literal notranslate"><span class="pre">acquisition_plan_kwargs</span></code>, for example
+<code class="docutils literal notranslate"><span class="pre">RE(agent.optimize(5,</span> <span class="pre">acquisition_plan_kwargs={&quot;resolution&quot;:</span> <span class="pre">1e-5}))</span></code>; every
+acquisition of that call receives them. Bind arguments that never change, such
+as <code class="docutils literal notranslate"><span class="pre">md</span></code> or <code class="docutils literal notranslate"><span class="pre">per_step</span></code>, with <a class="reference external" href="https://docs.python.org/3/library/functools.html#functools.partial" title="(in Python v3.15)"><code class="xref py py-func docutils literal notranslate"><span class="pre">functools.partial()</span></code></a>, for example
+<code class="docutils literal notranslate"><span class="pre">acquisition_plan=partial(default_acquire,</span> <span class="pre">md={&quot;sample&quot;:</span> <span class="pre">&quot;s1&quot;})</span></code>. If an
+argument changes the measurement noise, have the evaluation function return
+each outcome as a <code class="docutils literal notranslate"><span class="pre">(value,</span> <span class="pre">sem)</span></code> tuple so that the Ax backend can weight
+points acquired with different settings.</p>
 <p>More complex experiments may do things such as optimize over a <em>virtual</em> parameter space rather
 than directly controlling hardware. Examples include:</p>
 <ul class="simple">
