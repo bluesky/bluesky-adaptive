@@ -86,7 +86,7 @@ Features
 
 Deprecations
 ............
-* ``md`` is vestigial in the ``AcquisitionPlan`` protocol and will be removed from it in a future major version.
+* ``md`` in the ``AcquisitionPlan`` protocol is deprecated and will be removed from it in a future major version.
   Nothing in Bluesky Adaptive relies on it: acquisition plans own the metadata of the runs they open. Plans may keep
   accepting ``md`` as their own argument, as ``default_acquire`` does.
 

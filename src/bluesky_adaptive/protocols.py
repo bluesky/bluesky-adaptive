@@ -304,10 +304,8 @@ class AcquisitionPlan(Protocol[_TUid_co]):
         sensors: Sequence[Sensor], optional
             The sensors that produce data to evaluate.
         md : Mapping[str, Any] | None, optional
-            Metadata to attach to the start document. Vestigial: nothing in Bluesky Adaptive relies on it, and
-            acquisition plans own the metadata of the runs they open. The optimization plans pass it only from
-            ``acquisition_plan_kwargs``; the Queue Server runner passes ``blop_suggestions``, which
-            :func:`~bluesky_adaptive.plans.default_acquire` records itself. It will be removed from this protocol in a
+            Metadata to attach to the start document. Deprecated: nothing in Bluesky Adaptive relies on it, and
+            acquisition plans own the metadata of the runs they open. It will be removed from this protocol in a
             future major version; plans may keep accepting it.
 
         Returns
