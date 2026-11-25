@@ -28,7 +28,8 @@ class QueueItemRuns(CallbackBase):
     bluesky-queueserver 0.0.26 and later record ``start["queue_server"]["queue_item_uid"]`` in every run. Subscribe
     this callback to the Queue Server's document stream before submitting plans and pass :meth:`run_uid` to
     :func:`~bluesky_adaptive.evaluation.per_run`. It uses each item's first run that passes ``run_filter`` and returns
-    once that run's stop document arrives, so read the data from the same stream, e.g. with
+    once that run's stop document arrives, so read the data with a reader that waits for the run to stop, such as
+    :class:`~bluesky_adaptive.evaluation.tiled.TiledRunPoller`, or from the same stream with
     :class:`~bluesky_adaptive.evaluation.documents.RunEventBuffer`.
 
     While the RE Manager reports the item queued or running, :meth:`run_uid` waits without a time limit. Thread-safe;
@@ -57,13 +58,12 @@ class QueueItemRuns(CallbackBase):
     --------
     .. code-block:: python
 
-        buffer = RunEventBuffer()
         runs = QueueItemRuns(RM)
         dispatcher = RemoteDispatcher("localhost:5578")
-        dispatcher.subscribe(buffer)
         dispatcher.subscribe(runs)
         threading.Thread(target=dispatcher.start, daemon=True).start()
-        agent = QueueserverAgent(RM, ..., evaluation_function=per_run(per_suggestion(score, buffer.pop), runs.run_uid))
+        evaluation_function = per_run(per_suggestion(score, TiledRunPoller(tiled_client)), runs.run_uid)
+        agent = QueueserverAgent(RM, ..., evaluation_function=evaluation_function)
     """
 
     def __init__(
