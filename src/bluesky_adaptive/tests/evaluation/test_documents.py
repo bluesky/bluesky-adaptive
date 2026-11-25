@@ -81,23 +81,6 @@ def test_run_event_buffer_pop_drops_runs_that_started_earlier(RE):
         buffer.pop(first)
 
 
-def test_run_event_buffer_buffers_only_runs_of_its_optimization(RE):
-    buffer = RunEventBuffer(optimization_uid="opt-1")
-    RE.subscribe(buffer)
-    x1, det = MovableSignal("x1"), ReadableSignal("det")
-    (own_uid,) = RE(
-        default_acquire([{"x1": 1.0, "_id": "a"}], [x1], [det], md={"bluesky-adaptive": {"optimization_uid": "opt-1"}})
-    )
-    (other_uid,) = RE(
-        default_acquire([{"x1": 1.0, "_id": "a"}], [x1], [det], md={"bluesky-adaptive": {"optimization_uid": "other"}})
-    )
-
-    # Nothing was popped yet, so only the optimization UID keeps the later run out of the buffer.
-    with pytest.raises(KeyError):
-        buffer.pop(other_uid)
-    assert buffer.pop(own_uid) == {"a": {"x1": 1.0, "det": 0.0}}
-
-
 def test_per_run_evaluates_the_queue_items_run_from_the_document_stream(RE):
     buffer = RunEventBuffer()
     runs = QueueItemRuns(timeout=5)
@@ -115,24 +98,21 @@ def test_per_run_evaluates_the_queue_items_run_from_the_document_stream(RE):
         assert future.result(timeout=5) == [{"objective": 20.0, "_id": "b"}]
 
 
-def test_queue_item_runs_selects_the_first_run_of_its_optimization_that_passes_run_filter(RE):
+def test_queue_item_runs_selects_the_first_run_of_the_item_that_passes_run_filter(RE):
     det = ReadableSignal("det")
 
-    def three_runs():
-        yield from count([det], md={"bluesky-adaptive": {"optimization_uid": "other"}})
-        yield from count([det], md={"bluesky-adaptive": {"optimization_uid": "opt-1"}, "dark_frame": True})
-        yield from count([det], md={"bluesky-adaptive": {"optimization_uid": "opt-1"}})
+    def dark_then_light():
+        yield from count([det], md={"dark_frame": True})
+        yield from count([det])
 
-    any_runs = QueueItemRuns(timeout=5)
-    own_runs = QueueItemRuns(timeout=5, optimization_uid="opt-1")
-    light_runs = QueueItemRuns(timeout=5, optimization_uid="opt-1", run_filter=lambda start: not start.get("dark_frame"))
-    for runs in (any_runs, own_runs, light_runs):
-        RE.subscribe(runs)
+    first_runs = QueueItemRuns(timeout=5)
+    light_runs = QueueItemRuns(timeout=5, run_filter=lambda start: not start.get("dark_frame"))
+    RE.subscribe(first_runs)
+    RE.subscribe(light_runs)
 
-    other_uid, dark_uid, light_uid = RE(three_runs(), queue_server={"queue_item_uid": "item-1"})
+    dark_uid, light_uid = RE(dark_then_light(), queue_server={"queue_item_uid": "item-1"})
 
-    assert any_runs.run_uid("item-1") == other_uid
-    assert own_runs.run_uid("item-1") == dark_uid
+    assert first_runs.run_uid("item-1") == dark_uid
     assert light_runs.run_uid("item-1") == light_uid
 
 

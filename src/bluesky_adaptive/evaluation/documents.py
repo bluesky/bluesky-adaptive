@@ -12,11 +12,6 @@ from ..plans import ACQUISITION_ORDER_KEY
 _PRIMARY_STREAM: Literal["primary"] = "primary"
 
 
-def _in_optimization(start: RunStart, optimization_uid: str | None) -> bool:
-    """Whether the run records ``optimization_uid``; every run if it is None."""
-    return optimization_uid is None or start.get("bluesky-adaptive", {}).get("optimization_uid") == optimization_uid
-
-
 class RunEventBuffer(CallbackBase):
     """Buffer the ``"primary"`` event data of acquisition runs by suggestion ID.
 
@@ -25,26 +20,19 @@ class RunEventBuffer(CallbackBase):
     Buffers runs that record ``start["bluesky-adaptive"]["acquisition_order"]``, such as from
     :func:`~bluesky_adaptive.plans.default_acquire`, pairing the n-th event with the n-th suggestion ID.
     Its methods may be called from different threads, such as a dispatcher's and an evaluation's.
-
-    Parameters
-    ----------
-    optimization_uid : str | None, optional
-        Buffer only runs whose start document records it as ``start["bluesky-adaptive"]["optimization_uid"]``. If
-        None, buffer every run that records its acquisition order.
     """
 
-    def __init__(self, *, optimization_uid: str | None = None) -> None:
+    def __init__(self) -> None:
         super().__init__()
-        self._optimization_uid = optimization_uid
         self._lock = threading.Lock()
         self._acquisition_orders: dict[str, list[Hashable]] = {}
         self._events: dict[str, list[dict[str, Any]]] = {}
         self._primary_descriptors: dict[str, str] = {}
 
     def start(self, doc: RunStart) -> None:
-        """Begin buffering the run if it records its acquisition order and the buffer's optimization UID."""
+        """Begin buffering the run if it records its acquisition order."""
         acquisition_order = doc.get("bluesky-adaptive", {}).get(ACQUISITION_ORDER_KEY)
-        if acquisition_order is None or not _in_optimization(doc, self._optimization_uid):
+        if acquisition_order is None:
             return
         with self._lock:
             self._acquisition_orders[doc["uid"]] = list(acquisition_order)
@@ -92,8 +80,7 @@ class RunEventBuffer(CallbackBase):
                 raise KeyError(
                     f"No buffered run with uid {uid!r}. Check that the buffer receives the run's documents, that the "
                     f"run's start document records start['bluesky-adaptive'][{ACQUISITION_ORDER_KEY!r}] (as "
-                    "default_acquire does) and the buffer's optimization_uid, if given, and that neither this run "
-                    "nor a later one was already popped."
+                    "default_acquire does), and that neither this run nor a later one was already popped."
                 )
             # Runs are buffered in start order.
             for run_uid in list(self._events):
@@ -117,11 +104,11 @@ class QueueItemRuns(CallbackBase):
     opens. Subscribe this callback to the dispatcher of the Queue Server's document stream before submitting plans,
     and pass :meth:`run_uid` to :func:`~bluesky_adaptive.evaluation.per_run`. :meth:`run_uid` returns once the run's
     stop document reaches this callback, so read the run's data from the same dispatcher, e.g. with
-    :class:`RunEventBuffer`, or with a reader that waits for the run's stop document. The item's first run that
-    passes ``optimization_uid`` and ``run_filter`` is used.
+    :class:`RunEventBuffer`, or with a reader that waits for the run's stop document. The item's first run, or the
+    first that passes ``run_filter``, is used.
 
-    Use one instance per runner: consuming an item drops the items whose runs started earlier. Its methods may be
-    called from different threads, such as a dispatcher's and an evaluation's.
+    Use one instance per runner: consuming an item drops the items whose runs started earlier, including other
+    clients' items. Its methods may be called from different threads, such as a dispatcher's and an evaluation's.
 
     Parameters
     ----------
@@ -129,12 +116,8 @@ class QueueItemRuns(CallbackBase):
         Seconds :meth:`run_uid` waits for the item's run to stop, including the time the item waits in the queue.
         Required because an item that fails before opening a run emits no documents, while the runner's ``stop()``
         and interpreter exit wait for the evaluation to return.
-    optimization_uid : str | None, optional
-        Select only runs that record it as ``start["bluesky-adaptive"]["optimization_uid"]``, as the plans submitted
-        by :class:`~bluesky_adaptive.queueserver.QueueserverOptimizationRunner` do when they pass ``md`` to their
-        run. This also keeps other clients' items out of the cache. If None, select runs of any optimization.
     run_filter : Callable[[RunStart], bool] | None, optional
-        Further select runs by their start document, e.g. ``lambda start: not start.get("dark_frame")``. It is called
+        Select runs by their start document, e.g. ``lambda start: not start.get("dark_frame")``. It is called
         on the dispatcher's thread, which receives its exceptions.
 
     Raises
@@ -149,7 +132,6 @@ class QueueItemRuns(CallbackBase):
     .. code-block:: python
 
         import threading
-        import uuid
 
         from bluesky.callbacks.zmq import RemoteDispatcher
 
@@ -160,9 +142,8 @@ class QueueItemRuns(CallbackBase):
         def score(data):
             return {"objective": data["det"]}
 
-        optimization_uid = str(uuid.uuid4())
-        buffer = RunEventBuffer(optimization_uid=optimization_uid)
-        runs = QueueItemRuns(timeout=600, optimization_uid=optimization_uid)
+        buffer = RunEventBuffer()
+        runs = QueueItemRuns(timeout=600)
         dispatcher = RemoteDispatcher("localhost:5578")
         dispatcher.subscribe(buffer)
         dispatcher.subscribe(runs)
@@ -170,7 +151,6 @@ class QueueItemRuns(CallbackBase):
         agent = QueueserverAgent(
             ...,
             evaluation_function=per_run(per_suggestion(score, buffer.pop), runs.run_uid),
-            optimization_uid=optimization_uid,
         )
     """
 
@@ -178,14 +158,12 @@ class QueueItemRuns(CallbackBase):
         self,
         *,
         timeout: float,
-        optimization_uid: str | None = None,
         run_filter: Callable[[RunStart], bool] | None = None,
     ) -> None:
         if timeout < 0:
             raise ValueError(f"timeout must be non-negative, got {timeout!r}.")
         super().__init__()
         self._timeout = timeout
-        self._optimization_uid = optimization_uid
         self._run_filter = run_filter
         self._condition = threading.Condition()
         self._run_uids: dict[str, str] = {}  # item UID -> selected run UID, in run start order
@@ -193,11 +171,9 @@ class QueueItemRuns(CallbackBase):
         self._stops: dict[str, RunStop] = {}  # item UID -> stop document of its selected run
 
     def start(self, doc: RunStart) -> None:
-        """Select the run if it is the first of its queue item to pass ``optimization_uid`` and ``run_filter``."""
+        """Select the run if it is the first of its queue item to pass ``run_filter``."""
         item_uid = doc.get("queue_server", {}).get("queue_item_uid")
-        if item_uid is None or not _in_optimization(doc, self._optimization_uid):
-            return
-        if self._run_filter is not None and not self._run_filter(doc):
+        if item_uid is None or (self._run_filter is not None and not self._run_filter(doc)):
             return
         with self._condition:
             if item_uid not in self._run_uids:
@@ -239,8 +215,8 @@ class QueueItemRuns(CallbackBase):
                 raise TimeoutError(
                     f"No run of queue item {item_uid!r} stopped within {self._timeout} s. Check the queue history for a "
                     "plan that failed before opening a run, that the dispatcher feeding this callback is running and was "
-                    "subscribed before the plan was submitted, and that the run records this callback's "
-                    "optimization_uid and passes its run_filter."
+                    "subscribed before the plan was submitted, and that the run passes this callback's run_filter, if "
+                    "given."
                 )
             stop = self._stops[item_uid]
             run_uid = self._run_uids[item_uid]
