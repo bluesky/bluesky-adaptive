@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.evaluation &#8212; Bluesky Adaptive 1.0.2.dev15 documentation</title>
+    <title>bluesky_adaptive.evaluation &#8212; Bluesky Adaptive 1.0.2.dev16 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=1015cc19"></script>
+    <script src="../../_static/documentation_options.js?v=27ed4673"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev15" />
+  <meta name="docsearch:version" content="1.0.2.dev16" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -852,6 +852,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">ID_KEY</span><span class="p">,</span> <span class="n">EvaluationFunction</span><span class="p">,</span> <span class="n">TUid</span>
 
 <span class="n">_TData</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"_TData"</span><span class="p">)</span>
+<span class="n">_TRunUid</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">"_TRunUid"</span><span class="p">)</span>
 
 
 <div class="viewcode-block" id="per_suggestion">
@@ -891,6 +892,42 @@ window.runMermaid = runMermaid;</script>
     <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">evaluate</span><span class="p">)</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_function</span><span class="p">(</span><span class="n">uid</span><span class="p">:</span> <span class="n">TUid</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
         <span class="k">return</span> <span class="p">[{</span><span class="o">**</span><span class="n">evaluate</span><span class="p">(</span><span class="n">data</span><span class="p">),</span> <span class="n">ID_KEY</span><span class="p">:</span> <span class="n">suggestion_id</span><span class="p">}</span> <span class="k">for</span> <span class="n">suggestion_id</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">fetch</span><span class="p">(</span><span class="n">uid</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+
+    <span class="k">return</span> <span class="n">evaluation_function</span></div>
+
+
+
+<div class="viewcode-block" id="per_run">
+<a class="viewcode-back" href="../../reference/evaluation.html#bluesky_adaptive.evaluation.per_run">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">per_run</span><span class="p">(</span><span class="n">evaluate</span><span class="p">:</span> <span class="n">EvaluationFunction</span><span class="p">[</span><span class="n">_TRunUid</span><span class="p">],</span> <span class="n">resolve</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">TUid</span><span class="p">],</span> <span class="n">_TRunUid</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">EvaluationFunction</span><span class="p">[</span><span class="n">TUid</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">"""Build an evaluation function that maps its UID through ``resolve`` before calling ``evaluate``.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    evaluate : EvaluationFunction[_TRunUid]</span>
+<span class="sd">        Evaluates an acquisition by the mapped UID, e.g. a Bluesky run UID.</span>
+<span class="sd">    resolve : Callable[[TUid], _TRunUid]</span>
+<span class="sd">        Maps the evaluation function's UID, e.g.</span>
+<span class="sd">        :meth:`QueueItemRuns.resolve &lt;bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve&gt;`.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    EvaluationFunction[TUid]</span>
+<span class="sd">        The evaluation function.</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; from bluesky_adaptive.evaluation import per_run</span>
+<span class="sd">    &gt;&gt;&gt; def evaluate_run(uid, suggestions):</span>
+<span class="sd">    ...     return [{"_id": "a", "run": uid}]</span>
+<span class="sd">    &gt;&gt;&gt; evaluation_function = per_run(evaluate_run, {"item-1": "run-1"}.__getitem__)</span>
+<span class="sd">    &gt;&gt;&gt; evaluation_function("item-1", [])</span>
+<span class="sd">    [{'_id': 'a', 'run': 'run-1'}]</span>
+<span class="sd">    """</span>
+
+    <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">evaluate</span><span class="p">)</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">evaluation_function</span><span class="p">(</span><span class="n">uid</span><span class="p">:</span> <span class="n">TUid</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">resolve</span><span class="p">(</span><span class="n">uid</span><span class="p">),</span> <span class="n">suggestions</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">evaluation_function</span></div>
 

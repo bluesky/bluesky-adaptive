@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Evaluation &#8212; Bluesky Adaptive 1.0.2.dev15 documentation</title>
+    <title>Evaluation &#8212; Bluesky Adaptive 1.0.2.dev16 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=1015cc19"></script>
+    <script src="../_static/documentation_options.js?v=27ed4673"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev15" />
+  <meta name="docsearch:version" content="1.0.2.dev16" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -560,6 +560,41 @@ its key.</p>
 </dd></dl>
 
 </section>
+<section id="per-run">
+<h2>per_run<a class="headerlink" href="#per-run" title="Link to this heading">#</a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="bluesky_adaptive.evaluation.per_run">
+<span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.evaluation.</span></span><span class="sig-name descname"><span class="pre">per_run</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">evaluate</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resolve</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation.html#per_run"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.per_run" title="Link to this definition">#</a></dt>
+<dd><p>Build an evaluation function that maps its UID through <code class="docutils literal notranslate"><span class="pre">resolve</span></code> before calling <code class="docutils literal notranslate"><span class="pre">evaluate</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>evaluate</strong><span class="classifier">EvaluationFunction[_TRunUid]</span></dt><dd><p>Evaluates an acquisition by the mapped UID, e.g. a Bluesky run UID.</p>
+</dd>
+<dt><strong>resolve</strong><span class="classifier">Callable[[TUid], _TRunUid]</span></dt><dd><p>Maps the evaluation function’s UID, e.g.
+<a class="reference internal" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve" title="bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve"><code class="xref py py-meth docutils literal notranslate"><span class="pre">QueueItemRuns.resolve</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>EvaluationFunction[TUid]</dt><dd><p>The evaluation function.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="kn">from</span><span class="w"> </span><span class="nn">bluesky_adaptive.evaluation</span><span class="w"> </span><span class="kn">import</span> <span class="n">per_run</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="k">def</span><span class="w"> </span><span class="nf">evaluate_run</span><span class="p">(</span><span class="n">uid</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">):</span>
+<span class="gp">... </span>    <span class="k">return</span> <span class="p">[{</span><span class="s2">"_id"</span><span class="p">:</span> <span class="s2">"a"</span><span class="p">,</span> <span class="s2">"run"</span><span class="p">:</span> <span class="n">uid</span><span class="p">}]</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evaluation_function</span> <span class="o">=</span> <span class="n">per_run</span><span class="p">(</span><span class="n">evaluate_run</span><span class="p">,</span> <span class="p">{</span><span class="s2">"item-1"</span><span class="p">:</span> <span class="s2">"run-1"</span><span class="p">}</span><span class="o">.</span><span class="fm">__getitem__</span><span class="p">)</span>
+<span class="gp">&gt;&gt;&gt; </span><span class="n">evaluation_function</span><span class="p">(</span><span class="s2">"item-1"</span><span class="p">,</span> <span class="p">[])</span>
+<span class="go">[{'_id': 'a', 'run': 'run-1'}]</span>
+</pre></div>
+</div>
+</dd></dl>
+
+</section>
 <section id="runeventbuffer">
 <h2>RunEventBuffer<a class="headerlink" href="#runeventbuffer" title="Link to this heading">#</a></h2>
 <dl class="py class">
@@ -567,9 +602,10 @@ its key.</p>
 <span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.evaluation.documents.</span></span><span class="sig-name descname"><span class="pre">RunEventBuffer</span></span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/documents.html#RunEventBuffer"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CallbackBase</span></code></p>
 <p>Buffer the <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> event data of acquisition runs by suggestion ID.</p>
-<p>Subscribe with <code class="docutils literal notranslate"><span class="pre">RE.subscribe(buffer)</span></code> and pass <a class="reference internal" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.pop" title="bluesky_adaptive.evaluation.documents.RunEventBuffer.pop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pop()</span></code></a> to <a class="reference internal" href="#bluesky_adaptive.evaluation.per_suggestion" title="bluesky_adaptive.evaluation.per_suggestion"><code class="xref py py-func docutils literal notranslate"><span class="pre">per_suggestion()</span></code></a>.
-Buffers runs that record <code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;acquisition_order&quot;]</span></code>, such as from
-<a class="reference internal" href="plans.html#bluesky_adaptive.plans.default_acquire" title="bluesky_adaptive.plans.default_acquire"><code class="xref py py-func docutils literal notranslate"><span class="pre">default_acquire()</span></code></a>, pairing the n-th event with the n-th suggestion ID.</p>
+<p>Subscribe with <code class="docutils literal notranslate"><span class="pre">RE.subscribe(buffer)</span></code> or to a remote document stream, and pass <a class="reference internal" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.pop" title="bluesky_adaptive.evaluation.documents.RunEventBuffer.pop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pop()</span></code></a> to
+<a class="reference internal" href="#bluesky_adaptive.evaluation.per_suggestion" title="bluesky_adaptive.evaluation.per_suggestion"><code class="xref py py-func docutils literal notranslate"><span class="pre">per_suggestion()</span></code></a>. Buffers runs that record
+<code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;acquisition_order&quot;]</span></code>, as <a class="reference internal" href="plans.html#bluesky_adaptive.plans.default_acquire" title="bluesky_adaptive.plans.default_acquire"><code class="xref py py-func docutils literal notranslate"><span class="pre">default_acquire()</span></code></a> does,
+pairing the n-th event with the n-th suggestion ID. Thread-safe; use one buffer per consumer.</p>
 <dl class="field-list simple">
 </dl>
 <dl class="py method">
@@ -599,7 +635,7 @@ Buffers runs that record <code class="docutils literal notranslate"><span class=
 <dl class="py method">
 <dt class="sig sig-object py" id="bluesky_adaptive.evaluation.documents.RunEventBuffer.pop">
 <span class="sig-name descname"><span class="pre">pop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">uid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/documents.html#RunEventBuffer.pop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.pop" title="Link to this definition">#</a></dt>
-<dd><p>Remove a buffered run and return its event data keyed by suggestion ID.</p>
+<dd><p>Remove a buffered run, and any that started before it, and return its event data by suggestion ID.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><dl class="simple">
@@ -618,6 +654,105 @@ Buffers runs that record <code class="docutils literal notranslate"><span class=
 <dt>KeyError</dt><dd><p>If the run is not buffered.</p>
 </dd>
 <dt>ValueError</dt><dd><p>If the number of <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> events differs from the number of suggestion IDs.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+</dd></dl>
+
+</dd></dl>
+
+</section>
+<section id="queueitemruns">
+<h2>QueueItemRuns<a class="headerlink" href="#queueitemruns" title="Link to this heading">#</a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="bluesky_adaptive.evaluation.queueserver.QueueItemRuns">
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.evaluation.queueserver.</span></span><span class="sig-name descname"><span class="pre">QueueItemRuns</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">re_manager_api</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">timeout</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">60.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">poll_interval</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_filter</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/queueserver.html#QueueItemRuns"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns" title="Link to this definition">#</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">CallbackBase</span></code></p>
+<p>Resolve Queue Server item UIDs to the UIDs of the runs they open.</p>
+<p>bluesky-queueserver 0.0.26 and later record <code class="docutils literal notranslate"><span class="pre">start[&quot;queue_server&quot;][&quot;queue_item_uid&quot;]</span></code> in every run. Subscribe
+this callback to the Queue Server’s document stream before submitting plans and pass <a class="reference internal" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve" title="bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve"><code class="xref py py-meth docutils literal notranslate"><span class="pre">resolve()</span></code></a> to
+<a class="reference internal" href="#bluesky_adaptive.evaluation.per_run" title="bluesky_adaptive.evaluation.per_run"><code class="xref py py-func docutils literal notranslate"><span class="pre">per_run()</span></code></a>. It uses each item’s first run that passes <code class="docutils literal notranslate"><span class="pre">run_filter</span></code> and returns
+once that run’s stop document arrives, so read the data with a reader that waits for the run to stop, such as
+<a class="reference internal" href="#bluesky_adaptive.evaluation.tiled.TiledRunPoller" title="bluesky_adaptive.evaluation.tiled.TiledRunPoller"><code class="xref py py-class docutils literal notranslate"><span class="pre">TiledRunPoller</span></code></a>, or from the same stream with
+<a class="reference internal" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer" title="bluesky_adaptive.evaluation.documents.RunEventBuffer"><code class="xref py py-class docutils literal notranslate"><span class="pre">RunEventBuffer</span></code></a>.</p>
+<p>While the RE Manager reports the item queued or running, <a class="reference internal" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve" title="bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve"><code class="xref py py-meth docutils literal notranslate"><span class="pre">resolve()</span></code></a> waits without a time limit. Thread-safe;
+use one instance per runner, since consuming an item drops the items whose runs started earlier.</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Part of the <strong>experimental</strong> queueserver integration; the API may change without deprecation.</p>
+</div>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>re_manager_api</strong><span class="classifier">bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI</span></dt><dd><p>The RE Manager running the items.</p>
+</dd>
+<dt><strong>timeout</strong><span class="classifier">float, optional</span></dt><dd><p>Seconds to wait for the run’s stop document once the item has finished. Default is 60.</p>
+</dd>
+<dt><strong>poll_interval</strong><span class="classifier">float, optional</span></dt><dd><p>Seconds between RE Manager requests while waiting. Default is 0.5.</p>
+</dd>
+<dt><strong>run_filter</strong><span class="classifier">Callable[[RunStart], bool] | None, optional</span></dt><dd><p>Selects runs by start document, e.g. <code class="docutils literal notranslate"><span class="pre">lambda</span> <span class="pre">start:</span> <span class="pre">not</span> <span class="pre">start.get(&quot;dark_frame&quot;)</span></code>. Called on the
+dispatcher’s thread; its exceptions are raised from <a class="reference internal" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve" title="bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve"><code class="xref py py-meth docutils literal notranslate"><span class="pre">resolve()</span></code></a>.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>ValueError</dt><dd><p>If <code class="docutils literal notranslate"><span class="pre">timeout</span></code> is negative or <code class="docutils literal notranslate"><span class="pre">poll_interval</span></code> is not positive.</p>
+</dd>
+</dl>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">runs</span> <span class="o">=</span> <span class="n">QueueItemRuns</span><span class="p">(</span><span class="n">RM</span><span class="p">)</span>
+<span class="n">dispatcher</span> <span class="o">=</span> <span class="n">RemoteDispatcher</span><span class="p">(</span><span class="s2">"localhost:5578"</span><span class="p">)</span>
+<span class="n">dispatcher</span><span class="o">.</span><span class="n">subscribe</span><span class="p">(</span><span class="n">runs</span><span class="p">)</span>
+<span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">dispatcher</span><span class="o">.</span><span class="n">start</span><span class="p">,</span> <span class="n">daemon</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">start</span><span class="p">()</span>
+<span class="n">evaluation_function</span> <span class="o">=</span> <span class="n">per_run</span><span class="p">(</span><span class="n">per_suggestion</span><span class="p">(</span><span class="n">score</span><span class="p">,</span> <span class="n">TiledRunPoller</span><span class="p">(</span><span class="n">tiled_client</span><span class="p">)),</span> <span class="n">runs</span><span class="o">.</span><span class="n">resolve</span><span class="p">)</span>
+<span class="n">agent</span> <span class="o">=</span> <span class="n">QueueserverAgent</span><span class="p">(</span><span class="n">RM</span><span class="p">,</span> <span class="o">...</span><span class="p">,</span> <span class="n">evaluation_function</span><span class="o">=</span><span class="n">evaluation_function</span><span class="p">)</span>
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="bluesky_adaptive.evaluation.queueserver.QueueItemRuns.start">
+<span class="sig-name descname"><span class="pre">start</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/queueserver.html#QueueItemRuns.start"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.start" title="Link to this definition">#</a></dt>
+<dd><p>Select the run if it is the first of its queue item to pass <code class="docutils literal notranslate"><span class="pre">run_filter</span></code>.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluesky_adaptive.evaluation.queueserver.QueueItemRuns.stop">
+<span class="sig-name descname"><span class="pre">stop</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">doc</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/queueserver.html#QueueItemRuns.stop"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.stop" title="Link to this definition">#</a></dt>
+<dd><p>Record the stop document of a selected run.</p>
+<dl class="field-list simple">
+</dl>
+</dd></dl>
+
+<dl class="py method">
+<dt class="sig sig-object py" id="bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve">
+<span class="sig-name descname"><span class="pre">resolve</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">item_uid</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/evaluation/queueserver.html#QueueItemRuns.resolve"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve" title="Link to this definition">#</a></dt>
+<dd><p>Wait for the item’s run to stop and return its UID, dropping the item and earlier ones.</p>
+<p>An operator’s <code class="docutils literal notranslate"><span class="pre">re_stop</span></code> also ends a run with <code class="docutils literal notranslate"><span class="pre">&quot;success&quot;</span></code>, so the data reader must check it is complete.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt><strong>item_uid</strong><span class="classifier">str</span></dt><dd><p>Queue item UID, as the Queue Server runner passes to the evaluation function.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><dl class="simple">
+<dt>str</dt><dd><p>UID of the item’s selected run.</p>
+</dd>
+</dl>
+</dd>
+<dt class="field-odd">Raises<span class="colon">:</span></dt>
+<dd class="field-odd"><dl class="simple">
+<dt>TimeoutError</dt><dd><p>If no selected run stops within <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds after the item finished.</p>
+</dd>
+<dt>RuntimeError</dt><dd><p>If the run did not succeed, the item ended without opening a run, or <code class="docutils literal notranslate"><span class="pre">run_filter</span></code> raised.</p>
+</dd>
+<dt>KeyError</dt><dd><p>If the RE Manager has no record of the item.</p>
 </dd>
 </dl>
 </dd>
@@ -744,12 +879,25 @@ indefinitely. Default is 60.</p>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.per_suggestion"><code class="docutils literal notranslate"><span class="pre">per_suggestion()</span></code></a></li>
 </ul>
 </li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#per-run">per_run</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.per_run"><code class="docutils literal notranslate"><span class="pre">per_run()</span></code></a></li>
+</ul>
+</li>
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#runeventbuffer">RunEventBuffer</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer</span></code></a><ul class="nav section-nav flex-column">
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.start"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer.start()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.descriptor"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer.descriptor()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.event"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer.event()</span></code></a></li>
 <li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.documents.RunEventBuffer.pop"><code class="docutils literal notranslate"><span class="pre">RunEventBuffer.pop()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#queueitemruns">QueueItemRuns</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns"><code class="docutils literal notranslate"><span class="pre">QueueItemRuns</span></code></a><ul class="nav section-nav flex-column">
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.start"><code class="docutils literal notranslate"><span class="pre">QueueItemRuns.start()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.stop"><code class="docutils literal notranslate"><span class="pre">QueueItemRuns.stop()</span></code></a></li>
+<li class="toc-h4 nav-item toc-entry"><a class="reference internal nav-link" href="#bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve"><code class="docutils literal notranslate"><span class="pre">QueueItemRuns.resolve()</span></code></a></li>
 </ul>
 </li>
 </ul>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev15 documentation</title>
+    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev16 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=1015cc19"></script>
+    <script src="_static/documentation_options.js?v=27ed4673"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev15" />
+  <meta name="docsearch:version" content="1.0.2.dev16" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -573,7 +573,17 @@ Plans also keep <code class="docutils literal notranslate"><span class="pre">pla
 function that evaluates the data of one suggestion and sets the <code class="docutils literal notranslate"><span class="pre">&quot;_id&quot;</span></code> of each outcome.
 <code class="docutils literal notranslate"><span class="pre">bluesky_adaptive.evaluation.documents.RunEventBuffer</span></code>, subscribed with <code class="docutils literal notranslate"><span class="pre">RE.subscribe(buffer)</span></code>, buffers the
 <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> event data of <code class="docutils literal notranslate"><span class="pre">default_acquire</span></code> runs so that <code class="docutils literal notranslate"><span class="pre">per_suggestion(evaluate,</span> <span class="pre">buffer.pop)</span></code> can evaluate
-them (<a class="reference external" href="https://github.com/bluesky/bluesky-adaptive/issues/73">#73</a>).</p></li>
+them. <code class="docutils literal notranslate"><span class="pre">pop</span></code> also drops runs that started earlier, and the buffer may be fed by a dispatcher thread
+(<a class="reference external" href="https://github.com/bluesky/bluesky-adaptive/issues/73">#73</a>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">per_run(evaluate,</span> <span class="pre">resolve)</span></code> builds an evaluation function from one that takes another UID, such as a Bluesky run
+UID. <code class="docutils literal notranslate"><span class="pre">bluesky_adaptive.evaluation.queueserver.QueueItemRuns(re_manager_api)</span></code>, subscribed to the Queue Server’s
+document stream, resolves queue item UIDs to the UIDs of the runs they open, so that
+<code class="docutils literal notranslate"><span class="pre">per_run(per_suggestion(evaluate,</span> <span class="pre">TiledRunPoller(client)),</span> <span class="pre">runs.resolve)</span></code>, or <code class="docutils literal notranslate"><span class="pre">buffer.pop</span></code> of a
+<code class="docutils literal notranslate"><span class="pre">RunEventBuffer</span></code> on the same stream, can evaluate the runs of the Queue Server runner’s plans. It uses each item’s
+first run, or the first that passes an optional <code class="docutils literal notranslate"><span class="pre">run_filter</span></code>, and raises if the run fails or <code class="docutils literal notranslate"><span class="pre">run_filter</span></code> raises.
+While the RE Manager reports the item queued or running, <code class="docutils literal notranslate"><span class="pre">resolve</span></code> waits without a time limit; it raises at once
+if the item ended without opening a run, and otherwise waits at most <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds for the run’s stop
+document. It needs the <code class="docutils literal notranslate"><span class="pre">queueserver</span></code> extra.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">bluesky_adaptive.evaluation.tiled.TiledRunPoller(client)</span></code> reads the <code class="docutils literal notranslate"><span class="pre">&quot;primary&quot;</span></code> data of <code class="docutils literal notranslate"><span class="pre">default_acquire</span></code>
 runs from Tiled so that <code class="docutils literal notranslate"><span class="pre">per_suggestion(evaluate,</span> <span class="pre">TiledRunPoller(client))</span></code> can evaluate them. Each call polls
 Tiled until the run has a stop document, raising <code class="docutils literal notranslate"><span class="pre">TimeoutError</span></code> after <code class="docutils literal notranslate"><span class="pre">timeout</span></code> seconds. It needs the new
