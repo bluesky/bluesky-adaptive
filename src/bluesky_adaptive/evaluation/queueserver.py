@@ -1,10 +1,7 @@
 """
 Evaluation helpers for plans run by a Bluesky Queue Server.
 
-.. warning::
-
-    This module is part of the **experimental** queueserver integration. The API may change in future releases
-    without a deprecation period.
+.. warning:: Part of the **experimental** queueserver integration; the API may change without deprecation.
 """
 
 import threading
@@ -26,40 +23,30 @@ from event_model import RunStart, RunStop
 
 
 class QueueItemRuns(CallbackBase):
-    """Resolve Queue Server item UIDs to the UIDs of the runs they open, from start and stop documents.
+    """Resolve Queue Server item UIDs to the UIDs of the runs they open.
 
-    bluesky-queueserver 0.0.26 and later record ``start["queue_server"]["queue_item_uid"]`` in every run a queue item
-    opens. Subscribe this callback to the dispatcher of the Queue Server's document stream before submitting plans,
-    and pass :meth:`run_uid` to :func:`~bluesky_adaptive.evaluation.per_run`. :meth:`run_uid` returns once the run's
-    stop document reaches this callback, so read the run's data from the same dispatcher, e.g. with
-    :class:`~bluesky_adaptive.evaluation.documents.RunEventBuffer`, or with a reader that waits for the run's stop
-    document. The item's first run, or the first that passes ``run_filter``, is used.
+    bluesky-queueserver 0.0.26 and later record ``start["queue_server"]["queue_item_uid"]`` in every run. Subscribe
+    this callback to the Queue Server's document stream before submitting plans and pass :meth:`run_uid` to
+    :func:`~bluesky_adaptive.evaluation.per_run`. It uses each item's first run that passes ``run_filter`` and returns
+    once that run's stop document arrives, so read the data from the same stream, e.g. with
+    :class:`~bluesky_adaptive.evaluation.documents.RunEventBuffer`.
 
-    The documents tell when the data is ready; the RE Manager tells whether the item is still queued or running.
-    While it is, :meth:`run_uid` waits without a time limit, so time spent in the queue does not count; stopping,
-    aborting, or removing the item ends the wait. An item that ends without opening a run raises at once.
+    While the RE Manager reports the item queued or running, :meth:`run_uid` waits without a time limit. Thread-safe;
+    use one instance per runner, since consuming an item drops the items whose runs started earlier.
 
-    Use one instance per runner: consuming an item drops the items whose runs started earlier, including other
-    clients' items. Its methods may be called from different threads, such as a dispatcher's and an evaluation's.
-
-    .. warning::
-
-        This class is part of the **experimental** queueserver integration. The API may change in future releases
-        without a deprecation period.
+    .. warning:: Part of the **experimental** queueserver integration; the API may change without deprecation.
 
     Parameters
     ----------
     re_manager_api : bluesky_queueserver_api.zmq.REManagerAPI | bluesky_queueserver_api.http.REManagerAPI
-        The RE Manager that runs the items, asked for their queue and history state every ``poll_interval`` seconds
-        until the item's run has stopped or the item has finished.
+        The RE Manager running the items.
     timeout : float, optional
-        Seconds to wait for the selected run's stop document after the RE Manager reports that the item finished.
-        Default is 60.
+        Seconds to wait for the run's stop document once the item has finished. Default is 60.
     poll_interval : float, optional
-        Seconds between requests to the RE Manager. Default is 0.5.
+        Seconds between RE Manager requests while waiting. Default is 0.5.
     run_filter : Callable[[RunStart], bool] | None, optional
-        Select runs by their start document, e.g. ``lambda start: not start.get("dark_frame")``. It is called
-        on the dispatcher's thread; if it raises, :meth:`run_uid` raises for that item instead of waiting.
+        Selects runs by start document, e.g. ``lambda start: not start.get("dark_frame")``. Called on the
+        dispatcher's thread; its exceptions are raised from :meth:`run_uid`.
 
     Raises
     ------
@@ -68,35 +55,15 @@ class QueueItemRuns(CallbackBase):
 
     Examples
     --------
-    Evaluate the ``"primary"`` events of the run each submitted plan opens:
-
     .. code-block:: python
 
-        import threading
-
-        from bluesky.callbacks.zmq import RemoteDispatcher
-        from bluesky_queueserver_api.zmq import REManagerAPI
-
-        from bluesky_adaptive.ax.queueserver_agent import QueueserverAgent
-        from bluesky_adaptive.evaluation import per_run, per_suggestion
-        from bluesky_adaptive.evaluation.documents import RunEventBuffer
-        from bluesky_adaptive.evaluation.queueserver import QueueItemRuns
-
-        def score(data):
-            return {"objective": data["det"]}
-
-        RM = REManagerAPI()
         buffer = RunEventBuffer()
         runs = QueueItemRuns(RM)
         dispatcher = RemoteDispatcher("localhost:5578")
         dispatcher.subscribe(buffer)
         dispatcher.subscribe(runs)
         threading.Thread(target=dispatcher.start, daemon=True).start()
-        agent = QueueserverAgent(
-            RM,
-            ...,
-            evaluation_function=per_run(per_suggestion(score, buffer.pop), runs.run_uid),
-        )
+        agent = QueueserverAgent(RM, ..., evaluation_function=per_run(per_suggestion(score, buffer.pop), runs.run_uid))
     """
 
     def __init__(
@@ -156,16 +123,14 @@ class QueueItemRuns(CallbackBase):
                 self._condition.notify_all()
 
     def run_uid(self, item_uid: str) -> str:
-        """Wait for the queue item's run to stop and return its UID.
+        """Wait for the item's run to stop and return its UID, dropping the item and earlier ones.
 
-        Removes the item and the items whose runs started earlier. A run that an operator stops with ``re_stop``
-        also ends with ``"success"``, so the data reader must check that the run is complete, as
-        :meth:`RunEventBuffer.pop <bluesky_adaptive.evaluation.documents.RunEventBuffer.pop>` does.
+        An operator's ``re_stop`` also ends a run with ``"success"``, so the data reader must check it is complete.
 
         Parameters
         ----------
         item_uid : str
-            Queue item UID, such as the one the Queue Server runner passes to the evaluation function.
+            Queue item UID, as the Queue Server runner passes to the evaluation function.
 
         Returns
         -------
@@ -175,13 +140,11 @@ class QueueItemRuns(CallbackBase):
         Raises
         ------
         TimeoutError
-            If the item finished, but no selected run of it stopped within ``timeout`` seconds.
+            If no selected run stops within ``timeout`` seconds after the item finished.
         RuntimeError
-            If the run's exit status is not ``"success"``, the item ended without opening a run, or ``run_filter``
-            raised on one of its runs.
+            If the run did not succeed, the item ended without opening a run, or ``run_filter`` raised.
         KeyError
-            If the RE Manager has no record of the item, e.g. because it was removed from the queue or the history
-            was cleared.
+            If the RE Manager has no record of the item.
         """
         deadline: float | None = None  # Set once the RE Manager reports that the item finished.
         while True:
@@ -217,9 +180,8 @@ class QueueItemRuns(CallbackBase):
 
     def _item_result(self, item_uid: str) -> Mapping[str, Any] | None:
         """Return the ``result`` of the item's history entry, or None while it is queued or running."""
-        # Items only move from the queue to running to the history, and each response is one consistent state of
-        # the RE Manager, so checking in that order cannot miss an item in transit. A failed item is put back in the
-        # queue under a new UID, so its original UID resolves to the failure in the history.
+        # Items move from queue to running to history, and each response is consistent, so this order misses none.
+        # A failed item is re-queued under a new UID; its original UID stays in the history.
         queue = self._rm.queue_get(reload=True)
         if queue["running_item"].get("item_uid") == item_uid or any(item["item_uid"] == item_uid for item in queue["items"]):
             return None
@@ -233,8 +195,7 @@ class QueueItemRuns(CallbackBase):
 
     def _consume(self, item_uid: str) -> None:
         """Remove the item and the items whose runs started earlier; call with the condition held."""
-        # Items run one at a time, so runs that started earlier belong to items that were consumed, timed out,
-        # or submitted by other clients.
+        # Items run one at a time, so earlier runs belong to consumed, timed-out, or other clients' items.
         for older_item_uid in list(self._run_uids):
             self._item_uids.pop(self._run_uids.pop(older_item_uid), None)
             self._outcomes.pop(older_item_uid, None)

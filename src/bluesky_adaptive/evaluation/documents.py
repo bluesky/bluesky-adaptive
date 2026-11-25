@@ -15,13 +15,10 @@ _PRIMARY_STREAM: Literal["primary"] = "primary"
 class RunEventBuffer(CallbackBase):
     """Buffer the ``"primary"`` event data of acquisition runs by suggestion ID.
 
-    Subscribe with ``RE.subscribe(buffer)``, or to the dispatcher of a remote document stream alongside
-    :class:`~bluesky_adaptive.evaluation.queueserver.QueueItemRuns`, and pass :meth:`pop` to
-    :func:`~bluesky_adaptive.evaluation.per_suggestion`.
-    Buffers runs that record ``start["bluesky-adaptive"]["acquisition_order"]``, such as from
-    :func:`~bluesky_adaptive.plans.default_acquire`, pairing the n-th event with the n-th suggestion ID.
-    Use one buffer per consumer, such as one per runner: popping a run drops the runs that started before it. Its
-    methods may be called from different threads, such as a dispatcher's and an evaluation's.
+    Subscribe with ``RE.subscribe(buffer)`` or to a remote document stream, and pass :meth:`pop` to
+    :func:`~bluesky_adaptive.evaluation.per_suggestion`. Buffers runs that record
+    ``start["bluesky-adaptive"]["acquisition_order"]``, as :func:`~bluesky_adaptive.plans.default_acquire` does,
+    pairing the n-th event with the n-th suggestion ID. Thread-safe; use one buffer per consumer.
     """
 
     def __init__(self) -> None:
@@ -55,10 +52,7 @@ class RunEventBuffer(CallbackBase):
         return doc
 
     def pop(self, uid: str) -> dict[Hashable, dict[str, Any]]:
-        """Remove a buffered run and return its event data keyed by suggestion ID.
-
-        Also drops the runs that started before it: an evaluation pops each acquisition run before the next one
-        starts, so earlier runs are never evaluated.
+        """Remove a buffered run, and any that started before it, and return its event data by suggestion ID.
 
         Parameters
         ----------

@@ -50,16 +50,14 @@ def per_suggestion(
 
 
 def per_run(evaluate: EvaluationFunction[_TRunUid], run_uid: Callable[[TUid], _TRunUid]) -> EvaluationFunction[TUid]:
-    """Build an evaluation function from one that evaluates acquisitions by another UID, such as a Bluesky run UID.
-
-    The evaluation function calls ``evaluate`` with ``run_uid(uid)`` in place of ``uid``.
+    """Build an evaluation function that maps its UID through ``run_uid`` before calling ``evaluate``.
 
     Parameters
     ----------
     evaluate : EvaluationFunction[_TRunUid]
-        Evaluates the acquisition identified by the UID that ``run_uid`` returns.
+        Evaluates an acquisition by the mapped UID, e.g. a Bluesky run UID.
     run_uid : Callable[[TUid], _TRunUid]
-        Returns the UID ``evaluate`` takes for the evaluation function's UID, e.g.
+        Maps the evaluation function's UID, e.g.
         :meth:`QueueItemRuns.run_uid <bluesky_adaptive.evaluation.queueserver.QueueItemRuns.run_uid>`.
 
     Returns
