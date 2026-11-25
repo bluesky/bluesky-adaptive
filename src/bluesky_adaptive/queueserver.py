@@ -435,15 +435,11 @@ class QueueserverOptimizationRunner:
         self._state.current_suggestions = suggestions
         self._state.iteration_suggestions = suggestions
 
-        # Build metadata
-        md: dict[str, Any] = {"blop_suggestions": self._state.current_suggestions}
-
         return BPlan(
             self._plan_name,
             self._state.current_suggestions,
             list(self._problem.actuators),
             list(self._problem.sensors),
-            md=md,
             **(self._problem.acquisition_plan_kwargs or {}),
         )
 

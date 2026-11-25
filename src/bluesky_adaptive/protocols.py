@@ -304,9 +304,9 @@ class AcquisitionPlan(Protocol[_TUid_co]):
         sensors: Sequence[Sensor], optional
             The sensors that produce data to evaluate.
         md : Mapping[str, Any] | None, optional
-            Metadata to attach to the start document. Deprecated: nothing in Bluesky Adaptive relies on it, and
-            acquisition plans own the metadata of the runs they open. It will be removed from this protocol in a
-            future major version; plans may keep accepting it.
+            Metadata to attach to the start document. Deprecated: Bluesky Adaptive passes it only from
+            ``acquisition_plan_kwargs``, and acquisition plans own the metadata of the runs they open. It will be
+            removed from this protocol in a future major version; plans may keep accepting it.
 
         Returns
         -------
