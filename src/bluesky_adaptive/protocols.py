@@ -402,9 +402,7 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
     acquisition_plan_kwargs: Mapping[str, Any], optional
         Additional plan arguments to pass to the Bluesky plan.
     optimization_uid: str, optional
-        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in the runs of
-        submitted plans that pass ``md`` to their run, as ``default_acquire`` does. If not provided, a new UUID4 is
-        generated.
+        Identifier of the optimization. If not provided, a new UUID4 is generated.
 
     See Also
     --------
