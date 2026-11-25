@@ -83,9 +83,6 @@ Features
   caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
   on a shared background event loop; cancelling that future cancels the loop. Interpreter exit now waits for an
   in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
-* ``QueueserverOptimizationRunner`` passes the problem's ``optimization_uid`` to submitted plans in
-  ``md["bluesky-adaptive"]``, so ``default_acquire`` records it as ``start["bluesky-adaptive"]["optimization_uid"]``.
-  ``QueueserverAgent`` generates one, exposes it, and accepts it, like ``Agent``.
 * ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` accept ``metadata`` for the optimization run's start
   document, such as ``tiled_access_tags``. ``Agent`` and ``Scipy`` accept it and expose it as ``agent.metadata``.
 * ``QueueserverOptimizationRunner`` accepts ``callbacks`` and ``metadata``. Each ``run()`` or
@@ -94,12 +91,11 @@ Features
   ``adaptive_acquisition_uid`` is its queue item UID. Like ``RunEngine`` callbacks, they are called on the runner's
   event loop, so slow callbacks should buffer, for example with ``bluesky.callbacks.buffer.BufferingWrapper``.
   ``QueueserverAgent`` passes its ``metadata`` and the callbacks registered with ``subscribe``, which include an
-  ``OptimizationLogger`` by default.
+  ``OptimizationLogger`` by default. Like ``Agent``, it generates an ``optimization_uid``, exposes it, and accepts
+  it.
 
 Bug Fixes
 .........
-* ``QueueserverOptimizationRunner`` merges ``md`` from ``acquisition_plan_kwargs`` into the ``md`` it passes to
-  submitted plans instead of raising ``TypeError``.
 * ``optimize`` marks a step's trials failed on a ``TrialFaultAware`` optimizer when its outcomes fail validation,
   as it already did for acquisition and evaluation errors.
 * ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like

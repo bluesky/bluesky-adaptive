@@ -38,13 +38,7 @@ from .protocols import (
     QueueserverOptimizationProblem,
     TrialFaultAware,
 )
-from .utils import (
-    _acquisition_md,
-    _maybe_checkpoint,
-    _validate_outcomes,
-    _validate_suggestions,
-    collect_optimization_metadata,
-)
+from .utils import _maybe_checkpoint, _validate_outcomes, _validate_suggestions, collect_optimization_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -441,9 +435,8 @@ class QueueserverOptimizationRunner:
         self._state.current_suggestions = suggestions
         self._state.iteration_suggestions = suggestions
 
-        acquisition_plan_kwargs = dict(self._problem.acquisition_plan_kwargs or {})
-        md = _acquisition_md(self._problem.optimization_uid, acquisition_plan_kwargs.pop("md", None))
-        md["blop_suggestions"] = self._state.current_suggestions
+        # Build metadata
+        md: dict[str, Any] = {"blop_suggestions": self._state.current_suggestions}
 
         return BPlan(
             self._plan_name,
@@ -451,7 +444,7 @@ class QueueserverOptimizationRunner:
             list(self._problem.actuators),
             list(self._problem.sensors),
             md=md,
-            **acquisition_plan_kwargs,
+            **(self._problem.acquisition_plan_kwargs or {}),
         )
 
     async def _run_loop(self, item_uid: str) -> OptimizationResult:
