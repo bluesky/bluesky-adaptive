@@ -98,6 +98,8 @@ Features
 
 Bug Fixes
 .........
+* ``QueueserverOptimizationRunner`` merges ``md`` from ``acquisition_plan_kwargs`` into the ``md`` it passes to
+  submitted plans instead of raising ``TypeError``.
 * ``optimize`` marks a step's trials failed on a ``TrialFaultAware`` optimizer when its outcomes fail validation,
   as it already did for acquisition and evaluation errors.
 * ``sample_suggestions`` validates its suggestions and outcomes, and ``acquire_baseline`` its outcomes, like

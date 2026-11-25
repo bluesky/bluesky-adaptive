@@ -304,7 +304,9 @@ class AcquisitionPlan(Protocol[_TUid_co]):
         sensors: Sequence[Sensor], optional
             The sensors that produce data to evaluate.
         md : Mapping[str, Any] | None, optional
-            Metadata to attach to the start document
+            Metadata for the start document of every run the plan opens, merged with the plan's own metadata,
+            including the nested ``"bluesky-adaptive"`` mapping, as :func:`~bluesky_adaptive.plans.default_acquire`
+            does. The Queue Server runner passes the problem's ``optimization_uid`` in it.
 
         Returns
         -------
@@ -400,11 +402,11 @@ class QueueserverOptimizationProblem(BaseOptimizationProblem[str, str, str, str]
         The name of a Bluesky plan to acquire data. If not provided, a default plan name will be used.
         The plan must match the arguments of :class:`AcquisitionPlan`.
     acquisition_plan_kwargs: Mapping[str, Any], optional
-        Additional plan arguments to pass to the Bluesky plan.
+        Additional plan arguments to pass to the Bluesky plan. Its ``md`` is merged into the ``md`` the runner
+        passes.
     optimization_uid: str, optional
-        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in the runs of
-        submitted plans that pass ``md`` to their run, as ``default_acquire`` does. If not provided, a new UUID4 is
-        generated.
+        Identifier of the optimization, passed to submitted plans in ``md`` so that their runs record it as
+        ``start["bluesky-adaptive"]["optimization_uid"]``. If not provided, a new UUID4 is generated.
 
     See Also
     --------
