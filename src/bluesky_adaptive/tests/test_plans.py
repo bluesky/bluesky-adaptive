@@ -1,4 +1,6 @@
 from dataclasses import dataclass
+from functools import partial
+from threading import Event
 from typing import cast
 from unittest.mock import MagicMock, patch
 
@@ -191,6 +193,26 @@ def test_optimize(RE):
     assert data["x1"] == 0.0
     assert data["objective"] == 0.0
     assert data["adaptive_acquisition_uid"] and isinstance(data["adaptive_acquisition_uid"], str)
+
+
+def test_optimize_keeps_run_engine_responsive_during_evaluation(RE):
+    responded = Event()
+
+    def evaluate(uid, suggestions):
+        RE.loop.call_soon_threadsafe(responded.set)
+        assert responded.wait(2), "evaluation blocked the RunEngine loop"
+        return [{"objective": 1.0, "_id": suggestions[0]["_id"]}]
+
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=evaluate,
+    )
+    RE(optimize(problem))
+    optimizer.ingest.assert_called_once_with([{"objective": 1.0, "_id": 0}])
 
 
 def test_optimize_accepts_unhashable_acquisition_reference(RE):
@@ -498,12 +520,12 @@ def test_list_scan_in_run_allows_custom_per_step_streams(RE):
         actuators=[MovableSignal("x1", initial_value=-1.0)],
         sensors=[readable],
         evaluation_function=evaluation_function,
-        acquisition_plan=list_scan_in_run,
+        acquisition_plan=partial(list_scan_in_run, per_step=per_step),
     )
     callback, documents = _collect_documents()
     RE.subscribe(callback)
     try:
-        RE(optimize_in_run(optimization_problem, n_points=2, per_step=per_step))
+        RE(optimize_in_run(optimization_problem, n_points=2))
     finally:
         RE.unsubscribe(callback)
 
@@ -1289,7 +1311,7 @@ def test_optimize_emits_checkpoints_per_iteration(RE):
     ],
     ids=["optimize", "optimize_in_run", "sample_suggestions", "acquire_baseline"],
 )
-def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, plan_name):
+def test_optimization_runs_record_the_problem_optimization_uid_and_entry_point(RE, run_plan, plan_name):
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
     problem = OptimizationProblem(
@@ -1307,6 +1329,83 @@ def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, pla
 
     start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == plan_name)
     assert start["bluesky-adaptive"]["optimization_uid"] == problem.optimization_uid
+    assert start["bluesky-adaptive"]["entry_point"] == plan_name
+
+
+@pytest.mark.parametrize(
+    ("run_plan", "plan_name"),
+    [
+        (lambda problem, callback, md: optimize(problem, callbacks=[callback], metadata=md), "optimize"),
+        (
+            lambda problem, callback, md: sample_suggestions(
+                problem, [{"x1": 1.0, "_id": 0}], callbacks=[callback], metadata=md
+            ),
+            "sample_suggestions",
+        ),
+        (
+            lambda problem, callback, md: acquire_baseline(problem, {"x1": 1.0}, callbacks=[callback], metadata=md),
+            "acquire_baseline",
+        ),
+    ],
+    ids=["optimize", "sample_suggestions", "acquire_baseline"],
+)
+def test_record_runs_add_caller_metadata_to_start(RE, run_plan, plan_name):
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(
+            side_effect=lambda uid, suggestions: [{"objective": 0.0, "_id": s["_id"]} for s in suggestions]
+        ),
+    )
+    callback, documents = _collect_documents()
+
+    RE(run_plan(problem, callback, {"tiled_access_tags": ["proposal-1"], "plan_name": "user"}))
+
+    start = next(doc for name, doc in documents if name == "start")
+    assert start["tiled_access_tags"] == ["proposal-1"]
+    assert start["plan_name"] == plan_name
+
+
+@pytest.mark.parametrize(
+    ("run_plan", "acquisitions"),
+    [
+        (lambda problem, kwargs: optimize(problem, iterations=2, acquisition_plan_kwargs=kwargs), 2),
+        (lambda problem, kwargs: optimize_in_run(problem, iterations=2, acquisition_plan_kwargs=kwargs), 2),
+        (
+            lambda problem, kwargs: sample_suggestions(problem, [{"x1": 1.0, "_id": 0}], acquisition_plan_kwargs=kwargs),
+            1,
+        ),
+        (lambda problem, kwargs: acquire_baseline(problem, {"x1": 1.0}, acquisition_plan_kwargs=kwargs), 1),
+    ],
+    ids=["optimize", "optimize_in_run", "sample_suggestions", "acquire_baseline"],
+)
+def test_acquisition_plan_kwargs_reach_every_acquisition_of_the_call(RE, run_plan, acquisitions):
+    received = []
+
+    @plan
+    def acquisition_plan(suggestions, actuators, sensors=None, *, md=None, resolution=1e-3):
+        received.append(resolution)
+        yield from bps.null()
+        return "uid"
+
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=MagicMock(
+            side_effect=lambda uid, suggestions: [{"objective": 0.0, "_id": s["_id"]} for s in suggestions]
+        ),
+        acquisition_plan=acquisition_plan,
+    )
+
+    RE(run_plan(problem, {"resolution": 1e-5}))
+
+    assert received == [1e-5] * acquisitions
 
 
 def test_optimization_runs_duplicate_released_metadata_at_top_level(RE):
