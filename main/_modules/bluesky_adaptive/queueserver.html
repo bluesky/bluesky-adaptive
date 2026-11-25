@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.2.dev12 documentation</title>
+    <title>bluesky_adaptive.queueserver &#8212; Bluesky Adaptive 1.0.2.dev13 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=db9c5cd4"></script>
+    <script src="../../_static/documentation_options.js?v=7fe4d8cd"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev12" />
+  <meta name="docsearch:version" content="1.0.2.dev13" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -861,7 +861,7 @@ window.runMermaid = runMermaid;</script>
 <span class="kn">import</span><span class="w"> </span><span class="nn">threading</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Awaitable</span><span class="p">,</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Mapping</span><span class="p">,</span> <span class="n">Sequence</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">concurrent.futures</span><span class="w"> </span><span class="kn">import</span> <span class="n">FIRST_COMPLETED</span><span class="p">,</span> <span class="n">Future</span><span class="p">,</span> <span class="n">wait</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span><span class="p">,</span> <span class="n">replace</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 <span class="k">try</span><span class="p">:</span>
@@ -874,9 +874,16 @@ window.runMermaid = runMermaid;</script>
         <span class="s2">"Install them with: pip install bluesky-adaptive[queueserver]"</span>
     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">._records</span><span class="w"> </span><span class="kn">import</span> <span class="n">RunRecorder</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">.plans</span><span class="w"> </span><span class="kn">import</span> <span class="n">default_acquire</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">ID_KEY</span><span class="p">,</span> <span class="n">CanRegisterSuggestions</span><span class="p">,</span> <span class="n">QueueserverOptimizationProblem</span><span class="p">,</span> <span class="n">TrialFaultAware</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_maybe_checkpoint</span><span class="p">,</span> <span class="n">_validate_outcomes</span><span class="p">,</span> <span class="n">_validate_suggestions</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ID_KEY</span><span class="p">,</span>
+    <span class="n">CanRegisterSuggestions</span><span class="p">,</span>
+    <span class="n">DocumentCallback</span><span class="p">,</span>
+    <span class="n">QueueserverOptimizationProblem</span><span class="p">,</span>
+    <span class="n">TrialFaultAware</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">_maybe_checkpoint</span><span class="p">,</span> <span class="n">_validate_outcomes</span><span class="p">,</span> <span class="n">_validate_suggestions</span><span class="p">,</span> <span class="n">collect_optimization_metadata</span>
 
 <span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
 
@@ -1001,9 +1008,18 @@ window.runMermaid = runMermaid;</script>
     <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">num_points</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span>
     <span class="n">checkpoint_interval</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">manual</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
     <span class="n">current_iteration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="c1"># In flight until ingested; registered as failed if the loop fails.</span>
     <span class="n">current_suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+    <span class="c1"># The current iteration's suggestions, named in the stop reason if the loop fails.</span>
+    <span class="n">iteration_suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
     <span class="n">uids</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">record_iteration</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Iteration recorded for the in-flight suggestions; -1 for manually submitted ones."""</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">manual</span> <span class="k">else</span> <span class="bp">self</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">-</span> <span class="mi">1</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">build_result</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Build an :class:`OptimizationResult` from the current state."""</span>
@@ -1042,17 +1058,28 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        sensors, and evaluation function.</span>
 <span class="sd">    queueserver_client : QueueserverClient</span>
 <span class="sd">        Client for communicating with the queueserver.</span>
+<span class="sd">    callbacks : Sequence[DocumentCallback], optional</span>
+<span class="sd">        Receive one optimization run per :meth:`run` or :meth:`submit_suggestions` call. Called on the event loop, so</span>
+<span class="sd">        slow callbacks should buffer, for example with :class:`bluesky.callbacks.buffer.BufferingWrapper`.</span>
+<span class="sd">    metadata : Mapping[str, Any] | None, optional</span>
+<span class="sd">        Extra start document metadata for those runs, such as ``tiled_access_tags``. Read when each loop starts.</span>
 <span class="sd">    """</span>
 
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
         <span class="n">optimization_problem</span><span class="p">:</span> <span class="n">QueueserverOptimizationProblem</span><span class="p">,</span>
         <span class="n">queueserver_client</span><span class="p">:</span> <span class="n">QueueserverClient</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">callbacks</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">DocumentCallback</span><span class="p">]</span> <span class="o">=</span> <span class="p">(),</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span> <span class="o">=</span> <span class="n">optimization_problem</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">queueserver_client</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span> <span class="o">=</span> <span class="n">callbacks</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_plan_name</span> <span class="o">=</span> <span class="n">optimization_problem</span><span class="o">.</span><span class="n">acquisition_plan</span> <span class="ow">or</span> <span class="n">DEFAULT_ACQUIRE_PLAN_NAME</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span> <span class="n">_OptimizationState</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span><span class="p">:</span> <span class="n">RunRecorder</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -1204,11 +1231,17 @@ window.runMermaid = runMermaid;</script>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[],</span> <span class="n">Awaitable</span><span class="p">[</span><span class="nb">str</span><span class="p">]],</span> <span class="n">started</span><span class="p">:</span> <span class="n">Future</span><span class="p">[</span><span class="kc">None</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Claim the runner, submit the first plan with ``start``, and run the loop, releasing the runner at the end."""</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_claim</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># after _claim(): a rejected second call must not touch the running loop's recorder</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">item_uid</span> <span class="o">=</span> <span class="k">await</span> <span class="n">start</span><span class="p">()</span>
             <span class="k">if</span> <span class="n">started</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
                 <span class="n">started</span><span class="o">.</span><span class="n">set_result</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
             <span class="k">return</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">_run_loop</span><span class="p">(</span><span class="n">item_uid</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">BaseException</span> <span class="k">as</span> <span class="n">error</span><span class="p">:</span>
+            <span class="c1"># Set only after start() created this loop's state, so the state belongs to this loop too.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span><span class="o">.</span><span class="n">stop_for</span><span class="p">(</span><span class="n">error</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">record_iteration</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">iteration_suggestions</span><span class="p">)</span>
+            <span class="k">raise</span>
         <span class="k">finally</span><span class="p">:</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_running</span> <span class="o">=</span> <span class="kc">False</span>
 
@@ -1219,6 +1252,11 @@ window.runMermaid = runMermaid;</script>
             <span class="n">max_iterations</span><span class="o">=</span><span class="n">iterations</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="n">num_points</span><span class="p">,</span> <span class="n">checkpoint_interval</span><span class="o">=</span><span class="n">checkpoint_interval</span>
         <span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_recording</span><span class="p">(</span>
+            <span class="s2">"QueueserverOptimizationRunner.run"</span><span class="p">,</span>
+            <span class="p">{</span><span class="s2">"iterations"</span><span class="p">:</span> <span class="n">iterations</span><span class="p">,</span> <span class="s2">"n_points"</span><span class="p">:</span> <span class="n">num_points</span><span class="p">,</span> <span class="s2">"checkpoint_interval"</span><span class="p">:</span> <span class="n">checkpoint_interval</span><span class="p">},</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">suggest</span><span class="p">,</span> <span class="n">num_points</span><span class="p">)</span>
         <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_plan</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Submitting iteration </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
@@ -1227,7 +1265,7 @@ window.runMermaid = runMermaid;</script>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_start_submit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Check the environment and submit a plan for manual suggestions, returning its queue item UID."""</span>
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">check_environment</span><span class="p">)</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">_OptimizationState</span><span class="p">(</span><span class="n">max_iterations</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">suggestions</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">_OptimizationState</span><span class="p">(</span><span class="n">max_iterations</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_points</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">suggestions</span><span class="p">),</span> <span class="n">manual</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="o">=</span> <span class="kc">False</span>
         <span class="c1"># Ensure all suggestions have an ID_KEY or register them with the optimizer</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">CanRegisterSuggestions</span><span class="p">)</span> <span class="ow">and</span> <span class="nb">any</span><span class="p">(</span>
@@ -1241,9 +1279,17 @@ window.runMermaid = runMermaid;</script>
         <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span> <span class="n">CanRegisterSuggestions</span><span class="p">):</span>
             <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">register_suggestions</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">)</span>
 
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_plan</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_recording</span><span class="p">(</span><span class="s2">"QueueserverOptimizationRunner.submit_suggestions"</span><span class="p">,</span> <span class="p">{</span><span class="s2">"suggestions"</span><span class="p">:</span> <span class="n">suggestions</span><span class="p">})</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Submitting manually specified suggestion(s)"</span><span class="p">)</span>
         <span class="k">return</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">submit_plan</span><span class="p">,</span> <span class="n">plan</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_start_recording</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entry_point</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">run_metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">"""Start this loop's optimization run."""</span>
+        <span class="n">problem</span> <span class="o">=</span> <span class="n">replace</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="p">,</span> <span class="n">acquisition_plan</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_plan_name</span><span class="p">)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="o">**</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="ow">or</span> <span class="p">{}),</span> <span class="o">**</span><span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">problem</span><span class="p">,</span> <span class="n">entry_point</span><span class="p">),</span> <span class="o">**</span><span class="n">run_metadata</span><span class="p">}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span> <span class="o">=</span> <span class="n">RunRecorder</span><span class="p">(</span><span class="n">callbacks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">_try_register_failures</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Mapping</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Notify a TrialFaultAware optimizer of failed suggestions, if supported."""</span>
@@ -1260,8 +1306,8 @@ window.runMermaid = runMermaid;</script>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"_build_plan() called before run() or submit_suggestions()"</span><span class="p">)</span>
         <span class="n">_validate_suggestions</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
 
-        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span> <span class="o">=</span> <span class="n">suggestions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">iteration_suggestions</span> <span class="o">=</span> <span class="n">suggestions</span>
 
         <span class="c1"># Build metadata</span>
         <span class="n">md</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"blop_suggestions"</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span><span class="p">}</span>
@@ -1278,7 +1324,8 @@ window.runMermaid = runMermaid;</script>
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_run_loop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_uid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">OptimizationResult</span><span class="p">:</span>
 <span class="w">        </span><span class="sd">"""Evaluate, ingest, and resubmit until done, registering the in-flight suggestions as failed on error."""</span>
         <span class="n">state</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
-        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">recorder</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">recorder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"_run_loop() called before run() or submit_suggestions()"</span><span class="p">)</span>
         <span class="k">try</span><span class="p">:</span>
             <span class="n">next_item_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">item_uid</span>
@@ -1289,6 +1336,7 @@ window.runMermaid = runMermaid;</script>
             <span class="c1"># Register failures before re-raising so a caller that observes the failure sees the trials failed.</span>
             <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_try_register_failures</span><span class="p">,</span> <span class="n">state</span><span class="o">.</span><span class="n">current_suggestions</span><span class="p">)</span>
             <span class="k">raise</span>
+        <span class="n">recorder</span><span class="o">.</span><span class="n">stop</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">state</span><span class="o">.</span><span class="n">build_result</span><span class="p">()</span>
 
     <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">_process_acquisition</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item_uid</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
@@ -1297,7 +1345,7 @@ window.runMermaid = runMermaid;</script>
 
 <span class="sd">        Returns the next submitted queue item UID, or ``None`` when the loop is done.</span>
 <span class="sd">        """</span>
-        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s2">"_process_acquisition called before run()"</span><span class="p">)</span>
         <span class="n">suggestions</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span>
 
@@ -1313,19 +1361,23 @@ window.runMermaid = runMermaid;</script>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">uids</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">item_uid</span><span class="p">)</span>
         <span class="c1"># Ingested suggestions are no longer in flight.</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_suggestions</span> <span class="o">=</span> <span class="p">[]</span>
-        <span class="c1"># Checkpoint optimizer, if applicable</span>
+        <span class="c1"># Recorded after ingesting, so that a failing callback cannot cost the optimizer an evaluated step.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recorder</span><span class="o">.</span><span class="n">record</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">record_iteration</span><span class="p">,</span> <span class="n">item_uid</span><span class="p">,</span> <span class="n">suggestions</span><span class="p">,</span> <span class="n">outcomes</span><span class="p">)</span>
+        <span class="c1"># Checkpoint optimizer, if applicable; _maybe_checkpoint takes the 0-based iteration, like optimize passes.</span>
         <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span>
             <span class="n">_maybe_checkpoint</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="p">,</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">checkpoint_interval</span><span class="p">,</span>
-            <span class="n">iteration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="p">,</span>
+            <span class="n">iteration</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span>
         <span class="p">)</span>
         <span class="c1"># Check if done</span>
         <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_continuous</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Optimization complete after </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2"> iterations"</span><span class="p">)</span>
             <span class="k">return</span> <span class="kc">None</span>
 
-        <span class="c1"># Continue: get next suggestions and submit</span>
+        <span class="c1"># Continue: start the next iteration, get its suggestions, and submit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">iteration_suggestions</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="n">suggestions</span> <span class="o">=</span> <span class="k">await</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">to_thread</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_problem</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">suggest</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">num_points</span><span class="p">)</span>
         <span class="n">plan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_build_plan</span><span class="p">(</span><span class="n">suggestions</span><span class="p">)</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Submitting iteration </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">current_iteration</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">max_iterations</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>

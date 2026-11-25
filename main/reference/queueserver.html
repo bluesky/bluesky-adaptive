@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Queueserver &#8212; Bluesky Adaptive 1.0.2.dev12 documentation</title>
+    <title>Queueserver &#8212; Bluesky Adaptive 1.0.2.dev13 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=db9c5cd4"></script>
+    <script src="../_static/documentation_options.js?v=7fe4d8cd"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev12" />
+  <meta name="docsearch:version" content="1.0.2.dev13" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -639,7 +639,7 @@ The API may change in future releases without a deprecation period.</p>
 <h2>QueueserverOptimizationRunner<a class="headerlink" href="#queueserveroptimizationrunner" title="Link to this heading">#</a></h2>
 <dl class="py class">
 <dt class="sig sig-object py" id="bluesky_adaptive.queueserver.QueueserverOptimizationRunner">
-<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.queueserver.</span></span><span class="sig-name descname"><span class="pre">QueueserverOptimizationRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queueserver_client</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner" title="Link to this definition">#</a></dt>
+<span class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></span><span class="sig-prename descclassname"><span class="pre">bluesky_adaptive.queueserver.</span></span><span class="sig-name descname"><span class="pre">QueueserverOptimizationRunner</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">optimization_problem</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">queueserver_client</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">callbacks</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">metadata</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/bluesky_adaptive/queueserver.html#QueueserverOptimizationRunner"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner" title="Link to this definition">#</a></dt>
 <dd><p>Bases: <a class="reference external" href="https://docs.python.org/3/builtins/functions.html#object" title="(in Python v3.15)"><code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></a></p>
 <p>Runs optimization loops through a Bluesky queueserver.</p>
 <p>This class coordinates the optimization workflow by getting suggestions from
@@ -662,6 +662,11 @@ The API may change in future releases without a deprecation period.</p>
 sensors, and evaluation function.</p>
 </dd>
 <dt><strong>queueserver_client</strong><span class="classifier">QueueserverClient</span></dt><dd><p>Client for communicating with the queueserver.</p>
+</dd>
+<dt><strong>callbacks</strong><span class="classifier">Sequence[DocumentCallback], optional</span></dt><dd><p>Receive one optimization run per <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.run"><code class="xref py py-meth docutils literal notranslate"><span class="pre">run()</span></code></a> or <a class="reference internal" href="#bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions" title="bluesky_adaptive.queueserver.QueueserverOptimizationRunner.submit_suggestions"><code class="xref py py-meth docutils literal notranslate"><span class="pre">submit_suggestions()</span></code></a> call. Called on the event loop, so
+slow callbacks should buffer, for example with <code class="xref py py-class docutils literal notranslate"><span class="pre">bluesky.callbacks.buffer.BufferingWrapper</span></code>.</p>
+</dd>
+<dt><strong>metadata</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Extra start document metadata for those runs, such as <code class="docutils literal notranslate"><span class="pre">tiled_access_tags</span></code>. Read when each loop starts.</p>
 </dd>
 </dl>
 </dd>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev12 documentation</title>
+    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev13 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=db9c5cd4"></script>
+    <script src="_static/documentation_options.js?v=7fe4d8cd"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev12" />
+  <meta name="docsearch:version" content="1.0.2.dev13" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -544,6 +544,10 @@ never change can instead be bound to the plan, for example
 keyword-only, so a plan with <code class="docutils literal notranslate"><span class="pre">md</span></code> bound this way satisfies it, and start documents record the name of the
 function a <code class="docutils literal notranslate"><span class="pre">functools.partial</span></code> wraps as <code class="docutils literal notranslate"><span class="pre">acquisition_plan</span></code> and <code class="docutils literal notranslate"><span class="pre">evaluation_function</span></code>
 (<a class="reference external" href="https://github.com/bluesky/bluesky-adaptive/pull/106">#106</a>).</p></li>
+<li><p>The Queue Server runner records each loop as an optimization run, even without callbacks, so its parameter and
+outcome names follow the same rules as <code class="docutils literal notranslate"><span class="pre">optimize</span></code>: they must not start with <code class="docutils literal notranslate"><span class="pre">adaptive_</span></code>, a parameter and an
+outcome must not share a name, and every point must have the same fields. A step that breaks them raises
+<code class="docutils literal notranslate"><span class="pre">ValueError</span></code> after its outcomes are ingested.</p></li>
 </ul>
 </section>
 <section id="features">
@@ -556,6 +560,9 @@ function a <code class="docutils literal notranslate"><span class="pre">functool
 <li><p>Optimization run metadata is also recorded under <code class="docutils literal notranslate"><span class="pre">&quot;bluesky-adaptive&quot;</span></code> in start documents, duplicating
 <code class="docutils literal notranslate"><span class="pre">evaluation_function</span></code>, <code class="docutils literal notranslate"><span class="pre">acquisition_plan</span></code>, <code class="docutils literal notranslate"><span class="pre">optimizer</span></code>, <code class="docutils literal notranslate"><span class="pre">sensors</span></code>, and <code class="docutils literal notranslate"><span class="pre">actuators</span></code>. The top-level keys
 are kept for backwards compatibility.</p></li>
+<li><p>Optimization runs record the plan or runner method that started them as
+<code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;entry_point&quot;]</span></code>, for example <code class="docutils literal notranslate"><span class="pre">&quot;optimize&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;QueueserverOptimizationRunner.run&quot;</span></code>.
+Plans also keep <code class="docutils literal notranslate"><span class="pre">plan_name</span></code>.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">default_acquire</span></code> records the suggestion IDs in scan order as <code class="docutils literal notranslate"><span class="pre">start[&quot;bluesky-adaptive&quot;][&quot;acquisition_order&quot;]</span></code>.
 <code class="docutils literal notranslate"><span class="pre">&quot;blop_acquisition_order&quot;</span></code> is kept for backwards compatibility.</p></li>
 <li><p>New <code class="docutils literal notranslate"><span class="pre">bluesky_adaptive.evaluation</span></code> package. <code class="docutils literal notranslate"><span class="pre">per_suggestion(evaluate,</span> <span class="pre">fetch)</span></code> builds an evaluation function from a
@@ -574,6 +581,12 @@ on a shared background event loop; cancelling that future cancels the loop. Inte
 in-flight evaluation to return (<a class="reference external" href="https://github.com/bluesky/bluesky-adaptive/issues/98">#98</a>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">optimize</span></code>, <code class="docutils literal notranslate"><span class="pre">sample_suggestions</span></code>, and <code class="docutils literal notranslate"><span class="pre">acquire_baseline</span></code> accept <code class="docutils literal notranslate"><span class="pre">metadata</span></code> for the optimization run’s start
 document, such as <code class="docutils literal notranslate"><span class="pre">tiled_access_tags</span></code>. <code class="docutils literal notranslate"><span class="pre">Agent</span></code> and <code class="docutils literal notranslate"><span class="pre">Scipy</span></code> accept it and expose it as <code class="docutils literal notranslate"><span class="pre">agent.metadata</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner</span></code> accepts <code class="docutils literal notranslate"><span class="pre">callbacks</span></code> and <code class="docutils literal notranslate"><span class="pre">metadata</span></code>. Each <code class="docutils literal notranslate"><span class="pre">run()</span></code> or
+<code class="docutils literal notranslate"><span class="pre">submit_suggestions()</span></code> loop, and its <code class="docutils literal notranslate"><span class="pre">_async</span></code> version, sends one optimization run to the callbacks. Its start
+document records the problem like <code class="docutils literal notranslate"><span class="pre">optimize</span></code> runs, plus <code class="docutils literal notranslate"><span class="pre">metadata</span></code>. Each evaluated point is one event whose
+<code class="docutils literal notranslate"><span class="pre">adaptive_acquisition_uid</span></code> is its queue item UID. Like <code class="docutils literal notranslate"><span class="pre">RunEngine</span></code> callbacks, they are called on the runner’s
+event loop, so slow callbacks should buffer, for example with <code class="docutils literal notranslate"><span class="pre">bluesky.callbacks.buffer.BufferingWrapper</span></code>.
+<code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code> does not pass callbacks or metadata to its runner yet.</p></li>
 </ul>
 </section>
 <section id="bug-fixes">
@@ -588,6 +601,8 @@ evaluation, or outcome validation fails, like <code class="docutils literal notr
 <li><p><code class="docutils literal notranslate"><span class="pre">optimize</span></code> records the step that meets the stopping criterion.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">OptimizationLogger</span></code> omits the Iterations line for runs whose start document has no <code class="docutils literal notranslate"><span class="pre">iterations</span></code>, such as
 <code class="docutils literal notranslate"><span class="pre">sample_suggestions</span></code> runs, instead of showing “Until stopping criterion”.</p></li>
+<li><p>The Queue Server runner takes checkpoints at the same iterations as <code class="docutils literal notranslate"><span class="pre">optimize</span></code>. With <code class="docutils literal notranslate"><span class="pre">checkpoint_interval=n</span></code>
+it checkpointed one iteration early, after iterations n - 1, 2n - 1, and so on.</p></li>
 </ul>
 </section>
 </section>

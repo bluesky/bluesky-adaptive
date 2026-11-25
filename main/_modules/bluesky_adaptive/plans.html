@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.plans &#8212; Bluesky Adaptive 1.0.2.dev12 documentation</title>
+    <title>bluesky_adaptive.plans &#8212; Bluesky Adaptive 1.0.2.dev13 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=db9c5cd4"></script>
+    <script src="../../_static/documentation_options.js?v=7fe4d8cd"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev12" />
+  <meta name="docsearch:version" content="1.0.2.dev13" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -1061,7 +1061,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
-            <span class="o">**</span><span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">,</span> <span class="s2">"optimize"</span><span class="p">),</span>
             <span class="s2">"plan_name"</span><span class="p">:</span> <span class="s2">"optimize"</span><span class="p">,</span>
             <span class="s2">"iterations"</span><span class="p">:</span> <span class="n">iterations</span><span class="p">,</span>
             <span class="s2">"n_points"</span><span class="p">:</span> <span class="n">n_points</span><span class="p">,</span>
@@ -1139,7 +1139,7 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">    acquisition_plan_kwargs : Mapping[str, Any] | None, optional</span>
 <span class="sd">        Keyword arguments passed to the acquisition plan on every acquisition of this call.</span>
 <span class="sd">    """</span>
-    <span class="n">_md</span> <span class="o">=</span> <span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">)</span>
+    <span class="n">_md</span> <span class="o">=</span> <span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">,</span> <span class="s2">"optimize_in_run"</span><span class="p">)</span>
     <span class="n">_md</span><span class="o">.</span><span class="n">update</span><span class="p">(</span>
         <span class="p">{</span>
             <span class="s2">"plan_name"</span><span class="p">:</span> <span class="s2">"optimize_in_run"</span><span class="p">,</span>
@@ -1275,7 +1275,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
-            <span class="o">**</span><span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">,</span> <span class="s2">"sample_suggestions"</span><span class="p">),</span>
             <span class="s2">"plan_name"</span><span class="p">:</span> <span class="s2">"sample_suggestions"</span><span class="p">,</span>
             <span class="s2">"suggestions"</span><span class="p">:</span> <span class="n">suggestions</span><span class="p">,</span>
         <span class="p">},</span>
@@ -1344,7 +1344,7 @@ window.runMermaid = runMermaid;</script>
         <span class="n">callbacks</span><span class="o">=</span><span class="n">callbacks</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
             <span class="o">**</span><span class="p">(</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{}),</span>
-            <span class="o">**</span><span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">),</span>
+            <span class="o">**</span><span class="n">collect_optimization_metadata</span><span class="p">(</span><span class="n">optimization_problem</span><span class="p">,</span> <span class="s2">"acquire_baseline"</span><span class="p">),</span>
             <span class="s2">"plan_name"</span><span class="p">:</span> <span class="s2">"acquire_baseline"</span><span class="p">,</span>
             <span class="s2">"suggestions"</span><span class="p">:</span> <span class="n">points</span><span class="p">,</span>
         <span class="p">},</span>
