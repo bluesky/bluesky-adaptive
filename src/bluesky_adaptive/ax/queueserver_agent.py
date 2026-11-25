@@ -63,7 +63,7 @@ class QueueserverAgent(_AxAgentMixin, _BaseAgent):
     checkpoint_path : str | None, optional
         The path to the checkpoint file to save the optimizer's state to.
     acquisition_plan_kwargs : Mapping[str, Any] | None, optional
-        Additional arguments to pass to the acquisition plan.
+        Additional arguments to pass to the acquisition plan. Its ``md`` is merged into the ``md`` the runner passes.
     optimization_uid : str | None, optional
         Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in the runs of
         submitted plans and in optimization runs. If None, a new UUID4 is generated.

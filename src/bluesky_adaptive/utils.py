@@ -85,6 +85,17 @@ def _suggestion_ids(suggestions: Sequence[Mapping]) -> tuple[Hashable, ...]:
     return tuple(cast(Hashable, suggestion[ID_KEY]) for suggestion in suggestions)
 
 
+def _acquisition_md(optimization_uid: str, md: Mapping[str, Any] | None) -> dict[str, Any]:
+    """Return the ``md`` passed to an acquisition plan: the caller's ``md`` plus the optimization UID.
+
+    The UID is recorded under ``"bluesky-adaptive"``, keeping the caller's other keys there, and replaces a
+    caller-supplied ``optimization_uid`` because it identifies the problem.
+    """
+    run_md = dict(md or {})
+    run_md["bluesky-adaptive"] = {**run_md.get("bluesky-adaptive", {}), "optimization_uid": optimization_uid}
+    return run_md
+
+
 def _drop_run_control_messages(plan: MsgGenerator[Any]) -> MsgGenerator[Any]:
     """Drop child-run messages while preserving hardware lifecycle messages."""
 
