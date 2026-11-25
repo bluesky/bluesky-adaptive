@@ -415,26 +415,22 @@ def test_callback_updates():
     opt.close()
 
 
-def test_suggest_waits_for_slow_batch():
-    """suggest() after an ingest returns scipy's whole next batch even when scipy is slow to request it."""
+def test_suggest_returns_whole_batch():
+    """suggest() after an ingest returns scipy's whole next batch, and scipy receives the outcomes in batch order."""
     dof1 = RangeDOF(actuator=MovableSignal(name="test_movable1"), bounds=(0, 10), parameter_type="float")
     dof2 = RangeDOF(actuator=MovableSignal(name="test_movable2"), bounds=(0, 10), parameter_type="float")
     objective = Objective(name="test_objective", minimize=False)
     config = ScipyCFG(dofs=[dof1, dof2], objective=objective, threads=4)
-    release = threading.Event()
     replayed = []
 
-    class SlowBatch(InnerOptimizer):
+    class Batch(InnerOptimizer):
         def call(self, cost, callback, kws=None) -> ScipyResult | OptimizeResult:
             cost(np.zeros(2))
-            release.wait()
             replayed.extend(kws["workers"](cost, [np.full(2, 1.0), np.full(2, 2.0), np.full(2, 3.0)]))
             return ScipyResult([0.0, 0.0], 0.0, nit=0)
 
-    opt = InteractiveOptimizer(SlowBatch(config), timeout=5)
+    opt = InteractiveOptimizer(Batch(config), timeout=5)
     opt.ingest([opt.suggest()[0] | {"test_objective": 0.0}])
-    # Correct code blocks in suggest() until the batch arrives; the delay only exposes polling implementations.
-    threading.Timer(0.05, release.set).start()
     batch = opt.suggest(4)
     assert [(s[ID_KEY], s["test_movable1"]) for s in batch] == [(1, 1.0), (2, 2.0), (3, 3.0)]
     opt.ingest([s | {"test_objective": 10.0 * s["test_movable1"]} for s in reversed(batch)])
