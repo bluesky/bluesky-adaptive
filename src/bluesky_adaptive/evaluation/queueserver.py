@@ -26,13 +26,13 @@ class QueueItemRuns(CallbackBase):
     """Resolve Queue Server item UIDs to the UIDs of the runs they open.
 
     bluesky-queueserver 0.0.26 and later record ``start["queue_server"]["queue_item_uid"]`` in every run. Subscribe
-    this callback to the Queue Server's document stream before submitting plans and pass :meth:`run_uid` to
+    this callback to the Queue Server's document stream before submitting plans and pass :meth:`resolve` to
     :func:`~bluesky_adaptive.evaluation.per_run`. It uses each item's first run that passes ``run_filter`` and returns
     once that run's stop document arrives, so read the data with a reader that waits for the run to stop, such as
     :class:`~bluesky_adaptive.evaluation.tiled.TiledRunPoller`, or from the same stream with
     :class:`~bluesky_adaptive.evaluation.documents.RunEventBuffer`.
 
-    While the RE Manager reports the item queued or running, :meth:`run_uid` waits without a time limit. Thread-safe;
+    While the RE Manager reports the item queued or running, :meth:`resolve` waits without a time limit. Thread-safe;
     use one instance per runner, since consuming an item drops the items whose runs started earlier.
 
     .. warning:: Part of the **experimental** queueserver integration; the API may change without deprecation.
@@ -47,7 +47,7 @@ class QueueItemRuns(CallbackBase):
         Seconds between RE Manager requests while waiting. Default is 0.5.
     run_filter : Callable[[RunStart], bool] | None, optional
         Selects runs by start document, e.g. ``lambda start: not start.get("dark_frame")``. Called on the
-        dispatcher's thread; its exceptions are raised from :meth:`run_uid`.
+        dispatcher's thread; its exceptions are raised from :meth:`resolve`.
 
     Raises
     ------
@@ -62,7 +62,7 @@ class QueueItemRuns(CallbackBase):
         dispatcher = RemoteDispatcher("localhost:5578")
         dispatcher.subscribe(runs)
         threading.Thread(target=dispatcher.start, daemon=True).start()
-        evaluation_function = per_run(per_suggestion(score, TiledRunPoller(tiled_client)), runs.run_uid)
+        evaluation_function = per_run(per_suggestion(score, TiledRunPoller(tiled_client)), runs.resolve)
         agent = QueueserverAgent(RM, ..., evaluation_function=evaluation_function)
     """
 
@@ -97,20 +97,15 @@ class QueueItemRuns(CallbackBase):
         with self._condition:
             if item_uid in self._run_uids:
                 return
-        try:
-            selected = self._run_filter is None or self._run_filter(doc)
-        except Exception as error:
-            # Raised from run_uid for this item: the dispatcher cannot report it to the evaluation waiting on it.
-            with self._condition:
-                if item_uid not in self._run_uids:
-                    self._run_uids[item_uid] = doc["uid"]
-                    self._outcomes[item_uid] = error
-                    self._condition.notify_all()
-            return
-        if not selected:
-            return
-        with self._condition:
-            if item_uid not in self._run_uids:
+            try:
+                selected = self._run_filter is None or self._run_filter(doc)
+            except Exception as error:
+                # Raised from resolve for this item: the dispatcher cannot report it to the evaluation waiting on it.
+                self._run_uids[item_uid] = doc["uid"]
+                self._outcomes[item_uid] = error
+                self._condition.notify_all()
+                return
+            if selected:
                 self._run_uids[item_uid] = doc["uid"]
                 self._item_uids[doc["uid"]] = item_uid
 
@@ -122,7 +117,7 @@ class QueueItemRuns(CallbackBase):
                 self._outcomes[item_uid] = doc
                 self._condition.notify_all()
 
-    def run_uid(self, item_uid: str) -> str:
+    def resolve(self, item_uid: str) -> str:
         """Wait for the item's run to stop and return its UID, dropping the item and earlier ones.
 
         An operator's ``re_stop`` also ends a run with ``"success"``, so the data reader must check it is complete.
@@ -196,8 +191,7 @@ class QueueItemRuns(CallbackBase):
     def _consume(self, item_uid: str) -> None:
         """Remove the item and the items whose runs started earlier; call with the condition held."""
         # Items run one at a time, so earlier runs belong to consumed, timed-out, or other clients' items.
-        for older_item_uid in list(self._run_uids):
+        item_uids = list(self._run_uids)
+        for older_item_uid in item_uids[: item_uids.index(item_uid) + 1]:
             self._item_uids.pop(self._run_uids.pop(older_item_uid), None)
             self._outcomes.pop(older_item_uid, None)
-            if older_item_uid == item_uid:
-                break

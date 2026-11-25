@@ -79,9 +79,8 @@ class RunEventBuffer(CallbackBase):
                     "default_acquire does), and that neither this run nor a later one was already popped."
                 )
             # Runs are buffered in start order.
-            for run_uid in list(self._events):
-                if run_uid == uid:
-                    break
+            run_uids = list(self._events)
+            for run_uid in run_uids[: run_uids.index(uid)]:
                 del self._acquisition_orders[run_uid], self._events[run_uid]
             acquisition_order = self._acquisition_orders.pop(uid)
             events = self._events.pop(uid)

@@ -1,3 +1,6 @@
+import importlib
+import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from unittest.mock import MagicMock
 
@@ -40,7 +43,7 @@ def test_per_run_evaluates_the_queue_items_run_from_the_document_stream(RE, pend
     RE.subscribe(buffer)
     RE.subscribe(runs)
     x1, det = MovableSignal("x1"), ReadableSignal("det")
-    evaluation_function = per_run(per_suggestion(lambda data: {"objective": 10 * data["x1"]}, buffer.pop), runs.run_uid)
+    evaluation_function = per_run(per_suggestion(lambda data: {"objective": 10 * data["x1"]}, buffer.pop), runs.resolve)
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         # The evaluation starts waiting before its item runs, as it does once the runner submits the plan.
@@ -65,8 +68,19 @@ def test_queue_item_runs_selects_the_first_run_of_the_item_that_passes_run_filte
 
     dark_uid, light_uid = RE(dark_then_light(), queue_server={"queue_item_uid": "item-1"})
 
-    assert first_runs.run_uid("item-1") == dark_uid
-    assert light_runs.run_uid("item-1") == light_uid
+    assert first_runs.resolve("item-1") == dark_uid
+    assert light_runs.resolve("item-1") == light_uid
+
+
+def test_queue_item_runs_ignores_runs_not_opened_by_a_queue_item(RE):
+    runs = QueueItemRuns(re_manager(running="item-1"))
+    RE.subscribe(runs)
+    det = ReadableSignal("det")
+
+    RE(count([det]))
+    (uid,) = RE(count([det]), queue_server={"queue_item_uid": "item-1"})
+
+    assert runs.resolve("item-1") == uid
 
 
 def test_queue_item_runs_raises_when_the_run_fails(RE):
@@ -84,7 +98,7 @@ def test_queue_item_runs_raises_when_the_run_fails(RE):
         )
 
     with pytest.raises(RuntimeError, match="ended with status 'fail'"):
-        runs.run_uid("item-1")
+        runs.resolve("item-1")
 
 
 def test_queue_item_runs_drops_items_whose_runs_started_earlier(RE):
@@ -95,9 +109,27 @@ def test_queue_item_runs_drops_items_whose_runs_started_earlier(RE):
     RE(count([det]), queue_server={"queue_item_uid": "item-1"})
     (uid_2,) = RE(count([det]), queue_server={"queue_item_uid": "item-2"})
 
-    assert runs.run_uid("item-2") == uid_2
+    assert runs.resolve("item-2") == uid_2
     with pytest.raises(TimeoutError):
-        runs.run_uid("item-1")
+        runs.resolve("item-1")
+
+
+def test_queue_item_runs_waits_for_a_stop_document_that_arrives_after_the_item_finished(RE):
+    finished = {"exit_status": "completed", "run_uids": ["run"], "msg": ""}
+    re_manager_api = re_manager(history=[("item-1", finished)])
+    polled = threading.Event()
+    history = re_manager_api.history_get.return_value
+    re_manager_api.history_get.side_effect = lambda **kwargs: (polled.set(), history)[1]
+    runs = QueueItemRuns(re_manager_api, timeout=5, poll_interval=0.01)
+    RE.subscribe(runs)
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(runs.resolve, "item-1")
+        # The RE Manager reports the item finished before its documents reach the dispatcher.
+        assert polled.wait(timeout=5)
+        (uid,) = RE(count([ReadableSignal("det")]), queue_server={"queue_item_uid": "item-1"})
+
+        assert future.result(timeout=5) == uid
 
 
 def test_queue_item_runs_raises_at_once_when_the_item_ends_without_a_run():
@@ -106,14 +138,14 @@ def test_queue_item_runs_raises_at_once_when_the_item_ends_without_a_run():
     runs = QueueItemRuns(re_manager(queued=["item-1-retry"], history=[("item-1", failed)]), timeout=60)
 
     with pytest.raises(RuntimeError, match="ended with status 'failed' without opening a run: plan raised"):
-        runs.run_uid("item-1")
+        runs.resolve("item-1")
 
 
 def test_queue_item_runs_raises_when_the_re_manager_has_no_record_of_the_item():
     runs = QueueItemRuns(re_manager(), timeout=60)
 
     with pytest.raises(KeyError, match="removed from the queue"):
-        runs.run_uid("item-1")
+        runs.resolve("item-1")
 
 
 def test_queue_item_runs_raises_run_filter_errors_for_the_item(RE):
@@ -123,5 +155,19 @@ def test_queue_item_runs_raises_run_filter_errors_for_the_item(RE):
     RE(count([ReadableSignal("det")]), queue_server={"queue_item_uid": "item-1"})
 
     with pytest.raises(RuntimeError, match="run_filter raised") as excinfo:
-        runs.run_uid("item-1")
+        runs.resolve("item-1")
     assert isinstance(excinfo.value.__cause__, KeyError)
+
+
+@pytest.mark.parametrize("settings", [{"poll_interval": 0}, {"timeout": -1}])
+def test_queue_item_runs_rejects_invalid_polling_settings(settings):
+    with pytest.raises(ValueError):
+        QueueItemRuns(re_manager(), **settings)
+
+
+def test_queue_item_runs_import_names_the_queueserver_extra_when_the_api_is_missing(monkeypatch):
+    monkeypatch.setitem(sys.modules, "bluesky_queueserver_api.http", None)
+    monkeypatch.delitem(sys.modules, "bluesky_adaptive.evaluation.queueserver")
+
+    with pytest.raises(ImportError, match=r"pip install bluesky-adaptive\[queueserver\]"):
+        importlib.import_module("bluesky_adaptive.evaluation.queueserver")

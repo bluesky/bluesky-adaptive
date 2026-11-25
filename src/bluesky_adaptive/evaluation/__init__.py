@@ -58,7 +58,7 @@ def per_run(evaluate: EvaluationFunction[_TRunUid], resolve: Callable[[TUid], _T
         Evaluates an acquisition by the mapped UID, e.g. a Bluesky run UID.
     resolve : Callable[[TUid], _TRunUid]
         Maps the evaluation function's UID, e.g.
-        :meth:`QueueItemRuns.run_uid <bluesky_adaptive.evaluation.queueserver.QueueItemRuns.run_uid>`.
+        :meth:`QueueItemRuns.resolve <bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve>`.
 
     Returns
     -------

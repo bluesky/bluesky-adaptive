@@ -74,10 +74,10 @@ Features
 * ``per_run(evaluate, resolve)`` builds an evaluation function from one that takes another UID, such as a Bluesky run
   UID. ``bluesky_adaptive.evaluation.queueserver.QueueItemRuns(re_manager_api)``, subscribed to the Queue Server's
   document stream, resolves queue item UIDs to the UIDs of the runs they open, so that
-  ``per_run(per_suggestion(evaluate, TiledRunPoller(client)), runs.run_uid)``, or ``buffer.pop`` of a
+  ``per_run(per_suggestion(evaluate, TiledRunPoller(client)), runs.resolve)``, or ``buffer.pop`` of a
   ``RunEventBuffer`` on the same stream, can evaluate the runs of the Queue Server runner's plans. It uses each item's
   first run, or the first that passes an optional ``run_filter``, and raises if the run fails or ``run_filter`` raises.
-  While the RE Manager reports the item queued or running, ``run_uid`` waits without a time limit; it raises at once
+  While the RE Manager reports the item queued or running, ``resolve`` waits without a time limit; it raises at once
   if the item ended without opening a run, and otherwise waits at most ``timeout`` seconds for the run's stop
   document. It needs the ``queueserver`` extra.
 * ``bluesky_adaptive.evaluation.tiled.TiledRunPoller(client)`` reads the ``"primary"`` data of ``default_acquire``
