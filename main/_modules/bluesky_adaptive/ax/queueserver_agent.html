@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.ax.queueserver_agent &#8212; Bluesky Adaptive 1.0.2.dev13 documentation</title>
+    <title>bluesky_adaptive.ax.queueserver_agent &#8212; Bluesky Adaptive 1.0.2.dev14 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../../_static/documentation_options.js?v=7fe4d8cd"></script>
+    <script src="../../../_static/documentation_options.js?v=b46d4800"></script>
     <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev13" />
+  <meta name="docsearch:version" content="1.0.2.dev14" />
   
     
     <script src="../../../_static/searchtools.js"></script>
@@ -858,6 +858,7 @@ window.runMermaid = runMermaid;</script>
         <span class="s2">"Install them with: pip install bluesky-adaptive[queueserver]"</span>
     <span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span>
 
+<span class="kn">from</span><span class="w"> </span><span class="nn">.._agent</span><span class="w"> </span><span class="kn">import</span> <span class="n">_BaseAgent</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
     <span class="n">Actuator</span><span class="p">,</span>
     <span class="n">EvaluationFunction</span><span class="p">,</span>
@@ -872,11 +873,12 @@ window.runMermaid = runMermaid;</script>
 
 <div class="viewcode-block" id="QueueserverAgent">
 <a class="viewcode-back" href="../../../reference/ax/agent.html#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent">[docs]</a>
-<span class="k">class</span><span class="w"> </span><span class="nc">QueueserverAgent</span><span class="p">(</span><span class="n">_AxAgentMixin</span><span class="p">):</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">QueueserverAgent</span><span class="p">(</span><span class="n">_AxAgentMixin</span><span class="p">,</span> <span class="n">_BaseAgent</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">"""</span>
 <span class="sd">    An asynchronous interface that uses Ax as the backend for optimization and experiment tracking.</span>
 
-<span class="sd">    Uses the bluesky-queueserver-api for scheduling plan execution.</span>
+<span class="sd">    Uses the bluesky-queueserver-api for scheduling plan execution. Each :meth:`run` or :meth:`submit_suggestions`</span>
+<span class="sd">    call sends one optimization run to the callbacks registered with :meth:`subscribe`, on the runner's event loop.</span>
 
 <span class="sd">    .. warning::</span>
 
@@ -909,6 +911,11 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        The path to the checkpoint file to save the optimizer's state to.</span>
 <span class="sd">    acquisition_plan_kwargs : Mapping[str, Any] | None, optional</span>
 <span class="sd">        Additional arguments to pass to the acquisition plan.</span>
+<span class="sd">    optimization_uid : str | None, optional</span>
+<span class="sd">        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in the agent's</span>
+<span class="sd">        optimization runs. If None, a new UUID4 is generated.</span>
+<span class="sd">    metadata : Mapping[str, Any] | None, optional</span>
+<span class="sd">        Extra start document metadata for optimization runs.</span>
 <span class="sd">    **kwargs : Any</span>
 <span class="sd">        Additional keyword arguments to configure the Ax experiment.</span>
 
@@ -934,6 +941,8 @@ window.runMermaid = runMermaid;</script>
         <span class="n">outcome_constraints</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">OutcomeConstraint</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">checkpoint_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="n">acquisition_plan_kwargs</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">optimization_uid</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="n">Mapping</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
         <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_sensors</span> <span class="o">=</span> <span class="n">sensors</span>
@@ -957,9 +966,12 @@ window.runMermaid = runMermaid;</script>
             <span class="n">checkpoint_path</span><span class="o">=</span><span class="n">checkpoint_path</span><span class="p">,</span>
             <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">optimization_uid</span><span class="o">=</span><span class="n">optimization_uid</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_runner</span> <span class="o">=</span> <span class="n">QueueserverOptimizationRunner</span><span class="p">(</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">to_optimization_problem</span><span class="p">(),</span>
             <span class="n">QueueserverClient</span><span class="p">(</span><span class="n">re_manager_api</span><span class="p">),</span>
+            <span class="n">callbacks</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_callbacks</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span>
         <span class="p">)</span>
 
     <span class="nd">@property</span>
@@ -1009,6 +1021,7 @@ window.runMermaid = runMermaid;</script>
             <span class="n">evaluation_function</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_evaluation_function</span><span class="p">,</span>
             <span class="n">acquisition_plan</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_acquisition_plan</span><span class="p">,</span>
             <span class="n">acquisition_plan_kwargs</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_acquisition_plan_kwargs</span><span class="p">,</span>
+            <span class="n">optimization_uid</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_optimization_uid</span><span class="p">,</span>
         <span class="p">)</span></div>
 
 

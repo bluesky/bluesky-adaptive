@@ -82,7 +82,9 @@ Features
   document records the problem like ``optimize`` runs, plus ``metadata``. Each evaluated point is one event whose
   ``adaptive_acquisition_uid`` is its queue item UID. Like ``RunEngine`` callbacks, they are called on the runner's
   event loop, so slow callbacks should buffer, for example with ``bluesky.callbacks.buffer.BufferingWrapper``.
-  ``QueueserverAgent`` does not pass callbacks or metadata to its runner yet.
+  ``QueueserverAgent`` passes its ``metadata`` and the callbacks registered with ``subscribe``, which include an
+  ``OptimizationLogger`` by default. Like ``Agent``, it generates an ``optimization_uid``, exposes it, and accepts
+  it.
 
 Bug Fixes
 .........

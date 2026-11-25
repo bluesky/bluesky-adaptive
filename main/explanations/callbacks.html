@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Optimization Callbacks &#8212; Bluesky Adaptive 1.0.2.dev13 documentation</title>
+    <title>Optimization Callbacks &#8212; Bluesky Adaptive 1.0.2.dev14 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=7fe4d8cd"></script>
+    <script src="../_static/documentation_options.js?v=b46d4800"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev13" />
+  <meta name="docsearch:version" content="1.0.2.dev14" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -535,9 +535,10 @@ points, move hardware, or compute objectives.</p>
 <p>Bluesky Adaptive builds on the standard Bluesky callback model: callbacks receive
 <code class="docutils literal notranslate"><span class="pre">start</span></code>, <code class="docutils literal notranslate"><span class="pre">descriptor</span></code>, <code class="docutils literal notranslate"><span class="pre">event</span></code>, and <code class="docutils literal notranslate"><span class="pre">stop</span></code> documents. Each call to
 <a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.optimize" title="bluesky_adaptive.plans.optimize"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.optimize()</span></code></a>, <a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.sample_suggestions" title="bluesky_adaptive.plans.sample_suggestions"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.sample_suggestions()</span></code></a>, or
-<a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.acquire_baseline" title="bluesky_adaptive.plans.acquire_baseline"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.acquire_baseline()</span></code></a> produces one <em>optimization run</em> summarizing the
+<a class="reference internal" href="../reference/plans.html#bluesky_adaptive.plans.acquire_baseline" title="bluesky_adaptive.plans.acquire_baseline"><code class="xref py py-func docutils literal notranslate"><span class="pre">bluesky_adaptive.plans.acquire_baseline()</span></code></a>, and each <code class="docutils literal notranslate"><span class="pre">run</span></code> or <code class="docutils literal notranslate"><span class="pre">submit_suggestions</span></code> call of a
+<a class="reference internal" href="../reference/ax/agent.html#bluesky_adaptive.ax.queueserver_agent.QueueserverAgent" title="bluesky_adaptive.ax.queueserver_agent.QueueserverAgent"><code class="xref py py-class docutils literal notranslate"><span class="pre">QueueserverAgent</span></code></a>, produces one <em>optimization run</em> summarizing the
 evaluated points and sends its documents to the callbacks registered with
-<a class="reference internal" href="../reference/ax/agent.html#bluesky_adaptive.ax.Agent.subscribe" title="bluesky_adaptive.ax.Agent.subscribe"><code class="xref py py-meth docutils literal notranslate"><span class="pre">Agent.subscribe</span></code></a> or passed in the plan’s
+the agent’s <a class="reference internal" href="../reference/ax/agent.html#bluesky_adaptive.ax.Agent.subscribe" title="bluesky_adaptive.ax.Agent.subscribe"><code class="xref py py-meth docutils literal notranslate"><span class="pre">subscribe</span></code></a> or passed in the plan’s
 <code class="docutils literal notranslate"><span class="pre">callbacks</span></code> argument.</p>
 <p>Optimization runs are separate from the acquisition runs that the RunEngine produces when it
 measures the points. Callbacks subscribed with <code class="docutils literal notranslate"><span class="pre">RE.subscribe</span></code> receive only the acquisition runs.
@@ -560,7 +561,7 @@ and the outcome fields under <code class="docutils literal notranslate"><span cl
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">event</span></code></dt><dd><p>One event per evaluated point: its parameter and outcome values, its suggestion ID
 (<code class="docutils literal notranslate"><span class="pre">adaptive_suggestion_id</span></code>), its iteration (<code class="docutils literal notranslate"><span class="pre">adaptive_iteration</span></code>), and the UID returned by
-the acquisition plan (<code class="docutils literal notranslate"><span class="pre">adaptive_acquisition_uid</span></code>).</p>
+the acquisition plan (<code class="docutils literal notranslate"><span class="pre">adaptive_acquisition_uid</span></code>), or the queue item UID for a <code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code>.</p>
 </dd>
 <dt><code class="docutils literal notranslate"><span class="pre">stop</span></code></dt><dd><p>Completion status and reason, useful for summaries or cleanup.</p>
 </dd>

@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev13 documentation</title>
+    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev14 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=7fe4d8cd"></script>
+    <script src="_static/documentation_options.js?v=b46d4800"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev13" />
+  <meta name="docsearch:version" content="1.0.2.dev14" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -586,7 +586,9 @@ document, such as <code class="docutils literal notranslate"><span class="pre">t
 document records the problem like <code class="docutils literal notranslate"><span class="pre">optimize</span></code> runs, plus <code class="docutils literal notranslate"><span class="pre">metadata</span></code>. Each evaluated point is one event whose
 <code class="docutils literal notranslate"><span class="pre">adaptive_acquisition_uid</span></code> is its queue item UID. Like <code class="docutils literal notranslate"><span class="pre">RunEngine</span></code> callbacks, they are called on the runner’s
 event loop, so slow callbacks should buffer, for example with <code class="docutils literal notranslate"><span class="pre">bluesky.callbacks.buffer.BufferingWrapper</span></code>.
-<code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code> does not pass callbacks or metadata to its runner yet.</p></li>
+<code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code> passes its <code class="docutils literal notranslate"><span class="pre">metadata</span></code> and the callbacks registered with <code class="docutils literal notranslate"><span class="pre">subscribe</span></code>, which include an
+<code class="docutils literal notranslate"><span class="pre">OptimizationLogger</span></code> by default. Like <code class="docutils literal notranslate"><span class="pre">Agent</span></code>, it generates an <code class="docutils literal notranslate"><span class="pre">optimization_uid</span></code>, exposes it, and accepts
+it.</p></li>
 </ul>
 </section>
 <section id="bug-fixes">
