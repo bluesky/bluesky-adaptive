@@ -38,6 +38,14 @@ Breaking Changes
   if none arrives within ``SUGGESTION_TIMEOUT`` seconds, instead of returning ``[]`` after a fixed short wait.
   ``final`` is set as soon as scipy converges. Once the optimizer thread stops, its pending points are dropped, so
   ingesting one raises ``ValueError`` unless ``force_resiliance`` is set.
+* ``optimize``, ``optimize_in_run``, ``sample_suggestions``, and ``acquire_baseline`` take the acquisition plan's
+  extra keyword arguments as a mapping in ``acquisition_plan_kwargs`` instead of as ``**kwargs``. ``Agent``'s
+  ``acquire_baseline``, ``optimize``, and ``sample_suggestions`` and ``Scipy.optimize`` accept it too. Arguments that
+  never change can instead be bound to the plan, for example
+  ``acquisition_plan=functools.partial(default_acquire, per_step=my_per_step)``. ``AcquisitionPlan`` takes ``md`` as
+  keyword-only, so a plan with ``md`` bound this way satisfies it, and start documents record the name of the
+  function a ``functools.partial`` wraps as ``acquisition_plan`` and ``evaluation_function``
+  (`#106 <https://github.com/bluesky/bluesky-adaptive/pull/106>`_).
 
 Features
 ........
@@ -64,6 +72,8 @@ Features
   caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
   on a shared background event loop; cancelling that future cancels the loop. Interpreter exit now waits for an
   in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
+* ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` accept ``metadata`` for the optimization run's start
+  document, such as ``tiled_access_tags``. ``Agent`` and ``Scipy`` accept it and expose it as ``agent.metadata``.
 
 Bug Fixes
 .........

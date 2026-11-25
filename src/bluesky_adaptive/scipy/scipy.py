@@ -33,6 +33,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
         evaluation_function: EvaluationFunction[TUid],
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
         optimization_uid: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
         **kwargs: Any,
     ):
         if config.optimizer not in list(SCP):
@@ -54,7 +55,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
         self.timeout = kwargs.pop("timeout", 200)
         self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
         self.optimizer.force_resiliance = self.resiliance = kwargs.pop("resiliance", True)
-        super().__init__(optimization_uid=optimization_uid)
+        super().__init__(optimization_uid=optimization_uid, metadata=metadata)
         self.sessioning = kwargs.pop("sessioning", True)
 
     @classmethod
@@ -204,8 +205,12 @@ class Scipy(_BaseAgent, Generic[TUid]):
         """
         self.optimizer.ingest(points)
 
-    def optimize(self, iterations=10, n_points=1):
-        """Optimization plan wrapper used by the agent interface."""
+    def optimize(self, iterations=10, n_points=1, *, acquisition_plan_kwargs: Mapping[str, Any] | None = None):
+        """
+        Optimization plan wrapper used by the agent interface.
+
+        ``acquisition_plan_kwargs`` are passed to the acquisition plan on every acquisition of this call.
+        """
         if self.optimizer.final is not None:
             self.config.initial = self.optimizer.final.x
             self.optimizer.close()
@@ -216,6 +221,8 @@ class Scipy(_BaseAgent, Generic[TUid]):
             iterations=iterations,
             n_points=n_points,
             callbacks=self._callbacks,
+            metadata=self._metadata,
+            acquisition_plan_kwargs=acquisition_plan_kwargs,
         )
         if self.sessioning:
             with self.optimizer:
