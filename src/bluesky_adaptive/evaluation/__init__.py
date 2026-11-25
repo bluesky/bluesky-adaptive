@@ -7,6 +7,7 @@ from typing import Any, TypeVar
 from ..protocols import ID_KEY, EvaluationFunction, TUid
 
 _TData = TypeVar("_TData")
+_TRunUid = TypeVar("_TRunUid")
 
 
 def per_suggestion(
@@ -44,5 +45,38 @@ def per_suggestion(
     @functools.wraps(evaluate)
     def evaluation_function(uid: TUid, suggestions: Sequence[Mapping]) -> list[dict[str, Any]]:
         return [{**evaluate(data), ID_KEY: suggestion_id} for suggestion_id, data in fetch(uid).items()]
+
+    return evaluation_function
+
+
+def per_run(evaluate: EvaluationFunction[_TRunUid], resolve: Callable[[TUid], _TRunUid]) -> EvaluationFunction[TUid]:
+    """Build an evaluation function that maps its UID through ``resolve`` before calling ``evaluate``.
+
+    Parameters
+    ----------
+    evaluate : EvaluationFunction[_TRunUid]
+        Evaluates an acquisition by the mapped UID, e.g. a Bluesky run UID.
+    resolve : Callable[[TUid], _TRunUid]
+        Maps the evaluation function's UID, e.g.
+        :meth:`QueueItemRuns.resolve <bluesky_adaptive.evaluation.queueserver.QueueItemRuns.resolve>`.
+
+    Returns
+    -------
+    EvaluationFunction[TUid]
+        The evaluation function.
+
+    Examples
+    --------
+    >>> from bluesky_adaptive.evaluation import per_run
+    >>> def evaluate_run(uid, suggestions):
+    ...     return [{"_id": "a", "run": uid}]
+    >>> evaluation_function = per_run(evaluate_run, {"item-1": "run-1"}.__getitem__)
+    >>> evaluation_function("item-1", [])
+    [{'_id': 'a', 'run': 'run-1'}]
+    """
+
+    @functools.wraps(evaluate)
+    def evaluation_function(uid: TUid, suggestions: Sequence[Mapping]) -> Sequence[Mapping]:
+        return evaluate(resolve(uid), suggestions)
 
     return evaluation_function
