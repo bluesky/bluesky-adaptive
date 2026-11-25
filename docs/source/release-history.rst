@@ -71,7 +71,7 @@ Features
   ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(evaluate, buffer.pop)`` can evaluate
   them. ``pop`` also drops runs that started earlier, and the buffer may be fed by a dispatcher thread
   (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
-* ``per_run(evaluate, run_uid)`` builds an evaluation function from one that takes another UID, such as a Bluesky run
+* ``per_run(evaluate, resolve)`` builds an evaluation function from one that takes another UID, such as a Bluesky run
   UID. ``bluesky_adaptive.evaluation.queueserver.QueueItemRuns(re_manager_api)``, subscribed to the Queue Server's
   document stream, resolves queue item UIDs to the UIDs of the runs they open, so that
   ``per_run(per_suggestion(evaluate, buffer.pop), runs.run_uid)`` can evaluate the runs of the Queue Server runner's
