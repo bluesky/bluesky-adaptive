@@ -3,6 +3,7 @@
 import time
 from collections.abc import Hashable, Mapping, Sequence
 from enum import StrEnum
+from functools import partial
 from typing import Any, cast
 
 import bluesky.preprocessors as bpp
@@ -13,7 +14,7 @@ from bluesky.utils import MsgGenerator
 from event_model import DataKey
 from numpy.typing import ArrayLike
 
-from .protocols import ID_KEY, Actuator, Checkpointable, OptimizationProblem, Optimizer
+from .protocols import ID_KEY, Actuator, Checkpointable, OptimizationProblem, Optimizer, QueueserverOptimizationProblem
 
 
 class Source(StrEnum):
@@ -278,26 +279,36 @@ def route_suggestions(suggestions: Sequence[Mapping], starting_position: dict | 
     return [suggestions[i] for i in _get_route_index(points=points, starting_point=starting_point)]
 
 
-def collect_optimization_metadata(optimization_problem: OptimizationProblem) -> dict[str, Any]:
-    """Collect the metadata for the optimization problem."""
-    if hasattr(optimization_problem.evaluation_function, "__name__"):
-        evaluation_function_name = optimization_problem.evaluation_function.__name__  # type: ignore[attr-defined]
-    else:
-        evaluation_function_name = optimization_problem.evaluation_function.__class__.__name__
-    if hasattr(optimization_problem.acquisition_plan, "__name__"):
-        acquisition_plan_name = optimization_problem.acquisition_plan.__name__  # type: ignore[attr-defined]
-    else:
-        acquisition_plan_name = optimization_problem.acquisition_plan.__class__.__name__
+def _callable_name(obj: object) -> str:
+    """Return the name of ``obj``, or of the callable a ``functools.partial`` wraps, falling back to the class name."""
+    while isinstance(obj, partial):
+        obj = obj.func
+    return getattr(obj, "__name__", obj.__class__.__name__)
+
+
+def collect_optimization_metadata(
+    optimization_problem: OptimizationProblem | QueueserverOptimizationProblem, entry_point: str
+) -> dict[str, Any]:
+    """Collect the start document metadata of an optimization run started by ``entry_point``."""
+    evaluation_function_name = _callable_name(optimization_problem.evaluation_function)
+    acquisition_plan = optimization_problem.acquisition_plan
+    acquisition_plan_name = acquisition_plan if isinstance(acquisition_plan, str) else _callable_name(acquisition_plan)
     metadata = {
         "evaluation_function": evaluation_function_name,
         "acquisition_plan": acquisition_plan_name,
         "optimizer": optimization_problem.optimizer.__class__.__name__,
-        "sensors": [sensor.name for sensor in optimization_problem.sensors],
-        "actuators": [actuator.name for actuator in optimization_problem.actuators],
+        "sensors": [sensor if isinstance(sensor, str) else sensor.name for sensor in optimization_problem.sensors],
+        "actuators": [
+            actuator if isinstance(actuator, str) else actuator.name for actuator in optimization_problem.actuators
+        ],
     }
     # Duplicate to preserve back-compat. Change only on v2 release. All new keys added here
     # should go under "bluesky-adaptive".
     return {
         **metadata,
-        "bluesky-adaptive": {"optimization_uid": optimization_problem.optimization_uid, **metadata},
+        "bluesky-adaptive": {
+            "optimization_uid": optimization_problem.optimization_uid,
+            "entry_point": entry_point,
+            **metadata,
+        },
     }

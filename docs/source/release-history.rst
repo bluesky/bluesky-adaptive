@@ -34,6 +34,18 @@ Breaking Changes
 * Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
   ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
   ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
+* ``optimize``, ``optimize_in_run``, ``sample_suggestions``, and ``acquire_baseline`` take the acquisition plan's
+  extra keyword arguments as a mapping in ``acquisition_plan_kwargs`` instead of as ``**kwargs``. ``Agent``'s
+  ``acquire_baseline``, ``optimize``, and ``sample_suggestions`` and ``Scipy.optimize`` accept it too. Arguments that
+  never change can instead be bound to the plan, for example
+  ``acquisition_plan=functools.partial(default_acquire, per_step=my_per_step)``. ``AcquisitionPlan`` takes ``md`` as
+  keyword-only, so a plan with ``md`` bound this way satisfies it, and start documents record the name of the
+  function a ``functools.partial`` wraps as ``acquisition_plan`` and ``evaluation_function``
+  (`#106 <https://github.com/bluesky/bluesky-adaptive/pull/106>`_).
+* The Queue Server runner records each loop as an optimization run, even without callbacks, so its parameter and
+  outcome names follow the same rules as ``optimize``: they must not start with ``adaptive_``, a parameter and an
+  outcome must not share a name, and every point must have the same fields. A step that breaks them raises
+  ``ValueError`` after its outcomes are ingested.
 
 Features
 ........
@@ -44,6 +56,9 @@ Features
 * Optimization run metadata is also recorded under ``"bluesky-adaptive"`` in start documents, duplicating
   ``evaluation_function``, ``acquisition_plan``, ``optimizer``, ``sensors``, and ``actuators``. The top-level keys
   are kept for backwards compatibility.
+* Optimization runs record the plan or runner method that started them as
+  ``start["bluesky-adaptive"]["entry_point"]``, for example ``"optimize"`` or ``"QueueserverOptimizationRunner.run"``.
+  Plans also keep ``plan_name``.
 * ``default_acquire`` records the suggestion IDs in scan order as ``start["bluesky-adaptive"]["acquisition_order"]``.
   ``"blop_acquisition_order"`` is kept for backwards compatibility.
 * New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(evaluate, fetch)`` builds an evaluation function from a
@@ -70,7 +85,16 @@ Features
   in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
 * ``QueueserverOptimizationRunner`` passes the problem's ``optimization_uid`` to submitted plans in
   ``md["bluesky-adaptive"]``, so ``default_acquire`` records it as ``start["bluesky-adaptive"]["optimization_uid"]``.
-  ``QueueserverAgent`` generates one, exposes it, and accepts it.
+  ``QueueserverAgent`` generates one, exposes it, and accepts it, like ``Agent``.
+* ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` accept ``metadata`` for the optimization run's start
+  document, such as ``tiled_access_tags``. ``Agent`` and ``Scipy`` accept it and expose it as ``agent.metadata``.
+* ``QueueserverOptimizationRunner`` accepts ``callbacks`` and ``metadata``. Each ``run()`` or
+  ``submit_suggestions()`` loop, and its ``_async`` version, sends one optimization run to the callbacks. Its start
+  document records the problem like ``optimize`` runs, plus ``metadata``. Each evaluated point is one event whose
+  ``adaptive_acquisition_uid`` is its queue item UID. Like ``RunEngine`` callbacks, they are called on the runner's
+  event loop, so slow callbacks should buffer, for example with ``bluesky.callbacks.buffer.BufferingWrapper``.
+  ``QueueserverAgent`` passes its ``metadata`` and the callbacks registered with ``subscribe``, which include an
+  ``OptimizationLogger`` by default.
 
 Bug Fixes
 .........
@@ -83,6 +107,8 @@ Bug Fixes
 * ``optimize`` records the step that meets the stopping criterion.
 * ``OptimizationLogger`` omits the Iterations line for runs whose start document has no ``iterations``, such as
   ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
+* The Queue Server runner takes checkpoints at the same iterations as ``optimize``. With ``checkpoint_interval=n``
+  it checkpointed one iteration early, after iterations n - 1, 2n - 1, and so on.
 
 v1.0.1 (2026-11-07)
 -------------------

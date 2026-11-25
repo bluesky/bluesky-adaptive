@@ -214,7 +214,9 @@ class EvaluationFunction(Protocol[_TUid_contra]):
 
     Notes
     -----
-    The evaluation function is called after data acquisition to compute outcomes.
+    The evaluation function is called in a worker thread after data acquisition
+    to compute outcomes. Give blocking data access a timeout: a callback that
+    has already started can continue running after the RunEngine aborts a plan.
     It uses the uid returned by the acquisition plan to retrieve or identify
     the relevant data and associate each acquired row with a suggestion by its
     ``"_id"``. The uid type is evaluator-defined; it may be a Bluesky run UID,
@@ -280,6 +282,7 @@ class AcquisitionPlan(Protocol[_TUid_co]):
         suggestions: Sequence[Mapping],
         actuators: Sequence[Actuator],
         sensors: Sequence[Sensor] | None = None,
+        *,
         md: Mapping[str, Any] | None = None,
     ) -> MsgGenerator[_TUid_co]:
         """

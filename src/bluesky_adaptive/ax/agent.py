@@ -229,6 +229,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         A stopping strategy that decides when/if optimization should halt early.
     optimization_uid : str | None, optional
         Identifier of the optimization. If None, a new UUID4 is generated.
+    metadata : Mapping[str, Any] | None, optional
+        Extra start document metadata for optimization runs.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -261,6 +263,7 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         checkpoint_path: str | None = None,
         stopping_strategy: BaseGlobalStoppingStrategy | None = None,
         optimization_uid: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
         **kwargs: Any,
     ):
         if any(isinstance(dof.actuator, str) for dof in dofs):
@@ -283,7 +286,7 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
             stopping_strategy=stopping_strategy,
             **kwargs,
         )
-        super().__init__(optimization_uid=optimization_uid)
+        super().__init__(optimization_uid=optimization_uid, metadata=metadata)
 
     @classmethod
     def from_checkpoint(
@@ -294,6 +297,7 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         evaluation_function: EvaluationFunction[TUid],
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
         optimization_uid: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
     ) -> "Agent[TUid]":
         """
         Load an agent from the optimizer's checkpoint file.
@@ -318,6 +322,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
             A Bluesky plan to acquire data from the beamline. If not provided, a default plan will be used.
         optimization_uid : str | None, optional
             Identifier of the optimization to continue. If None, a new UUID4 is generated.
+        metadata : Mapping[str, Any] | None, optional
+            Extra start document metadata for optimization runs.
         """
         instance = object.__new__(cls)
         instance._optimizer = AxOptimizer.from_checkpoint(checkpoint_path)
@@ -325,7 +331,7 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         instance._sensors = sensors
         instance._evaluation_function = evaluation_function
         instance._acquisition_plan = acquisition_plan
-        _BaseAgent.__init__(instance, optimization_uid=optimization_uid)
+        _BaseAgent.__init__(instance, optimization_uid=optimization_uid, metadata=metadata)
 
         return instance
 
@@ -376,7 +382,9 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
             optimization_uid=self._optimization_uid,
         )
 
-    def acquire_baseline(self, parameterization: dict[str, Any] | None = None) -> MsgGenerator[None]:
+    def acquire_baseline(
+        self, parameterization: dict[str, Any] | None = None, *, acquisition_plan_kwargs: Mapping[str, Any] | None = None
+    ) -> MsgGenerator[None]:
         """
         Acquire a baseline reading for reference.
 
@@ -388,6 +396,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         parameterization : dict[str, Any] | None, optional
             The DOF values to move to before acquiring baseline. If None, acquires
             at current positions.
+        acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+            Keyword arguments passed to the acquisition plan.
 
         Yields
         ------
@@ -399,10 +409,16 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         bluesky_adaptive.plans.acquire_baseline : The underlying Bluesky plan.
         """
         yield from acquire_baseline(
-            self.to_optimization_problem(), parameterization=parameterization, callbacks=self._callbacks
+            self.to_optimization_problem(),
+            parameterization=parameterization,
+            callbacks=self._callbacks,
+            metadata=self._metadata,
+            acquisition_plan_kwargs=acquisition_plan_kwargs,
         )
 
-    def optimize(self, iterations: int | None = 1, n_points: int = 1) -> MsgGenerator[None]:
+    def optimize(
+        self, iterations: int | None = 1, n_points: int = 1, *, acquisition_plan_kwargs: Mapping[str, Any] | None = None
+    ) -> MsgGenerator[None]:
         """
         Run Bayesian optimization.
 
@@ -419,6 +435,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         n_points : int, optional
             The number of points to evaluate per iteration. Default is 1. Higher values
             enable batch optimization but may reduce optimization efficiency per iteration.
+        acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+            Keyword arguments passed to the acquisition plan on every acquisition of this call.
 
         Yields
         ------
@@ -444,11 +462,16 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         For complete examples, see :doc:`/tutorials/simple-experiment`.
         """
         yield from optimize(
-            self.to_optimization_problem(), iterations=iterations, n_points=n_points, callbacks=self._callbacks
+            self.to_optimization_problem(),
+            iterations=iterations,
+            n_points=n_points,
+            callbacks=self._callbacks,
+            metadata=self._metadata,
+            acquisition_plan_kwargs=acquisition_plan_kwargs,
         )
 
     def sample_suggestions(
-        self, suggestions: Sequence[Mapping]
+        self, suggestions: Sequence[Mapping], *, acquisition_plan_kwargs: Mapping[str, Any] | None = None
     ) -> MsgGenerator[tuple[TUid, Sequence[Mapping], Sequence[Mapping]]]:
         """
         Evaluate specific parameter combinations.
@@ -460,6 +483,8 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         ----------
         suggestions : Sequence[Mapping]
             Either optimizer suggestions (with "_id") or manual points (without "_id").
+        acquisition_plan_kwargs : Mapping[str, Any] | None, optional
+            Keyword arguments passed to the acquisition plan.
 
         Returns
         -------
@@ -472,7 +497,13 @@ class Agent(_AxAgentMixin, _BaseAgent, Generic[TUid]):
         optimize : Run full optimization loop.
         """
         return (
-            yield from sample_suggestions(self.to_optimization_problem(), suggestions=suggestions, callbacks=self._callbacks)
+            yield from sample_suggestions(
+                self.to_optimization_problem(),
+                suggestions=suggestions,
+                callbacks=self._callbacks,
+                metadata=self._metadata,
+                acquisition_plan_kwargs=acquisition_plan_kwargs,
+            )
         )
 
     def navigate_to_best(self, parameterization: Mapping | None = None) -> MsgGenerator[None]:
