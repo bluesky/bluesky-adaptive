@@ -46,6 +46,10 @@ Breaking Changes
   outcome names follow the same rules as ``optimize``: they must not start with ``adaptive_``, a parameter and an
   outcome must not share a name, and every point must have the same fields. A step that breaks them raises
   ``ValueError`` after its outcomes are ingested.
+* ``QueueserverOptimizationRunner`` no longer passes ``md={"blop_suggestions": ...}`` to submitted plans, so remote
+  acquisition plans need not accept ``md``, and ``md`` in ``acquisition_plan_kwargs`` reaches the plan instead of
+  raising ``TypeError``. ``default_acquire`` still records ``blop_suggestions`` itself; a custom plan that recorded the
+  runner's value must build it from its ``suggestions`` argument.
 
 Features
 ........
@@ -85,6 +89,12 @@ Features
   ``QueueserverAgent`` passes its ``metadata`` and the callbacks registered with ``subscribe``, which include an
   ``OptimizationLogger`` by default. Like ``Agent``, it generates an ``optimization_uid``, exposes it, and accepts
   it.
+
+Deprecations
+............
+* ``md`` in the ``AcquisitionPlan`` protocol is deprecated and will be removed from it in a future major version.
+  Bluesky Adaptive passes it only from ``acquisition_plan_kwargs``: acquisition plans own the metadata of the runs
+  they open. Plans may keep accepting ``md`` as their own argument, as ``default_acquire`` does.
 
 Bug Fixes
 .........

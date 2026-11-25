@@ -6,7 +6,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev14 documentation</title>
+    <title>bluesky_adaptive.protocols &#8212; Bluesky Adaptive 1.0.2.dev15 documentation</title>
   
   
   
@@ -41,7 +41,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../../_static/documentation_options.js?v=b46d4800"></script>
+    <script src="../../_static/documentation_options.js?v=1015cc19"></script>
     <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -420,7 +420,7 @@ window.runMermaid = runMermaid;</script>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev14" />
+  <meta name="docsearch:version" content="1.0.2.dev15" />
   
     
     <script src="../../_static/searchtools.js"></script>
@@ -1192,7 +1192,9 @@ window.runMermaid = runMermaid;</script>
 <span class="sd">        sensors: Sequence[Sensor], optional</span>
 <span class="sd">            The sensors that produce data to evaluate.</span>
 <span class="sd">        md : Mapping[str, Any] | None, optional</span>
-<span class="sd">            Metadata to attach to the start document</span>
+<span class="sd">            Metadata to attach to the start document. Deprecated: Bluesky Adaptive passes it only from</span>
+<span class="sd">            ``acquisition_plan_kwargs``, and acquisition plans own the metadata of the runs they open. It will be</span>
+<span class="sd">            removed from this protocol in a future major version; plans may keep accepting it.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>

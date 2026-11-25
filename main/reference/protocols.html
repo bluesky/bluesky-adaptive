@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Protocols &#8212; Bluesky Adaptive 1.0.2.dev14 documentation</title>
+    <title>Protocols &#8212; Bluesky Adaptive 1.0.2.dev15 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=b46d4800"></script>
+    <script src="../_static/documentation_options.js?v=1015cc19"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev14" />
+  <meta name="docsearch:version" content="1.0.2.dev15" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -600,7 +600,9 @@ values used by Bluesky Adaptive optimization plans must be unique within a batch
 </dd>
 <dt><strong>sensors: Sequence[Sensor], optional</strong></dt><dd><p>The sensors that produce data to evaluate.</p>
 </dd>
-<dt><strong>md</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Metadata to attach to the start document</p>
+<dt><strong>md</strong><span class="classifier">Mapping[str, Any] | None, optional</span></dt><dd><p>Metadata to attach to the start document. Deprecated: Bluesky Adaptive passes it only from
+<code class="docutils literal notranslate"><span class="pre">acquisition_plan_kwargs</span></code>, and acquisition plans own the metadata of the runs they open. It will be
+removed from this protocol in a future major version; plans may keep accepting it.</p>
 </dd>
 </dl>
 </dd>

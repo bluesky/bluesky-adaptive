@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Your first Bayesian optimization with Bluesky Adaptive &#8212; Bluesky Adaptive 1.0.2.dev14 documentation</title>
+    <title>Your first Bayesian optimization with Bluesky Adaptive &#8212; Bluesky Adaptive 1.0.2.dev15 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=b46d4800"></script>
+    <script src="../_static/documentation_options.js?v=1015cc19"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev14" />
+  <meta name="docsearch:version" content="1.0.2.dev15" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -545,7 +545,7 @@
 <div class="cell_output docutils container">
 <div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>/home/runner/work/bluesky-adaptive/bluesky-adaptive/.pixi/envs/docs/lib/python3.13/site-packages/torch/jit/_script.py:1491: FutureWarning: `torch.jit.script` is deprecated. Please switch to `torch.compile` or `torch.export`.
   warnings.warn(
-[INFO 11-25 17:22:02] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.1.9
+[INFO 11-25 18:20:01] ax.storage.sqa_store.with_db_settings_base: Ax SQL storage initialized with SQLAlchemy 2.1.9
 </pre></div>
 </div>
 </div>
@@ -696,102 +696,104 @@
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Actuators  </span>x1, x2                                                                                               <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Sensors    </span>N/A                                                                                                  <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Iterations </span>5  <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Points/iter </span>8                                                                                     <span style="color: #000080; text-decoration-color: #000080">│</span>
-<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>bc2454d0-5e2d-4f03-a17c-1674f2fb98ff                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>9e444e38-05bf-4eb6-adad-def48bafc013                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
 </pre>
 </div><div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[Himmelblau] evaluating acquired order:
-[0, 2, 3, 6, 7, 1, 5, 4]
+[0, 4, 5, 1, 7, 3, 6, 2]
 [Himmelblau] evaluating acquired order:
-[15, 10, 12, 11, 14, 8, 13, 9]
+[13, 8, 10, 15, 11, 14, 9, 12]
 [Himmelblau] evaluating acquired order:
-[18, 21, 23, 16, 19, 17, 20, 22]
+[20, 16, 22, 18, 21, 19, 23, 17]
 [Himmelblau] evaluating acquired order:
-[26, 24, 28, 25, 30, 27, 29, 31]
+[27, 28, 24, 29, 26, 30, 25, 31]
 [Himmelblau] evaluating acquired order:
-[32, 37, 34, 35, 38, 36, 33, 39]
+[36, 32, 38, 33, 39, 34, 37, 35]
 </pre></div>
 </div>
-<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-25 17:22:05] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 0 with parameters {'x1': 0.0, 'x2': 0.0} using GenerationNode CenterOfSearchSpace.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 1 with parameters {'x1': 2.458181, 'x2': 3.781238} using GenerationNode Sobol.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 2 with parameters {'x1': -2.087889, 'x2': -0.835116} using GenerationNode Sobol.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 3 with parameters {'x1': -3.85514, 'x2': 0.568017} using GenerationNode Sobol.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 4 with parameters {'x1': 4.108856, 'x2': -4.810671} using GenerationNode Sobol.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 5 with parameters {'x1': 2.940819, 'x2': 2.290549} using GenerationNode Sobol.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 6 with parameters {'x1': -2.532684, 'x2': -3.088215} using GenerationNode Sobol.
-[INFO 11-25 17:22:05] ax.api.client: Generated new trial 7 with parameters {'x1': -0.901499, 'x2': 3.316251} using GenerationNode Sobol.
-[INFO 11-25 17:22:05] ax.api.client: Trial 0 marked COMPLETED.
-[INFO 11-25 17:22:05] ax.api.client: Trial 2 marked COMPLETED.
-[INFO 11-25 17:22:05] ax.api.client: Trial 3 marked COMPLETED.
-[INFO 11-25 17:22:05] ax.api.client: Trial 6 marked COMPLETED.
-[INFO 11-25 17:22:05] ax.api.client: Trial 7 marked COMPLETED.
-[INFO 11-25 17:22:05] ax.api.client: Trial 1 marked COMPLETED.
-[INFO 11-25 17:22:06] ax.api.client: Trial 5 marked COMPLETED.
-[INFO 11-25 17:22:06] ax.api.client: Trial 4 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 8 with parameters {'x1': -5.0, 'x2': 2.196024} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 9 with parameters {'x1': -5.0, 'x2': -2.249524} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 10 with parameters {'x1': 5.0, 'x2': -2.264153} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 11 with parameters {'x1': 5.0, 'x2': 2.552443} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 12 with parameters {'x1': 5.0, 'x2': 1.960585} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 13 with parameters {'x1': -5.0, 'x2': 5.0} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 14 with parameters {'x1': -5.0, 'x2': 2.388305} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Generated new trial 15 with parameters {'x1': 5.0, 'x2': -2.516068} using GenerationNode MBM.
-[INFO 11-25 17:22:13] ax.api.client: Trial 15 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Trial 10 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Trial 12 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Trial 11 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Trial 14 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Trial 8 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Trial 13 marked COMPLETED.
-[INFO 11-25 17:22:13] ax.api.client: Trial 9 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 16 with parameters {'x1': 2.700398, 'x2': 0.671248} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 17 with parameters {'x1': 3.305511, 'x2': 3.163762} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 18 with parameters {'x1': -3.438598, 'x2': -3.44659} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 19 with parameters {'x1': 3.372721, 'x2': 1.01063} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 20 with parameters {'x1': -0.176255, 'x2': 5.0} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 21 with parameters {'x1': -1.806942, 'x2': -5.0} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 22 with parameters {'x1': -1.693724, 'x2': 5.0} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Generated new trial 23 with parameters {'x1': -3.031686, 'x2': -1.197439} using GenerationNode MBM.
-[INFO 11-25 17:22:20] ax.api.client: Trial 18 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Trial 21 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Trial 23 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Trial 16 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Trial 19 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Trial 17 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Trial 20 marked COMPLETED.
-[INFO 11-25 17:22:20] ax.api.client: Trial 22 marked COMPLETED.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 24 with parameters {'x1': -1.766383, 'x2': 2.141641} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 25 with parameters {'x1': -0.445463, 'x2': 2.088374} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 26 with parameters {'x1': -2.214042, 'x2': 2.437874} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 27 with parameters {'x1': 2.793914, 'x2': 1.738692} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 28 with parameters {'x1': -1.270162, 'x2': 1.940189} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 29 with parameters {'x1': 3.393751, 'x2': -1.052523} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 30 with parameters {'x1': 0.683697, 'x2': 2.152099} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Generated new trial 31 with parameters {'x1': -5.0, 'x2': -5.0} using GenerationNode MBM.
-[INFO 11-25 17:22:25] ax.api.client: Trial 26 marked COMPLETED.
-[INFO 11-25 17:22:25] ax.api.client: Trial 24 marked COMPLETED.
-[INFO 11-25 17:22:25] ax.api.client: Trial 28 marked COMPLETED.
-[INFO 11-25 17:22:25] ax.api.client: Trial 25 marked COMPLETED.
-[INFO 11-25 17:22:26] ax.api.client: Trial 30 marked COMPLETED.
-[INFO 11-25 17:22:26] ax.api.client: Trial 27 marked COMPLETED.
-[INFO 11-25 17:22:26] ax.api.client: Trial 29 marked COMPLETED.
-[INFO 11-25 17:22:26] ax.api.client: Trial 31 marked COMPLETED.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 32 with parameters {'x1': -3.441678, 'x2': -2.870785} using GenerationNode MBM.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 33 with parameters {'x1': 3.6897, 'x2': -0.332589} using GenerationNode MBM.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 34 with parameters {'x1': 2.160692, 'x2': -1.796661} using GenerationNode MBM.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 35 with parameters {'x1': 3.06571, 'x2': -2.09021} using GenerationNode MBM.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 36 with parameters {'x1': 2.56267, 'x2': -1.020481} using GenerationNode MBM.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 37 with parameters {'x1': 1.060208, 'x2': -2.06097} using GenerationNode MBM.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 38 with parameters {'x1': 3.256329, 'x2': -0.339548} using GenerationNode MBM.
-[INFO 11-25 17:22:31] ax.api.client: Generated new trial 39 with parameters {'x1': 2.564935, 'x2': 2.345484} using GenerationNode MBM.
-[INFO 11-25 17:22:32] ax.api.client: Trial 32 marked COMPLETED.
-[INFO 11-25 17:22:32] ax.api.client: Trial 37 marked COMPLETED.
-[INFO 11-25 17:22:32] ax.api.client: Trial 34 marked COMPLETED.
-[INFO 11-25 17:22:32] ax.api.client: Trial 35 marked COMPLETED.
-[INFO 11-25 17:22:32] ax.api.client: Trial 38 marked COMPLETED.
-[INFO 11-25 17:22:32] ax.api.client: Trial 36 marked COMPLETED.
-[INFO 11-25 17:22:32] ax.api.client: Trial 33 marked COMPLETED.
-[INFO 11-25 17:22:32] ax.api.client: Trial 39 marked COMPLETED.
+<div class="output stderr highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>[INFO 11-25 18:20:04] ax.api.client: GenerationStrategy(name='Center+Sobol+MBM:fast', nodes=[CenterGenerationNode(next_node_name='Sobol', use_existing_trials_for_initialization=True), GenerationNode(name='Sobol', generator_specs=[GeneratorSpec(generator_enum=Sobol, generator_key_override=None)], transition_criteria=[MinTrials(transition_to='MBM'), MinTrials(transition_to='MBM')], suggested_experiment_status=ExperimentStatus.INITIALIZATION, pausing_criteria=[MaxTrialsAwaitingData(threshold=5)]), GenerationNode(name='MBM', generator_specs=[GeneratorSpec(generator_enum=BoTorch, generator_key_override=None)], transition_criteria=None, suggested_experiment_status=ExperimentStatus.OPTIMIZATION, pausing_criteria=None)]) chosen based on user input and problem structure.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 0 with parameters {'x1': 0.0, 'x2': 0.0} using GenerationNode CenterOfSearchSpace.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 1 with parameters {'x1': -3.374617, 'x2': -4.335153} using GenerationNode Sobol.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 2 with parameters {'x1': 1.731757, 'x2': 4.057708} using GenerationNode Sobol.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 3 with parameters {'x1': 3.767795, 'x2': -0.392757} using GenerationNode Sobol.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 4 with parameters {'x1': -1.025734, 'x2': 0.120808} using GenerationNode Sobol.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 5 with parameters {'x1': -1.745081, 'x2': -1.958026} using GenerationNode Sobol.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 6 with parameters {'x1': 3.38292, 'x2': 2.313593} using GenerationNode Sobol.
+[INFO 11-25 18:20:04] ax.api.client: Generated new trial 7 with parameters {'x1': 1.0443, 'x2': -3.392218} using GenerationNode Sobol.
+[INFO 11-25 18:20:05] ax.api.client: Trial 0 marked COMPLETED.
+[INFO 11-25 18:20:05] ax.api.client: Trial 4 marked COMPLETED.
+[INFO 11-25 18:20:05] ax.api.client: Trial 5 marked COMPLETED.
+[INFO 11-25 18:20:05] ax.api.client: Trial 1 marked COMPLETED.
+[INFO 11-25 18:20:05] ax.api.client: Trial 7 marked COMPLETED.
+[INFO 11-25 18:20:05] ax.api.client: Trial 3 marked COMPLETED.
+[INFO 11-25 18:20:05] ax.api.client: Trial 6 marked COMPLETED.
+[INFO 11-25 18:20:05] ax.api.client: Trial 2 marked COMPLETED.
+/home/runner/work/bluesky-adaptive/bluesky-adaptive/.pixi/envs/docs/lib/python3.13/site-packages/linear_operator/utils/cholesky.py:41: NumericalWarning: A not p.d., added jitter of 1.0e-08 to the diagonal
+  warnings.warn(
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 8 with parameters {'x1': 3.864373, 'x2': 5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 9 with parameters {'x1': 3.368162, 'x2': -5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 10 with parameters {'x1': 5.0, 'x2': 5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 11 with parameters {'x1': -5.0, 'x2': 5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 12 with parameters {'x1': 5.0, 'x2': -5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 13 with parameters {'x1': 3.508779, 'x2': 5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 14 with parameters {'x1': -5.0, 'x2': -5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Generated new trial 15 with parameters {'x1': -3.120457, 'x2': 5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:10] ax.api.client: Trial 13 marked COMPLETED.
+[INFO 11-25 18:20:10] ax.api.client: Trial 8 marked COMPLETED.
+[INFO 11-25 18:20:10] ax.api.client: Trial 10 marked COMPLETED.
+[INFO 11-25 18:20:10] ax.api.client: Trial 15 marked COMPLETED.
+[INFO 11-25 18:20:10] ax.api.client: Trial 11 marked COMPLETED.
+[INFO 11-25 18:20:10] ax.api.client: Trial 14 marked COMPLETED.
+[INFO 11-25 18:20:10] ax.api.client: Trial 9 marked COMPLETED.
+[INFO 11-25 18:20:10] ax.api.client: Trial 12 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 16 with parameters {'x1': 2.757502, 'x2': 0.96455} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 17 with parameters {'x1': -1.497236, 'x2': -5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 18 with parameters {'x1': 3.25922, 'x2': 1.008149} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 19 with parameters {'x1': -3.948988, 'x2': -0.818644} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 20 with parameters {'x1': 2.523409, 'x2': 0.706285} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 21 with parameters {'x1': -0.9529, 'x2': 5.0} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 22 with parameters {'x1': 2.539506, 'x2': 1.315609} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Generated new trial 23 with parameters {'x1': -4.025359, 'x2': -1.969807} using GenerationNode MBM.
+[INFO 11-25 18:20:15] ax.api.client: Trial 20 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Trial 16 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Trial 22 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Trial 18 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Trial 21 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Trial 19 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Trial 23 marked COMPLETED.
+[INFO 11-25 18:20:15] ax.api.client: Trial 17 marked COMPLETED.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 24 with parameters {'x1': 2.680042, 'x2': 2.256757} using GenerationNode MBM.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 25 with parameters {'x1': 2.564188, 'x2': -1.596775} using GenerationNode MBM.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 26 with parameters {'x1': 5.0, 'x2': 0.131674} using GenerationNode MBM.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 27 with parameters {'x1': -3.273593, 'x2': -2.569085} using GenerationNode MBM.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 28 with parameters {'x1': -2.73442, 'x2': 2.429599} using GenerationNode MBM.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 29 with parameters {'x1': 3.868574, 'x2': 0.902997} using GenerationNode MBM.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 30 with parameters {'x1': 5.0, 'x2': -1.024871} using GenerationNode MBM.
+[INFO 11-25 18:20:20] ax.api.client: Generated new trial 31 with parameters {'x1': 2.043642, 'x2': -1.460181} using GenerationNode MBM.
+[INFO 11-25 18:20:21] ax.api.client: Trial 27 marked COMPLETED.
+[INFO 11-25 18:20:21] ax.api.client: Trial 28 marked COMPLETED.
+[INFO 11-25 18:20:21] ax.api.client: Trial 24 marked COMPLETED.
+[INFO 11-25 18:20:21] ax.api.client: Trial 29 marked COMPLETED.
+[INFO 11-25 18:20:21] ax.api.client: Trial 26 marked COMPLETED.
+[INFO 11-25 18:20:21] ax.api.client: Trial 30 marked COMPLETED.
+[INFO 11-25 18:20:21] ax.api.client: Trial 25 marked COMPLETED.
+[INFO 11-25 18:20:21] ax.api.client: Trial 31 marked COMPLETED.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 32 with parameters {'x1': 3.049505, 'x2': 1.800153} using GenerationNode MBM.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 33 with parameters {'x1': -1.850494, 'x2': 2.700614} using GenerationNode MBM.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 34 with parameters {'x1': -3.53424, 'x2': 2.232726} using GenerationNode MBM.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 35 with parameters {'x1': -3.817397, 'x2': -3.23777} using GenerationNode MBM.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 36 with parameters {'x1': 3.45923, 'x2': -1.334777} using GenerationNode MBM.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 37 with parameters {'x1': -5.0, 'x2': 1.4007} using GenerationNode MBM.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 38 with parameters {'x1': -0.537556, 'x2': 2.560243} using GenerationNode MBM.
+[INFO 11-25 18:20:27] ax.api.client: Generated new trial 39 with parameters {'x1': -3.23884, 'x2': 1.684717} using GenerationNode MBM.
+[INFO 11-25 18:20:28] ax.api.client: Trial 36 marked COMPLETED.
+[INFO 11-25 18:20:28] ax.api.client: Trial 32 marked COMPLETED.
+[INFO 11-25 18:20:28] ax.api.client: Trial 38 marked COMPLETED.
+[INFO 11-25 18:20:28] ax.api.client: Trial 33 marked COMPLETED.
+[INFO 11-25 18:20:28] ax.api.client: Trial 39 marked COMPLETED.
+[INFO 11-25 18:20:28] ax.api.client: Trial 34 marked COMPLETED.
+[INFO 11-25 18:20:28] ax.api.client: Trial 37 marked COMPLETED.
+[INFO 11-25 18:20:28] ax.api.client: Trial 35 marked COMPLETED.
 </pre></div>
 </div>
 <div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
@@ -804,213 +806,213 @@
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 1                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.45818 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.78124 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   96.5616 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 1                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.37462 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -4.33515 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   86.4582 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 2                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.08789 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                 -0.835116 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   126.288 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 2                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.73176 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   4.05771 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   140.917 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 3                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.85514 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.568017 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   130.559 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 3                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.76779 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                 -0.392757 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   17.3335 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 4                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    4.10886 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -4.81067 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   411.269 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 4                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.02573 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.120808 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   160.749 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">1</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>96.5616<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>411.269<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>186.936
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>17.3335<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>170<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>115.092
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (5 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 5                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.94082 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.29055 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   1.41372 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 5                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.74508 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.95803 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   122.382 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 6                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.53268 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -3.08821 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   58.8861 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 6                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.38292 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.31359 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   10.6176 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #e1c052; text-decoration-color: #e1c052">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 7                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -0.901499 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.31625 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   56.7967 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
+<span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 7                          </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                     1.0443 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -3.39222 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span><span style="color: #008000; text-decoration-color: #008000">                   207.753 </span><span style="color: #e1c052; text-decoration-color: #e1c052">┃</span>
 <span style="color: #e1c052; text-decoration-color: #e1c052">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 8                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.19602 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   313.827 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 8                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.86437 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   557.856 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 9                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -2.24952 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   186.232 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 9                          </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.36816 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                        -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   478.272 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.41372<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>411.269<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>155.183
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>10.6176<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>557.856<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>195.234
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (10 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 10                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -2.26415 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   147.504 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 10                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                       890 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 11                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.55244 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   294.368 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 11                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                       530 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 12                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.96058 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                    258.14 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 12                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                        -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                       610 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 13                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                       530 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 13                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.50878 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   502.463 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 14                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.3883 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   308.216 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 14                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                        -5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                       250 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">2</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.41372<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>206.004
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>10.6176<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>890<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>315.653
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (15 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 15                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -2.51607 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   150.635 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
+<span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 15                         </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.12046 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span><span style="color: #008000; text-decoration-color: #008000">                   235.368 </span><span style="color: #8fa88b; text-decoration-color: #8fa88b">┃</span>
 <span style="color: #8fa88b; text-decoration-color: #8fa88b">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 16                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                     2.7004 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.671248 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                    24.036 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 16                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                     2.7575 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   0.96455 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   16.8831 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 17                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.30551 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   3.16376 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   49.4271 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 17                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.49724 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                        -5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   461.632 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 18                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    -3.4386 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -3.44659 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   8.95292 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 18                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.25922 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.00815 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   7.82018 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 19                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.37272 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.01063 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                    8.7114 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 19                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.94899 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                 -0.818644 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   119.911 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">3</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.41372<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>166.591
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>7.82018<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>890<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>278.821
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (20 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 20                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -0.176255 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   353.314 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 20                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.52341 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.706285 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   31.2369 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 21                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.80694 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                        -5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   424.394 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 21                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    -0.9529 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   316.532 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 22                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.69372 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                         5 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                     275.7 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 22                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.53951 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.31561 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   17.9183 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #c78b94; text-decoration-color: #c78b94">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 23                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.03169 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.19744 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                   82.9606 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
+<span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 23                         </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -4.02536 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.96981 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span><span style="color: #008000; text-decoration-color: #008000">                    61.511 </span><span style="color: #c78b94; text-decoration-color: #c78b94">┃</span>
 <span style="color: #c78b94; text-decoration-color: #c78b94">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 24                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.76638 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.14164 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   50.3979 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 24                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.68004 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.25676 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   3.03304 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">4</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.41372<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>180.744
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>3.03304<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>890<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>240.266
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (25 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 25                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -0.445463 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.08837 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   85.4317 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 25                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.56419 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.59677 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   39.8185 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 26                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.21404 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.43787 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   24.0949 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 26                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.131674 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   203.635 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 27                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.79391 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.73869 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   3.51763 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 27                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.27359 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -2.56908 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   21.6316 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 28                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.27016 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.94019 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   75.7529 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 28                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -2.73442 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.4296 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   15.8756 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 29                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.39375 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.05252 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   6.52843 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 29                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.86857 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  0.902997 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   29.0698 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">4</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.41372<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>157.131
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>3.03304<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>890<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>210.556
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (30 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 30                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                   0.683697 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.1521 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   73.0706 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 30                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                          5 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.02487 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   169.256 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 31                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                        -5 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                       250 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
+<span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 31                         </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.04364 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.46018 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span><span style="color: #008000; text-decoration-color: #008000">                   76.5961 </span><span style="color: #7a93a6; text-decoration-color: #7a93a6">┃</span>
 <span style="color: #7a93a6; text-decoration-color: #7a93a6">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 32                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.44168 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -2.87078 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   8.94439 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 32                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                     3.0495 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.80015 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.513948 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 33                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                     3.6897 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                 -0.332589 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   15.4423 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 33                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -1.85049 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.70061 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                    26.191 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 34                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.16069 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.79666 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   68.6619 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 34                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.53424 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.23273 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   44.6584 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.41372<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>146.572
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>0.513948<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>890<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>189.54
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (35 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 35                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.06571 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -2.09021 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   13.8171 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 35                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    -3.8174 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -3.23777 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                  0.223778 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 36                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.56267 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.02048 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   41.2699 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 36                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.45923 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -1.33478 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   3.23037 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 37                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.06021 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -2.06097 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   145.354 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 37                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                         -5 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    1.4007 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   337.944 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 38                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    3.25633 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                 -0.339548 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   13.7066 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 38                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                  -0.537556 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.56024 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   67.4011 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃                            ┃                            ┃                           ┃                           ┃</span>
-<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 39                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                    2.56494 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   2.34548 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   5.44505 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
+<span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f"> 39                         </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   -3.23884 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008080; text-decoration-color: #008080">                   1.68472 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span><span style="color: #008000; text-decoration-color: #008000">                   56.1486 </span><span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┃</span>
 <span style="color: #9b8ba8; text-decoration-color: #9b8ba8">┡────────────────────────────╇────────────────────────────╇───────────────────────────╇───────────────────────────┩</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────── </span>Iteration <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span> <span style="color: #800080; text-decoration-color: #800080">/</span> <span style="color: #008080; text-decoration-color: #008080; font-weight: bold">5</span><span style="color: #000080; text-decoration-color: #000080"> ─────────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>1.41372<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>530<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>133.741
+</div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">  <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  min: </span>0.223778<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  max: </span>890<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  mean: </span>177.471
 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">  (40 pts sampled)</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #000080; text-decoration-color: #000080">───────────────────────────────────────────────────────────────────────────────────────────────────────────────────</span>
@@ -1018,21 +1020,21 @@
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="font-weight: bold">                           Summary Statistics                           </span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┏━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━┳━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━┓</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Name          </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Type    </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Min </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Max </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Mean </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Std </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Count </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┡━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━╇━━━━━╇━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━┩</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x1           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>      -5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>   5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 0.261399 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 3.32469 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    40 │</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x2           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>      -5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>   5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 0.294296 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 2.78387 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    40 │</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ outcome │</span> 1.41372 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 530 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>  133.741 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 137.909 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    40 │</span>
-<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">└───────────────┴─────────┴─────────┴─────┴──────────┴─────────┴───────┘</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┏━━━━━━━━━━━━━━━┳━━━━━━━━━┳━━━━━━━━━━┳━━━━━┳━━━━━━━━━┳━━━━━━━━━┳━━━━━━━┓</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Name          </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Type    </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">      Min </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Max </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">    Mean </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold">     Std </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span><span style="font-weight: bold"> Count </span><span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┃</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">┡━━━━━━━━━━━━━━━╇━━━━━━━━━╇━━━━━━━━━━╇━━━━━╇━━━━━━━━━╇━━━━━━━━━╇━━━━━━━┩</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x1           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>       -5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>   5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>  0.3934 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 3.36638 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    40 │</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008080; text-decoration-color: #008080">x2           </span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ param   │</span>       -5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span>   5 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 0.36242 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 3.09215 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    40 │</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> <span style="color: #008000; text-decoration-color: #008000">himmelblau_2d</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│ outcome │</span> 0.223778 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 890 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 177.471 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│</span> 213.219 <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">│    40 │</span>
+<span style="color: #7f7f7f; text-decoration-color: #7f7f7f">└───────────────┴─────────┴──────────┴─────┴─────────┴─────────┴───────┘</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace"><span style="color: #008000; text-decoration-color: #008000">────────────────────────────────────────────── </span><span style="font-weight: bold">Optimization Complete</span><span style="color: #008000; text-decoration-color: #008000"> ──────────────────────────────────────────────</span>
 </pre>
-</div><div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>('02e3882d-3618-452d-bfbe-bc7a6305ceef',
- 'e5003218-7c4d-4210-9e7e-9a31bd04b0af',
- 'bb335fcd-1e46-4a3f-acc5-22e69ff22c10',
- 'db4c4d77-e478-462f-a7d6-e655b932c6be',
- '663465fb-bbcc-499e-a2fa-8cd7b9b63fe6')
+</div><div class="output text_plain highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>('c546db0e-ed99-4654-962c-1ef29add181e',
+ '81151c34-18b2-4d07-91dc-bcf7321ca089',
+ 'b6522d64-ad1c-4bc5-b8a0-19bd002e3127',
+ '73d810ac-afe4-424d-80ec-9ac1d797d953',
+ 'eac4624d-14f1-4795-8415-064aa513f4bb')
 </pre></div>
 </div>
 </div>
@@ -4702,7 +4704,7 @@ return Plotly;
 <div class="card">
     <div class="card-header">
         <b>himmelblau_2d (Mean) vs. x1, x2</b>
-        <div class="card-subtitle">The contour plot visualizes the predicted outcomes for himmelblau_2d across a two-dimensional parameter space, with other parameters held fixed at their best trial value (Arm 5_0). This plot helps in identifying regions of optimal performance and understanding how changes in the selected parameters influence the predicted outcomes. Contour lines represent levels of constant predicted values, providing insights into the gradient and potential optima within the parameter space.</div>
+        <div class="card-subtitle">The contour plot visualizes the predicted outcomes for himmelblau_2d across a two-dimensional parameter space, with other parameters held fixed at their best trial value (Arm 24_0). This plot helps in identifying regions of optimal performance and understanding how changes in the selected parameters influence the predicted outcomes. Contour lines represent levels of constant predicted values, providing insights into the gradient and potential optima within the parameter space.</div>
         <button class="card-subtitle-toggle">See more</button>
     </div>
     <div class="card-body">
@@ -4716,7 +4718,7 @@ return Plotly;
 }
 </style>
 <div class="content">
-    <div style="height:100%; width:100%;">                            <div id="d45f2f92-1127-4a54-8074-c463a5f06a71" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("d45f2f92-1127-4a54-8074-c463a5f06a71")) {                    Plotly.newPlot(                        "d45f2f92-1127-4a54-8074-c463a5f06a71",                        [{"colorbar":{"ticksuffix":""},"colorscale":[[0.0,"rgb(161, 105, 40)"],[0.16666666666666666,"rgb(189, 146, 90)"],[0.3333333333333333,"rgb(214, 189, 141)"],[0.5,"rgb(237, 234, 194)"],[0.6666666666666666,"rgb(181, 200, 184)"],[0.8333333333333334,"rgb(121, 167, 172)"],[1.0,"rgb(40, 135, 161)"]],"hoverinfo":"skip","showscale":true,"x":{"dtype":"f8","bdata":"AAAAAAAAFMDHcRzHcRwPwAAAAM9T1w7AsNiCuo6IC8D9nFyGP4ILwOo\u002fW73kQAjAjuM4juM4BsAAAMD970IEwCb4OnRbtgHAAABA\u002fP6zAMAnuW+dO+n8v26yZVYbQ\u002fy\u002fv7RAHX4Z+7+qqqqqqqr6v1zlw4yVUvS\u002fAAAANhXZ7L9wHMdxHMfhv9LmiJp3gty\u002fLNDuzIOPxr8AAAAAAAAAAHAcx3Ecx+E\u002fJLI159jg5T\u002fxbN5UnPbwP6yqqqqqqvo\u002f5iUbzhhJAUAAAACwWqoDQJckmeJYgARAMaGu4\u002fyEBEBAYgp8apoFQJDjOI7jOAZA22Bygu9ZBkAAAMAlzIYHQJpy1\u002fKShghABbgZYvYMCkDOweKtr3EKQNoXuhZV+wpAp28my2YmC0B2Kph8gYQNQMhxHMdxHA9AAABA+ndvEEAAAAAAAAAUQA=="},"y":{"dtype":"f8","bdata":"AAAAAAAAFMAAACCWID4TwMdxHMdxHA\u002fArXlTrJ2SC8AAAEDfqbQIwOnaMBVe9wbAjuM4juM4BsAK\u002f3ZW6CAEwDPfFAH8HALANl4gnQb\u002fAcCrtUFHwLgAwGjIHgjefADAw4l5\u002fB+\u002f\u002fL+qqqqqqqr6vyPDose1KPO\u002fesFTdiLX8L9\u002fl3Wy41PwvwAAAClEueq\u002fcBzHcRzH4b9l8faTKbvVv0rzO0klSdW\u002fAAAAAAAAAABwHMdxHMfhPwAAAAgxLeI\u002fUFX5Qdx65T8iLQ5RiivwP6yqqqqqqvo\u002fImrvcK7R+z9PyrlvAwv\u002fP2kBJ\u002fmNXv8\u002fvPjAoP20AEB\u002fauylFCIBQH4jr7t\u002fNwFA+ZJ1B3WRAUAAAAA\u002fC1MCQMzAIwGNwwJA5vdsnj8bA0AKw+5BxIADQESEh3NnawRAkOM4juM4BkBNaiZfYk8JQAAAAM2uhwpAAAAAgPk\u002fDkDIcRzHcRwPQAAAAAAAABRA"},"z":{"dtype":"f8","bdata":"kZ\u002fWZi0vb0Aphs\u002f0plxqQL+\u002fy0zrcGpAuUY9ZnDCbECQkFHeOclsQNuOh5tWrnBAjzuEgUqNckASzUp86Y10QOxOcrKvPndABPEr+VxIeEAYeh58pW16QBYwnnFbtnpAIPYTT5sze0CQvUUfhGB7QB7qgUeld31ABNX1E1uEfkBGJ+bbcbp+QHLXqh0rqH5AUp9dtBRBfkCYU4c4dtp9QFrBYzhMQnxAsEm\u002fyg7je0AOCdNsle56QOam\u002fZ++GHpAFNkc4BcbekCENdWzCFJ6QLYJODhaanpARpURM+VqekA2UIs16Yt6QKzVu\u002fDDnnpA0uPh8qWiekBSyScUbsR6QGonJH6g3XpA6LMqMmH6ekDySZWJaP96QJAWmI9zBHtAsAIVd5IFe0CarqU5c\u002ft6QAz4V82Q1npA8OrdQuKPekCdvVy51ld4QEu6kBPS+WxAsk6hnQOfZkBHUq7+HqtmQF+NzrgitWhAHqb8b5m7aEBokahM30BtQIaOqXQBiXBAIIbJpzOcckACRz0Hj3B1QBnTfo0ri3ZA\u002fR\u002fX1TzaeECmKj2fUSl5QFY\u002fkfkfsnlAZk2yhmDjeUCOYOL36Tp8QNbB86rGgH1AyEyQAyDmfUDqCyI4K+F9QI6mSAyrln1AAiUaQok\u002ffUCgPHH5E8d7QGRAx2uRa3tADJIbgPF6ekDmQQtrXZh5QFilhSkkhHlASnLSaKSqeUCMwLQD+7x5QHLndLJkvXlA\u002fMZyEqTWeUBo\u002f6f9F+V5QDwwNZQQ6HlATFODIbABekA2QYtXOhR6QJIR41CGJ3pAhOr7X0gqekCmUCHuWSx6QD6UXMySLHpASLvtFaUXekB4l1sqr+15QCyFp024o3lAVuduBhl5d0AYwwqsTUxkQByjgL\u002fsiEpAiJHPqGD8SUAUj5WXNIhKQND5hH1dlkpAxOA+LgUgVEDW0z8ZhjlbQIMXD4Cfz2FALg+1+d7zZ0B5BhaRHXhqQDIfzVP8+W9AaxXhGhNfcECuMinQTgtxQJdU+QouSnFAMldJvqd9dECUEfeXQKF2QJxyfjSr0XdAJuz9pYkJeECoCeg8rEd4QCIXSgl6PnhAun2yXyJwd0DHJMBBpil3QImHWaxfTXZAOREALrgSdUA1YjuAZGV0QF4NU8wmH3RAvXcXEe0KdECy\u002fpnogQp0QDOTRnjA8nNANJHyBxXmc0D0hRdIgONzQGepy96dzHNAsvV4sXK5c0DiW3hKJZtzQBooGuvnknNAFgxzYUKHc0A+IG9qg4NzQAYU7zV\u002fSHNACGAYYhEZc0DMdmcCBd1yQN3Gg+8xs3FAVbQmL6a6YkAI3HRavGU0QGiuC0wmojJAMJZ67zdtJ0AgkK9CSIgnQNCyNIe17j9ArBAZDIlATED\u002fERwKBcFVQJHZbcGIpmBAE27C0OkQY0AnkM0UUHFoQOb3ZX1jM2lAidjr\u002f9CJakAgFnt2WgdrQCptHf\u002fSxXBAZE77cCgOc0CIiWRANm50QD5LgQ2WtnRABmzGsjIddUBem4hgBS11QCgLkl02mHRA\u002fi4n4UdYdEBwwTld7HxzQB898R8jCXJAdTMPzh0FcUDgriU4kIRwQHwm6uZvXHBAbDUjS5hbcEBM40gjVitwQKITxkqPEXBA2LK5sVcMcEBpmhQugL5vQPQHmvRJeG9AlJHa44wXb0Ddz6g5fABvQIIsrOMk4m5AgRqsJ+zYbkAOOZX0+WNuQOvY4lzEIW5AhqFdKaLjbUBNS6e4smZtQL1UJkQO9GJAwHuGhDyqKEDgFsRfcEYkQIAYlaRzcATAwBlXlS5iBMCgqlmUKrAmQCxp6UTA8T9ARAZc6CpgTUBgKpZVmSJZQADcWLXRk11AFdJXMtPKY0BGjzgWC4FkQOy6QRKFw2VALpJ9sQ46ZkDaIM8bTHNsQOP0v3GddXBAerb1tJHacUDq2BTk\u002fyZyQBQY0ruhmnJAvs7WlhG0ckC5Auhp+TZyQCh3ehYJ+XFAnBgPp+UXcUDoassz5+RuQMAkygLAU2xAKDJaM9\u002f5akCRu0f1I4xqQH4x35bViWpALNRWJ94FakBidNFA279pQE9vooLDsWlA7WDN5bg5aUD\u002fQ9Frsd9oQCDha9ZMbGhAxETX4uxSaECKWJozMjNoQFcz+iL4KWhAcX1c\u002faTLZ0CKDYjtNLFnQK6A5WmetWdAvev\u002fGZMEaUC90lif5qhjQCDlUXfM9i1AwPV1KO4sKUCA8ETzAo8IwIDvo0H6tAjAYFGNsZVLHEC4z7fRYRQ5QFaIMzGZpkhAKN73NAryVUBg9+SbVRNaQEMCUpZruGFAvLTUVbtjYkDpTL70WpNjQPbZEiQbA2RAeBccD9roaUCEyHhDqS9uQH\u002f6wcB\u002fcXBAZnxX9Fe8cEAPor1UIS9xQPplDMuaSXFAMfC54ZLQcEDsr8usa5JwQPhOrFWrVm9ATN9QpPzPa0BSkaKZ7fBoQG9V+1HOZWdAMkFJuQfoZkAZMRJUY+VmQLU6EmJ3TmZAs\u002fqwucv+ZUCTJlLVz+5lQP4ds8nCZ2VAWW4NMIIEZUCqVRegV4pkQGUduNbJcGRAFuHc\u002fOpRZECXuQYiOklkQLzMS6mBAGRAT7qWJbQDZEDqS6TNlDZkQKDaGom8sGZAI3wGb9ARZEAw\u002fPrJ3aIxQEBnZ+AbWC5AAGTUPcqw+b+ADvpVKyb6v6Dhbsd09xtAGOvsUrbgN0Duu9p\u002fu3lHQN6zix2b+lRA7BShKGf2WEBstA1xgAJhQDS5urx3qGFArYu\u002fdcfOYkBACIZHJztjQHuvnmDn9WhAtllTpt4gbUC\u002fHwZ9qMRvQBnFtROlK3BABDgvojaccEA4jGcQG7ZwQGgx6JGfPHBAKPcHVS\u002f8b0Ah5xx0FChuQCvGuOl\u002fiGpABS3LZ8yJZ0A2wATl3uplQCyr0tmyZmVAPieERuxjZUCSBR7jgsVkQNxS\u002fCURcmRArDY+XVlhZECogM+pkNRjQMqeE7P0bWNABSN5jsrxYkCfL\u002fVWZNhiQOKbYxs0umJAo0bzEtexYkBdKMX5tnNiQKpT8e5zhGJAEw3O1hbMYkCxQut2WchlQHqh3+QwfGVAUCboXOMiPUBIA4eKkoY6QODxZCX9chxAAIuOXqY7HEDAOcEe2E4nQBBvR6ixcjlAdndrDl6gRkB9U+zvr3FTQPt3+JIm\u002fVZAVp\u002fP1ngaX0Bk+YMakiJgQMDm1kG5K2FA3YcmsnaNYUABKPgPG71mQI4dA4DMh2pAqwuTN9HvbEAK2fllJHVtQDbMUfJuP25Agol0ry1qbkD0zrp+jGhtQChiS3jj52xAB3LLGGIBa0CaAOcEcx9nQN78HmcNzmNAzVFW0az7YUBM2vzbAGdhQEg\u002fTV\u002fiY2FAFgBs2E2yYEDWywEjTlVgQPfzGsK9QmBAoEM8cIpPX0AQ4BJvk3JeQNDyXnZ3c11Aikn8Tp5CXUAE4caAgQtdQNDoPy8O\u002fVxAiLWpCt3BXEAaWNcqbjJdQDhUHOvnOF5A1nbhYEeGY0ALmfT1JRRnQIrZfnCDLEZAdEFLeNnUREA4vvt+D3Q0QEBIJ1k3YTRAuKuz8\u002figNUA04QdSklNAQMaKW5dgtEhA1FPpNHtoU0AHkMGhPYRWQMLrobnmq11AZlSAjgy0XkAm6Xa7tERgQG0Wq4NDm2BAt6j7Fo00ZUCYcEV\u002fmpBoQLrn0jwPrmpA8f2KFHEha0AuIWEpRcprQJZaSyjh5WtAhhw3HOvIakD6CjAOYkNqQKRi7VxnSmhA4sqXs8EvZEBTMJv3fZhgQBBZSLEcNV1Alrt+Tu3vW0CgN11OHOlbQG9ULvHOZVpAKf6oW\u002fKbWUAsTqEBxnNZQK5EQPnTJlhAERw39uA9V0AYS3anJTxWQPQAvNb9DVZAn\u002fobK+7cVUAdPcyj8tBVQIQuu6au1lVArUT0FECTVkB5qlLFxQpYQORSw0vAw2FATm25VbUsZ0BGYanSUKhGQIyS59FWUEVAMGEXGAFWNUCIapi16EI1QKDjdxu1VTZA7NoCnIeaQEDCVmtWhuVIQNtFkW9jcVNAkDWsh7WGVkDcdU6XDqBdQGJp5i4tpl5ASsjlXPk7YECd8twB35FgQEbQBFosImVAnSR3sHR3aEAi7I9lOJBqQEIgF2pyAmtAT+BhrxKpa0B2ZKX7p8NrQLhhEMbQpGpAgLWD3vgeakCJLWJl8CRoQHkXSUtCB2RArOVMpD5sYEBVvZcv6NdcQGTa2Y42kVtAsHW\u002fiF2KW0DYSi9EUgVaQH7smuCZOllA4Fh7YUMSWUAiSys2FMRXQBE4+L1+2lZA2g2wRarYVUA8ZnQDrKpVQKDRpAX3eVVAdeU0FSBuVUD\u002fniaqj3dVQCppKYduOFZAGM66BVe2V0DOVpShtKxhQOzWZwNlOWhAplflZckaTEC4DtzP9MBKQJy+ifLueD9AvAyp+WRjP0Ck1ajxY7E+QHhSbDQ8\u002f0NAelkXFCllS0AbgiW4wwpUQLp+up4m21ZAzht5zkRaXUDnTSX+a0peQIxlYD479V9AGgipa1VJYEDQ4tLuWndkQNi3DXybgWdA9A5oUJtlaUDAWkvVr8ppQISqNU4BWGpA3KtTkaVmakBrTJyu4TFpQEKM8vOaqGhADRCNE3OjZkDlO\u002ff7x2ZiQOZGMq1HSl1AkMbbLcIYWUCkGvEHVMJXQCSJXj4nu1dABQmafecjVkAxC8LHMVBVQFrT\u002f7UhJlVAVzGN9vPKU0D\u002fndEGs9pSQENRQMfU11FA0OHxC4yrUUAjkAickn5RQEGAc289dFFAeEFgscOkUUCCR7sKJZNSQKOII\u002fKrVFRAW2PqJArHYECMq0NzgWpoQH7ORnoeIU1ANLYQez3HS0C8Y9dOCrVAQPjTTUMTqkBAnvTwqkYrQEAqKeeWF69EQP5gCU3e7EtAa2vZ4xIxVEBma93\u002fHvVWQF77OZBwWF1ABt5rvpxEXkA4pfs7WehfQBLecjmWQWBAaLW3PZ1dZED9bDbJ8VlnQDPitygDNGlAMtX1YJeWaUCcS6wTDR9qQEK1ZhFgK2pAPm7k0VryaED0VQQPcWhoQKGZuW5VYWZAwVLg\u002fWUfYkBUEli1Nq5cQDT+O8AqdFhAqOJz0voaV0At8V1WvxNXQGPHskBMeVVAU6YQngCkVEArj2yIonlUQFseqCQnHFNArlImubQqUkCUe3d5nydRQBKIzMyh+1BAF+9eKE7PUEA2\u002fSM3PMVQQN+g+Zug\u002fFBAUsi0XQvzUUA+ZmC0isBTQCf1J9cIoWBAn9ENYxIXakAufprw7zVTQGM9IcuIilJA\u002fJwCAm+3SUBSFxo5GKtJQGYl3FcTDUhAMrOt\u002fMN5S0CWeRL4ebZQQC2IsSgE+VVA8uIcbB9UWEA8KNKkiMhdQAtgdCI6kl5AFPZSGYf4X0DCA36UTz5gQNzM3NQdvGNA8rHy\u002fbk7ZkCK5hAxIbtnQOHtp5eRBmhA4xX31pthaEDi+5szBVhoQDf5UXX\u002f9mZA5\u002fvAVHtnZkCNgOIae1BkQKOuYFhHyl9AjcjdgqDNV0DrIJvfh0xTQHlPkKAP3FFAHZHojFfUUUCtqXhcnh5QQI5NpJJcd05AVGXfGFsdTkBGTLWYGjpLQITduU6TQUlAEn0XkDI1R0DyLXLLeOFGQDQN+kfOkkZAOLy3Ps6CRkA83XcDyWFHQIobiEt\u002f1ElAMpEFko04TkBh+HANRQFfQPvsvCtD2WpAKPlMHX1qVUArr+zry8BUQGKOcWR+G05AVnkIybkOTkDKBn1bWQdMQDTUMxBfA09AanYhDAg2UkBu2Dl4kA1XQNLz6l2TOllAniAvDH5EXkBcDSzVpf5eQPK0uXGUJGBATEmyIXhhYEC0rV7Ig5ZjQGKgP3Bf22VASKofchQvZ0CMmVVUMm9nQJHOJMbEs2dAsqBZkTmfZ0Bhzh2qdSpmQPt7E3dqmGVAe1kGQft6Y0BG29tg3P5dQKxwS6ze1FVA2OptC480UUDKkubjOXNPQAKkAtVYY09AFovLXvHeS0CwUaadWwxKQFzI1onfr0lALEAcYkO5RkDqzxgaorVEQC61afzto0JAlj+WeWZRQkCGwqjqNgZCQIqiqgLB90FAhL1sGooEQ0DsVHkPcbBFQJg8Hfvua0pAisWbil4qXkBirVxVLA1tQHzaQUpRLFxAxRgmpIqLW0Ct7jSj1\u002f9VQPJW1Qk8+VVAMOtW1c+QVEC2QRMSRolVQL7XUDiYjVdAwZHQy89GW0BST5N+mvRcQL5HyeqlaGBA0UxI0VqvYED0rR73WyxhQB8B1JI6WmFAxJF8aNq2Y0ClUY0Kb0ZlQL2f9IXpDmZAjjSYAj4qZkCebQs35SRmQCjGpU7062VAaVW4gmo3ZEA2z87ZWZ5jQJyDcTk\u002fcmFAMHCI+HGjWUDR6dNvXv1QQDR0orJb\u002fkdA9N3w8YLGRECOmCDJObVEQJ6M1LXB30BAoNz3qgXFPUB42znwHvs8QMAyBXaghDZA2MVo+\u002fUlMkBglCE8G38rQAAERkSIMCpAsM8\u002fJK8TKUAwABT0N+QoQMDsv+pzzy5AeGOn9vf2NUAoIk5Rn69AQASEM0VidVxAwASKfsCLbUBFfewhl8BdQJTyMWi8Il1A5L6CX+SsV0AyUDhYV6ZXQDnJJLAhNlZAnfzFT+MZV0DRlxE19f5YQF4CDfm4gFxAiVTPIKQUXkDvelzQ3thgQOJ2R266GmFAfM0vhu6OYUB+YOMJfrlhQPjrG5v85GNAs6ENmFRJZUAd3bfmOO9lQP0Fh7kyAWZA9eI3eMjoZUC3LDnSWaZlQG8GsT+z4WNAe6T2uS9HY0Bv0FbUEBlhQD08QU4+5lhAvWCWe34lUEDYTGXYoCBGQFiYUlDB10JAqHDU4BnGQkBkCipQA7Y9QNC1POkFpDlA0K2oTWLVOEBAT1VSNzcyQACqCHhweitA4CdbMhV5IkBwYVCEMCQhQABTJuMZBCBAwMFRr+qpH0CAgdGW3w4mQGBCTBcp2zFAMLVphFe3PUCa+D9uAlNcQCLIyRnQpG1AVLuK9dAQXkDipMKylHNdQAFva\u002fy9AlhAeYVobzX8V0B56RnuZItWQEnKbum0a1dA0DSLgDhLWUBm8p\u002fKv8JcQJkn+77LUV5AjFtSAF\u002fxYEBWc\u002fz2SjJhQD6\u002f5pfKpGFAqUxxiLXOYUCE\u002f4mTjPBjQCK3rXY9TGVAztGeyxvrZUCURb9RK\u002ftlQASOcGbU3mVA08MahG+aZUDWUDWketJjQO7SSeevN2NAUoLG\u002fkAJYUDjl1q33sRYQO6u1hvb\u002fU9AQvJcZifKRUA8W7eDxX1CQMr2xpQKbEJAiDg1z+j4PEDw3Vs+AeI4QPha9ShfEjhAaB3Wf9RrMUCwBgVm+9cpQBDFW5kRyyBAILpdUlvpHkAAAUCHUKccQACZvYf\u002fSBxAYGaQEpptJEDgJYEfaBgxQPjvrKxeDD1AsV8Mr6hRXECf3XgDoyJuQN+bd+jqn19A\u002fZkrjO4FX0AKWp9TeLFZQO5uKBEPq1lABkjaoOI8WEAA46yATRBZQMBa2atr2FpAqot0uzUiXkACCFJV05pfQPgEb\u002fNIeWFAZo\u002fN+bu1YUDA1rwdDCBiQD+lT5ndRmJAQQ4QgWI5ZECmBY\u002fri2llQPQioPlY5GVAElYAHnXqZUD8DObIkrllQEI6s5fWamVA5dYFq46RY0AMyiRba\u002fViQBn0AzH5xWBAvQQk\u002f0Q4WEDczc9VdbJOQPj\u002fv14MT0RAEM9fv3bwQEBKvo1WVt5AQLj62RiQrjlA+LaM2NZ9NUCAMLLr+Kg0QNAwwC5grCtAgEIlyptuIkAAAiGQukcSQMDSvNuFFQ9AANGjWOd8CkBAdvtHvr8JQGCTY1V8ExpAcGNIX7JhK0D4KB3zmiQ6QDL++nOHdlxAzjuyveasbkALDiBybJlgQFUd8wURTmBAgHtO285oW0B5Ekv0lWJbQNonCoN7A1pAZpslvJ\u002fUWkAxuE2Zm5BcQJLOfjcIu19Avp\u002fbNC2RYEAkLjWIJyViQDKsPXqrXWJAWoysg6nAYkDvlJZXq+RiQJK\u002fC+HiqWRAXrvgf9+sZUBqpIrL4v9lQGoL+cOj+mVABqXIVMWxZUAvGakLsFZlQAijFnyuaGNACEKlFCzLYkC7\u002f5sCDZxgQFmbnHpS5ldAnA+sn9LiTUDUooJvuU5DQLxgx5QMuj9AACCd1fWUP0CAlRmWSVU3QLALhvVbCTNAoNmrOf8uMkBg2W9wpVwmQCBOwA5BwhlAAGpFdegM+z8ADVQw4ffvPwDI2MCbfds\u002fAKBuh4Hq1T+An+\u002fOU2MPQHB5DLa0CidAQH+IK\u002fOrOED7N1Ts1kFdQPbdT2FF+25AvKLJoxTuYED80cvwCqNgQKu6T1MeHFxAN3ScZ\u002fkVXEB8wcrDQMFaQA4F0LS2l1tABjWLJohWXUDQ+wNUnj9gQEwFFFvc8WBAROGMVSWAYkCT0qYrirdiQDvX1mlVGGNAYh6Z7XU7Y0DugHIIQfBkQB1WNqGS32VAvL3QXREfZkD2Kp\u002fS5RNmQIWy19L9vWVAQP\u002fP1eZbZUAfUyequWFjQJlRBcV9w2JAl2Xgz2qVYEA8XWwsj+FXQJKHP7LK0k1ABoEqoRcwQ0CUkKaSD3E\u002fQECMiS+4Sz9AGGgBi6X9NkA4n6aNk6oyQHjJ3yDfzjFA0K51bUGKJUAAijuAJRYYQIDQbKkZFfU\u002fALurX5fT5D8A1FtIsATAPwAgDG4Bvqs\u002fAJw0Juz7D0BwXOc8EvwnQPBmL+GjuTlAZf8t+odeXkBkmMxgi\u002f1uQPBRxLju72BA6DelhuOkYECMLg6Uyx9cQIQBv9umGVxANg1nJSLFWkCWUcpRyZtbQA7h82LKWl1AA6AOnNRBYEDK9RtgFfRgQH3UHVhUgmJAhTdLqrW5YkC5OhY4eRpjQEcls2iWPWNAV7XZYRTyZEDaKCPI9eBlQBycKpr5H2ZADHi7B6cUZkA4N9ScZr5lQI\u002fJvqseXGVAjzMt05lhY0B6rxLBWMNiQPVkjNxPlWBAS0ogjrXhV0DwWJ7NS9NNQBgLPmCBMENALEN5Z9BxP0CwC6yseEw\u002fQNiuXXda\u002fjZAsJktL02rMkBgEDQgm88xQJBMpHocjCVA4EFosUsbGECAtG22xDn1PwCVksaVKOU\u002fAMTf6k+iwT8AcHMMPE2xP6BHWTgUGxBAELTQUiESKEBACcBW4Mk5QF\u002fQoqafaV5ArFQcAXZkb0DCk79Q0RZhQGUb+lEtymBAj+CIYQdNXEDZ2G7pvUZcQN4vg2uF6VpAAzHyFibEW0CSFvpy6ItdQNl5rYy1YWBA8mBpKccWYUDpZGAd5aliQEBXAyq+4WJA9M9CFClDY0CUGGpEdGZjQIRYAbEfGWVAHFYktrz+ZUDr5IfyNDBmQGQ+8McaIGZAjBGWM1O+ZUCi\u002f1GhQlVlQKZlAXbITWNANIubZL+uYkCg7\u002fo60YJgQGJbrEnI01dAiKEoaFvhTUBu\u002fZQBZllDQPjCHy3i2T9ALFdTOw61P0BQB6xQx4g3QMBJCINJTDNAiPQ8\u002fqR1MkAgPf7YB0EnQCC8eW3DYRxAgFnF42yBBkBAB+hZhzMCQIBSA+BACf8\u002fAPp\u002fnLvo\u002fj+gEcNClMkbQNAU5oaEty9AuDu3\u002fyTGPkDxXYGbDYZgQNAa5dK1HnBAzrkALCXfYEA7SfXil4lgQGXwfR+5AltAgimZTBn7WkBQwCIqDQpZQPgdItfwqFlA9hrcoIhPW0DFeJYzRHxeQEZ7Uax66l9A+lQa\u002feiSYUAq6hSCxsxhQNyX1eYCMmJA71YfD8hWYkAk+dcW+B9kQBX0uD6ZFmVAGLkC+9JQZUAqF1bh+UFlQDBD8Va94GRAI3s5YrB2ZECthJKE+2tiQAh89CRuzWFA2Z9Tca9QX0CI16hCO2NWQNJ2SD7030tAckF\u002f3d0eQkDQ6xoMBAw+QMSzUAn86j1AMMfTHGWvNkAw\u002fGQm5AgzQCD00+C0UjJAgDPG1ZxwKUBAIG74S68iQIB2EUpDERxAYB3ruy4WHEAATgMWiM8dQGAFXXPUwh5ACOKa1LxtMEAgUWU2SxU8QBZ5r0iMFUdAJsPLmZvzY0CWKMY41CFwQLysW4Jm3WBACLdp6o6HYEDD8wzNuvdaQNmX43MO8FpApcBk+i35WECgT1H8PZVZQFOIa4TOOVtAuEIPRvNkXkDdt9Rq19JfQEzyjJYAh2FAdom7oOHAYUARSvf5JyZiQOU0NfXxSmJAES7hXZwUZECYEE2m2AtlQAyWac2aRmVAwBAL5eY3ZUDnDlR69dZkQGVIhtUNbWRAfUpT+6diYkDaeUuRK8RhQGB\u002fMhu4Pl9AkGq7NV1TVkCSeLKjjcdLQDYK1sU8DUJAeEetcnnuPUCAWfGlks09QABmB1QwmjZAwAi6ssX4MkA4rCJsr0MyQPBJuBm4ZylAoM8fkwG6IkDgWSga\u002fmccQOBaedrEfhxA4Bo4ZSNRHkAAhJ3dZ0wfQEBCbtKtrTBAOB6wbkFqPEC4wvXJz0tHQMkhT599C2RA4lAC6hI9cEBz7WF6Ys9gQEWohiv+dmBAsr4V3yCZWkCUCbwUBJFaQLTe2mkhZVhAlnj3IsfmWECyCMBky3daQNMeJy6okl1AY2j99Nf8XkDkiXNgWBphQK6NOOk7VGFA2OXxvam5YUA1oUpBjd5hQOydWxi6q2NABUhDEyCoZEDAQ0Z6x+dkQHolzbN52mRAbp4Nxnl8ZEB0VD3qHBRkQMRkaqslDWJAzQh\u002fDlxvYUBsTo\u002fsY5peQMXQ+PaawVVAciSC4aPkSkBytoPiKGZBQGjyQ0Hd0jxAAJTOEByzPEAgA0IaQcg1QOAmX33IUzJAmGLrFGSoMUBw8dtIzusoQHAPGenj6iJAQM2yGlYIH0CApkqU8bsfQCDG22zuNCFAIFSXOYHVIUAYLn9rtscyQAwI2UNHOz9AoNEyjnkaSUAE9UBbkNdkQO\u002fz4ickqXBAIFcF5J6vYEA6obE5KE1gQE7y95xtSVlAW0YzlnI\u002fWUDr9Wyj2ShWQBDg\u002f2bbK1ZAfTBS+jlXV0D0IVvb1RBaQHrx0bPWX1tAysohC2FxXkDYBKrAA+JeQAFRNfejqF9Ad4dV7kjxX0BnEIxZZclhQKLjkUpg12JAopXEegAtY0B\u002fCe4E4iZjQLQkw12i2WJAYgOqmil7YkCwdhy+6IxgQLwTjcy4519AXOLzSm\u002fAW0CAh37LYTVTQBy228LCzUZAEOuSZCh9PEDIxohLC043QPC8Zl\u002fhMjdAGJKRqTZqMUDgELuGvFItQKDUyKpjSSxAMPsX1L\u002fMJEBgxZc1i3ohQCAsCPy+gyJA0D8uqDwSJEDA5+VZTBgnQFBletPTQShAQDr14B\u002frOUBgJ\u002fc02o5EQLwjc\u002f2Hj09AO4mgK\u002fy4Z0AuCavIfs5xQL33D5MuB2FAka+4NwqMYEDXVPnoxDJXQJaWhb2XI1dA\u002f6clF4pYUUCeb7yxg3xPQFJHicECAE9A+gVfKge0UECs33BW+oZRQCxENuXVx1NAW4miSjIiVEDllqxT2MVUQDhq9GQRA1VA9B+MqatbWEBiAvzG+bpaQBWX+2yh9FtAMhACAx8fXEDcMjo\u002fNxJcQKpX9KU1sltABsuzK1\u002fYWEC0QeU1ENhXQKYR9VuaM1RAZByY7sMaSUC4FAz4D9c3QODE5saoRyZAIGMNappJH0DgsG2CSwgfQODYOOTSmBJAgM1JeMJnDECAKA8ciBwLQIDGbkGRjAhAoAbV7Y87EkDwCakTIYckQFD2vQNv5ChAsLR8H\u002fnTL0Dokmx7hh0xQFYbpdDh90NAMGxNiuCtTkCn\u002fMB8UYhWQOnOki7XyW1AwRsS5SX2cUCxexRoSCRhQDDUyk47pmBAO8M36QQWV0Cd1eTiLgZXQMOA\u002fT2j4FBA1CK3J+YbTkD+H9P1hTlNQH6HOd\u002fAL09AhfhJThtYUEB3Y+8mYHhSQKZMef4fz1JAcd6+JgJtU0CjRy\u002flUKhTQHRqom7t8lZASus9imRaWUAF3AjANqlaQDuMvJg43FpABw27wPvlWkATlotBRZVaQJbc0rU151dA5vxfilnvVkDB6QaZImBTQDqDZTN6sEdA6LmH0E+NNUBAtoReAaoiQACbon6r3RhAwAdUHRGhGEBAlYOLDbYKQAC1Bm5WXANAQIso2XNgAkBAYkPYfcoCQKBvfFQouRBAYNwWJ27mJEBAexXUuJEpQHDooC3qdjBAyJaMbqe7MUD4oeKmwsNEQDRWp0Asz09AAXyv5gNHV0DjUNNO+29uQEh49ZNxbnJAjZfbKdSSYUBvbhdLqwxhQMYEoB81\u002fVZA9IvthHvrVkDUK6rSnoBPQATtBvnLkEpAEsTAXXiBSEBQ2UTyjyRJQJp8xjq6NEpAmirUcbmwTUBc3\u002fG\u002fV0hOQAQ4BD8hYU9A3I3fuBvMT0A1pKxR+wVTQLhoQWWWhlVAh9nzACYXV0AKiYWBvWRXQETl9HuOtVdAknKvBP+UV0BKJImyVHFVQCMseEYclFRAfYD5KeFGUUDS8RhKsSxEQMDRrLa67i9AADWBwsQIFEBATBUES2cDQMDjRPrVBgNAAEKdGdy\u002f1D8AgG3IEwi\u002fvwC8hhBMMsK\u002fAGDExjp87D+AZZ\u002fPIAANQEClmd7gwiZAgCeMENw7LECAfXN2IVsyQFh9NjY4zTNA6HpOkD4VR0BZVzibfYBRQMoX0qFpWFlAOCgoh1cXcEDNLiSCc3tyQBIN\u002fsysoGFAvOF6LbQZYUDcXGDn\u002ff9WQIhQF9IS7lZAqqfK7d5PT0D27LyLpz1KQHC28LbQDkhALDI27DCOSEDuv0doe5JJQFZfIYmj+UxAnHOl0+6OTUAEHljJAKROQF6BSau+DU9AMXstk0iiUkDeAnSgqiVVQExY+WRsvVZA4iv90O0NV0BJMoUbjGZXQPO6sRJJS1dAbBF\u002fNt82VUCprsUIlFxUQIGdrvWCFlFA1Hk6gdTdQ0Dwm\u002fPXz\u002fkuQOBGqNremBJAgMRO8GzuAEBAkJouTpAAQAAwGXj+qrY\u002fAIBZrKn5078AMioGnrLUvwAT2Z3dp+k\u002fgPUSmzf6DEAgA2e4hAknQJBbtvn9lSxAaMfkscKVMkDQbSpOJQw0QIp7OL3QU0dAgJKE21yqUUBCy23YnY1ZQDDpxu4LLXBAjCeoWcfQckCWvOsl7QNiQBEkzHHxd2FAbsxIDmIrV0ARtnDCQBhXQKxdPnN9UE5AvnXnnkpkSEAel+DRAW1FQBw4QCR7CEVA4me4a9vARUCsBY9LqqJIQEIfPXoWKUlA\u002flsHmmImSkDqkdDCOIhKQJW8orDmQlBAow1uYtvYUkAXOVS1859UQJNc0LObA1VAtdkCwYSPVUDHXK28G5dVQInWdm3\u002f5lNArx7SkOQfU0CLWvcpaAhQQHwpip8dMUJAwPo7Y9DoKUCA+6ASHYcGQADp7s8xheI\u002fAKV3xrpD4T8AiRfrTEbwvwCLK+WwdvK\u002fANmIqcm78b8A6alrEw\u002fiP4B+B3knHg9AMABgW2g8KUDw3c5tADwvQKB2QtzcODRAOOP+xp3INUBsxteflOlIQDIE9ViRs1JAGKxttFTZWkAyYbEphrBwQAvo13Ro9nJAFcSkehQ0YkAgyYD+DaZhQLJgrTTTS1dAopGJGzE4V0AGs4qxfgJOQBoN3YWcukdAEPew0axuRECWnQ2Fk6lDQED+dWe5QURA6iWvzubqRkDmHCOWA2tHQHiKvLI7XkhAYtUK47i8SEA2KeaLaaJOQG0Zn42N71FAsaGFSoLLU0DMtfQnljdUQOB6M6QL2lRA9o9z7\u002fTwVEAm5Mbb5WxTQJYMBhUvrlJAhh0oAbdVT0De4L0Z1aNBQGBGsS\u002fWUyhAAMZh4M9SAkAAgLsUYTDFPwDABY8tfsA\u002fgKI3GJ5B9L8AmwnPNNb0vwD+eURqwvO\u002fACJZn3Ox5D\u002fA6POk56gQQNDA+RcibCpAsKAFed5LMECQUb4nWQU1QChn2h\u002fMnjZAUG+AmLqaSUBCe+HO2iNTQCjNSxHPYltASiF3ttXkcEAYYl028v1yQBY\u002fSNgHPmJA1ohnuJuvYUBZrD0SQ1NXQMpqe8KHP1dAHs2JDlj1TUDoSrixbptHQCbOnhjUPkRAlNFR77FmQ0DQn\u002fvafPhDQAzAkKB\u002flkZAeH+sD14VR0A0J5P1mQZIQDaXmG5uZEhAGLcpy3JFTkDJcDc4xMJRQMePsQTlolNA7+A4lqcQVEB0s6z1nbdUQCFXkH2W0VRAguNC+VFWU0CEsRAhR5lSQLR4L4\u002fnM09AUrwbrPGKQUBAYlPrpA4oQAA7D4mwpAFAAFCFlO0Luj8AMIjqJ8ewPwDW6m2Yx\u002fS\u002fANQpOkEO9b+AGjZpo+nzvwDjU\u002f0dp+U\u002fYFgMEAntEECgbLhVDa0qQLAdKLF\u002fcDBAINNfs8cvNUCYcD\u002f+EMs2QKbpssQhvklAadx2iQo6U0Dq7CErwH1bQCOF7cvr7nBApr\u002fZDikec0B4m3+pqGliQG8VuZKV2WFAm2xD4Xl2V0B7CpEFVWJXQCZ6GJtBxk1A7t\u002f2\u002fpYgR0DIRa\u002fW3n1DQPqpvPOYVUJAiBdYpZ\u002fMQkA4sjfknDtFQI7v\u002fp0\u002ftUVAJorvtyGeRkA8YIPdMPlGQAga\u002fdiuxkxAGqO9x64KUUDHfG9kmvxSQEtkmsaHcVNAEppi16srVEBX1k0Uq1JUQI0DomXO\u002fFJAyOmRYt1GUkAqceHu9LBOQLb9+\u002fUlLUFAgOF1HN8SJ0CAvh45yqr+PwAAVIXE1bm\u002fADC62iFNwb8AfL3qIgH2vwBfiPhwC\u002fW\u002fgLuTn4Gi878AIkSO51nrP2AOAzh2OxJAcHEb+a7RK0CI4ddnxBMxQEhLIxui6jVAMEPMF2ONN0CQOJrDMlVKQC7mPZvFl1NA\u002fUT\u002fub3uW0CiYaX8mRhxQLsAJSujZnNAlhw\u002fdATSYkCHgxE8ez5iQC5v++cy2VdAyJGJdS3EV0DC5w7FjZBNQOpwn+siSEZA+C84A2AOQkA22o0wIzlAQKby009bdkBAXOU9r99\u002fQkCq0tUePe5CQBD\u002fIVIpxUNADt2DT0UaREAAFo6Gmb5JQEQiVIG4Lk9A2SrvSwCxUUBljzzq4DVSQMYBxqOmGlNAuTV78ZNeU0Bh6CmUnltSQOKLRCRYtVFAKt8EQAHYTUAs2OsF8aFAQKCDGaRy1yVAgGAv0eka+z8AgOQoywHEvwDA23tG58e\u002fADT0Q9r18r8AmhTHqy3vvwBpK4r6UOu\u002fAAT8kdit+D9AmXHJaSUWQEC2nhpmvC5AAD1WaViqMkB4ifC+a683QDDcnJvNYDlAwCn3blqoS0ClXEzfzmRUQPHe+kkZ4VxAOAUNBmducUAEqBCO1ZJzQCTnMEWTFWNALjoZORiAYkDM6EGT5CFYQKKac7ReDFhAQBcFTaWRTUAGIvC9MetFQAqMJVDsWUFAnBTgtZdAPkCY\u002fqiK53c+QAyQzoOhCkFAdBeMk3pyQUAy\u002f6rWCD9CQL7ltXy3kEJAoMy3z+QdSECChIFWxaJNQJUo4+P3AlFAGUxwAWyRUUA2gAakv49SQHRJIGT+5FJA1RT+aIYTUkDGIt3tjHZRQJ5cANb2hU1AFv\u002flkFR7QECAnIjL0rglQABb5d39Vv0\u002fADg6Xb2LsT8AACX\u002fGYCkPwBxyRx\u002fteq\u002fAJXVqdp+4b8AKHQ3mzLav4Bv8xVnLwFAoB04uOoqGUAoUW1z5l4wQIBnK5ArvDNAaB8CWg\u002fZOEDAhDmj+pE6QHi6Fccod0xAz+NOxFfeVECREY4pkW1dQK1jOau1nXFAoON5Q2S2c0B4Cuy87E1jQP49BGz3tmJAOgypttNiWEA+H6AQ60xYQHirSoUspE1A2ORNRua0RUCmJvvJvd9AQKD8b31RsDxA2LvhwoCzPECgfCfJlfU\u002fQEZPy8eYXUBAiAKz9yMiQUDmdPKpLXFBQCKU3lHR7EZAZFs9pZGCTEBf2N5a8YVQQFxZeusAHFFAoIHZyJouUkDWuGgHk5FSQB0ptFg951FAEvYFApdRUUCuDM7OGV5NQPRkhls8dEBAkNh\u002fMO3zJUDAVWp3D7YAQADOZrgEjdg\u002fAMinfoHQ1j8AmOi3E5bbvwBYNy6LqLa\u002fAEBY3IoVrz9AhhB5WNwFQOCLyPUy7htAuJyuHrk8MUDwrbH9KaY0QOifYQb60zlAID8QFECSO0ACD\u002fBlvx1NQC5kzY5vPlVAEkij3+7aXUDF5ZHLOsFxQB6DZX\u002fN4HNAJ+ojWlOTY0DkH620s\u002fpiQG7vgJpqt1hAnzTXRRGhWEDI8fBz881NQGII8TcPi0VATvAGVdRnQEAgcHGvCw07QIC4wbM91DpACDNeu2utPUA409zNdmc+QKD\u002fEew03j9AtAIwfh47QEDMBFNlG6NFQL4YbhoqTUtAP5NDBcABUEBf0Q24wqBQQDYR8Hkuy1FAOviYmkE+UkAjkksDvMFRQHNsML6fNFFA\u002flzblZlLTUAaoS52UoZAQHDA9gknlyZAAKJqDHdpBEAAH2pd7A\u002ftPwDOPmpHPew\u002fANyNMK6+xz8AuHEqfLfiPwAZ1QDi4uc\u002fwL0QpWBNDEBAF4e6kpgfQJhCOQx2VjJAuGync6fMNUBgH4iMMQw7QFjEmRgT0DxAEosiSNjkTUAGrtu3SK9VQJBmxqN1WV5AzeV619PocUByKwGsLEh0QDLieMSYRWRAiVj881OpY0Cwyas5rqNZQKgNJ3xYjFlA3jEM9XuHTkBSdt5oDodFQKDcBSbFZD9AgOfoJ9MJOEAQPoOsmEg3QKB9LJLpMzlA2B3fgN3TOUDYdkyLWSE7QMiSUfnVqztA3DiWrKoTQ0AQ04S53e9IQDwwhGt0EU5AjIndf955T0D0bqj2nB9RQOiP9UeguFFARhIOgX6nUUBGehJWPC5RQCReJo9GmU1AxqYUox4iQUDAGR4BEKspQGBvc8DQYRFAQEUgrMqCBkAApTvPYVMGQEDnxoA+EQJAgB1mlpsYBkCA2vDs2ZEHQKAHkrIA1RdAsN1U2A0NJUDIkyN7jk41QNBHbGF73DhAFHit8P08PkDgVlG8pQVAQDhhgzK+zE9AjEuvdHW7VkAQYv6eAH5fQLpkKxPvPXJAIZ\u002fcNaoqdUD9icQh6\u002fFlQMRjIUZyT2VAH\u002fnbuoUoXED5ijYlaQ9cQJsBin+jwlBAlic8RCImR0AsR5RJYgdAQCBDm10cuzVAWDB5jGb8M0AoC\u002fZHejE0QBDVHgAJojRAgBF6zTGlNUCQZH45hBc2QGCyej3eBkBAfgB0kJBSRkB2a5TzQVFMQKYWoifaD05ASHoXuCbcUEBEc+1uNMFRQDZI3P6AhFJAVQOuErExUkDYwEsG2SRQQHTnQqItS0RAUFYNTKtkM0CgUPgzPyQmQAD22DJaPiNAAORjJoEzI0DAtz1WEWYiQIBunlyMlCNA0Ia3Xr78I0CQPqePjWUqQPiZbpW38zFAQHBMIzYMPUAiInpl91dAQEBjnGhNF0NA\u002fLcqCjMDREBicycX3wVSQMor7O9S7lhAKxe5gKngYEBHQaY7WMpyQPanUC4R+nZALwq+QWnQaUD+0jnz9iZpQJ+uFyhsbmFA5kqMNa9gYUCo0ViiCg9WQLDrHOP1zU9A5NH+WbbWRkC0Y0xQ5Rg\u002fQChrjef88jtASOAyTq7KOUBIGiaPefw5QGhs0FywnzpAsP9MicPzOkC84ooN6ENCQDYMN99UcElA3Vi4\u002fjF6UEAt45iOGKNRQE916nbnNVRA\u002fxkITUeYVUAMGgJgaK1XQFyN2ptSlFdAmo4CDMr7VUBQXnfESyBQQDYo4TrUMUVATvGgafihQEBs+LR\u002fi4Q\u002fQFjfcY1yfT9ADASJC6yxPkCIPiBAVw4\u002fQADT1+MkNj9ASjD1DY78QEDoO5NPZytDQKbWICcUaEhAmNsHxWUkSkD6C5TydsVMQPi0ohGtp01AX9pKrlGNVkCvUVHJ6TpdQKMrrA6\u002f4WJAhtpy7thnc0CkRwnhmsp3QBeCESeMsWtAn1atXs8Ga0BBY0oBlS9jQCArKpqFIWNAZV0UjwkqWUAKf6C4UbdSQC6vjMSQ50tASGh8L\u002fn3Q0BMhukmZi9CQHJFVzyQxEBAkjwXwx3VQEDaUN0ukxpBQFz+ePYEQUFAKHFiFO8QRkAoeldp0p1NQAGQMSRN21JApsgrLGkfVED7yKhsNfdWQCj+gSrkhVhAS1Cr4q8MW0CUg3WgaAVbQKfOxbmKi1lAzlKXklSiU0C0OI2ekstLQJosYP5P5EZAuHN8ZZ7iRUCQeG6SUN5FQNb73SvkSUVA+B77FmpcRUD2g8T4ZmpFQEJojqUulEZAUnM9fO2QSEC40MqE53tNQHQNTvMPIk9AqnEXmwzSUECjPCjZNT5RQNQqEzdzrVhAYMQxujEkX0AwJf6KAbZjQMiwv9gYi3NA7lniqLGJekBbqzfzED1xQLXl6EOG6HBARlcT1D3maUDU7wUVyNdpQOWfObuL\u002fWJAXFDTVLkGX0BK083Fx8FZQJfmSzjsNVVAmgqFdKAjVEDV+P7fEixTQDP\u002fS895L1NA4QN2M59MU0B1pDPUz15TQCG2Hego+VVAtnMYcBtSWkCsxx7s7iJfQNzsFKq6VWBAmIvRQksVYkDC4gRGBhBjQMrQ9eviyWRAfA8zVu\u002fUZEDTEqJSICRkQKTKqj3x52BAHrCj6EoYW0C+bh0OQN1XQFYIdz78DVdAcG7eZhUKV0BBAz29Z1NWQDqj9jE7G1ZAFdwnGUEUVkDawi8DqyRWQDWs+0S9qlZAINQrmJZaWEA4Fv6m4\u002fdYQJOqKLGR7VlA1CXYjbhBWkAw1tRa3yRgQIlGWREa3WJAhhHAS6NoZkDGWGKLS6pzQIJIEo\u002fTNHtA5B8NzxscckAQ3HfFXMhxQJ91Uy+esWtApjSqzzGja0DrHSn\u002fj8hkQKe40UBgSmFATjQFTANGXUA+PvjSBK9YQIjTs1rqmVdAAT7xqzShVkAZJLZmHKVWQCRglwGdw1ZAtmfKp3XWVkBPwkwzzINZQPheDY3\u002f+11AEFb\u002f5Fx4YUBb3fHEdEJiQM96\u002fHZ4D2RAcKMZys4RZUDAlO1CQtlmQFS228y55GZARjVM590uZkBjb6h3N9hiQPz\u002fnng8sF5AXQ9xWMI8W0AOrSbRMVdaQHLZzVHLUlpAOsu7sRp9WUD+x+gfIDJZQMN7F9kfJ1lA1kDQgzoRWUBIiI3rTHRZQIihai5S6lpA\u002fcYdxNV3W0DajJVdX1dcQF58xG52pFxA\u002fPhsa1ohYUDIGQBQAbNjQH6ZAwzkEWdAiFVMRrqkc0BPL6g5f4WAQOpgau4a1XpAWrxkanyUekD6+K7UP3h3QE7wf7FycndAXvCTpGCqdEAye\u002fTytj5zQF7skBhnL3JAFIPALSpUcUCXIGy8wyhxQEyxw1NFHnFAnRG+ChkmcUD3na4aojlxQEBWkWSpQnFAwacNHrYlckBoVaZLxGhzQIueLIVmt3RAdosJF8QddUDuRz6B3f11QBAj0csbc3ZAYhxE2DIKd0Ay3Nqis\u002fZ2QAAyp4aQRHZA\u002fBL8r4Hqc0Co\u002fe\u002fUOXVxQL8uMTeSDnBA6f9W7GY7b0BMF6IItDZvQP1riXzjLm5A0QMn4q2obUCYuAXEVI5tQI5SSc5aumxAfH+v7G4wbEDqfLL3065rQMSWSs3anWtA2a3ZHsKRa0BWV8GnnJBrQN8XCqlABGxARHaZRtrVbEDOjrRm8ihuQE6XDtp8BXNA","shape":"45, 41"},"type":"contour"},{"hovertemplate":"(%{x}, %{y})\u003cextra\u003eSampled\u003c\u002fextra\u003e","marker":{"color":"black","symbol":"x"},"mode":"markers","name":"Sampled","showlegend":false,"x":[0.0,2.458180785179138,-2.08788868971169,-3.855140320956707,4.108856115490198,2.9408190678805113,-2.5326843094080687,-0.9014993719756603,-5.0,-5.0,-5.0,-5.0,-5.0,5.0,5.0,5.0,5.0,2.70039841562928,3.305510862810684,-3.438597726537067,3.3727208877125863,-0.1762547255181074,-1.806941618906032,-1.6937237875638826,-3.031686286303729,-1.7663834929363946,-0.44546308604513485,-2.2140416222091686,2.7939138594775677,-1.2701621531144474,3.393750750647047,0.6836971774878902,-3.441678483121983,3.6897001012742363,2.1606918432269024,3.0657099697112473,2.5626695349679482,1.0602076831044622,3.2563293136690867,2.564935473219656],"y":[0.0,3.7812376022338867,-0.8351155091077089,0.5680165439844131,-4.810671182349324,2.2905487939715385,-3.0882146302610636,3.3162513747811317,2.1960239966159603,-2.2495243335249837,5.0,2.388304937076998,-5.0,-2.2641525349135008,2.5524434114200023,1.9605846149935025,-2.5160681490959904,0.6712476051858776,3.163761847839203,-3.446589800164665,1.0106299558854706,5.0,-5.0,5.0,-1.1974389837525414,2.141640945699066,2.0883743819132103,2.437874331568655,1.7386917506725088,1.9401888241087766,-1.0525231001048199,2.152099100382144,-2.870784917405548,-0.3325894560983228,-1.7966613638205764,-2.0902104918411246,-1.020480820757683,-2.0609703668970276,-0.33954848718328484,2.3454837883983597],"type":"scatter"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"#E5ECF6","showlakes":true,"showland":true,"subunitcolor":"white"},"hoverlabel":{"align":"left"},"hovermode":"closest","paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2}}},"xaxis":{"range":[-5.0,5.0],"title":{"text":"x1"}},"yaxis":{"range":[-5.0,5.0],"title":{"text":"x2"}}},                        {"responsive": true}                    )                };            </script>        </div>
+    <div style="height:100%; width:100%;">                            <div id="4fc2c580-ee7c-4d17-a9cd-e0e292cd26fb" class="plotly-graph-div" style="height:100%; width:100%;"></div>            <script>                window.PLOTLYENV=window.PLOTLYENV || {};                                if (document.getElementById("4fc2c580-ee7c-4d17-a9cd-e0e292cd26fb")) {                    Plotly.newPlot(                        "4fc2c580-ee7c-4d17-a9cd-e0e292cd26fb",                        [{"colorbar":{"ticksuffix":""},"colorscale":[[0.0,"rgb(161, 105, 40)"],[0.16666666666666666,"rgb(189, 146, 90)"],[0.3333333333333333,"rgb(214, 189, 141)"],[0.5,"rgb(237, 234, 194)"],[0.6666666666666666,"rgb(181, 200, 184)"],[0.8333333333333334,"rgb(121, 167, 172)"],[1.0,"rgb(40, 135, 161)"]],"hoverinfo":"skip","showscale":true,"x":{"dtype":"f8","bdata":"AAAAAAAAFMDd14i39xkQwNSDCfyGlw\u002fAx3Ecx3EcD8DvLEqvB4oOwL4IQqMfRgzAAAAA8Db\u002fCsAOx3erUTAKwOSbGfEk6QnAX9WASLL2CMCO4ziO4zgGwHnMULoX4AXASgsciZ+b\u002fb8AAIBr2uv7v6qqqqqqqvq\u002fdzleU630978AAAAZaGnwv7NiaFEofu6\u002fcBzHcRzH4b\u002fa499YqDPhvwAAAAAAAAAAcBzHcRzH4T8AAABhdLXwP6yqqqqqqvo\u002fAACArka1+z9C\u002fITFYFkAQDRQpzHxLwRAivNQjuhQBEDDhM\u002f7dIMEQJknzAu6cAVAMF+cQV0PBkCQ4ziO4zgGQKEv7apiZQhAq\u002fcGIeISCkAff0i2\u002fvEKQAAAwHw4EAtAd\u002fNW24CsC0CsWod\u002f+hEMQAAAAKFxJA5A2c1OaTzqDkAU32Dq1vIOQMhxHMdxHA9AAAAAAAAAFEA="},"y":{"dtype":"f8","bdata":"AAAAAAAAFMAAAABgMlcRwMdxHMdxHA\u002fAAABAAkMjC8CSRjT08+YJwI7jOI7jOAbAXX86TXyNBMAHlq1RVIT\u002fvwAAgDUTVP+\u002fqqqqqqqq+r8k+zB3Y4z5v5hnLEbmXPe\u002ft+nrnD9b9b8pjprd3mXwv96sD+RVMuq\u002fcBzHcRzH4b8AAADy7yLZvwAAAAAAAAAAAAAAmEftvj+0RrLptNrAP3Acx3Ecx+E\u002fVbpEDOOZ5j+G+GL3WOXsPwhBKeaX3e4\u002fBRrx+2Ah8D+P+JuQuwz1PyYVb0lEafY\u002frKqqqqqq+j9YnteumfT6P6LFKRRtzfw\u002f1Kh4jJ\u002fcAUAq5qy51g0CQAAAQDQ9ggJA2pKaYNFvA0CRRXbbYHsEQAX9QYbbmgVAkOM4juM4BkDIcRzHcRwPQAAAIMgXOxBAAAAAAAAAFEA="},"z":{"dtype":"f8","bdata":"hFzIq2cjb0ATS2hsnENjQCKy1FtpBWNAI7+PNu7qYkDCqRoKqOViQLB9nivt7GNAIm+wUB9HZUDmbHD9hWhmQDZHPzof2GZALx1ROyyAaEDmW5cLwpZuQPLB4o98eG9A8jCABpB\u002feUBYaOZD0Yx6QPoJqq8HSntAFYMJtSy9fEB1Zu\u002fYPX1\u002fQKKP4rpbun9ANDtfwxgTgEDZOYklPxGAQFZTQzGgn35ATlrEWvXEe0C0J5KBA1h5QF40ZD2TtHdA7gI0TPKpd0AHGx6futR3QOHDgXZkM3lAgKpZvnJEeUCQPrBjMF95QFwSlpHH5XlA39sQXYNHekBYT15sCmJ6QHIA0kCG5XtAbfB0o7IufUDaT+7rrt99QFBWAFTY931AJnieEy91fkA06hBewMZ+QLam2VmeNoBAQIZ6HS6DgEDY9D8MeIaAQExk3ZdRloBAWPRYQb8Kg0CqVxwNizRoQOYY4hgKulRAfGFoQbLwU0B6rkrYXH9TQIvI22s1LVNAQQgHP64iVEAGZs846jpWQJEnp54MHFhA\u002fDmtpOXZWEBFWtBshblbQJb2d74vV2NAl7zdLRQmZEDFJs1KCT5zQG5P0PUSQHRAMjTfUyf2dEBgTy1+mF12QMgVBV9eGXlAcNZau5JZeUB26Bl0iuZ5QDI8atLu5HlAcvBcROyweEBgDbK7GjF2QPGgsc5Y\u002fHNAxIORtFVdckD2uAu\u002fJ05yQF5AdpniVnJAa5HOVgRjc0CqPm727HBzQJNXVIDRhnNAWn\u002ffRGz2c0B3cD+pwEh0QMD2wDlEX3RAFQGHP1SvdUAsKX4qn9Z2QPIi1t0WeXdAXDVE+3mPd0BCm8yHbwR4QMJBApFQUXhAWEPqGCXqeUA+NWs1ToN6QAJPMMXziXpAIh4WHRGqekB4jM536D2AQBYK0VTBsmRANKFRp8GQSEAg6W2z4KhGQPCOLSt1f0VAuMjtk6OCREBM61\u002fC8N9EQLCcecrVD0hAxO0X1YMkS0BgETfTn2JMQO40eQq\u002fpFBAF5BlDilKWkAVPqW1+btbQBIlGoeyj25AQTST+zk2cECnkhJk6d5wQKQ2HKZdLXJAVHhtMc\u002fDdEDmy1y2uAJ1QP3gPcTtnHVAlbvLQKycdUBwUTXJI6d0QKA5liKGeXJA28ZRr7h3cEBKNe1MqahtQPyBZC+\u002ffm1AriEeATw+bUCwzhhBPpRuQKl69TqaqG5ARqOO4OHIbkDQjLu\u002fN3FvQOcRZI278G9AvLmh3AIKcEB0X\u002fXaGhpxQPLg6fhjFHJAN5EjEguickD2Mc1sxrVyQK75ONKxHXNAaG\u002fijcNic0DPhhkKZdx0QDLOJSeHbnVAO7qOHe50dUA4K8+F75N1QL6e686k63tAKsHoNTlKYkDQiQvmfbk8QDCg0bvIZDhAOK6EPtOaNUBYiKBRggIzQIgiOL3rjzBAUN10Z62kNEDYC\u002fQxEy05QDAXe3chEjtA4Oq9tYpgQUBYjEytO5pQQP4jP9Pez1FA9m5BLRc3Z0BygsWxzdZoQHp66fnr\u002fWlAbyb3U+pJbEA32at9YnZwQB+IYGvOsHBAAojNg\u002f1OcUD4qPCF+k9xQGj6bT55n3BA7s7YYl2pbUCqNsYpXR5qQPCqItGSuWZAnSenL0Z+ZkD9a95HmsZlQLzCRmCZCGZApBSQoWQSZkC6zoNKXyJmQHKWQjnpfGZAV51sKK7HZkCQQ0U7IN1mQHXFvJFyRmhASYTT82+4aUAF\u002fFQOVJZqQPGloSLjtWpAu+icyplea0CayndkANFrQBDzp4CwYG5A53hI2pZrb0AKm69XcndvQI5n39YQsW9AhUVjd1CxdkBH01iLSeNhQDCyOV2qPjpA0MIdhIjONUBg0mRxdekyQPCuRllnKjBAgP2IAIavKUDoGvqK3jwwQKjv+y6ORDRAKB69hlX6NUCgaLNsWv08QHCvUURcMU1AVD9oBax0T0AvEVePlVtlQJdXtETK5WZADNAwcuv9Z0ApP59n5CxqQD79XdK0m25AiJUy+Z4Mb0DqFGHtWSNwQGKJs6SlJHBAPQMyp2EQb0A3S+NTpbdrQKdoA11KUWhAfbG7I\u002fbeZEAwfSC\u002fjJ1kQCQw69G9vGNAq0LbXMSgY0CUEdST+aZjQOoQ4fprsWNAFDLQIJDxY0D90593bypkQNd9698uO2RAGoFH82JmZUDp4MW826tmQDGn+Ku3dGdAdp5ZDJCRZ0BREt\u002fA0CxoQBPjA0AFl2hA5ySdZ98Da0Cq\u002fHCSnwVsQE2nBT8iEWxAouCg7CJJbEAcLlyBHSJ1QPJ+dc6Yo2FAcBt\u002fr54WPUC416ZspXs4QOC\u002f+5qZYjVAEOFprlVQMkCgBJTJHJYpQMBxFIK0nyxA+K0Km1XtMEBglPEahxwyQLBOCAm1MDdAhMJW6kX2RkDcqMqZEcJIQD43M6F8MGFADNO8+2x3YkA+jQLlcGBjQCQlIe12M2VAn+3opaT3aEBbiZkMgVppQDFNgUWwgWpAQs3hm5mFakCAJYUegLZpQA5VPDcbCGdAUAqski4HZEAOguiPvmNgQLSbvoo5D2BA6NNA5R9fXUD5I3rHMepaQKOxHY\u002fQ4FpAxItFNxfUWkCr+L1ODbRaQLCT4RgsuVpA6D+SSCm+WkBprvWv1ptbQCQwGUbcGF1AGxTmwwArXkBI69sZOlReQChXBiUGOV9AQg9\u002fQqfbX0B4phSTlvBhQDGfRbJH1mJA\u002fKP3+rjgYkCS7M9vvhNjQBQNCItc73BAVcStepj0YUBsD5dqH25BQICxuhYjPz5AADZcvrAbO0BAzgq11\u002fI3QGha9PTgpDFA2BxTHJ5qMkDwrLK4TnM0QMDEClGGajVAkA2bx4SuOUCkRCgZl8VGQLzaLeAmXUhA0C4ipJn0X0AKquOtmSJhQJ7SXTIP9mFAtEfW3baeY0A3WzqL5hFnQKQGEsmfbWdAJYaFhE2HaEAbVT1gkItoQDRiZEOD5GdAXe0EeH57ZUBTN6OEc6NiQHpKmKcuzl1AubVkz8wTXUAJJcOYs+JZQJZyF56Rb1ZAmTMI4Y1cVkDJvO0S+UBWQDKApIwj2lVAgYrxBlivVUD64Knfw6dVQPIoOyed31VAKKRFPyfmVkCqA0wxa8BXQKyu6QBw4ldA2GswYYKjWEC+TjcHZjBZQGma9BKW2VxAG6xNybWMXkCX7raorKBeQEnEnRJtAl9A+l2hgDmobkAKgzVwmAFkQPDmQkSCMk9AoFacVBX1TED0LvEht2RLQNxghQq7w0lAcN1iCPPQRUBgx9PfOFVFQCBuF8EvpkVAvD\u002fWgXfdRUCke\u002fOaff5GQNRZDfPHTE1AsA8Pnt5eTkDZZ3KwkytdQKk+JeIt2l5A2j3+S1gHYECwfxSj4z5hQB7ETRZh1GNAb63LtIAbZEAdRVsM1QVlQFen5YZqCmVAWfm2GbK5ZEASTpJ0lvRiQN4iXK93fGBAATZgTtLyWEDGcQUVFQtYQJjHZKtYs1NAWK7lwFhpS0AwSoToJxJLQOQ9T\u002f82j0pAuIFuY\u002fpYSED4\u002f\u002fkj3A9HQMSK+1PmwEZAhDN4\u002fgrqQ0CoNiPwC6VDQNj46WWoQ0RAiFomFgBkREBAiEitvzVFQNCnE1\u002fA5EVAhOlLFcp5S0AMVXc8h29OQAxYd7VEk05ArLD\u002fPlxDT0CKoN4cZAhoQM4J2h4wD2RAtFDyQsOFT0A0xloJ2EhNQKhCowenuEtAMPujVZ4XSkBk0oGu1SFGQGw2h4Z1okVAiJhi22rwRUCctqE8iyZGQODZCiUzQ0dAdEqYw4SBTUCAh326S5FOQB4R2FTrKl1AY3Mz1KvWXkCCKxoalQRgQALQKVQgOmFA4G9kGKTLY0CEoqJqYhJkQOjohVnC+2RAjqjwpFcAZUBdpQcA7rBkQAr7hwV+7mJAQJ8cse13YEByKAwJKudYQKOWcnWi\u002fldAuRJcucuhU0D4g9Pg2S9LQJAHUazR10pAHCUx8ZRTSkDkTLLoLxdIQHD2zGzryUZA6LVMrd95RkCA+Qm90JRDQNBx05rdRUNA+GrXxt7fQ0Cs13XSn\u002f9DQPCPVW96zkRA5MpS8r17RUAEzOv7twlLQCgSfk3I\u002fU1A6BBlVnYhTkBE05wPR9FOQGKGRLB78WdAhEO0wrN3ZUCp38gcFexTQGtFuUDm01JA9sH+cicOUkAeNFsMaz1RQLz\u002fZ\u002fE3Qk5AIL9PTvpvTUAUgLvVcXlNQCwj3URClU1ANGS+OT5OTkBgwrxN849RQGznkcN0\u002fVFAf2EfoMKRXUDhWaOfjvxeQOqLatOKAGBAyUobgnsIYUA0ZQDKKT9jQIKi3vMrfWNA2Ey1\u002fy9QZEBUhPkfuFRkQK\u002fvQx\u002fVIWRAK+m26M6aYkCgJHPrwEZgQCzDRFsxSVhAAbyZva5OV0ALkyMkEX5SQJAT\u002fGVR7kZAuLOqhFODRkAYVlJ\u002f4uFFQIAdvyrkGkNABP2tLGJwQUCMLwSx9gdBQKgN3p9UyjlA8HLDnZhyN0D4TQzUzNs3QAhz6QyDAThA6L\u002fIPs0gOUDIExsr1S86QODVUmoBEEJALIVDfn\u002fiREBICd9rAgVFQJAGTeaFr0VAsQZ7ImE4ZkAnno6TQtNlQIfQPBjd71RA4V+FtA7ZU0A5i7Fx0xNTQNYUsCQKQ1JAnocZjGwfUECQ3b6Ej1pPQBS7jOckVU9AFAPFNT9rT0Dk1jq5TwdQQLnoMTXASFJAdI86T5KwUkCo7+msasZdQHXHthNaI19AVPjjpwkPYEDyC9vPQQ1hQDn34geVMGNA2uLb1LlsY0CqnS2M7DpkQALy0dhwP2RAhRMAenQSZEABYkad15diQNvstajxSmBAR\u002ftgNJJEWEBKW\u002fRgN0ZXQK0LEsjuXFJAtFp9XNlARkAYJ8aF29FFQHCp8\u002fBBKkVAQJX+lBVGQkBI\u002fxDI\u002fodAQOTOeMR2GkBAKF70HsZqN0AIIDRNCbg0QGDGgTMG+DRAsK36s4cYNUBwtL3Udh42QLCMXYaBHjdAuAyg7LpqQECMNoSagDdDQCRdZFfUWUNAADjSSocDREClABJoLfFlQCYPNjwhiWZAQAOGaKvnVkDuu8D6NdNVQB4nbEzHDlVAE+vnVbo9VEBWeToKEQxSQKBHWekTiVFAAGLy7JJ4UUBC2iN1WH5RQLA5ACgcvFFAtM6mRVi1U0A+fS6GyBJUQNsvb887Q15AZ+uIWyyHX0DyEIkrHjhgQMeP5ibZJGFAvrh5mHclY0CtNMUpSF5jQADq\u002fu3yI2RAk1M+unEoZEB8vxJYLQZkQIJwZoDeoWJAMAVS4LphYEBJ5Z5pQlpYQMxYQP7tVFdAAfbEyAA\u002fUkBE0XrzzUNFQGBmo16gzURA9DTvFfcaREDwE8aKcQJBQJAEu6qUQj5A0J1VNjtVPUDYbddw5J4zQHhTR6iLSzBA2IXtJYlDMEBgMClZ\u002f1owQHARcYoYNTFAKG3OUG8bMkD4fJ8AdXM7QNjOARgCfkBAlFKC5xWgQEAE90M1uEhBQPfrDrUoimVAcqm5eIAxZ0DEwpNCRKtYQC9IfoZomFdA43ddklrUVkAezM\u002f3uwJWQLd3gnb+w1NAipr9qUEyU0CVZYnn2RVTQLKuw\u002fAXF1NA1vxgeNtDU0BTkLp1NwBVQMjEImr3VFVACeCNffDHXkB6Hq9YevdfQAaUfOcTaWBA1GWgpppHYUCdtCAlRSxjQLBehMlvYmNAYxpaToEhZEAsya9z\u002fyVkQKz02xPRDGRAnWmJrc66YkBYfCFV+IRgQI0tQhORjFhAx3G0VXWBV0Cl5GA2skZSQDzD9rrjtERAXCeI3dk4REAIIjqJLH1DQKh5tLQQOkBAkPYzl\u002fB4PECYO7ssyHw7QIjCgDJjCDFAIBN4w49rKkBQ1sm\u002fYOspQOCHMZxXDCpAYEN8N3J9K0AQAvP3VyMtQPigIVxYpjdASBk3b5wlPUAYQPELkWk9QFh7Kmoduj5ASf+myiVTZUAFEuhQXspoQKcxIGzjsFxAB1xwYKSeW0Bqp5PPP9laQLpWgc7zA1pALnUHc9agV0DXEVK2CuxWQDir7P2AtFZAvlWAJJarVkBSabeozLJWQOhIpt1S7VdAUmmyJvEvWEBKw6R1UBNgQPY7IRJel2BAJrp4\u002feb2YECkhTmCcLphQANPaKysa2NASjhUnzmdY0CbYizCW1JkQNv9m1j4VmRA7VFx431SZEBoVGDGdSVjQCg+KpxaA2FAJzCH1eVdWUBcuCif9UZYQJrlQoWfwVJA4Idz+ARwREDokjcseOhDQMhbrOIaG0NA2K\u002fTKasJP0CYgkemMKA6QLg7YmhwhzlA4NL\u002f+G9TK0BA5uNw3twhQADL0bK8mCBAMOsvJPGhIECgddrZlaMhQKB7ZnPJCyNAALKVco5EMkBQwAe7eMY3QPjNn0n9CjhA8F7JmcleOUBoRvkJjVhlQJDWCa7+ymlAMtN+IkP6XkDstYv95+RdQLFX+iwnHF1AW\u002fsekNRBXEAnIoBAbsBZQIiho5P381hASC2p+VerWEBpEef\u002fNZxYQOzL69kYjVhAlP1Ioop\u002fWUDJo6qCi7hZQIUaQ\u002fpZe2BAIMuRXbv2YEDjevIdUVBhQI5QWQKRCGJA6UO01YGmY0BvsKK2rtZjQE01mcwxi2RA37q+vgaQZEAogDOjCJlkQOIjdJWyfmNAB22c8i5lYUCH4YLEbAhaQIfvdNNa61hAP1irvVtAU0D44AJo9tREQKRDkQL7R0RA2Dj00UpyQ0Ao3RNpjWo\u002fQLjwIGd9zjpAQAukLb6oOUBwKFXs11gqQIB3pbOPKCBAABxygFY\u002fHUDgnT40bUIdQOA5m4TmAx9AgK0\u002fkgjbIEA4LuWuHzAxQFhU9VVTxzZAAPIanwUNN0BoJgCW0WY4QHuJ5AOJtmVAn2ud5Tv2akCOy+E9kKdgQFRun4BSGGBA9CQmruVfX0BC19nhLXteQECCxh1NyFtA6XevwD7bWkCS2D++vXxaQErCJn3oZVpA0jWylRI8WkCRmCYk1N9aQCy7cT0LD1tASm6tM5DWYED01rHfAExhQCSJoNjAoWFAbRWKQWxTYkB+H3ymwOpjQOCFgQVLG2RAeMy6UebWZEBoTSBxONxkQNwxipdR92RAbupN36buY0DDs5ziptphQHrdtToX1VpAAbzUktWxWUBzVbXboeJTQFyGn2zjkUVA7DUI5FEARUDUhsfnoyNEQNxFr4a3RkBAwKdAfALJO0CgwVbxFZk6QKCvuRZeUytAkEmBHw67IEDgxD4ibTkeQMBtiLeDOh5AEKqdYnYAIEBwjnZ8OWIhQLDD8HXgujFAqDgguGiCN0A4nsiNe8o3QOD7hUsZMDlAR8L\u002fyLt3ZkDDW\u002fo92JxrQDyJ698xMWFAMbY+d3ydYEDYLBBkcTFgQBKpcCggdV9ALLohxgqcXEDWmvvAnphbQGTbBIL+K1tA2imPdlcQW0AXhYCjV9ZaQIftLEonT1tAA7szHIB5W0AyDMYO3O1gQDaQ7ldlYmFABu\u002fKwdC3YUDOB\u002fCdsmliQEl4sgL9BmRAbLd8qvY4ZEAaBsNIlP1kQC0e0aRUA2VAhsHjS3gqZUCmDgCpdClkQO+ljH+nFWJAbNynPPc3W0AgVXGemBFaQI3kVmSNMVRA4DweuCf5RUB8qrh172VFQCDSMc\u002fEhkRAXNcwIgSfQEBAn6eO+2w8QMDN+vMJOjtA4FjhRKBgLECAIvyNwMwhQGBDSzKSQyBA4OIzWQ9IIEBAIpBm70MhQIDsTTuluSJA4FBhKi+1MkC4Er17u6U4QAgnvlq87zhAgMxz8tpeOkCVnUP2YApnQFSgtBRT8mxAnPXYtNriYUCju3YZrj5hQO2uX0qYxWBAmBKBfiw\u002fYEBFN80ilSxdQIUPGeVi6VtA3fUiAO5WW0Bra6nkzC5bQA8tztadzFpAGSi+c8zoWkAErVCeOgpbQEgtH7U5o2BAwuuFOIQdYUBnkd5lBnhhQO1JjQPdNmJAOFhvykQAZEArKdeNVzlkQOF8bs3PIWVAhhTZqQApZUD8nl54H3BlQKuJnJpfd2RAihY6YhZZYkAVXvhfsYlbQDc9lgxAXVpArMkxnMRhVEBYRucociNGQDxhT0B4j0VAWB+LU1CvRED8cUpL3MVAQPB3jNpIvjxAmHY6fSCNO0AwJHodOoItQBD2jasJuyNAAEqzeoPGIkAQHN8Ie+EiQNDVfzewWiRA8IV9pA4qJkD4hLBa5401QLivUx1cATxAaL\u002ftWFdRPEA46eMTs909QAcbS1Srj2hAsixVKqZLbUBqVljHJO9hQJ\u002fcayk8RGFAAlhIG+bFYEB2eEV+UDlgQH8p7SDx8lxAB4BWKdOYW0DAyltsS\u002flaQEurRLrzzFpA7hqrRZZdWkDGO8IszV5aQIMSDwoTflpAeKaVbh1kYECzOZn9LeJgQP80dSy\u002fP2FAiS41tb4FYkAm1akLYuRjQDjH\u002fg6VIGRANPPzwLsXZUCaIyQ0eB9lQO57X\u002f4OcWVA0N1ozNd3ZEDgLYWjAFNiQJEfYQQLaltAt2qTbfs7WkDL04\u002f2+DpUQCQARmNg2EVAQOZe2vxERUBMVrt+zWVEQMD7DUATgkBAuPfxoZhAPEDwnvBcVBI7QJBUP\u002fCx8yxAEKmZPVieI0AAssabRPEiQACfEP2RFiNAUE4yc7jHJEDA8PeSqL0mQFAz9VC0SjZA4LyNV\u002fHuPECYKSabHUE9QAjVO+gm2D5AMkzGdnYIaUDM1A5cX1NtQDqN\u002faxW72FAFvlpIslDYUA+FYbQ8sRgQCoVxAbHN2BAqb2gGYfrXEAHDLwnRI9bQOV6jJCF7lpA1zYzIsrBWkDuLpNuNlFaQCxpEZQCUFpAqMMpPRlvWkCKXScxgV1gQHKY3x7z22BAWGzykdI5YUCEf8WxhwBiQEh9Wn484WNAUwl8d7wdZED5jwFHSBZlQGgA38wRHmVAZ8uzlJtwZUAzTzv8RndkQIhz6FrEUWJASh9UXrtlW0BAjB1yhzdaQO+t2AQUNlRA\u002fBPH+jfPRUCU3fh65jtFQDz5ZoDUXERA0EsmocB5QEBQ7wSfBzE8QLg5+\u002fASAztAAKDj\u002fN\u002ffLEBAuAyf4ZUjQHAM4jbM7yJAMN\u002fL4xoWI0AAvfC9q8wkQCCxvhxSxiZAuJnw0fVZNkDoUw9xxgI9QNDdvCsnVT1A6EzL6C\u002ftPkCNb5L0OxNpQNDsh628Y25A3A7lanSRYUCcD00w\u002f8dgQLUrLwAJMmBADcWow+ETX0BjiSZ+x8taQPKDI53aEFlA01TvC2c7WEAHODwY7\u002f1XQBJ0wXD+WVdANVRXtZb4VkBjWJ7pPxFXQI6TYceX1V1AsQ4F2gr5XkCZqotpTtNfQGscbs4o02BA0c9PpcUVY0A8KOfMFWBjQEtM9368lmRA+K6FprSgZEDGHf0juhdlQHD026\u002fWD2RAV7khVpPFYUBWByg\u002fcPlZQF83f28PxlhAdNMmkwi6UkBkmu\u002fCzyFDQBSyKrFxk0JA3CEPHki8QUD4wdLH6QY8QNBQRJZmhjdAIP8dqPZqNkDQdG0smQMmQKC1fhVMAx5AwDIXZeBnH0BA8FT3+wogQBDXPKRMxSJA8EmIomtuJUCoEKUQiaE3QMiP7aCsFD9A4Dw4OwhwP0DcNn\u002fc2JlAQGjeqAD2pGpAFizRaMa9bkBPaIbKVUphQA5X8hIodGBA859HusyoX0CKtHew5UFeQKeBPqYKqFlA7\u002ftmRVLGV0BLzSvIittWQI50Frtal1ZAxXSBwwHfVUCpJh0ZRFlVQOca3tXJb1VAiYl3gB9xXEAYgUcylqVdQJWPHqkvjV5AdFT5biE\u002fYEBgu7VM5KpiQE\u002f8Qpzb+mJA1N7NxRlKZECjGHjJ5FRkQJw9cGq512RABLkCqo7FY0AC31pzNGlhQCc7buxkHVlAIH+jEGDoV0DYc8s82dtRQEByYIrwl0FA3DSId2EMQUAEN9WVqTlAQNB+o1TKLzlAwLNHqhHSNEDQXVINQMAzQJBKcPHl1iFAgEdB17XOF0CALANI02saQCDvONyTRRtAILBeclfQIEAA9W33T8YjQNige2CQoTdAgPwGOcNnP0AAdvPaxcY\u002fQIzx++4RzkBAWUy31Mcra0DcSQoMEjZvQJga+qQn3GBA+ORLhO3nX0AvWKlUtYxeQDCbWPW3BV1AlnPx9bz4V0DTLIdCoeBVQOqsrfAK2FRAXgv2U3uKVECP\u002fCGku7VTQP1hQJv5\u002fVJA1bRg8KIRU0DLvuk8nGpaQIJEzY7xtltACaemQTOxXEBxfhtOLcxeQA3S7Q6PCmJA2uKKITZiYkCNqZ62PNJjQADFLAIY3mNAVR\u002f9nVpuZEBI3yIjZUpjQHJZDwif0mBAaO+cEOS+V0DYDOwXBYhWQDDOW90RflBAEH6L0WhmPkAwfA1maFg9QABeSNxYwTtAcKNJnZjHNEBgvcAO0qAwQNDNf8kzPC9AQA50Wiq5FkBACoh9GikMQGAbqGIOgRJAgK9nwyebE0Bg8+H6bEgbQBDdCb5ACiFAKImDUyV0N0BoZ6pcma8\u002fQNC6\u002fbzeCUBAaGsDcfkAQUBLnC4BatprQDsawG94XW9AmpVPfWG3YEB9afC3hpJfQAA1bvYxLl5AHuLHgaicXEAzup9g4mlXQEY8wX7zP1VAMB4k0ZotVEBO1\u002fsE+txTQM+tfr7w\u002flJAsjDSKd02UkCVXpyamElSQBci1vkiv1lAWMzglTUTW0AXJp3JgRNcQKLRjs4FPF5AeunDMKvUYUCn4b8kwy5iQPE7KUYJqWNA1IZ+bze1Y0Bjn618FElkQJxYvs2AHmNAjiEqvE6dYEDGIXSQTkRXQDWVrQz0DFZA5qevFbUEUEDwVqrN7cE8QPBk2Fs5tztAKNbzA1olOkAwyDreDUYzQNB6GpGkZS5AUBNPuudqLEAAhwKqvlcSQAC\u002fHcLioAVAQLV5UaO2D0DA0n7kUgsRQKCWnxhhKxlAUKqtup0hIEDwdzpiwmU3QCj5GUT8xz9AmDNZm+gWQECkxA87GhJBQCJhgDbqEWxA4ZuhfyB6b0ADsJHbDp1gQHbrTMdVVV9A42C8mG\u002fqXUCrffsETFFcQKay2lRKA1dAQq6jWYTMVEAFmDwuJLNTQLZph9tNYFNArF87I5R7UkDiuipPvqdRQBpUU+\u002fNuVFA\u002fzvTF8NDWUBJb7+8Xp1aQJLo54v8oVtAlPbDnSzUXUCKY2Txsq1hQHys+iaGCWJAEBZ7eQSLY0BJvZVNbJdjQEbL\u002fBSjLWRAiL0JlxD+YkAlA7Rr93VgQP7vnp886lZAn1m6v5OyVUCQd07Uq1dPQPD6T5LCjztAmO+en4aHOkBAALXiifk4QADi0TwALjJAANSLl6RSLEAgbAjq3F8qQABiiZcRXw5AQDADU5L0AEBA7EDEnfILQIBLURu1cg5AADkk412tF0DA++gUjvweQFjCkyU7XjdAMHV2m4bcP0AwFs86yiFAQIih3W\u002fwH0FAMkZI\u002fcY5bEAuLohh0y5wQIcqu8eh019AP80JT7WvXUCEEX2dSBRcQIgJ2SX8QlpADh5cIM8rVECU2B6aJpZRQAxfaDLMSFBAOMEvqzvLT0BEXxFytp5NQMy1AxrLR0tA5MjUkLJhS0CP4YxQyspVQCjdMufsS1dAdRCxB1pvWECqXhA8ZeZaQFJ2ZwcfkmBAkuLV9\u002ff5YECe1G6DSaxiQF5kOK0kumJAYHDP0U5bY0Db6naAPAFiQPAufeNTh15AaoFuIOY1VEBUC4rbOv1SQPSu+Yg0E0pAONWUh0C5MkDQS2O96cUxQAACfpezWDBAcC8u4AxlJEAAad7JzJkaQIBGVBCINxdAAEyIv7kd+7+Adnyu6rn7vwCeBFIbKOE\u002fAGaxKxsY7z9AQ2gUts8NQIAleRC+5RdA6E71AxzSN0A8SBUAWJJAQGCXCbB4ykBANCOi3dfeQUCCL1\u002f\u002fr2ttQCpuBFF\u002fU3BANUFExtd8X0DK20Nax0ZdQKvzRiZpnVtAUC+Wyvi7WUBZwZHP72pTQOCEVLjxuVBAMC0eoC+7TkDkFqptYetNQKCnk2UwoktATHD8JP8XSUAQ\u002f40nzy5JQDNjkxDq11RAr8iz9OZjVkDeZk4GyI9XQALetQ2tGVpALmKuJXdEYEBOKE7sgK9gQFCc+ipTbmJAvDIutoZ8YkCOuEKMuB5jQHuo4RCrtmFAQ5sd1hvSXUDNthKixGtTQIJ1KA1KM1JArI6xXEWQSECwZWdto0kwQLAdmyKDui5AgIvnjNz1K0BQkn6CghYgQKBh\u002fNc2mhJAwO3FuTzFDkAAMnHbHl0IwEDoBk4jigTAAOCF4KiClL8ARMeRlgfdPwAIgNu3PwtAoFa7xt0hF0CAjDJKhU04QHRAZ7ik70BAMAVgOSIpQUAsiV8zFERCQFy5OU9YzG1AsDWMlo7ZcECa7jKWVrNeQABoRNW8Q1xAvLhO1x9uWkABm\u002fXkcVlYQD45vFZyUFFA\u002fOcD36CQTEBw1ZBDE3hJQNRjOK8LikhAIAMfUODkRUAILXaf\u002frNCQKQQsOhdwEJA3Cq49xURUkCnWxEj1L1TQMw1n1w1A1VA+1z\u002fntzFV0CtHl1PCMheQPzeBUGusF9AYtUvbwW6YUBeWLchGMlhQBowrBAKaGJAyspk1n3OYEBZuGI6HplbQLbVjiBr+VBAKG4dF8aGT0BguAQAY\u002fxDQED0pQXisyJAQGvHCQsOIUDgMJVQ1TEdQIAhYkEuFAFAAG0UgtaP5r8ACnqlc8L1v0BVkMseZRjAQLSdbGWQDsAAxl4JAALUvwAkV2CArNI\u002fgJiY5lpfD0CAI3Eo\u002fvMaQHiSkQKRhjtA6FLjQPj0QkC0KGB99TJDQFzTHlmVY0RA1syg4Aowb0CPSBzt2+NwQFNHPbSFql5A8v5KCQE3XEAGE9FtYF5aQHnQmW40RlhAeFbNQaYwUUDEyxmXG0VMQMRKyjH7JUlAXM3rNuA1SEAY5zFZYIpFQEDtr9rjTUJAFOAbLoNZQkDKQ6YxueRRQGzmvoOZk1NASoc\u002fyaPaVEC4TNdy+6BXQPe4lQmXrF5A8j5fBGiWX0AWu+0S+65hQBOVyqsZvmFAZiOFYXNcYkDUgdlJP79gQMP0ejpic1tArKO9q2TQUECAAlJpSzVPQGAbSZ18sUNAMLko3BjhIUCAoYbaJT8gQECniPQsoBtAgDcqc+rR\u002fD8AQuZ6mubvv4DcxZ7LP\u002fq\u002fIA\u002flz+PfGMDAs8BIF3YOwABYYKpzYc2\u002fAIITh\u002feZ2D\u002fA7pUT8kAQQMCOfHjjpRtAaE59ubbcO0AA1XpUeidDQOjEr\u002fbIZUNAyPsSsPCXREB4WgMbxUtvQFYJSpbCKXFAXOLKmOiDXkDrERgpaPdbQBSAiGyNC1pAxSAvrxjdV0AsgJuqWXdQQCifBYA+hkpAJLc2AAk9R0CgZ3R6oT9GQNwk76GIa0NA0CRi4GLIP0Dgsr3Uz9U\u002fQFh7fT2Z2FBAGiBfQsaUUkBQ1Z3NKeZTQJLAHlx6w1ZA2bVjp3oJXkA8tE+GcPpeQFh5CQB+bWFAW81aEN58YUD3UclmQBZiQKy\u002fZ3feYGBAFZ3XMjKIWkCI\u002fwSzCqVPQMh7kg8KPk1AoE97rSPpQUBgUqcRaDsaQGAbHEIKLBdAYCCFa8afEkAAQDRjWd2rvwADfJXykwTAQPEgTeIfCcBgfElF3ZQawIAP50AM0wrAAKRVAL8R5j8Aol\u002fBat31P8AJ6ORMexVAkG\u002f0NI3bIEAYxq\u002fYO3I+QOg\u002fHyqzokRADBzNbhPjREDcY+jHLx9GQDSp2\u002fr8BHBAdqvIFu5zckCf0hI7wz9fQPBB6GkfWVxACZwxlswnWkADcdtMt6hXQJDG85lVP05A\u002fEdmhxnARkA43fcxS9xCQDQ2XYHfrUFAgGwoFe+GPECAH7gdgEAzQKiQitVrJjNAdOrds5tWTEA4AhzAuBJQQODofxm5hVFAA1WTTEmtVEC6X2tB1alcQJI7k1G9r11AxJMFLVDnYEDy3Ff09vZgQDFru+rqa2FAkIaS1uakXkDX+pS3V8RXQOAtVWeO8klAmBfZdLirR0Bwyc+u47c6QICVWWLsDwlAQEe88FjVBEAA7Aymalr9PwC3eF3rPfG\u002fQA+NFomoAsDA9kfHy4AEwIDgvhCTPvW\u002fwP9dxLYSF0DQqOVIBJInQKDI2ZeydClAWBjIUMwYMkDoHNyX8wc2QICCGo4VNkhAGBXFsIdhTkCcE5tEHqpOQB5icpXVBlBA8EC0xcXhcUCIDut2pYlyQKSC7aj3W19ARimXW5dwXEC7fpqxnDtaQEzVordHuFdAfK0A8qM\u002fTkB0irb1kbFGQEixIO5\u002fxUJALBhffHOUQUBwkPil6EM8QOirovZJ3jJAAJdn7u\u002fBMkBoUbRG5i5MQDqWiTbqAFBATuDJa4F1UUAwQTH7jqBUQEQbJAxXpVxAc+nIvxysXUCO4qtcdeZgQGfzwsQX9mBAjmWVtTtoYUDEtJ3o2ZFeQDRs7KzAqFdAKBJdQaG+SUBcc0EyZnpHQICnY5IVezpAwBxW3uwsCkAAHelmmREGQIBktYHuGQBAAP6gj8UZ6b+ANkAVZVf\u002fv8DkXV8wWAHAAJyx+Cxc5L+ADLvQeMYaQJAs7NpYqSlAUKOQPkOUK0B4DeXKpD0zQCjDYOk8OjdAPIStok3wSEBgVUkx+SZPQNzNWa8IcE9AbmSUp+xqUECOuk5muwJyQJWRkCZ3vnJA0\u002f+YjNWmX0DxpxbqaLBcQPFPw5bmclpAy5ze5KblV0A0WRxFY1JOQETq0vSfoUZAsBNiSDaiQkAsXp93AmtBQDCuqo4byztASIPIZCUcMkAovg+PaPoxQMBJKyyH4ktAbNWHodG+T0Bo\u002fjmsoVdRQCEjiLulilRAaJOkvguiXEDCBmwAvKpdQHPwA8e052BA\u002fiMPaEn3YEAKm2SreGJhQHxYNvOZal5Ap0lSHMdtV0AsG03hIlNJQJhXkvdxFUdAqOTg8KYOOkBAdLwDdyAOQIDV4LPlUApAwB9NJrPOBEAA8Plv1iS1PwBSi2Vou+y\u002fAPYvzzPj8L8AypUheBHzP8BbdyE2KyJAwDg+2boEL0BgcibIsIEwQEh2SkWmJzZAOKePN2dEOkAMIfM0UMRKQKbco13VilBACJ0iqOyvUEDUHXT4hGVRQBb92IGuU3JA+reuZaMwc0DLnpe3DTJgQHNoCeXdV11A3PzvsIAJW0Dey6dHpWhYQNSRzMTFyU5AlEP4kx\u002fURkCQYnLqO65CQOja07fGakFAuKuHjQJ\u002fO0BYyf4XpTwxQKAqSaDnDzFARA+\u002fimmWS0Cc8pNTXIRPQPQ6vgw\u002fQVFA\u002fZGZPDiDVEApxcnlzrxcQEI1237UyF1APChukET5YEA4tfFYrghhQDJwZN5oZGFA736BOLg1XkD1l5Ui+BJXQGwPiGCEv0hAkHxOrN+QRkD495a8C9Y5QIA3a5i8IhZAgNoEtEiMFEBA9JviNUkSQEAAFG\u002fqMgVAgMTyC+eqAEDA3slWj0kAQIBsFxdPNRdAEHK9DDvDLUBo96nhIek1QKhCYX8j\u002fTZA2NMjI6sMPUAIK0J\u002fSrZAQGyzLN1G\u002fE5ArGYuTkrCUkBrVLZjiOhSQKRvYqGko1NAZpkT8FcGc0CF5abyYbtzQK4mGKfKumBAXy6J3RpSXkDAKh6OxPFbQGlupvn6O1lAhBwSgdDXT0BUMyWiKJhHQGRmIC3SSENAbIDfkiP4QUCQiKFn8Uc8QOgQOs1rZDFAaF3XlWArMUBU6euXAMhLQJCgtvNzx09A1OBUc5BpUUCKIaVPQLpUQLi0YEkhFF1Ao6BImPkiXkAZ84Y75SZhQGxYogQINmFAvm8l1YR+YUCyA2axaSpeQLCbg4lf4VZASFXQylyYSEAgL\u002fmLgH1GQFh68s5gtzpAMP+NuPiuIUBALM8IuhQhQFAYwZgEPyBAwKp1dVCrG0DgU0r48WEbQMBGQFavtxtAAHTX9Gb+KEDw755Ue\u002fg2QLBW3OOytD5AeNhVosngP0D8w9nZfzVDQCTUqm1cjEVAhBCXc09HUkDfKxBxpqpVQNUnQskx0lVA8agAgoiTVkAsksaE4+VzQP+wBKsrXHRAeD9zUCJyYUBG8fj1m6lfQLgDBYtRN11ATct4vJhsWkDurlHl8M9QQECQEL+fFUlASIdoY1+cREDcweTESj5DQIjQnDIrgT5AkCUqS\u002ff3MkAwXAMA97EyQMAr7trepUxAooVB9KFaUEAGxgNgn+ZRQJXKeaaPRFVATzmf+8K5XUBUjIXZjcpeQID12dexeGFAIBSmXm+HYUDY1BJ8arlhQLcE3p53XV5A1lkVG4DxVkDooloSqhRJQMyjm9KGEkdAwF8pREogPUCwfyzlBygsQEDzlA0NxitAgK+yglxHK0AQjc2EQIEqQNBCaF8efStAkLETZGL0K0AAV8ROjpQ1QJhhM6qhzkBAZChelh0RRUCQEQ9jf7RFQKixPhFkPUlAXDRbCxq\u002fS0A7QXotYsdVQDNNhaVHTFlAvvUl1zd1WUAJXsDGNz1aQJ7JY68u8XRAKrUFHoq5dEB5fbCuHudhQKQ4wmfaQ2BAU6dQ7jQMXkCRu0b2uzZbQBQoq7GhclFASAWwsWw0SkDQEUtIcKVFQFTu7BZmQERA9DcCnxEtQEAgpdo11nk0QPAMA4zkLDRADPMxCuhsTUD+A4Rg5sFQQJCS+jPGUFJA4MWx1t20VUBLiQV13DVeQAC8Bc9BR19AZgQvNN60YUAaASj7WcNhQAjNDyxN6GFAvclxxaWXXkBUpTlHmRtXQPS7Rek6qElAAIZN6z21R0DYqA6BkCQ\u002fQFi\u002fdyUYvjFAELs87VWdMUCwVRVIE3cxQADdPF2TjDFAmCr9HzZdMkAwSQyTtK4yQOCY9ZjlcTtAvF\u002fBSy0uRED0OsysEalIQMBKDqXtU0lA5D\u002fdrsACTUB0bIG\u002fX5xPQN4XX5rh7ldAjASPsCOGW0CLp35X1q9bQEW6MIB2e1xALyRkFzSQdUB4R3NXnQp7QBiGGSx+6mxAVwaptksca0CNpRScxrxpQLinh4kcKmhA6cPQNhSxYkCI8h8tXDhgQDv2wIsn0V1AEvtBBxcCXUDUSG6lZp5aQN5s5bI15VZAxWevXtjAVkDmywk6sBBgQAhGq9vvGmFACkamtHzlYUAgz6MdB5xjQHIxXqYrxmdA96KnQANFaECI7i+wmf5pQDcTq6jYB2pABsfMxLpzaUCBQkL0pT9mQF7JndiwsWJA+fZhepPuXkBZP\u002fapgppeQP8SDqJsPl5AEgBJVTsWYUAnEK+yNDRhQAqLF3PfY2FAWcSwNmFfYkCljDSoNyFjQKJ1rdddV2NAWT2VAGG1ZkDgMinhXPlpQJkfD84Y5GtAd4wxcXIpbEBBCA4RqJptQKK8OyK5k25AZCWxNnMMckDj13SugSlzQO1md8EkNnNAkv5pRYVzc0DAiYDw8NqAQLa8v+OhEHxAfLQcjzYfb0BOCLY5M1JtQObp7Ux182tAAileHY5hakCQCM0\u002fCepkQJJC29xRcWJAb4PQXUshYUDUFAYapLlgQJOifkuDDl9AIiu5cmZQW0D31F+xQCtbQMYrEatpOWJApJrVoFxBY0Dzhp5DDApkQN2AFkYVvGVA4XsSZynWaUAwYpo5HFJqQHCh9bz9+mtAVy\u002ftv3oDbEBqIs8QylxrQIIPBG4GK2hA6z2DP2XCZEDIVsxbDPhhQJYDxOP83WFAMUapqQAGYkBQ5cpwWZZkQGjliPGouWRAxTmyn4LxZEDNvwXoUBNmQNlpZ+B+7mZAt6uX2TgrZ0BFEXmqp91qQCBipUqJW25AkLGGUnAwcEBcxBW8z1RwQNVCNlrEFXFAPz\u002fZkFKXcUA7YtANgW50QF5Bu2yakHVAQLzb22yddUBCaKvnp9t1QH6JBf+58YFAvMdTv1mHgEDxfhl7hOJ1QAaGCcXxEHVA6LBI9k5xdEDua8AuNLpzQPaE8ZhqO3FAZ893slMacEDd0oeYuwFvQI57F20eo25A5y37msyLbUBXZg7US9trQC7enwtey2tA\u002fmO0PYERcEDJTZ37vopwQGbCsLCZ5nBA4l5neDGscUCi5EZXbIFzQLquN0hht3NACwpfMIhodEB\u002fsMjMo2t0QELyavMOE3RAwpqjP+THckA3dop5Q7dxQAV7XyM7r3FAsLiJbsvOcUA4vA3Ul8dyQMLWZlMPhXVArJdAfgqjdUDAyYMzyNF1QLBzfRlZuXZAXX5jE\u002fhed0BEID8Jsot3QHwPPP7HFXpA2ueV5Y9DfEAmwMHozHR9QCQ3IhzYnn1Aq6Mg1JJ6fkCjm7bSJwt\u002fQCOumbNCCIFABTh0A5WagUDZ7Ptq9KCBQDAfHg\u002fGv4FAKduXWRWlh0A=","shape":"40, 43"},"type":"contour"},{"hovertemplate":"(%{x}, %{y})\u003cextra\u003eSampled\u003c\u002fextra\u003e","marker":{"color":"black","symbol":"x"},"mode":"markers","name":"Sampled","showlegend":false,"x":[0.0,-3.374616503715515,1.7317568603903055,3.767794854938984,-1.0257340408861637,-1.7450813483446836,3.382920240983367,1.044300440698862,3.8643730380224324,3.368161605918331,5.0,5.0,5.0,5.0,-5.0,-5.0,-5.0,3.5087785685712642,-3.1204572357479914,2.7575020910116095,-1.4972356087269796,3.259220369362955,-3.948987931290029,2.523409259718415,-0.95290008449509,2.539506065221251,-4.025359027602431,2.680042354743773,2.5641879723267222,-3.2735932727745256,-2.734420257178098,3.8685739813626103,2.0436416083535116,3.0495045999177397,-1.8504939418641748,-3.534240031674101,-3.817397469950826,3.459230149832759,-0.5375558601218657,-3.2388399921360236],"y":[0.0,-4.335153102874756,4.057707907631993,-0.39275740273296833,0.12080810032784939,-1.9580261316150427,2.3135933000594378,-3.392217652872205,5.0,-5.0,5.0,-5.0,0.13167439852673157,-1.024870744361474,5.0,-5.0,1.4006998890411722,5.0,5.0,0.9645499701819356,-5.0,1.0081491319157305,-0.8186444715805938,0.7062850226992149,5.0,1.3156085633086467,-1.9698069754171017,2.2567572122468578,-1.5967745452796374,-2.5690847428776764,2.42959857436868,0.902996524025881,-1.4601805440092672,1.800152853739157,2.7006140221489,2.232726190025554,-3.237769992680861,-1.3347774629352054,2.5602433343380615,1.6847168760085847],"type":"scatter"}],                        {"template":{"data":{"barpolar":[{"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"barpolar"}],"bar":[{"error_x":{"color":"#2a3f5f"},"error_y":{"color":"#2a3f5f"},"marker":{"line":{"color":"#E5ECF6","width":0.5},"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"bar"}],"carpet":[{"aaxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"baxis":{"endlinecolor":"#2a3f5f","gridcolor":"white","linecolor":"white","minorgridcolor":"white","startlinecolor":"#2a3f5f"},"type":"carpet"}],"choropleth":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"choropleth"}],"contourcarpet":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"contourcarpet"}],"contour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"contour"}],"heatmap":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"heatmap"}],"histogram2dcontour":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2dcontour"}],"histogram2d":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"histogram2d"}],"histogram":[{"marker":{"pattern":{"fillmode":"overlay","size":10,"solidity":0.2}},"type":"histogram"}],"mesh3d":[{"colorbar":{"outlinewidth":0,"ticks":""},"type":"mesh3d"}],"parcoords":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"parcoords"}],"pie":[{"automargin":true,"type":"pie"}],"scatter3d":[{"line":{"colorbar":{"outlinewidth":0,"ticks":""}},"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatter3d"}],"scattercarpet":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattercarpet"}],"scattergeo":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergeo"}],"scattergl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattergl"}],"scattermap":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scattermap"}],"scatterpolargl":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolargl"}],"scatterpolar":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterpolar"}],"scatter":[{"fillpattern":{"fillmode":"overlay","size":10,"solidity":0.2},"type":"scatter"}],"scatterternary":[{"marker":{"colorbar":{"outlinewidth":0,"ticks":""}},"type":"scatterternary"}],"surface":[{"colorbar":{"outlinewidth":0,"ticks":""},"colorscale":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"type":"surface"}],"table":[{"cells":{"fill":{"color":"#EBF0F8"},"line":{"color":"white"}},"header":{"fill":{"color":"#C8D4E3"},"line":{"color":"white"}},"type":"table"}]},"layout":{"annotationdefaults":{"arrowcolor":"#2a3f5f","arrowhead":0,"arrowwidth":1},"autotypenumbers":"strict","coloraxis":{"colorbar":{"outlinewidth":0,"ticks":""}},"colorscale":{"diverging":[[0,"#8e0152"],[0.1,"#c51b7d"],[0.2,"#de77ae"],[0.3,"#f1b6da"],[0.4,"#fde0ef"],[0.5,"#f7f7f7"],[0.6,"#e6f5d0"],[0.7,"#b8e186"],[0.8,"#7fbc41"],[0.9,"#4d9221"],[1,"#276419"]],"sequential":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]],"sequentialminus":[[0.0,"#0d0887"],[0.1111111111111111,"#46039f"],[0.2222222222222222,"#7201a8"],[0.3333333333333333,"#9c179e"],[0.4444444444444444,"#bd3786"],[0.5555555555555556,"#d8576b"],[0.6666666666666666,"#ed7953"],[0.7777777777777778,"#fb9f3a"],[0.8888888888888888,"#fdca26"],[1.0,"#f0f921"]]},"colorway":["#636efa","#EF553B","#00cc96","#ab63fa","#FFA15A","#19d3f3","#FF6692","#B6E880","#FF97FF","#FECB52"],"font":{"color":"#2a3f5f"},"geo":{"bgcolor":"white","lakecolor":"white","landcolor":"#E5ECF6","showlakes":true,"showland":true,"subunitcolor":"white"},"hoverlabel":{"align":"left"},"hovermode":"closest","paper_bgcolor":"white","plot_bgcolor":"#E5ECF6","polar":{"angularaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","radialaxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"scene":{"xaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"yaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"},"zaxis":{"backgroundcolor":"#E5ECF6","gridcolor":"white","gridwidth":2,"linecolor":"white","showbackground":true,"ticks":"","zerolinecolor":"white"}},"shapedefaults":{"line":{"color":"#2a3f5f"}},"ternary":{"aaxis":{"gridcolor":"white","linecolor":"white","ticks":""},"baxis":{"gridcolor":"white","linecolor":"white","ticks":""},"bgcolor":"#E5ECF6","caxis":{"gridcolor":"white","linecolor":"white","ticks":""}},"title":{"x":0.05},"xaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2},"yaxis":{"automargin":true,"gridcolor":"white","linecolor":"white","ticks":"","title":{"standoff":15},"zerolinecolor":"white","zerolinewidth":2}}},"xaxis":{"range":[-5.0,5.0],"title":{"text":"x1"}},"yaxis":{"range":[-5.0,5.0],"title":{"text":"x2"}}},                        {"responsive": true}                    )                };            </script>        </div>
 </div>
 
     </div>
@@ -4793,9 +4795,9 @@ return Plotly;
       <td>1_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>96.561572</td>
-      <td>2.458181</td>
-      <td>3.781238</td>
+      <td>86.458211</td>
+      <td>-3.374617</td>
+      <td>-4.335153</td>
     </tr>
     <tr>
       <th>2</th>
@@ -4803,9 +4805,9 @@ return Plotly;
       <td>2_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>126.288129</td>
-      <td>-2.087889</td>
-      <td>-0.835116</td>
+      <td>140.916914</td>
+      <td>1.731757</td>
+      <td>4.057708</td>
     </tr>
     <tr>
       <th>3</th>
@@ -4813,9 +4815,9 @@ return Plotly;
       <td>3_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>130.559498</td>
-      <td>-3.855140</td>
-      <td>0.568017</td>
+      <td>17.333484</td>
+      <td>3.767795</td>
+      <td>-0.392757</td>
     </tr>
     <tr>
       <th>4</th>
@@ -4823,9 +4825,9 @@ return Plotly;
       <td>4_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>411.268985</td>
-      <td>4.108856</td>
-      <td>-4.810671</td>
+      <td>160.749494</td>
+      <td>-1.025734</td>
+      <td>0.120808</td>
     </tr>
     <tr>
       <th>5</th>
@@ -4833,9 +4835,9 @@ return Plotly;
       <td>5_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>1.413722</td>
-      <td>2.940819</td>
-      <td>2.290549</td>
+      <td>122.381996</td>
+      <td>-1.745081</td>
+      <td>-1.958026</td>
     </tr>
     <tr>
       <th>6</th>
@@ -4843,9 +4845,9 @@ return Plotly;
       <td>6_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>58.886072</td>
-      <td>-2.532684</td>
-      <td>-3.088215</td>
+      <td>10.617571</td>
+      <td>3.382920</td>
+      <td>2.313593</td>
     </tr>
     <tr>
       <th>7</th>
@@ -4853,9 +4855,9 @@ return Plotly;
       <td>7_0</td>
       <td>COMPLETED</td>
       <td>Sobol</td>
-      <td>56.796657</td>
-      <td>-0.901499</td>
-      <td>3.316251</td>
+      <td>207.752503</td>
+      <td>1.044300</td>
+      <td>-3.392218</td>
     </tr>
     <tr>
       <th>8</th>
@@ -4863,9 +4865,9 @@ return Plotly;
       <td>8_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>313.827392</td>
-      <td>-5.000000</td>
-      <td>2.196024</td>
+      <td>557.856068</td>
+      <td>3.864373</td>
+      <td>5.000000</td>
     </tr>
     <tr>
       <th>9</th>
@@ -4873,9 +4875,9 @@ return Plotly;
       <td>9_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>186.232286</td>
+      <td>478.271893</td>
+      <td>3.368162</td>
       <td>-5.000000</td>
-      <td>-2.249524</td>
     </tr>
     <tr>
       <th>10</th>
@@ -4883,9 +4885,9 @@ return Plotly;
       <td>10_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>147.504410</td>
+      <td>890.000000</td>
       <td>5.000000</td>
-      <td>-2.264153</td>
+      <td>5.000000</td>
     </tr>
     <tr>
       <th>11</th>
@@ -4893,9 +4895,9 @@ return Plotly;
       <td>11_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>294.368313</td>
+      <td>530.000000</td>
+      <td>-5.000000</td>
       <td>5.000000</td>
-      <td>2.552443</td>
     </tr>
     <tr>
       <th>12</th>
@@ -4903,9 +4905,9 @@ return Plotly;
       <td>12_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>258.140199</td>
+      <td>610.000000</td>
       <td>5.000000</td>
-      <td>1.960585</td>
+      <td>-5.000000</td>
     </tr>
     <tr>
       <th>13</th>
@@ -4913,8 +4915,8 @@ return Plotly;
       <td>13_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>530.000000</td>
-      <td>-5.000000</td>
+      <td>502.462929</td>
+      <td>3.508779</td>
       <td>5.000000</td>
     </tr>
     <tr>
@@ -4923,9 +4925,9 @@ return Plotly;
       <td>14_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>308.216149</td>
+      <td>250.000000</td>
       <td>-5.000000</td>
-      <td>2.388305</td>
+      <td>-5.000000</td>
     </tr>
     <tr>
       <th>15</th>
@@ -4933,9 +4935,9 @@ return Plotly;
       <td>15_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>150.634778</td>
+      <td>235.367856</td>
+      <td>-3.120457</td>
       <td>5.000000</td>
-      <td>-2.516068</td>
     </tr>
     <tr>
       <th>16</th>
@@ -4943,9 +4945,9 @@ return Plotly;
       <td>16_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>24.035963</td>
-      <td>2.700398</td>
-      <td>0.671248</td>
+      <td>16.883115</td>
+      <td>2.757502</td>
+      <td>0.964550</td>
     </tr>
     <tr>
       <th>17</th>
@@ -4953,9 +4955,9 @@ return Plotly;
       <td>17_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>49.427074</td>
-      <td>3.305511</td>
-      <td>3.163762</td>
+      <td>461.631653</td>
+      <td>-1.497236</td>
+      <td>-5.000000</td>
     </tr>
     <tr>
       <th>18</th>
@@ -4963,9 +4965,9 @@ return Plotly;
       <td>18_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>8.952922</td>
-      <td>-3.438598</td>
-      <td>-3.446590</td>
+      <td>7.820177</td>
+      <td>3.259220</td>
+      <td>1.008149</td>
     </tr>
     <tr>
       <th>19</th>
@@ -4973,9 +4975,9 @@ return Plotly;
       <td>19_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>8.711400</td>
-      <td>3.372721</td>
-      <td>1.010630</td>
+      <td>119.911046</td>
+      <td>-3.948988</td>
+      <td>-0.818644</td>
     </tr>
     <tr>
       <th>20</th>
@@ -4983,9 +4985,9 @@ return Plotly;
       <td>20_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>353.314072</td>
-      <td>-0.176255</td>
-      <td>5.000000</td>
+      <td>31.236936</td>
+      <td>2.523409</td>
+      <td>0.706285</td>
     </tr>
     <tr>
       <th>21</th>
@@ -4993,9 +4995,9 @@ return Plotly;
       <td>21_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>424.394397</td>
-      <td>-1.806942</td>
-      <td>-5.000000</td>
+      <td>316.531890</td>
+      <td>-0.952900</td>
+      <td>5.000000</td>
     </tr>
     <tr>
       <th>22</th>
@@ -5003,9 +5005,9 @@ return Plotly;
       <td>22_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>275.699682</td>
-      <td>-1.693724</td>
-      <td>5.000000</td>
+      <td>17.918256</td>
+      <td>2.539506</td>
+      <td>1.315609</td>
     </tr>
     <tr>
       <th>23</th>
@@ -5013,9 +5015,9 @@ return Plotly;
       <td>23_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>82.960558</td>
-      <td>-3.031686</td>
-      <td>-1.197439</td>
+      <td>61.511031</td>
+      <td>-4.025359</td>
+      <td>-1.969807</td>
     </tr>
     <tr>
       <th>24</th>
@@ -5023,9 +5025,9 @@ return Plotly;
       <td>24_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>50.397868</td>
-      <td>-1.766383</td>
-      <td>2.141641</td>
+      <td>3.033044</td>
+      <td>2.680042</td>
+      <td>2.256757</td>
     </tr>
     <tr>
       <th>25</th>
@@ -5033,9 +5035,9 @@ return Plotly;
       <td>25_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>85.431665</td>
-      <td>-0.445463</td>
-      <td>2.088374</td>
+      <td>39.818507</td>
+      <td>2.564188</td>
+      <td>-1.596775</td>
     </tr>
     <tr>
       <th>26</th>
@@ -5043,9 +5045,9 @@ return Plotly;
       <td>26_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>24.094865</td>
-      <td>-2.214042</td>
-      <td>2.437874</td>
+      <td>203.635169</td>
+      <td>5.000000</td>
+      <td>0.131674</td>
     </tr>
     <tr>
       <th>27</th>
@@ -5053,9 +5055,9 @@ return Plotly;
       <td>27_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>3.517631</td>
-      <td>2.793914</td>
-      <td>1.738692</td>
+      <td>21.631581</td>
+      <td>-3.273593</td>
+      <td>-2.569085</td>
     </tr>
     <tr>
       <th>28</th>
@@ -5063,9 +5065,9 @@ return Plotly;
       <td>28_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>75.752851</td>
-      <td>-1.270162</td>
-      <td>1.940189</td>
+      <td>15.875578</td>
+      <td>-2.734420</td>
+      <td>2.429599</td>
     </tr>
     <tr>
       <th>29</th>
@@ -5073,9 +5075,9 @@ return Plotly;
       <td>29_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>6.528427</td>
-      <td>3.393751</td>
-      <td>-1.052523</td>
+      <td>29.069773</td>
+      <td>3.868574</td>
+      <td>0.902997</td>
     </tr>
     <tr>
       <th>30</th>
@@ -5083,9 +5085,9 @@ return Plotly;
       <td>30_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>73.070552</td>
-      <td>0.683697</td>
-      <td>2.152099</td>
+      <td>169.255795</td>
+      <td>5.000000</td>
+      <td>-1.024871</td>
     </tr>
     <tr>
       <th>31</th>
@@ -5093,9 +5095,9 @@ return Plotly;
       <td>31_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>250.000000</td>
-      <td>-5.000000</td>
-      <td>-5.000000</td>
+      <td>76.596125</td>
+      <td>2.043642</td>
+      <td>-1.460181</td>
     </tr>
     <tr>
       <th>32</th>
@@ -5103,9 +5105,9 @@ return Plotly;
       <td>32_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>8.944392</td>
-      <td>-3.441678</td>
-      <td>-2.870785</td>
+      <td>0.513948</td>
+      <td>3.049505</td>
+      <td>1.800153</td>
     </tr>
     <tr>
       <th>33</th>
@@ -5113,9 +5115,9 @@ return Plotly;
       <td>33_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>15.442296</td>
-      <td>3.689700</td>
-      <td>-0.332589</td>
+      <td>26.190995</td>
+      <td>-1.850494</td>
+      <td>2.700614</td>
     </tr>
     <tr>
       <th>34</th>
@@ -5123,9 +5125,9 @@ return Plotly;
       <td>34_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>68.661896</td>
-      <td>2.160692</td>
-      <td>-1.796661</td>
+      <td>44.658369</td>
+      <td>-3.534240</td>
+      <td>2.232726</td>
     </tr>
     <tr>
       <th>35</th>
@@ -5133,9 +5135,9 @@ return Plotly;
       <td>35_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>13.817109</td>
-      <td>3.065710</td>
-      <td>-2.090210</td>
+      <td>0.223778</td>
+      <td>-3.817397</td>
+      <td>-3.237770</td>
     </tr>
     <tr>
       <th>36</th>
@@ -5143,9 +5145,9 @@ return Plotly;
       <td>36_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>41.269924</td>
-      <td>2.562670</td>
-      <td>-1.020481</td>
+      <td>3.230365</td>
+      <td>3.459230</td>
+      <td>-1.334777</td>
     </tr>
     <tr>
       <th>37</th>
@@ -5153,9 +5155,9 @@ return Plotly;
       <td>37_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>145.353817</td>
-      <td>1.060208</td>
-      <td>-2.060970</td>
+      <td>337.943801</td>
+      <td>-5.000000</td>
+      <td>1.400700</td>
     </tr>
     <tr>
       <th>38</th>
@@ -5163,9 +5165,9 @@ return Plotly;
       <td>38_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>13.706625</td>
-      <td>3.256329</td>
-      <td>-0.339548</td>
+      <td>67.401102</td>
+      <td>-0.537556</td>
+      <td>2.560243</td>
     </tr>
     <tr>
       <th>39</th>
@@ -5173,9 +5175,9 @@ return Plotly;
       <td>39_0</td>
       <td>COMPLETED</td>
       <td>MBM</td>
-      <td>5.445053</td>
-      <td>2.564935</td>
-      <td>2.345484</td>
+      <td>56.148580</td>
+      <td>-3.238840</td>
+      <td>1.684717</td>
     </tr>
   </tbody>
 </table>

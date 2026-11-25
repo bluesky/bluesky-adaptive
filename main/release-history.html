@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev14 documentation</title>
+    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev15 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=b46d4800"></script>
+    <script src="_static/documentation_options.js?v=1015cc19"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev14" />
+  <meta name="docsearch:version" content="1.0.2.dev15" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -548,6 +548,10 @@ function a <code class="docutils literal notranslate"><span class="pre">functool
 outcome names follow the same rules as <code class="docutils literal notranslate"><span class="pre">optimize</span></code>: they must not start with <code class="docutils literal notranslate"><span class="pre">adaptive_</span></code>, a parameter and an
 outcome must not share a name, and every point must have the same fields. A step that breaks them raises
 <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> after its outcomes are ingested.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">QueueserverOptimizationRunner</span></code> no longer passes <code class="docutils literal notranslate"><span class="pre">md={&quot;blop_suggestions&quot;:</span> <span class="pre">...}</span></code> to submitted plans, so remote
+acquisition plans need not accept <code class="docutils literal notranslate"><span class="pre">md</span></code>, and <code class="docutils literal notranslate"><span class="pre">md</span></code> in <code class="docutils literal notranslate"><span class="pre">acquisition_plan_kwargs</span></code> reaches the plan instead of
+raising <code class="docutils literal notranslate"><span class="pre">TypeError</span></code>. <code class="docutils literal notranslate"><span class="pre">default_acquire</span></code> still records <code class="docutils literal notranslate"><span class="pre">blop_suggestions</span></code> itself; a custom plan that recorded the
+runner’s value must build it from its <code class="docutils literal notranslate"><span class="pre">suggestions</span></code> argument.</p></li>
 </ul>
 </section>
 <section id="features">
@@ -589,6 +593,14 @@ event loop, so slow callbacks should buffer, for example with <code class="docut
 <code class="docutils literal notranslate"><span class="pre">QueueserverAgent</span></code> passes its <code class="docutils literal notranslate"><span class="pre">metadata</span></code> and the callbacks registered with <code class="docutils literal notranslate"><span class="pre">subscribe</span></code>, which include an
 <code class="docutils literal notranslate"><span class="pre">OptimizationLogger</span></code> by default. Like <code class="docutils literal notranslate"><span class="pre">Agent</span></code>, it generates an <code class="docutils literal notranslate"><span class="pre">optimization_uid</span></code>, exposes it, and accepts
 it.</p></li>
+</ul>
+</section>
+<section id="deprecations">
+<h3>Deprecations<a class="headerlink" href="#deprecations" title="Link to this heading">#</a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">md</span></code> in the <code class="docutils literal notranslate"><span class="pre">AcquisitionPlan</span></code> protocol is deprecated and will be removed from it in a future major version.
+Bluesky Adaptive passes it only from <code class="docutils literal notranslate"><span class="pre">acquisition_plan_kwargs</span></code>: acquisition plans own the metadata of the runs
+they open. Plans may keep accepting <code class="docutils literal notranslate"><span class="pre">md</span></code> as their own argument, as <code class="docutils literal notranslate"><span class="pre">default_acquire</span></code> does.</p></li>
 </ul>
 </section>
 <section id="bug-fixes">
@@ -1197,6 +1209,7 @@ functions instead (<a class="reference external" href="https://github.com/NSLS-I
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#unreleased">Unreleased</a><ul class="nav section-nav flex-column">
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#breaking-changes">Breaking Changes</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#features">Features</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#deprecations">Deprecations</a></li>
 <li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#bug-fixes">Bug Fixes</a></li>
 </ul>
 </li>
