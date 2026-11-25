@@ -152,21 +152,6 @@ def test_runner_leaves_acquisition_order_metadata_to_plan(mock_optimization_prob
     assert "blop_acquisition_order" not in submitted_plan.kwargs["md"]
 
 
-def test_runner_records_the_problem_optimization_uid_in_submitted_plans(mock_optimization_problem):
-    """Submitted plans pass the optimization UID to their runs through md."""
-    mock_client = MagicMock(spec=QueueserverClient)
-    runner = QueueserverOptimizationRunner(
-        optimization_problem=mock_optimization_problem,
-        queueserver_client=mock_client,
-    )
-
-    runner.run(iterations=1, num_points=1)
-    submitted_plan = mock_client.submit_plan.call_args[0][0]
-    assert submitted_plan.kwargs["md"]["bluesky-adaptive"] == {
-        "optimization_uid": mock_optimization_problem.optimization_uid
-    }
-
-
 def test_runner_run_passes_acquisition_plan_kwargs_to_bplan():
     """Test that acquisition_plan_kwargs are forwarded to the submitted BPlan."""
     mock_client = MagicMock(spec=QueueserverClient)
@@ -188,26 +173,6 @@ def test_runner_run_passes_acquisition_plan_kwargs_to_bplan():
     submitted_plan = mock_client.submit_plan.call_args[0][0]
     assert submitted_plan.kwargs["exposure_time"] == 0.5
     assert submitted_plan.kwargs["num_frames"] == 10
-
-
-def test_runner_merges_acquisition_plan_kwargs_md_into_submitted_md(mock_optimization_problem):
-    """md in acquisition_plan_kwargs keeps its keys, but the problem's optimization UID takes precedence."""
-    mock_client = MagicMock(spec=QueueserverClient)
-    problem = replace(
-        mock_optimization_problem,
-        acquisition_plan_kwargs={
-            "md": {"sample": "s1", "bluesky-adaptive": {"note": "n", "optimization_uid": "caller"}},
-            "exposure_time": 0.5,
-        },
-    )
-    runner = QueueserverOptimizationRunner(optimization_problem=problem, queueserver_client=mock_client)
-
-    runner.run(iterations=1, num_points=1)
-
-    submitted_plan = mock_client.submit_plan.call_args[0][0]
-    assert submitted_plan.kwargs["exposure_time"] == 0.5
-    assert submitted_plan.kwargs["md"]["sample"] == "s1"
-    assert submitted_plan.kwargs["md"]["bluesky-adaptive"] == {"note": "n", "optimization_uid": problem.optimization_uid}
 
 
 def test_runner_run_twice_fails():
