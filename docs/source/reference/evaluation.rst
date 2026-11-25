@@ -22,7 +22,7 @@ RunEventBuffer
 QueueItemRuns
 -------------
 
-.. autoclass:: bluesky_adaptive.evaluation.documents.QueueItemRuns
+.. autoclass:: bluesky_adaptive.evaluation.queueserver.QueueItemRuns
    :members:
    :undoc-members:
    :show-inheritance:

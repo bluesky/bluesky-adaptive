@@ -92,8 +92,8 @@ class QueueserverClient:
     """
     Handles communication with a Bluesky queueserver.
 
-    This class encapsulates queueserver communication: plan submission, environment checks, and item results.
-    The queue must be running or have autostart enabled.
+    This class encapsulates queueserver communication: plan submission and
+    environment checks. The queue must be running or have autostart enabled.
 
     .. warning::
 
@@ -142,43 +142,6 @@ class QueueserverClient:
         response = self._rm.item_add(plan)
         logger.debug(f"Submitted plan to queue. Response: {response}")
         return response["item"]["item_uid"]
-
-    def item_result(self, item_uid: str) -> Mapping[str, Any] | None:
-        """
-        Return the result of a queue item once it has finished, or None while it is queued or running.
-
-        Pass this method to :class:`~bluesky_adaptive.evaluation.documents.QueueItemRuns`.
-
-        Parameters
-        ----------
-        item_uid : str
-            The queue item UID returned by :meth:`submit_plan`.
-
-        Returns
-        -------
-        Mapping[str, Any] | None
-            The ``result`` of the item's history entry, holding its ``exit_status``, ``run_uids``, and ``msg``, or
-            None while the item is queued or running. A failed item is put back in the queue under a new UID, so its
-            original UID still resolves to the failure.
-
-        Raises
-        ------
-        KeyError
-            If the item is neither queued, running, nor in the history, e.g. because it was removed from the queue
-            or the history was cleared.
-        """
-        # Items only move from the queue to running to the history, and each response is one consistent state of
-        # the RE Manager, so checking in that order cannot miss an item in transit.
-        queue = self._rm.queue_get(reload=True)
-        if queue["running_item"].get("item_uid") == item_uid or any(item["item_uid"] == item_uid for item in queue["items"]):
-            return None
-        for item in reversed(self._rm.history_get(reload=True)["items"]):
-            if item["item_uid"] == item_uid:
-                return item["result"]
-        raise KeyError(
-            f"Queue item {item_uid!r} is neither queued, running, nor in the history. Check whether it was removed "
-            "from the queue or the history was cleared."
-        )
 
 
 @dataclass

@@ -1,0 +1,127 @@
+from concurrent.futures import ThreadPoolExecutor
+from unittest.mock import MagicMock
+
+import pytest
+from bluesky.plans import count
+from bluesky.run_engine import RunEngine
+from bluesky_queueserver_api.zmq import REManagerAPI
+
+from bluesky_adaptive.evaluation import per_run, per_suggestion
+from bluesky_adaptive.evaluation.documents import RunEventBuffer
+from bluesky_adaptive.evaluation.queueserver import QueueItemRuns
+from bluesky_adaptive.plans import default_acquire
+
+from ..conftest import MovableSignal, ReadableSignal
+
+
+@pytest.fixture()
+def RE():
+    return RunEngine({})
+
+
+def re_manager(*, running=None, queued=(), history=()):
+    """Mimic an RE Manager's running item, queue, and history of (item UID, result) pairs."""
+    re_manager_api = MagicMock(spec=REManagerAPI)
+    re_manager_api.queue_get.return_value = {
+        "items": [{"item_uid": item_uid} for item_uid in queued],
+        "running_item": {"item_uid": running} if running else {},
+    }
+    re_manager_api.history_get.return_value = {
+        "items": [{"item_uid": item_uid, "result": result} for item_uid, result in history]
+    }
+    return re_manager_api
+
+
+@pytest.mark.parametrize("pending", [{"running": "item-2"}, {"queued": ["item-2"]}], ids=["running", "queued"])
+def test_per_run_evaluates_the_queue_items_run_from_the_document_stream(RE, pending):
+    buffer = RunEventBuffer()
+    # Time while the item is queued or running does not count against the timeout.
+    runs = QueueItemRuns(re_manager(**pending), timeout=0, poll_interval=0.01)
+    RE.subscribe(buffer)
+    RE.subscribe(runs)
+    x1, det = MovableSignal("x1"), ReadableSignal("det")
+    evaluation_function = per_run(per_suggestion(lambda data: {"objective": 10 * data["x1"]}, buffer.pop), runs.run_uid)
+
+    with ThreadPoolExecutor(max_workers=1) as executor:
+        # The evaluation starts waiting before its item runs, as it does once the runner submits the plan.
+        future = executor.submit(evaluation_function, "item-2", [])
+        RE(default_acquire([{"x1": 1.0, "_id": "a"}], [x1], [det]), queue_server={"queue_item_uid": "item-1"})
+        RE(default_acquire([{"x1": 2.0, "_id": "b"}], [x1], [det]), queue_server={"queue_item_uid": "item-2"})
+
+        assert future.result(timeout=5) == [{"objective": 20.0, "_id": "b"}]
+
+
+def test_queue_item_runs_selects_the_first_run_of_the_item_that_passes_run_filter(RE):
+    det = ReadableSignal("det")
+
+    def dark_then_light():
+        yield from count([det], md={"dark_frame": True})
+        yield from count([det])
+
+    first_runs = QueueItemRuns(re_manager(running="item-1"))
+    light_runs = QueueItemRuns(re_manager(running="item-1"), run_filter=lambda start: not start.get("dark_frame"))
+    RE.subscribe(first_runs)
+    RE.subscribe(light_runs)
+
+    dark_uid, light_uid = RE(dark_then_light(), queue_server={"queue_item_uid": "item-1"})
+
+    assert first_runs.run_uid("item-1") == dark_uid
+    assert light_runs.run_uid("item-1") == light_uid
+
+
+def test_queue_item_runs_raises_when_the_run_fails(RE):
+    runs = QueueItemRuns(re_manager(running="item-1"))
+    RE.subscribe(runs)
+
+    def fail(detectors, step, pos_cache):
+        raise RuntimeError("detector fault")
+        yield
+
+    with pytest.raises(RuntimeError, match="detector fault"):
+        RE(
+            default_acquire([{"x1": 1.0, "_id": "a"}], [MovableSignal("x1")], [ReadableSignal("det")], per_step=fail),
+            queue_server={"queue_item_uid": "item-1"},
+        )
+
+    with pytest.raises(RuntimeError, match="ended with status 'fail'"):
+        runs.run_uid("item-1")
+
+
+def test_queue_item_runs_drops_items_whose_runs_started_earlier(RE):
+    finished = {"exit_status": "completed", "run_uids": ["run"], "msg": ""}
+    runs = QueueItemRuns(re_manager(history=[("item-1", finished), ("item-2", finished)]), timeout=0.01)
+    RE.subscribe(runs)
+    det = ReadableSignal("det")
+    RE(count([det]), queue_server={"queue_item_uid": "item-1"})
+    (uid_2,) = RE(count([det]), queue_server={"queue_item_uid": "item-2"})
+
+    assert runs.run_uid("item-2") == uid_2
+    with pytest.raises(TimeoutError):
+        runs.run_uid("item-1")
+
+
+def test_queue_item_runs_raises_at_once_when_the_item_ends_without_a_run():
+    # A failed item goes back in the queue under a new UID, and its original UID stays in the history.
+    failed = {"exit_status": "failed", "run_uids": [], "msg": "plan raised"}
+    runs = QueueItemRuns(re_manager(queued=["item-1-retry"], history=[("item-1", failed)]), timeout=60)
+
+    with pytest.raises(RuntimeError, match="ended with status 'failed' without opening a run: plan raised"):
+        runs.run_uid("item-1")
+
+
+def test_queue_item_runs_raises_when_the_re_manager_has_no_record_of_the_item():
+    runs = QueueItemRuns(re_manager(), timeout=60)
+
+    with pytest.raises(KeyError, match="removed from the queue"):
+        runs.run_uid("item-1")
+
+
+def test_queue_item_runs_raises_run_filter_errors_for_the_item(RE):
+    runs = QueueItemRuns(re_manager(running="item-1"), run_filter=lambda start: start["sample"] == "s1")
+    RE.subscribe(runs)
+
+    RE(count([ReadableSignal("det")]), queue_server={"queue_item_uid": "item-1"})
+
+    with pytest.raises(RuntimeError, match="run_filter raised") as excinfo:
+        runs.run_uid("item-1")
+    assert isinstance(excinfo.value.__cause__, KeyError)

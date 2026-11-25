@@ -72,13 +72,13 @@ Features
   them. ``pop`` also drops runs that started earlier, and the buffer may be fed by a dispatcher thread
   (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
 * ``per_run(evaluate, run_uid)`` builds an evaluation function from one that takes another UID, such as a Bluesky run
-  UID. ``bluesky_adaptive.evaluation.documents.QueueItemRuns(item_result)``, subscribed to the Queue Server's document
-  stream, resolves queue item UIDs to the UIDs of the runs they open, so that
+  UID. ``bluesky_adaptive.evaluation.queueserver.QueueItemRuns(re_manager_api)``, subscribed to the Queue Server's
+  document stream, resolves queue item UIDs to the UIDs of the runs they open, so that
   ``per_run(per_suggestion(evaluate, buffer.pop), runs.run_uid)`` can evaluate the runs of the Queue Server runner's
   plans. It uses each item's first run, or the first that passes an optional ``run_filter``, and raises if the run
-  fails or ``run_filter`` raises. ``item_result``, such as the new ``QueueserverClient.item_result``, reports whether
-  the item is still queued or running: ``run_uid`` waits for it without a time limit, raises at once if it ended
-  without opening a run, and otherwise waits at most ``timeout`` seconds for the run's stop document.
+  fails or ``run_filter`` raises. While the RE Manager reports the item queued or running, ``run_uid`` waits without
+  a time limit; it raises at once if the item ended without opening a run, and otherwise waits at most ``timeout``
+  seconds for the run's stop document. It needs the ``queueserver`` extra.
 * ``bluesky_adaptive.evaluation.tiled.TiledRunPoller(client)`` reads the ``"primary"`` data of ``default_acquire``
   runs from Tiled so that ``per_suggestion(evaluate, TiledRunPoller(client))`` can evaluate them. Each call polls
   Tiled until the run has a stop document, raising ``TimeoutError`` after ``timeout`` seconds. It needs the new
