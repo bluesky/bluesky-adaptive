@@ -84,6 +84,12 @@ Features
   event loop, so slow callbacks should buffer, for example with ``bluesky.callbacks.buffer.BufferingWrapper``.
   ``QueueserverAgent`` does not pass callbacks or metadata to its runner yet.
 
+Deprecations
+............
+* ``md`` is vestigial in the ``AcquisitionPlan`` protocol and will be removed from it in a future major version.
+  Nothing in Bluesky Adaptive relies on it: acquisition plans own the metadata of the runs they open. Plans may keep
+  accepting ``md`` as their own argument, as ``default_acquire`` does.
+
 Bug Fixes
 .........
 * ``optimize`` marks a step's trials failed on a ``TrialFaultAware`` optimizer when its outcomes fail validation,
