@@ -1,6 +1,5 @@
 """Agent interface for asynchronous optimization using Bluesky Queueserver and Ax."""
 
-import uuid
 from collections.abc import Mapping, Sequence
 from concurrent.futures import Future
 from typing import Any
@@ -14,6 +13,7 @@ except ImportError as e:
         "Install them with: pip install bluesky-adaptive[queueserver]"
     ) from e
 
+from .._agent import _BaseAgent
 from ..protocols import (
     Actuator,
     EvaluationFunction,
@@ -26,11 +26,12 @@ from .objective import Objective, OutcomeConstraint, to_ax_objective_str
 from .optimizer import AxOptimizer
 
 
-class QueueserverAgent(_AxAgentMixin):
+class QueueserverAgent(_AxAgentMixin, _BaseAgent):
     """
     An asynchronous interface that uses Ax as the backend for optimization and experiment tracking.
 
-    Uses the bluesky-queueserver-api for scheduling plan execution.
+    Uses the bluesky-queueserver-api for scheduling plan execution. Each :meth:`run` or :meth:`submit_suggestions`
+    call sends one optimization run to the callbacks registered with :meth:`subscribe`, on the runner's event loop.
 
     .. warning::
 
@@ -65,7 +66,9 @@ class QueueserverAgent(_AxAgentMixin):
         Additional arguments to pass to the acquisition plan.
     optimization_uid : str | None, optional
         Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in the runs of
-        submitted plans. If None, a new UUID4 is generated.
+        submitted plans and in optimization runs. If None, a new UUID4 is generated.
+    metadata : Mapping[str, Any] | None, optional
+        Extra start document metadata for optimization runs.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -92,6 +95,7 @@ class QueueserverAgent(_AxAgentMixin):
         checkpoint_path: str | None = None,
         acquisition_plan_kwargs: Mapping[str, Any] | None = None,
         optimization_uid: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
         **kwargs: Any,
     ):
         self._sensors = sensors
@@ -115,10 +119,12 @@ class QueueserverAgent(_AxAgentMixin):
             checkpoint_path=checkpoint_path,
             **kwargs,
         )
-        self._optimization_uid = optimization_uid if optimization_uid is not None else str(uuid.uuid4())
+        super().__init__(optimization_uid=optimization_uid, metadata=metadata)
         self._runner = QueueserverOptimizationRunner(
             self.to_optimization_problem(),
             QueueserverClient(re_manager_api),
+            callbacks=self._callbacks,
+            metadata=self._metadata,
         )
 
     @property
@@ -140,11 +146,6 @@ class QueueserverAgent(_AxAgentMixin):
     def acquisition_plan(self) -> str | None:
         """Acquisition plan name used during acquisition."""
         return self._acquisition_plan
-
-    @property
-    def optimization_uid(self) -> str:
-        """Identifier of this agent's optimization."""
-        return self._optimization_uid
 
     def stop(self) -> None:
         """

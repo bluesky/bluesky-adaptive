@@ -77,7 +77,7 @@ Features
   in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
 * ``QueueserverOptimizationRunner`` passes the problem's ``optimization_uid`` to submitted plans in
   ``md["bluesky-adaptive"]``, so ``default_acquire`` records it as ``start["bluesky-adaptive"]["optimization_uid"]``.
-  ``QueueserverAgent`` generates one, exposes it, and accepts it.
+  ``QueueserverAgent`` generates one, exposes it, and accepts it, like ``Agent``.
 * ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` accept ``metadata`` for the optimization run's start
   document, such as ``tiled_access_tags``. ``Agent`` and ``Scipy`` accept it and expose it as ``agent.metadata``.
 * ``QueueserverOptimizationRunner`` accepts ``callbacks`` and ``metadata``. Each ``run()`` or
@@ -85,7 +85,8 @@ Features
   document records the problem like ``optimize`` runs, plus ``metadata``. Each evaluated point is one event whose
   ``adaptive_acquisition_uid`` is its queue item UID. Like ``RunEngine`` callbacks, they are called on the runner's
   event loop, so slow callbacks should buffer, for example with ``bluesky.callbacks.buffer.BufferingWrapper``.
-  ``QueueserverAgent`` does not pass callbacks or metadata to its runner yet.
+  ``QueueserverAgent`` passes its ``metadata`` and the callbacks registered with ``subscribe``, which include an
+  ``OptimizationLogger`` by default.
 
 Bug Fixes
 .........

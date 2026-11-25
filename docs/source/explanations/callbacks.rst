@@ -25,9 +25,10 @@ How Bluesky Adaptive emits documents
 Bluesky Adaptive builds on the standard Bluesky callback model: callbacks receive
 ``start``, ``descriptor``, ``event``, and ``stop`` documents. Each call to
 :func:`bluesky_adaptive.plans.optimize`, :func:`bluesky_adaptive.plans.sample_suggestions`, or
-:func:`bluesky_adaptive.plans.acquire_baseline` produces one *optimization run* summarizing the
+:func:`bluesky_adaptive.plans.acquire_baseline`, and each ``run`` or ``submit_suggestions`` call of a
+:class:`~bluesky_adaptive.ax.queueserver_agent.QueueserverAgent`, produces one *optimization run* summarizing the
 evaluated points and sends its documents to the callbacks registered with
-:meth:`Agent.subscribe <bluesky_adaptive.ax.Agent.subscribe>` or passed in the plan's
+the agent's :meth:`subscribe <bluesky_adaptive.ax.Agent.subscribe>` or passed in the plan's
 ``callbacks`` argument.
 
 Optimization runs are separate from the acquisition runs that the RunEngine produces when it
@@ -57,7 +58,7 @@ An optimization run contains the same document types as any other Bluesky run:
 ``event``
     One event per evaluated point: its parameter and outcome values, its suggestion ID
     (``adaptive_suggestion_id``), its iteration (``adaptive_iteration``), and the UID returned by
-    the acquisition plan (``adaptive_acquisition_uid``).
+    the acquisition plan (``adaptive_acquisition_uid``), or the queue item UID for a ``QueueserverAgent``.
 
 ``stop``
     Completion status and reason, useful for summaries or cleanup.

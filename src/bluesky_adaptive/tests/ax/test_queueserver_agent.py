@@ -253,3 +253,20 @@ def test_queueserver_agent_problems_share_its_generated_optimization_uid(mock_re
 
     assert agent.to_optimization_problem().optimization_uid == agent.optimization_uid
     assert agent.to_optimization_problem().optimization_uid == agent.optimization_uid
+
+
+def test_queueserver_agent_sends_its_optimization_runs_to_subscribed_callbacks(mock_re_manager_api):
+    """Callbacks subscribed and metadata set after construction reach the runs the agent starts afterwards."""
+    agent = _open_queue_agent(mock_re_manager_api, _evaluate, optimization_uid="opt-1")
+    documents = []
+    agent.subscribe(lambda name, doc: documents.append((name, doc)))
+    agent.metadata["sample"] = "s1"
+
+    asyncio.run(agent.run_async(iterations=1))
+
+    (start,) = [doc for name, doc in documents if name == "start"]
+    assert start["sample"] == "s1"
+    assert start["bluesky-adaptive"]["optimization_uid"] == "opt-1"
+    assert [doc["data"]["adaptive_acquisition_uid"] for name, doc in documents if name == "event"] == ["item-0"]
+    assert documents[-1][0] == "stop"
+    assert documents[-1][1]["exit_status"] == "success"
