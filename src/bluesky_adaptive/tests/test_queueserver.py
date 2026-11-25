@@ -8,6 +8,7 @@ import pytest
 from bluesky_queueserver_api import BPlan
 from bluesky_queueserver_api.zmq import REManagerAPI
 
+from bluesky_adaptive._records import ACQUISITION_UID_FIELD, ITERATION_FIELD, SUGGESTION_ID_FIELD
 from bluesky_adaptive.protocols import CanRegisterSuggestions, Optimizer, QueueserverOptimizationProblem, TrialFaultAware
 from bluesky_adaptive.queueserver import (
     OptimizationResult,
@@ -371,11 +372,13 @@ def test_runner_submit_suggestions_async_returns_result(mock_optimization_proble
     mock_optimization_problem.optimizer.suggest.assert_not_called()
 
 
-def _start_runner(problem, iterations=3, num_points=1, checkpoint_interval=None):
+def _start_runner(problem, iterations=3, num_points=1, checkpoint_interval=None, callbacks=(), metadata=None):
     """Start a runner whose client returns queue item UIDs "item-0", "item-1", ..."""
     mock_client = MagicMock(spec=QueueserverClient)
     mock_client.submit_plan.side_effect = (f"item-{i}" for i in itertools.count())
-    runner = QueueserverOptimizationRunner(optimization_problem=problem, queueserver_client=mock_client)
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=problem, queueserver_client=mock_client, callbacks=callbacks, metadata=metadata
+    )
     future = runner.run(iterations=iterations, num_points=num_points, checkpoint_interval=checkpoint_interval)
     return runner, mock_client, future
 
@@ -613,8 +616,9 @@ def test_runner_run_interrupted_before_first_submission_abandons_run(mock_optimi
     mock_client.submit_plan.assert_called_once()
 
 
-def test_runner_checkpoints(mock_optimization_problem):
-    """A checkpoint is taken for each iteration."""
+@pytest.mark.parametrize(("checkpoint_interval", "checkpoints"), [(1, 3), (2, 1)])
+def test_runner_checkpoints(mock_optimization_problem, checkpoint_interval, checkpoints):
+    """A checkpoint is taken every checkpoint_interval iterations, like optimize."""
 
     mock_optimizer = MagicMock(spec=CheckpointableOptimizer)
     mock_optimizer.suggest.return_value = [
@@ -626,9 +630,11 @@ def test_runner_checkpoints(mock_optimization_problem):
         sensors=mock_optimization_problem.sensors,
         evaluation_function=mock_optimization_problem.evaluation_function,
     )
-    runner, mock_client, future = _start_runner(mock_optimization_problem, checkpoint_interval=1)
+    runner, mock_client, future = _start_runner(
+        mock_optimization_problem, iterations=3, checkpoint_interval=checkpoint_interval
+    )
     future.result(timeout=5)
-    assert mock_optimizer.checkpoint.call_count == 3
+    assert mock_optimizer.checkpoint.call_count == checkpoints
 
 
 def test_runner_skip_checkpoints(mock_optimization_problem):
@@ -654,3 +660,208 @@ def test_runner_raises_not_checkpointable(mock_optimization_problem):
     runner, mock_client, future = _start_runner(mock_optimization_problem, checkpoint_interval=1)
     with pytest.raises(ValueError, match="optimizer is not checkpointable"):
         future.result(timeout=5)
+
+
+def _collector():
+    documents: list[tuple[str, dict]] = []
+
+    def callback(name, doc):
+        documents.append((name, dict(doc)))
+
+    return callback, documents
+
+
+def test_runner_records_optimization_run(mock_optimization_problem):
+    """run() sends one optimization run with one event per evaluated point, labeled with its queue item UID."""
+    problem = mock_optimization_problem
+    problem.optimizer.suggest.return_value = [
+        {"_id": 0, "motor1": 5.0, "motor2": 3.0},
+        {"_id": 1, "motor1": 6.0, "motor2": 4.0},
+    ]
+    problem.evaluation_function.return_value = [{"_id": 0, "objective": 1.0}, {"_id": 1, "objective": 2.0}]
+    callback, documents = _collector()
+
+    runner, mock_client, future = _start_runner(problem, iterations=2, num_points=2, callbacks=[callback])
+    future.result(timeout=5)
+
+    assert [name for name, _ in documents] == ["start", "descriptor", "event", "event", "event", "event", "stop"]
+    start = documents[0][1]
+    assert (start["iterations"], start["n_points"]) == (2, 2)
+    assert start["acquisition_plan"] == "default_acquire"
+    assert (start["sensors"], start["actuators"]) == (["detector"], ["motor1", "motor2"])
+    assert start["bluesky-adaptive"]["optimization_uid"] == problem.optimization_uid
+    assert start["bluesky-adaptive"]["entry_point"] == "QueueserverOptimizationRunner.run"
+    events = [doc["data"] for name, doc in documents if name == "event"]
+    assert [(e[ITERATION_FIELD], e[ACQUISITION_UID_FIELD], e[SUGGESTION_ID_FIELD], e["objective"]) for e in events] == [
+        (0, "item-0", "0", 1.0),
+        (0, "item-0", "1", 2.0),
+        (1, "item-1", "0", 1.0),
+        (1, "item-1", "1", 2.0),
+    ]
+    assert documents[-1][1]["exit_status"] == "success"
+
+
+def test_runner_records_submitted_suggestions(mock_optimization_problem):
+    """submit_suggestions() sends one optimization run whose points have iteration -1."""
+    suggestions = [{"_id": 0, "motor1": 1.0, "motor2": 2.0}]
+    mock_client = MagicMock(spec=QueueserverClient)
+    mock_client.submit_plan.return_value = "item-0"
+    callback, documents = _collector()
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=mock_optimization_problem, queueserver_client=mock_client, callbacks=[callback]
+    )
+
+    asyncio.run(runner.submit_suggestions_async(suggestions))
+
+    start = documents[0][1]
+    assert start["bluesky-adaptive"]["entry_point"] == "QueueserverOptimizationRunner.submit_suggestions"
+    assert start["suggestions"] == suggestions
+    assert [doc["data"][ITERATION_FIELD] for name, doc in documents if name == "event"] == [-1]
+    assert documents[-1][1]["exit_status"] == "success"
+
+
+@pytest.mark.parametrize(
+    ("suggest_side_effect", "evaluation_side_effect", "names", "reason"),
+    [
+        (
+            None,
+            ValueError("bad data"),
+            ["start", "stop"],
+            "Iteration 0 with suggestion IDs [0] failed: ValueError: bad data",
+        ),
+        (
+            [[{"_id": 0, "motor1": 5.0, "motor2": 3.0}], ValueError("bad data")],
+            None,
+            ["start", "descriptor", "event", "stop"],
+            "Iteration 1 with suggestion IDs [] failed: ValueError: bad data",
+        ),
+    ],
+    ids=["evaluation", "next-suggest"],
+)
+def test_runner_error_fails_optimization_run(
+    mock_optimization_problem, suggest_side_effect, evaluation_side_effect, names, reason
+):
+    """A loop error stops the optimization run with "fail", naming the iteration that raised."""
+    problem = mock_optimization_problem
+    problem.optimizer.suggest.side_effect = suggest_side_effect
+    problem.evaluation_function.side_effect = evaluation_side_effect
+    callback, documents = _collector()
+
+    runner, mock_client, future = _start_runner(problem, iterations=2, callbacks=[callback])
+
+    assert isinstance(future.exception(timeout=5), ValueError)
+    assert [name for name, _ in documents] == names
+    stop = documents[-1][1]
+    assert (stop["exit_status"], stop["reason"]) == ("fail", reason)
+
+
+def test_runner_cancelled_run_aborts_optimization_run(mock_optimization_problem):
+    """Cancelling run_async() during an evaluation stops the optimization run with "abort"."""
+    evaluating = threading.Event()
+    release = threading.Event()
+
+    def evaluate(**kwargs):
+        evaluating.set()
+        assert release.wait(timeout=5)
+        return [{"_id": 0, "objective": 1.0}]
+
+    problem = replace(mock_optimization_problem, evaluation_function=MagicMock(side_effect=evaluate))
+    mock_client = MagicMock(spec=QueueserverClient)
+    mock_client.submit_plan.side_effect = (f"item-{i}" for i in itertools.count())
+    callback, documents = _collector()
+    runner = QueueserverOptimizationRunner(
+        optimization_problem=problem, queueserver_client=mock_client, callbacks=[callback]
+    )
+
+    async def cancel_run():
+        task = asyncio.create_task(runner.run_async(iterations=10))
+        assert await asyncio.to_thread(evaluating.wait, 5)
+        task.cancel()
+        with pytest.raises(asyncio.CancelledError):
+            await task
+        release.set()  # before returning, so that asyncio.run does not wait on the blocked worker thread
+
+    asyncio.run(cancel_run())
+
+    assert [name for name, _ in documents] == ["start", "stop"]
+    assert documents[-1][1]["exit_status"] == "abort"
+
+
+def test_runner_cancel_during_delivery_stops_after_the_delivered_documents(mock_optimization_problem):
+    """Callbacks run on the event loop, so a cancel requested while one runs aborts the run only after the delivery."""
+    mock_client = MagicMock(spec=QueueserverClient)
+    mock_client.submit_plan.side_effect = (f"item-{i}" for i in itertools.count())
+    documents = []
+
+    async def cancel_during_event():
+        loop = asyncio.get_running_loop()
+        task = None
+
+        def callback(name, doc):
+            documents.append((name, threading.get_ident(), doc))
+            if name == "event":
+                loop.call_soon_threadsafe(task.cancel)
+
+        runner = QueueserverOptimizationRunner(
+            optimization_problem=mock_optimization_problem, queueserver_client=mock_client, callbacks=[callback]
+        )
+        task = asyncio.create_task(runner.run_async(iterations=3))
+        with pytest.raises(asyncio.CancelledError):
+            await task
+
+    asyncio.run(cancel_during_event())
+
+    assert [name for name, _, _ in documents] == ["start", "descriptor", "event", "stop"]
+    assert {thread for _, thread, _ in documents} == {threading.get_ident()}
+    assert documents[-1][2]["exit_status"] == "abort"
+    mock_client.submit_plan.assert_called_once()
+
+
+def test_runner_callback_error_fails_run_without_failing_ingested_trials():
+    """A callback that fails on an event fails the run, naming the ingested trials without failing them."""
+
+    class FaultAwareOptimizer(Optimizer, TrialFaultAware): ...
+
+    problem = QueueserverOptimizationProblem(
+        optimizer=MagicMock(spec=FaultAwareOptimizer),
+        actuators=["motor1"],
+        sensors=["detector"],
+        evaluation_function=MagicMock(return_value=[{"_id": 0, "objective": 1.0}]),
+    )
+    problem.optimizer.suggest.return_value = [{"_id": 0, "motor1": 5.0}]
+    error = RuntimeError("callback failed")
+
+    stop_documents = []
+
+    def callback(name, doc):
+        if name == "event":
+            raise error
+        if name == "stop":
+            stop_documents.append(doc)
+
+    runner, mock_client, future = _start_runner(problem, iterations=2, callbacks=[callback])
+
+    assert future.exception(timeout=5) is error
+    problem.optimizer.ingest.assert_called_once()
+    problem.optimizer.register_failures.assert_not_called()
+    mock_client.submit_plan.assert_called_once()
+    assert [(doc["exit_status"], doc["reason"]) for doc in stop_documents] == [
+        ("fail", "Iteration 0 with suggestion IDs [0] failed: RuntimeError: callback failed")
+    ]
+
+
+def test_runner_adds_caller_metadata_to_optimization_runs(mock_optimization_problem):
+    """Caller metadata is read when each loop starts, and the runner's own keys take precedence."""
+    metadata = {"tiled_access_tags": ["proposal-1"], "bluesky-adaptive": {"optimization_uid": "user"}}
+    callback, documents = _collector()
+
+    runner, mock_client, future = _start_runner(
+        mock_optimization_problem, iterations=1, callbacks=[callback], metadata=metadata
+    )
+    future.result(timeout=5)
+    metadata["tiled_access_tags"].append("proposal-2")
+    runner.submit_suggestions([{"_id": 0, "motor1": 1.0, "motor2": 2.0}]).result(timeout=5)
+
+    starts = [doc for name, doc in documents if name == "start"]
+    assert [d["bluesky-adaptive"]["optimization_uid"] for d in starts] == [mock_optimization_problem.optimization_uid] * 2
+    assert [d["tiled_access_tags"] for d in starts] == [["proposal-1"], ["proposal-1", "proposal-2"]]

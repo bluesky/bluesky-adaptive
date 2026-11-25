@@ -16,7 +16,7 @@ import logging
 import threading
 from collections.abc import Awaitable, Callable, Mapping, Sequence
 from concurrent.futures import FIRST_COMPLETED, Future, wait
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 try:
@@ -29,9 +29,16 @@ except ImportError as e:
         "Install them with: pip install bluesky-adaptive[queueserver]"
     ) from e
 
+from ._records import RunRecorder
 from .plans import default_acquire
-from .protocols import ID_KEY, CanRegisterSuggestions, QueueserverOptimizationProblem, TrialFaultAware
-from .utils import _maybe_checkpoint, _validate_outcomes, _validate_suggestions
+from .protocols import (
+    ID_KEY,
+    CanRegisterSuggestions,
+    DocumentCallback,
+    QueueserverOptimizationProblem,
+    TrialFaultAware,
+)
+from .utils import _maybe_checkpoint, _validate_outcomes, _validate_suggestions, collect_optimization_metadata
 
 logger = logging.getLogger(__name__)
 
@@ -144,9 +151,18 @@ class _OptimizationState:
     max_iterations: int = 1
     num_points: int = 1
     checkpoint_interval: int | None = None
+    manual: bool = False
     current_iteration: int = 0
+    # In flight until ingested; registered as failed if the loop fails.
     current_suggestions: Sequence[Mapping] = field(default_factory=list)
+    # The current iteration's suggestions, named in the stop reason if the loop fails.
+    iteration_suggestions: Sequence[Mapping] = field(default_factory=list)
     uids: list[str] = field(default_factory=list)
+
+    @property
+    def record_iteration(self) -> int:
+        """Iteration recorded for the in-flight suggestions; -1 for manually submitted ones."""
+        return -1 if self.manual else self.current_iteration - 1
 
     def build_result(self) -> OptimizationResult:
         """Build an :class:`OptimizationResult` from the current state."""
@@ -183,17 +199,28 @@ class QueueserverOptimizationRunner:
         sensors, and evaluation function.
     queueserver_client : QueueserverClient
         Client for communicating with the queueserver.
+    callbacks : Sequence[DocumentCallback], optional
+        Receive one optimization run per :meth:`run` or :meth:`submit_suggestions` call. Called on the event loop, so
+        slow callbacks should buffer, for example with :class:`bluesky.callbacks.buffer.BufferingWrapper`.
+    metadata : Mapping[str, Any] | None, optional
+        Extra start document metadata for those runs, such as ``tiled_access_tags``. Read when each loop starts.
     """
 
     def __init__(
         self,
         optimization_problem: QueueserverOptimizationProblem,
         queueserver_client: QueueserverClient,
+        *,
+        callbacks: Sequence[DocumentCallback] = (),
+        metadata: Mapping[str, Any] | None = None,
     ):
         self._problem = optimization_problem
         self._client = queueserver_client
+        self._callbacks = callbacks
+        self._metadata = metadata
         self._plan_name = optimization_problem.acquisition_plan or DEFAULT_ACQUIRE_PLAN_NAME
         self._state: _OptimizationState | None = None
+        self._recorder: RunRecorder | None = None
         self._continuous = True
         self._running = False
 
@@ -330,11 +357,17 @@ class QueueserverOptimizationRunner:
     async def _run(self, start: Callable[[], Awaitable[str]], started: Future[None] | None = None) -> OptimizationResult:
         """Claim the runner, submit the first plan with ``start``, and run the loop, releasing the runner at the end."""
         self._claim()
+        self._recorder = None  # after _claim(): a rejected second call must not touch the running loop's recorder
         try:
             item_uid = await start()
             if started is not None:
                 started.set_result(None)
             return await self._run_loop(item_uid)
+        except BaseException as error:
+            # Set only after start() created this loop's state, so the state belongs to this loop too.
+            if self._recorder is not None and self._state is not None:
+                self._recorder.stop_for(error, self._state.record_iteration, self._state.iteration_suggestions)
+            raise
         finally:
             self._running = False
 
@@ -345,6 +378,11 @@ class QueueserverOptimizationRunner:
             max_iterations=iterations, num_points=num_points, checkpoint_interval=checkpoint_interval
         )
         self._continuous = True
+        self._start_recording(
+            "QueueserverOptimizationRunner.run",
+            {"iterations": iterations, "n_points": num_points, "checkpoint_interval": checkpoint_interval},
+        )
+        self._state.current_iteration += 1
         suggestions = await asyncio.to_thread(self._problem.optimizer.suggest, num_points)
         plan = self._build_plan(suggestions)
         logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
@@ -353,7 +391,7 @@ class QueueserverOptimizationRunner:
     async def _start_submit(self, suggestions: Sequence[Mapping]) -> str:
         """Check the environment and submit a plan for manual suggestions, returning its queue item UID."""
         await asyncio.to_thread(self._client.check_environment)
-        self._state = _OptimizationState(max_iterations=1, num_points=len(suggestions))
+        self._state = _OptimizationState(max_iterations=1, num_points=len(suggestions), manual=True)
         self._continuous = False
         # Ensure all suggestions have an ID_KEY or register them with the optimizer
         if not isinstance(self.optimization_problem.optimizer, CanRegisterSuggestions) and any(
@@ -367,9 +405,17 @@ class QueueserverOptimizationRunner:
         elif isinstance(self.optimization_problem.optimizer, CanRegisterSuggestions):
             suggestions = await asyncio.to_thread(self.optimization_problem.optimizer.register_suggestions, suggestions)
 
+        self._state.current_iteration += 1
         plan = self._build_plan(suggestions)
+        self._start_recording("QueueserverOptimizationRunner.submit_suggestions", {"suggestions": suggestions})
         logger.info("Submitting manually specified suggestion(s)")
         return await asyncio.to_thread(self._client.submit_plan, plan)
+
+    def _start_recording(self, entry_point: str, run_metadata: Mapping[str, Any]) -> None:
+        """Start this loop's optimization run."""
+        problem = replace(self._problem, acquisition_plan=self._plan_name)
+        metadata = {**(self._metadata or {}), **collect_optimization_metadata(problem, entry_point), **run_metadata}
+        self._recorder = RunRecorder(callbacks=self._callbacks, metadata=metadata)
 
     def _try_register_failures(self, suggestions: Sequence[Mapping]) -> None:
         """Notify a TrialFaultAware optimizer of failed suggestions, if supported."""
@@ -386,8 +432,8 @@ class QueueserverOptimizationRunner:
             raise RuntimeError("_build_plan() called before run() or submit_suggestions()")
         _validate_suggestions(suggestions)
 
-        self._state.current_iteration += 1
         self._state.current_suggestions = suggestions
+        self._state.iteration_suggestions = suggestions
 
         # Build metadata
         md: dict[str, Any] = {"blop_suggestions": self._state.current_suggestions}
@@ -404,7 +450,8 @@ class QueueserverOptimizationRunner:
     async def _run_loop(self, item_uid: str) -> OptimizationResult:
         """Evaluate, ingest, and resubmit until done, registering the in-flight suggestions as failed on error."""
         state = self._state
-        if state is None:
+        recorder = self._recorder
+        if state is None or recorder is None:
             raise RuntimeError("_run_loop() called before run() or submit_suggestions()")
         try:
             next_item_uid: str | None = item_uid
@@ -415,6 +462,7 @@ class QueueserverOptimizationRunner:
             # Register failures before re-raising so a caller that observes the failure sees the trials failed.
             await asyncio.to_thread(self._try_register_failures, state.current_suggestions)
             raise
+        recorder.stop()
         return state.build_result()
 
     async def _process_acquisition(self, item_uid: str) -> str | None:
@@ -423,7 +471,7 @@ class QueueserverOptimizationRunner:
 
         Returns the next submitted queue item UID, or ``None`` when the loop is done.
         """
-        if self._state is None:
+        if self._state is None or self._recorder is None:
             raise RuntimeError("_process_acquisition called before run()")
         suggestions = self._state.current_suggestions
 
@@ -439,19 +487,23 @@ class QueueserverOptimizationRunner:
         self._state.uids.append(item_uid)
         # Ingested suggestions are no longer in flight.
         self._state.current_suggestions = []
-        # Checkpoint optimizer, if applicable
+        # Recorded after ingesting, so that a failing callback cannot cost the optimizer an evaluated step.
+        self._recorder.record(self._state.record_iteration, item_uid, suggestions, outcomes)
+        # Checkpoint optimizer, if applicable; _maybe_checkpoint takes the 0-based iteration, like optimize passes.
         await asyncio.to_thread(
             _maybe_checkpoint,
             self._problem.optimizer,
             self._state.checkpoint_interval,
-            iteration=self._state.current_iteration,
+            iteration=self._state.current_iteration - 1,
         )
         # Check if done
         if not self._continuous or self._state.current_iteration >= self._state.max_iterations:
             logger.info(f"Optimization complete after {self._state.current_iteration} iterations")
             return None
 
-        # Continue: get next suggestions and submit
+        # Continue: start the next iteration, get its suggestions, and submit
+        self._state.current_iteration += 1
+        self._state.iteration_suggestions = []
         suggestions = await asyncio.to_thread(self._problem.optimizer.suggest, self._state.num_points)
         plan = self._build_plan(suggestions)
         logger.info(f"Submitting iteration {self._state.current_iteration}/{self._state.max_iterations}")
