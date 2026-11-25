@@ -20,6 +20,11 @@ def RE():
     return RunEngine({})
 
 
+def _pending(item_uid):
+    """Report every queue item as queued or running."""
+    return None
+
+
 def test_per_suggestion_scores_each_suggestion_from_its_primary_event(RE):
     buffer = RunEventBuffer()
     RE.subscribe(buffer)
@@ -83,7 +88,8 @@ def test_run_event_buffer_pop_drops_runs_that_started_earlier(RE):
 
 def test_per_run_evaluates_the_queue_items_run_from_the_document_stream(RE):
     buffer = RunEventBuffer()
-    runs = QueueItemRuns(timeout=5)
+    # Time while the item is queued or running does not count against the timeout.
+    runs = QueueItemRuns(_pending, timeout=0, poll_interval=0.01)
     RE.subscribe(buffer)
     RE.subscribe(runs)
     x1, det = MovableSignal("x1"), ReadableSignal("det")
@@ -105,8 +111,8 @@ def test_queue_item_runs_selects_the_first_run_of_the_item_that_passes_run_filte
         yield from count([det], md={"dark_frame": True})
         yield from count([det])
 
-    first_runs = QueueItemRuns(timeout=5)
-    light_runs = QueueItemRuns(timeout=5, run_filter=lambda start: not start.get("dark_frame"))
+    first_runs = QueueItemRuns(_pending)
+    light_runs = QueueItemRuns(_pending, run_filter=lambda start: not start.get("dark_frame"))
     RE.subscribe(first_runs)
     RE.subscribe(light_runs)
 
@@ -117,7 +123,7 @@ def test_queue_item_runs_selects_the_first_run_of_the_item_that_passes_run_filte
 
 
 def test_queue_item_runs_raises_when_the_run_fails(RE):
-    runs = QueueItemRuns(timeout=5)
+    runs = QueueItemRuns(_pending)
     RE.subscribe(runs)
 
     def fail(detectors, step, pos_cache):
@@ -135,7 +141,7 @@ def test_queue_item_runs_raises_when_the_run_fails(RE):
 
 
 def test_queue_item_runs_drops_items_whose_runs_started_earlier(RE):
-    runs = QueueItemRuns(timeout=0.01)
+    runs = QueueItemRuns(lambda item_uid: {"exit_status": "completed", "run_uids": ["run"], "msg": ""}, timeout=0.01)
     RE.subscribe(runs)
     det = ReadableSignal("det")
     RE(count([det]), queue_server={"queue_item_uid": "item-1"})
@@ -144,3 +150,23 @@ def test_queue_item_runs_drops_items_whose_runs_started_earlier(RE):
     assert runs.run_uid("item-2") == uid_2
     with pytest.raises(TimeoutError):
         runs.run_uid("item-1")
+
+
+def test_queue_item_runs_raises_at_once_when_the_item_ends_without_a_run():
+    runs = QueueItemRuns(
+        lambda item_uid: {"exit_status": "failed", "run_uids": [], "msg": "plan raised"}, timeout=60, poll_interval=0.01
+    )
+
+    with pytest.raises(RuntimeError, match="ended with status 'failed' without opening a run: plan raised"):
+        runs.run_uid("item-1")
+
+
+def test_queue_item_runs_raises_run_filter_errors_for_the_item(RE):
+    runs = QueueItemRuns(_pending, run_filter=lambda start: start["sample"] == "s1")
+    RE.subscribe(runs)
+
+    RE(count([ReadableSignal("det")]), queue_server={"queue_item_uid": "item-1"})
+
+    with pytest.raises(RuntimeError, match="run_filter raised") as excinfo:
+        runs.run_uid("item-1")
+    assert isinstance(excinfo.value.__cause__, KeyError)

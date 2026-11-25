@@ -93,6 +93,36 @@ def test_queueserver_client_submit_plan_propagates_item_add_rejection(mock_re_ma
     mock_re_manager.item_add.assert_called_once_with(plan)
 
 
+_FAILED_RESULT = {"exit_status": "failed", "run_uids": [], "msg": "plan raised"}
+
+
+@pytest.mark.parametrize(
+    ("running_item", "queued_items", "history", "expected"),
+    [
+        ({"item_uid": "item-1"}, [], [], None),
+        ({}, [{"item_uid": "item-1"}], [], None),
+        # A failed item is put back in the queue under a new UID, and its original UID stays in the history.
+        ({}, [{"item_uid": "item-1-retry"}], [{"item_uid": "item-1", "result": _FAILED_RESULT}], _FAILED_RESULT),
+    ],
+    ids=["running", "queued", "finished"],
+)
+def test_queueserver_client_item_result_reports_only_finished_items(running_item, queued_items, history, expected):
+    re_manager_api = MagicMock(spec=REManagerAPI)
+    re_manager_api.queue_get.return_value = {"items": queued_items, "running_item": running_item}
+    re_manager_api.history_get.return_value = {"items": history}
+
+    assert QueueserverClient(re_manager_api).item_result("item-1") == expected
+
+
+def test_queueserver_client_item_result_raises_for_items_the_re_manager_does_not_know():
+    re_manager_api = MagicMock(spec=REManagerAPI)
+    re_manager_api.queue_get.return_value = {"items": [], "running_item": {}}
+    re_manager_api.history_get.return_value = {"items": [{"item_uid": "item-2", "result": _FAILED_RESULT}]}
+
+    with pytest.raises(KeyError, match="removed from the queue"):
+        QueueserverClient(re_manager_api).item_result("item-1")
+
+
 def test_runner_run_validates_environment(mock_optimization_problem):
     """Test run() validates queueserver environment before starting."""
     mock_client = MagicMock(spec=QueueserverClient)
