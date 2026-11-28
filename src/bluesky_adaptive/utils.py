@@ -14,7 +14,7 @@ from bluesky.utils import MsgGenerator
 from event_model import DataKey
 from numpy.typing import ArrayLike
 
-from .protocols import ID_KEY, Actuator, Checkpointable, OptimizationProblem, Optimizer
+from .protocols import ID_KEY, Actuator, Checkpointable, OptimizationProblem, Optimizer, QueueserverOptimizationProblem
 
 
 class Source(StrEnum):
@@ -286,20 +286,29 @@ def _callable_name(obj: object) -> str:
     return getattr(obj, "__name__", obj.__class__.__name__)
 
 
-def collect_optimization_metadata(optimization_problem: OptimizationProblem) -> dict[str, Any]:
-    """Collect the metadata for the optimization problem."""
+def collect_optimization_metadata(
+    optimization_problem: OptimizationProblem | QueueserverOptimizationProblem, entry_point: str
+) -> dict[str, Any]:
+    """Collect the start document metadata of an optimization run started by ``entry_point``."""
     evaluation_function_name = _callable_name(optimization_problem.evaluation_function)
-    acquisition_plan_name = _callable_name(optimization_problem.acquisition_plan)
+    acquisition_plan = optimization_problem.acquisition_plan
+    acquisition_plan_name = acquisition_plan if isinstance(acquisition_plan, str) else _callable_name(acquisition_plan)
     metadata = {
         "evaluation_function": evaluation_function_name,
         "acquisition_plan": acquisition_plan_name,
         "optimizer": optimization_problem.optimizer.__class__.__name__,
-        "sensors": [sensor.name for sensor in optimization_problem.sensors],
-        "actuators": [actuator.name for actuator in optimization_problem.actuators],
+        "sensors": [sensor if isinstance(sensor, str) else sensor.name for sensor in optimization_problem.sensors],
+        "actuators": [
+            actuator if isinstance(actuator, str) else actuator.name for actuator in optimization_problem.actuators
+        ],
     }
     # Duplicate to preserve back-compat. Change only on v2 release. All new keys added here
     # should go under "bluesky-adaptive".
     return {
         **metadata,
-        "bluesky-adaptive": {"optimization_uid": optimization_problem.optimization_uid, **metadata},
+        "bluesky-adaptive": {
+            "optimization_uid": optimization_problem.optimization_uid,
+            "entry_point": entry_point,
+            **metadata,
+        },
     }

@@ -3,6 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 from bluesky import SupplementalData
 from bluesky.plan_stubs import one_nd_step
+from bluesky.plans import count
 from bluesky.run_engine import RunEngine
 
 from bluesky_adaptive.evaluation import per_suggestion
@@ -64,4 +65,26 @@ def test_run_event_buffer_rejects_more_than_one_event_per_suggestion(RE):
     )
 
     with pytest.raises(ValueError):
+        buffer.pop(uid)
+
+
+def test_run_event_buffer_pop_drops_runs_that_started_earlier(RE):
+    buffer = RunEventBuffer()
+    RE.subscribe(buffer)
+    x1, det = MovableSignal("x1"), ReadableSignal("det")
+    (first,) = RE(default_acquire([{"x1": 1.0, "_id": "a"}], [x1], [det]))
+    (second,) = RE(default_acquire([{"x1": 2.0, "_id": "b"}], [x1], [det]))
+
+    assert buffer.pop(second) == {"b": {"x1": 2.0, "det": 0.0}}
+    with pytest.raises(KeyError):
+        buffer.pop(first)
+
+
+def test_run_event_buffer_ignores_runs_without_an_acquisition_order(RE):
+    buffer = RunEventBuffer()
+    RE.subscribe(buffer)
+    # Plans other than default_acquire, e.g. bluesky.plans.count, do not record the acquisition order.
+    (uid,) = RE(count([ReadableSignal("det")]))
+
+    with pytest.raises(KeyError):
         buffer.pop(uid)

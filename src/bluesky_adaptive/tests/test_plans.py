@@ -1311,7 +1311,7 @@ def test_optimize_emits_checkpoints_per_iteration(RE):
     ],
     ids=["optimize", "optimize_in_run", "sample_suggestions", "acquire_baseline"],
 )
-def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, plan_name):
+def test_optimization_runs_record_the_problem_optimization_uid_and_entry_point(RE, run_plan, plan_name):
     optimizer = MagicMock(spec=Optimizer)
     optimizer.suggest.return_value = [{"x1": 0.0, "_id": 0}]
     problem = OptimizationProblem(
@@ -1329,6 +1329,7 @@ def test_optimization_runs_record_the_problem_optimization_uid(RE, run_plan, pla
 
     start = next(doc for name, doc in documents if name == "start" and doc["plan_name"] == plan_name)
     assert start["bluesky-adaptive"]["optimization_uid"] == problem.optimization_uid
+    assert start["bluesky-adaptive"]["entry_point"] == plan_name
 
 
 @pytest.mark.parametrize(

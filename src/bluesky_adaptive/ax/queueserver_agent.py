@@ -13,6 +13,7 @@ except ImportError as e:
         "Install them with: pip install bluesky-adaptive[queueserver]"
     ) from e
 
+from .._agent import _BaseAgent
 from ..protocols import (
     Actuator,
     EvaluationFunction,
@@ -25,11 +26,12 @@ from .objective import Objective, OutcomeConstraint, to_ax_objective_str
 from .optimizer import AxOptimizer
 
 
-class QueueserverAgent(_AxAgentMixin):
+class QueueserverAgent(_AxAgentMixin, _BaseAgent):
     """
     An asynchronous interface that uses Ax as the backend for optimization and experiment tracking.
 
-    Uses the bluesky-queueserver-api for scheduling plan execution.
+    Uses the bluesky-queueserver-api for scheduling plan execution. Each :meth:`run` or :meth:`submit_suggestions`
+    call sends one optimization run to the callbacks registered with :meth:`subscribe`, on the runner's event loop.
 
     .. warning::
 
@@ -62,6 +64,11 @@ class QueueserverAgent(_AxAgentMixin):
         The path to the checkpoint file to save the optimizer's state to.
     acquisition_plan_kwargs : Mapping[str, Any] | None, optional
         Additional arguments to pass to the acquisition plan.
+    optimization_uid : str | None, optional
+        Identifier of the optimization, recorded as ``start["bluesky-adaptive"]["optimization_uid"]`` in the agent's
+        optimization runs. If None, a new UUID4 is generated.
+    metadata : Mapping[str, Any] | None, optional
+        Extra start document metadata for optimization runs.
     **kwargs : Any
         Additional keyword arguments to configure the Ax experiment.
 
@@ -87,6 +94,8 @@ class QueueserverAgent(_AxAgentMixin):
         outcome_constraints: Sequence[OutcomeConstraint] | None = None,
         checkpoint_path: str | None = None,
         acquisition_plan_kwargs: Mapping[str, Any] | None = None,
+        optimization_uid: str | None = None,
+        metadata: Mapping[str, Any] | None = None,
         **kwargs: Any,
     ):
         self._sensors = sensors
@@ -110,9 +119,12 @@ class QueueserverAgent(_AxAgentMixin):
             checkpoint_path=checkpoint_path,
             **kwargs,
         )
+        super().__init__(optimization_uid=optimization_uid, metadata=metadata)
         self._runner = QueueserverOptimizationRunner(
             self.to_optimization_problem(),
             QueueserverClient(re_manager_api),
+            callbacks=self._callbacks,
+            metadata=self._metadata,
         )
 
     @property
@@ -157,6 +169,7 @@ class QueueserverAgent(_AxAgentMixin):
             evaluation_function=self._evaluation_function,
             acquisition_plan=self._acquisition_plan,
             acquisition_plan_kwargs=self._acquisition_plan_kwargs,
+            optimization_uid=self._optimization_uid,
         )
 
     def run(

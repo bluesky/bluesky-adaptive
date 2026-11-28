@@ -46,6 +46,14 @@ Breaking Changes
   keyword-only, so a plan with ``md`` bound this way satisfies it, and start documents record the name of the
   function a ``functools.partial`` wraps as ``acquisition_plan`` and ``evaluation_function``
   (`#106 <https://github.com/bluesky/bluesky-adaptive/pull/106>`_).
+* The Queue Server runner records each loop as an optimization run, even without callbacks, so its parameter and
+  outcome names follow the same rules as ``optimize``: they must not start with ``adaptive_``, a parameter and an
+  outcome must not share a name, and every point must have the same fields. A step that breaks them raises
+  ``ValueError`` after its outcomes are ingested.
+* ``QueueserverOptimizationRunner`` no longer passes ``md={"blop_suggestions": ...}`` to submitted plans, so remote
+  acquisition plans need not accept ``md``, and ``md`` in ``acquisition_plan_kwargs`` reaches the plan instead of
+  raising ``TypeError``. ``default_acquire`` still records ``blop_suggestions`` itself; a custom plan that recorded the
+  runner's value must build it from its ``suggestions`` argument.
 
 Features
 ........
@@ -56,13 +64,26 @@ Features
 * Optimization run metadata is also recorded under ``"bluesky-adaptive"`` in start documents, duplicating
   ``evaluation_function``, ``acquisition_plan``, ``optimizer``, ``sensors``, and ``actuators``. The top-level keys
   are kept for backwards compatibility.
+* Optimization runs record the plan or runner method that started them as
+  ``start["bluesky-adaptive"]["entry_point"]``, for example ``"optimize"`` or ``"QueueserverOptimizationRunner.run"``.
+  Plans also keep ``plan_name``.
 * ``default_acquire`` records the suggestion IDs in scan order as ``start["bluesky-adaptive"]["acquisition_order"]``.
   ``"blop_acquisition_order"`` is kept for backwards compatibility.
 * New ``bluesky_adaptive.evaluation`` package. ``per_suggestion(evaluate, fetch)`` builds an evaluation function from a
   function that evaluates the data of one suggestion and sets the ``"_id"`` of each outcome.
   ``bluesky_adaptive.evaluation.documents.RunEventBuffer``, subscribed with ``RE.subscribe(buffer)``, buffers the
   ``"primary"`` event data of ``default_acquire`` runs so that ``per_suggestion(evaluate, buffer.pop)`` can evaluate
-  them (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+  them. ``pop`` also drops runs that started earlier, and the buffer may be fed by a dispatcher thread
+  (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+* ``per_run(evaluate, resolve)`` builds an evaluation function from one that takes another UID, such as a Bluesky run
+  UID. ``bluesky_adaptive.evaluation.queueserver.QueueItemRuns(re_manager_api)``, subscribed to the Queue Server's
+  document stream, resolves queue item UIDs to the UIDs of the runs they open, so that
+  ``per_run(per_suggestion(evaluate, TiledRunPoller(client)), runs.resolve)``, or ``buffer.pop`` of a
+  ``RunEventBuffer`` on the same stream, can evaluate the runs of the Queue Server runner's plans. It uses each item's
+  first run, or the first that passes an optional ``run_filter``, and raises if the run fails or ``run_filter`` raises.
+  While the RE Manager reports the item queued or running, ``resolve`` waits without a time limit; it raises at once
+  if the item ended without opening a run, and otherwise waits at most ``timeout`` seconds for the run's stop
+  document. It needs the ``queueserver`` extra.
 * ``bluesky_adaptive.evaluation.tiled.TiledRunPoller(client)`` reads the ``"primary"`` data of ``default_acquire``
   runs from Tiled so that ``per_suggestion(evaluate, TiledRunPoller(client))`` can evaluate them. Each call polls
   Tiled until the run has a stop document, raising ``TimeoutError`` after ``timeout`` seconds. It needs the new
@@ -74,6 +95,20 @@ Features
   in-flight evaluation to return (`#98 <https://github.com/bluesky/bluesky-adaptive/issues/98>`_).
 * ``optimize``, ``sample_suggestions``, and ``acquire_baseline`` accept ``metadata`` for the optimization run's start
   document, such as ``tiled_access_tags``. ``Agent`` and ``Scipy`` accept it and expose it as ``agent.metadata``.
+* ``QueueserverOptimizationRunner`` accepts ``callbacks`` and ``metadata``. Each ``run()`` or
+  ``submit_suggestions()`` loop, and its ``_async`` version, sends one optimization run to the callbacks. Its start
+  document records the problem like ``optimize`` runs, plus ``metadata``. Each evaluated point is one event whose
+  ``adaptive_acquisition_uid`` is its queue item UID. Like ``RunEngine`` callbacks, they are called on the runner's
+  event loop, so slow callbacks should buffer, for example with ``bluesky.callbacks.buffer.BufferingWrapper``.
+  ``QueueserverAgent`` passes its ``metadata`` and the callbacks registered with ``subscribe``, which include an
+  ``OptimizationLogger`` by default. Like ``Agent``, it generates an ``optimization_uid``, exposes it, and accepts
+  it.
+
+Deprecations
+............
+* ``md`` in the ``AcquisitionPlan`` protocol is deprecated and will be removed from it in a future major version.
+  Bluesky Adaptive passes it only from ``acquisition_plan_kwargs``: acquisition plans own the metadata of the runs
+  they open. Plans may keep accepting ``md`` as their own argument, as ``default_acquire`` does.
 
 Bug Fixes
 .........
@@ -86,6 +121,8 @@ Bug Fixes
 * ``optimize`` records the step that meets the stopping criterion.
 * ``OptimizationLogger`` omits the Iterations line for runs whose start document has no ``iterations``, such as
   ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
+* The Queue Server runner takes checkpoints at the same iterations as ``optimize``. With ``checkpoint_interval=n``
+  it checkpointed one iteration early, after iterations n - 1, 2n - 1, and so on.
 * ``InteractiveOptimizer`` no longer loses or skips scipy's requested points when its optimizer thread is slow.
   With ``threads`` set, each finite-difference batch is suggested at once, in chunks of at most ``threads`` points.
   ``close()`` stops and joins the optimizer thread, ``session()`` closes the previous one, and ``Scipy.optimize``

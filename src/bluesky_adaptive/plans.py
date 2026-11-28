@@ -211,7 +211,7 @@ def optimize(
         callbacks=callbacks,
         metadata={
             **(metadata or {}),
-            **collect_optimization_metadata(optimization_problem),
+            **collect_optimization_metadata(optimization_problem, "optimize"),
             "plan_name": "optimize",
             "iterations": iterations,
             "n_points": n_points,
@@ -286,7 +286,7 @@ def optimize_in_run(
     acquisition_plan_kwargs : Mapping[str, Any] | None, optional
         Keyword arguments passed to the acquisition plan on every acquisition of this call.
     """
-    _md = collect_optimization_metadata(optimization_problem)
+    _md = collect_optimization_metadata(optimization_problem, "optimize_in_run")
     _md.update(
         {
             "plan_name": "optimize_in_run",
@@ -419,7 +419,7 @@ def sample_suggestions(
         callbacks=callbacks,
         metadata={
             **(metadata or {}),
-            **collect_optimization_metadata(optimization_problem),
+            **collect_optimization_metadata(optimization_problem, "sample_suggestions"),
             "plan_name": "sample_suggestions",
             "suggestions": suggestions,
         },
@@ -485,7 +485,7 @@ def acquire_baseline(
         callbacks=callbacks,
         metadata={
             **(metadata or {}),
-            **collect_optimization_metadata(optimization_problem),
+            **collect_optimization_metadata(optimization_problem, "acquire_baseline"),
             "plan_name": "acquire_baseline",
             "suggestions": points,
         },
