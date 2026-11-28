@@ -70,10 +70,17 @@ class TiledRunPoller:
             If the run has no stop document in Tiled within ``timeout`` seconds.
         KeyError
             If the run does not record its acquisition order.
+        RuntimeError
+            If the run's stop document records an ``exit_status`` other than ``"success"``.
         ValueError
             If the number of ``"primary"`` rows differs from the number of suggestion IDs.
         """
         run = self._wait_for_stop(uid)
+        stop = run.metadata["stop"]
+        if stop["exit_status"] != "success":
+            raise RuntimeError(
+                f"Run {uid!r} ended with status {stop['exit_status']!r}: {stop.get('reason') or '(no reason given)'}"
+            )
         acquisition_order = run.metadata["start"].get("bluesky-adaptive", {}).get(ACQUISITION_ORDER_KEY)
         if acquisition_order is None:
             raise KeyError(

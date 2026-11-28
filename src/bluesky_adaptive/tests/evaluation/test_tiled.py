@@ -53,6 +53,16 @@ def test_tiled_run_poller_rejects_runs_without_an_acquisition_order():
         TiledRunPoller({"uid": run})("uid")
 
 
+@pytest.mark.parametrize("exit_status", ["fail", "abort"])
+def test_tiled_run_poller_rejects_runs_that_did_not_succeed(exit_status):
+    # The row count matches the acquisition order, so only the exit status shows the run is incomplete.
+    run = tiled_run(["near"], [0.5])
+    run.metadata["stop"] = {"exit_status": exit_status, "reason": "detector timed out"}
+
+    with pytest.raises(RuntimeError, match=exit_status):
+        TiledRunPoller({"uid": run})("uid")
+
+
 @pytest.mark.parametrize("settings", [{"poll_interval": 0}, {"timeout": -1}])
 def test_tiled_run_poller_rejects_invalid_polling_settings(settings):
     with pytest.raises(ValueError):
