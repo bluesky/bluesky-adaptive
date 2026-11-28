@@ -25,8 +25,13 @@ class _Request:
 class _Stop(BaseException):
     """Unwinds the optimizer thread out of scipy when the session is closed or a point times out.
 
-    A ``BaseException`` because scipy wrappers such as shgo's ``FieldWrapper`` swallow ``Exception``.
+    A ``BaseException`` because scipy wrappers such as shgo's ``FieldWrapper`` swallow ``Exception``. ``error`` is
+    ``None`` when the session was closed, and otherwise the failure that ``suggest()`` and ``session()`` re-raise.
     """
+
+    def __init__(self, error: Exception | None = None):
+        super().__init__(error)
+        self.error = error
 
 
 class InteractiveOptimizer(Optimizer):
@@ -34,14 +39,26 @@ class InteractiveOptimizer(Optimizer):
 
     Scipy runs on a background thread. Every objective evaluation it requests becomes a pending point that
     ``suggest`` returns and ``ingest`` answers. ``_cond`` guards all state shared with that thread.
+
+    Parameters
+    ----------
+    optimizer : InnerOptimizer
+        The wrapped scipy optimizer.
+    config : ScipyCFG | None, optional
+        The optimization configuration, by default ``optimizer.config``.
+    timeout : float | None, optional
+        Seconds to wait for scipy to request a point, and for a suggested point to be ingested. When either wait
+        expires, the next ``suggest()`` (or ``session()``, while it waits for scipy's first point) raises
+        ``TimeoutError``. ``None``, the default, waits indefinitely, so a long acquisition or a paused RunEngine
+        leaves scipy waiting for its point.
     """
 
-    def __init__(self, optimizer: InnerOptimizer, config: ScipyCFG | None = None, timeout: int | None = 200):
+    def __init__(self, optimizer: InnerOptimizer, config: ScipyCFG | None = None, timeout: float | None = None):
         self.optimizer = optimizer
         self._thread: Thread | None = None
         self.session(config=config if config else optimizer.config, timeout=timeout)
 
-    def session(self, config: ScipyCFG, timeout: int | None = None):
+    def session(self, config: ScipyCFG, timeout: float | None = None):
         """
         Start a fresh optimization, closing the previous optimizer thread first.
 
@@ -121,7 +138,8 @@ class InteractiveOptimizer(Optimizer):
         RuntimeError
             Scipy converged and ``force_resiliance`` is off.
         TimeoutError
-            Scipy requested no point within ``SUGGESTION_TIMEOUT`` seconds.
+            Scipy requested no point within ``SUGGESTION_TIMEOUT`` seconds, or a suggested point was not ingested
+            within it.
         Exception
             Any error raised by the wrapped scipy optimizer.
         """
@@ -151,7 +169,8 @@ class InteractiveOptimizer(Optimizer):
                 request = self._active.pop(res[ID_KEY], None)
                 if request is None:
                     if not self.force_resiliance:
-                        raise ValueError("optimizer did not expect to receive an update")
+                        # A point dropped because the optimizer thread failed, e.g. timed out, reports that failure.
+                        raise self._error or ValueError("optimizer did not expect to receive an update")
                     continue
                 request.outcome = y
                 self._cond.notify_all()
@@ -214,19 +233,20 @@ class InteractiveOptimizer(Optimizer):
         try:
             final = self.optimizer.call(self._cost, self._record_intermediate, kws=kws)
             converged = True
-        except _Stop:
-            # Closed or timed out: keep the best point seen so a new session can restart from it.
+        except _Stop as stop:
+            # Closed or timed out: keep the best point seen so a new session can restart from it. A timeout is
+            # also reported through ``error``, so suggest() raises it instead of returning the final point.
             final = self.intermediate
             if final is None:
                 final = ScipyResult(list(self.optimizer.x0), np.nan, nit=self._increment)
+            error = stop.error
         except Exception as e:  # handed to the caller by suggest() and session()
             error = e
         with self._cond:
             self._finished = True
             self._converged = converged
             self._error = error
-            if error is None:
-                self.final = final
+            self.final = final
             self._active.clear()
             self._cond.notify_all()
 
@@ -243,8 +263,11 @@ class InteractiveOptimizer(Optimizer):
                 lambda: self._closed or batch.keys().isdisjoint(self._active), timeout=self.SUGGESTION_TIMEOUT
             )
             # A fully ingested batch is still returned to scipy if close() raced the last ingest.
-            if not batch.keys().isdisjoint(self._active):
-                raise _Stop
+            pending = sorted(batch.keys() & self._active.keys())
+            if pending:
+                if self._closed:
+                    raise _Stop
+                raise _Stop(TimeoutError(f"Points {pending} were not ingested within {self.SUGGESTION_TIMEOUT} s"))
         outcomes = [request.outcome for request in batch.values()]
         if any(outcome is None for outcome in outcomes):
             raise ValueError("return value is not present")

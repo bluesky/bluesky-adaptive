@@ -281,6 +281,28 @@ def test_close_stops_optimizer_thread():
     assert restart["test_movable2"] == pytest.approx(5.0)
 
 
+@pytest.mark.parametrize("force_resiliance", [False, True])
+def test_point_not_ingested_within_timeout_raises(force_resiliance):
+    """A point not ingested within the timeout makes suggest() raise instead of ending the optimization."""
+    dof = RangeDOF(actuator=MovableSignal(name="test_movable"), bounds=(0, 10), parameter_type="float")
+    config = ScipyCFG(dofs=[dof], objective=Objective(name="test_objective", minimize=True))
+    opt = InteractiveOptimizer(Minimize(config), timeout=0.05)
+    opt.force_resiliance = force_resiliance
+    [point] = opt.suggest()
+    opt._thread.join(timeout=5)  # the optimizer thread gives up on the point after the timeout
+
+    with pytest.raises(TimeoutError, match=r"Points \[0\] were not ingested"):
+        opt.suggest()
+    late = [point | {"test_objective": 1.0}]
+    if force_resiliance:
+        opt.ingest(late)
+    else:
+        with pytest.raises(TimeoutError):
+            opt.ingest(late)
+    assert opt.final is not None  # the restart point of the next session
+    opt.close()
+
+
 def test_suggest_before_optimization(optimizer_prep):
     """Test suggest() before any optimization returns expected state."""
     # Suggest before any ingest

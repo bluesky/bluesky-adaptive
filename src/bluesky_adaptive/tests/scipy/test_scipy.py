@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+from bluesky import RunEngine
 
 from bluesky_adaptive.ax import Objective, RangeDOF
 from bluesky_adaptive.protocols import ID_KEY, AcquisitionPlan, EvaluationFunction
@@ -426,3 +427,28 @@ def test_optimize_run_records_optimization_uid(secoundary_agent_prep):
 
     start = next(doc for name, doc in documents if name == "start")
     assert start["bluesky-adaptive"]["optimization_uid"] == secoundary_agent_prep.optimization_uid
+
+
+def test_optimize_fails_when_a_point_outlasts_the_timeout():
+    """A point not ingested within ``timeout`` fails ``optimize`` with ``TimeoutError``; the next call restarts."""
+    dof = RangeDOF(actuator=MovableSignal(name="test_movable"), bounds=(0, 10), parameter_type="float")
+    objective = Objective(name="test_objective", minimize=True)
+
+    def evaluate(uid, suggestions):
+        if agent.timeout is not None:
+            agent.optimizer._thread.join(timeout=5)  # returns once the optimizer thread has given up on the point
+        return [{objective.name: 1.0, ID_KEY: suggestion[ID_KEY]} for suggestion in suggestions]
+
+    agent = Scipy.Agent(
+        sensors=[ReadableSignal(name="test_readable")],
+        dofs=[dof],
+        objectives=[objective],
+        evaluation_function=evaluate,
+        timeout=0.05,
+    )
+    RE = RunEngine({})
+    with pytest.raises(TimeoutError, match="not ingested"):
+        RE(agent.optimize(3))
+
+    agent.timeout = None
+    RE(agent.optimize(1))

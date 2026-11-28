@@ -38,6 +38,10 @@ Breaking Changes
   if none arrives within ``SUGGESTION_TIMEOUT`` seconds, instead of returning ``[]`` after a fixed short wait.
   ``final`` is set as soon as scipy converges. Once the optimizer thread stops, its pending points are dropped, so
   ingesting one raises ``ValueError`` unless ``force_resiliance`` is set.
+* The ``timeout`` of ``InteractiveOptimizer`` and ``Scipy`` defaults to ``None``, waiting indefinitely, instead of 200
+  seconds. A suggested point that is not ingested within an explicit ``timeout`` makes the next ``suggest()`` raise
+  ``TimeoutError``, and ingesting it raises the same error unless ``force_resiliance`` is set, instead of silently
+  ending the optimization at its best point so far.
 * ``optimize``, ``optimize_in_run``, ``sample_suggestions``, and ``acquire_baseline`` take the acquisition plan's
   extra keyword arguments as a mapping in ``acquisition_plan_kwargs`` instead of as ``**kwargs``. ``Agent``'s
   ``acquire_baseline``, ``optimize``, and ``sample_suggestions`` and ``Scipy.optimize`` accept it too. Arguments that
