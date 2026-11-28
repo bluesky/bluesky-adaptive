@@ -1,6 +1,6 @@
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v5.0.0
+    rev: 3e8a8703264a2f4a69428a0aa4dcb512790b2c8c  # frozen: v6.0.0
     hooks:
       - id: check-added-large-files
       - id: check-yaml
@@ -31,12 +31,12 @@ repos:
         require_serial: true
 
   - repo: https://github.com/kynan/nbstripout
-    rev: 0.8.1
+    rev: da2cc151867afb69f79efbc67ef466593635acf5  # frozen: 0.9.2
     hooks:
       - id: nbstripout
 
   - repo: https://github.com/executablebooks/mdformat
-    rev: 0.7.21
+    rev: 2d496dbc18e31b83a1596685347ffe0b6041daf0  # frozen: 1.0.0
     hooks:
       - id: mdformat
         additional_dependencies:
