@@ -12,10 +12,6 @@ on:
   workflow_dispatch:
 
 jobs:
-  scheduled-job:
-    if: github.event_name == 'schedule'
-    uses: ./.github/workflows/_testing.yml
-
   integration-tests:
     if: github.event_name == 'schedule'
     uses: ./.github/workflows/_integration.yml
@@ -29,12 +25,12 @@ jobs:
     uses: ./.github/workflows/_pre-commit.yml
 
   test:
-    needs: lint
+    needs: [check, lint]
     if: needs.check.outputs.branch-pr == ''
     uses: ./.github/workflows/_testing.yml
 
   docs:
-    needs: lint
+    needs: [check, lint]
     if: needs.check.outputs.branch-pr == ''
     uses: ./.github/workflows/_docs.yml
     with:
@@ -51,17 +47,17 @@ jobs:
       id-token: write
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0 # v7.1.0
         with:
           python-version: '3.x'
 
       - name: Set up uv
-        uses: astral-sh/setup-uv@18d369b23da25a81e9458561248e1aafff6a70fa # v10.3.1
+        uses: astral-sh/setup-uv@1db35dd8eee11c5894872e0b383ae6c406cf738d # v10.4.0
         with:
           version: "0.13.4"
           enable-cache: false

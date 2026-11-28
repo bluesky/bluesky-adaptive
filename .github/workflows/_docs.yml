@@ -21,16 +21,16 @@ jobs:
       - name: Set env vars
         run: |
           export REPOSITORY_NAME=${GITHUB_REPOSITORY#*/}  # just the repo, as opposed to org/repo
-          echo "REPOSITORY_NAME=${REPOSITORY_NAME}" >> $GITHUB_ENV
-          echo "DOCS_VERSION=${GITHUB_REF_NAME//[^A-Za-z0-9._-]/_}" >> $GITHUB_ENV
+          echo "REPOSITORY_NAME=${REPOSITORY_NAME}" >> "$GITHUB_ENV"
+          echo "DOCS_VERSION=${GITHUB_REF_NAME//[^A-Za-z0-9._-]/_}" >> "$GITHUB_ENV"
 
       - name: Checkout the code
-        uses: actions/checkout@v5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
 
       - name: Install pixi and activate environment
-        uses: prefix-dev/setup-pixi@82d477f15f3a381dbcc8adc1206ce643fe110fb7 # v0.9.3
+        uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
         with:
           pixi-version: v0.82.1
           environments: docs
@@ -41,22 +41,22 @@ jobs:
         run: pixi run build-docs
 
       - name: Upload HTML docs artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: ${{ env.REPOSITORY_NAME }}-docs
           path: docs/build/html/
 
       - name: Move to versioned directory
-        run: mv docs/build/html .github/pages/$DOCS_VERSION
+        run: mv docs/build/html ".github/pages/$DOCS_VERSION"
 
       - name: Write switcher.json
-        run: python .github/pages/make_switcher.py --add $DOCS_VERSION ${{ github.repository }} .github/pages/switcher.json
+        run: python .github/pages/make_switcher.py --add "$DOCS_VERSION" ${{ github.repository }} .github/pages/switcher.json
 
       - name: Publish Docs to gh-pages
         if: inputs.publish && (github.ref_type == 'tag' || github.ref_name == 'main')
         # We pin to the SHA, not the tag, for security reasons.
         # https://docs.github.com/en/actions/learn-github-actions/security-hardening-for-github-actions#using-third-party-actions
-        uses: peaceiris/actions-gh-pages@4f9cc6602d3f66b9c108549d475ec49e8ef4d45e # v4.0.0
+        uses: peaceiris/actions-gh-pages@84c30a85c19949d7eee79c4ff27748b70285e453 # v4.1.0
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: .github/pages
