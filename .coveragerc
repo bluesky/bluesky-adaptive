@@ -14,3 +14,5 @@ omit =
 
 exclude_lines =
     if __name__ == '__main__':
+    # Imports for type checkers only never run.
+    if TYPE_CHECKING:
