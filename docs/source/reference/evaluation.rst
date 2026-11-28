@@ -35,3 +35,11 @@ TiledRunPoller
    :undoc-members:
    :show-inheritance:
    :special-members: __call__
+
+TiledQueueItemRuns
+------------------
+
+.. autoclass:: bluesky_adaptive.evaluation.tiled.TiledQueueItemRuns
+   :members:
+   :undoc-members:
+   :show-inheritance:

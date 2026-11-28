@@ -6,8 +6,7 @@ Evaluation helpers for plans run by a Bluesky Queue Server.
 
 import threading
 import time
-from collections.abc import Callable, Mapping
-from typing import Any
+from collections.abc import Callable
 
 try:
     import bluesky_queueserver_api.http
@@ -21,6 +20,8 @@ except ImportError as e:
 from bluesky.callbacks import CallbackBase
 from event_model import RunStart, RunStop
 
+from ._queue_items import finished_item_run_uids
+
 
 class QueueItemRuns(CallbackBase):
     """Resolve Queue Server item UIDs to the UIDs of the runs they open.
@@ -30,7 +31,8 @@ class QueueItemRuns(CallbackBase):
     :func:`~bluesky_adaptive.evaluation.per_run`. It uses each item's first run that passes ``run_filter`` and returns
     once that run's stop document arrives, so read the data with a reader that waits for the run to stop, such as
     :class:`~bluesky_adaptive.evaluation.tiled.TiledRunPoller`, or from the same stream with
-    :class:`~bluesky_adaptive.evaluation.documents.RunEventBuffer`.
+    :class:`~bluesky_adaptive.evaluation.documents.RunEventBuffer`. To resolve items without a document stream, use
+    :class:`~bluesky_adaptive.evaluation.tiled.TiledQueueItemRuns`.
 
     While the RE Manager reports the item queued or running, :meth:`resolve` waits without a time limit. Thread-safe;
     use one instance per runner, since consuming an item drops the items whose runs started earlier.
@@ -156,13 +158,7 @@ class QueueItemRuns(CallbackBase):
                     "Check that the dispatcher feeding this callback is running and was subscribed before the plan "
                     "was submitted, and that a run passes this callback's run_filter, if given."
                 )
-            result = self._item_result(item_uid)
-            if result is not None:
-                if not result["run_uids"]:
-                    raise RuntimeError(
-                        f"Queue item {item_uid!r} ended with status {result['exit_status']!r} without opening a run: "
-                        f"{result.get('msg') or '(no message)'}"
-                    )
+            if finished_item_run_uids(self._rm, item_uid) is not None:
                 deadline = time.monotonic() + self._timeout
         if isinstance(outcome, Exception):
             raise RuntimeError(f"run_filter raised on run {run_uid!r} of queue item {item_uid!r}.") from outcome
@@ -172,21 +168,6 @@ class QueueItemRuns(CallbackBase):
                 f"{outcome.get('reason') or '(no reason given)'}"
             )
         return run_uid
-
-    def _item_result(self, item_uid: str) -> Mapping[str, Any] | None:
-        """Return the ``result`` of the item's history entry, or None while it is queued or running."""
-        # Items move from queue to running to history, and each response is consistent, so this order misses none.
-        # A failed item is re-queued under a new UID; its original UID stays in the history.
-        queue = self._rm.queue_get(reload=True)
-        if queue["running_item"].get("item_uid") == item_uid or any(item["item_uid"] == item_uid for item in queue["items"]):
-            return None
-        for item in reversed(self._rm.history_get(reload=True)["items"]):
-            if item["item_uid"] == item_uid:
-                return item["result"]
-        raise KeyError(
-            f"The RE Manager has no record of queue item {item_uid!r}. Check whether it was removed from the queue "
-            "or the history was cleared."
-        )
 
     def _consume(self, item_uid: str) -> None:
         """Remove the item and the items whose runs started earlier; call with the condition held."""

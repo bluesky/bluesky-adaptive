@@ -44,7 +44,7 @@ Optional Extras
      - Transport layer only; pair with ``[ax]`` for ``QueueserverAgent``
    * - ``bluesky-adaptive[tiled]``
      - ``bluesky-tiled-plugins``
-     - Client only; needed by ``TiledRunPoller``
+     - Client only; needed by ``TiledRunPoller`` and, with ``[queueserver]``, ``TiledQueueItemRuns``
    * - ``bluesky-adaptive[cpu]``
      - *(uv index routing)*
      - Routes ``torch`` to the CPU-only PyTorch index; requires ``uv``

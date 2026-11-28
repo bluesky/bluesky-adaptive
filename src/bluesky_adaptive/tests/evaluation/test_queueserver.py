@@ -2,37 +2,22 @@ import importlib
 import sys
 import threading
 from concurrent.futures import ThreadPoolExecutor
-from unittest.mock import MagicMock
 
 import pytest
 from bluesky.plans import count
 from bluesky.run_engine import RunEngine
-from bluesky_queueserver_api.zmq import REManagerAPI
 
 from bluesky_adaptive.evaluation import per_run, per_suggestion
 from bluesky_adaptive.evaluation.documents import RunEventBuffer
 from bluesky_adaptive.evaluation.queueserver import QueueItemRuns
 from bluesky_adaptive.plans import default_acquire
 
-from ..conftest import MovableSignal, ReadableSignal
+from ..conftest import MovableSignal, ReadableSignal, re_manager
 
 
 @pytest.fixture()
 def RE():
     return RunEngine({})
-
-
-def re_manager(*, running=None, queued=(), history=()):
-    """Mimic an RE Manager's running item, queue, and history of (item UID, result) pairs."""
-    re_manager_api = MagicMock(spec=REManagerAPI)
-    re_manager_api.queue_get.return_value = {
-        "items": [{"item_uid": item_uid} for item_uid in queued],
-        "running_item": {"item_uid": running} if running else {},
-    }
-    re_manager_api.history_get.return_value = {
-        "items": [{"item_uid": item_uid, "result": result} for item_uid, result in history]
-    }
-    return re_manager_api
 
 
 @pytest.mark.parametrize("pending", [{"running": "item-2"}, {"queued": ["item-2"]}], ids=["running", "queued"])

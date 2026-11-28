@@ -84,6 +84,14 @@ Features
   runs from Tiled so that ``per_suggestion(evaluate, TiledRunPoller(client))`` can evaluate them. Each call polls
   Tiled until the run has a stop document, raising ``TimeoutError`` after ``timeout`` seconds. It needs the new
   ``tiled`` extra, which ``all`` includes (`#73 <https://github.com/bluesky/bluesky-adaptive/issues/73>`_).
+* ``bluesky_adaptive.evaluation.tiled.TiledQueueItemRuns(re_manager_api, client)`` resolves queue item UIDs to the
+  UIDs of the runs they open by searching Tiled, with no document stream, so that
+  ``per_run(evaluate, runs.resolve)`` can evaluate the runs of the Queue Server runner's plans. It uses each item's
+  first run in start order, or the first that passes an optional ``run_filter``, and returns once that run has a stop
+  document in Tiled. It keeps no state, so it also resolves items submitted before it was created. It raises
+  ``RuntimeError`` at once when a finished item has no run that passes ``run_filter``; otherwise it raises like
+  ``QueueItemRuns.resolve``. It needs the ``tiled`` extra, plus ``queueserver`` for the RE Manager client
+  (`#121 <https://github.com/bluesky/bluesky-adaptive/issues/121>`_).
 * ``QueueserverOptimizationRunner`` runs its loop as an asyncio coroutine instead of in a dedicated thread guarded by
   a lock. ``run_async()`` and ``submit_suggestions_async()`` on the runner and on ``QueueserverAgent`` run it on the
   caller's event loop. ``run()`` and ``submit_suggestions()`` still return a ``concurrent.futures.Future`` and run it
