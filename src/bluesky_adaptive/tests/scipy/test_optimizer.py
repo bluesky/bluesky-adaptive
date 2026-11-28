@@ -1,5 +1,7 @@
+import threading
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
 from scipy.optimize import OptimizeResult
 
@@ -115,24 +117,6 @@ def test_scipy_optimizer_SHGO_specific(mock_evaluation_function, mock_acquisitio
     inner = SHGO(config)
     opt = InteractiveOptimizer(inner, timeout=1)
     assert opt.final is None  # No optimization run yet
-    opt.close()
-
-
-def test_scipy_optimizer_threads_none(mock_evaluation_function, mock_acquisition_plan):
-    """Test ScipyOptimizer with threads=None (no parallelization)."""
-    movable = MovableSignal(name="test_movable")
-    dof = RangeDOF(actuator=movable, bounds=(0, 10), parameter_type="float")
-    objective = Objective(name="test_objective", minimize=False)
-
-    config = ScipyCFG(
-        dofs=[dof],
-        objective=objective,
-        threads=None,
-    )
-
-    inner = Minimize(config)
-    opt = InteractiveOptimizer(inner, timeout=1)
-    assert opt._thread_pool is None  # No thread pool when threads=None
     opt.close()
 
 
@@ -281,18 +265,42 @@ def test_ingest_missing_objective_name(optimizer_prep):
     optimizer_prep.close()
 
 
-def test_optimizer_close_cancels_futures(optimizer_prep):
-    """Test ScipyOptimizer.close() cancels all active futures."""
-    # Suggest to create active futures
-    optimizer_prep.suggest(2)
-    active_count = len(optimizer_prep._active)
-    assert active_count > 0
+def test_close_stops_optimizer_thread():
+    """close() racing scipy's next request still stops the optimizer thread and leaves the restart point."""
+    dof1 = RangeDOF(actuator=MovableSignal(name="test_movable1"), bounds=(0, 10), parameter_type="float")
+    dof2 = RangeDOF(actuator=MovableSignal(name="test_movable2"), bounds=(0, 10), parameter_type="float")
+    objective = Objective(name="test_objective", minimize=False)
+    config = ScipyCFG(dofs=[dof1, dof2], objective=objective, threads=4, rescale=[2.0, 3.0])
+    existing = set(threading.enumerate())
+    opt = InteractiveOptimizer(Minimize(config), timeout=5)
+    opt.ingest([opt.suggest(1)[0] | {"test_objective": 1.0}])
+    opt.close()  # scipy is concurrently requesting its finite-difference batch
+    assert [t for t in threading.enumerate() if t not in existing] == []
+    [restart] = opt.suggest()
+    assert restart["test_movable1"] == pytest.approx(5.0)
+    assert restart["test_movable2"] == pytest.approx(5.0)
 
-    # Close should cancel all futures
-    optimizer_prep.close()
-    # All futures should now have exceptions set
-    for future_wrapper in optimizer_prep._active.values():
-        assert future_wrapper.future.done()
+
+@pytest.mark.parametrize("force_resiliance", [False, True])
+def test_point_not_ingested_within_timeout_raises(force_resiliance):
+    """A point not ingested within the timeout makes suggest() raise instead of ending the optimization."""
+    dof = RangeDOF(actuator=MovableSignal(name="test_movable"), bounds=(0, 10), parameter_type="float")
+    config = ScipyCFG(dofs=[dof], objective=Objective(name="test_objective", minimize=True))
+    opt = InteractiveOptimizer(Minimize(config), timeout=0.05)
+    opt.force_resiliance = force_resiliance
+    [point] = opt.suggest()
+    opt._thread.join(timeout=5)  # the optimizer thread gives up on the point after the timeout
+
+    with pytest.raises(TimeoutError, match=r"Points \[0\] were not ingested"):
+        opt.suggest()
+    late = [point | {"test_objective": 1.0}]
+    if force_resiliance:
+        opt.ingest(late)
+    else:
+        with pytest.raises(TimeoutError):
+            opt.ingest(late)
+    assert opt.final is not None  # the restart point of the next session
+    opt.close()
 
 
 def test_suggest_before_optimization(optimizer_prep):
@@ -427,3 +435,26 @@ def test_callback_updates():
     opt.ingest([opt.suggest()[0] | {objective.name: -1}])
     assert opt.intermediate is best  # make sure it only keeps the best
     opt.close()
+
+
+def test_suggest_returns_whole_batch():
+    """suggest() after an ingest returns scipy's whole next batch, and scipy receives the outcomes in batch order."""
+    dof1 = RangeDOF(actuator=MovableSignal(name="test_movable1"), bounds=(0, 10), parameter_type="float")
+    dof2 = RangeDOF(actuator=MovableSignal(name="test_movable2"), bounds=(0, 10), parameter_type="float")
+    objective = Objective(name="test_objective", minimize=False)
+    config = ScipyCFG(dofs=[dof1, dof2], objective=objective, threads=4)
+    replayed = []
+
+    class Batch(InnerOptimizer):
+        def call(self, cost, callback, kws=None) -> ScipyResult | OptimizeResult:
+            cost(np.zeros(2))
+            replayed.extend(kws["workers"](cost, [np.full(2, 1.0), np.full(2, 2.0), np.full(2, 3.0)]))
+            return ScipyResult([0.0, 0.0], 0.0, nit=0)
+
+    opt = InteractiveOptimizer(Batch(config), timeout=5)
+    opt.ingest([opt.suggest()[0] | {"test_objective": 0.0}])
+    batch = opt.suggest(4)
+    assert [(s[ID_KEY], s["test_movable1"]) for s in batch] == [(1, 1.0), (2, 2.0), (3, 3.0)]
+    opt.ingest([s | {"test_objective": 10.0 * s["test_movable1"]} for s in reversed(batch)])
+    opt.close()
+    assert replayed == [10.0, 20.0, 30.0]

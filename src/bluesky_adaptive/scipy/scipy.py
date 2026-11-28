@@ -52,7 +52,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
         self._actuators = [cast(Actuator, dof.actuator) for dof in config.dofs if dof.actuator is not None]
         self._evaluation_function = evaluation_function
         self._acquisition_plan = acquisition_plan
-        self.timeout = kwargs.pop("timeout", 200)
+        self.timeout = kwargs.pop("timeout", None)
         self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
         self.optimizer.force_resiliance = self.resiliance = kwargs.pop("resiliance", True)
         super().__init__(optimization_uid=optimization_uid, metadata=metadata)
@@ -89,7 +89,10 @@ class Scipy(_BaseAgent, Generic[TUid]):
             The acquisition plan to use for acquiring data from the beamline. If not provided,
             :func:`bluesky_adaptive.plans.default_acquire` will be used.
         **kwargs : Any
-            Additional keyword arguments to configure the Ax experiment.
+            ``max_iter``, ``eps`` and ``scale`` configure the :class:`ScipyCFG`; all keyword arguments are also passed
+            to :class:`Scipy`. There, ``timeout`` is the number of seconds to wait for scipy to request a point, and for
+            a suggested point to be ingested, before ``suggest`` raises ``TimeoutError``; ``None``, the default, waits
+            indefinitely.
 
         See Also
         --------
@@ -213,6 +216,7 @@ class Scipy(_BaseAgent, Generic[TUid]):
         """
         if self.optimizer.final is not None:
             self.config.initial = self.optimizer.final.x
+            self.optimizer.close()
             self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
             self.optimizer.force_resiliance = self.resiliance
         optimize_plan = optimize(

@@ -34,6 +34,14 @@ Breaking Changes
 * Removed ``OptimizationCallbackRouter``, ``optimize_step`` (use ``optimize`` with ``iterations=1``), the
   ``readable_cache`` argument of ``optimize`` and ``sample_suggestions``, and the ``plans.OPTIMIZE_RUN_KEY`` and
   ``plans.SAMPLE_SUGGESTIONS_RUN_KEY`` constants.
+* ``InteractiveOptimizer.suggest()`` and ``session()`` block until scipy requests a point and raise ``TimeoutError``
+  if none arrives within ``SUGGESTION_TIMEOUT`` seconds, instead of returning ``[]`` after a fixed short wait.
+  ``final`` is set as soon as scipy converges. Once the optimizer thread stops, its pending points are dropped, so
+  ingesting one raises ``ValueError`` unless ``force_resiliance`` is set.
+* The ``timeout`` of ``InteractiveOptimizer`` and ``Scipy`` defaults to ``None``, waiting indefinitely, instead of 200
+  seconds. A suggested point that is not ingested within an explicit ``timeout`` makes the next ``suggest()`` raise
+  ``TimeoutError``, and ingesting it raises the same error unless ``force_resiliance`` is set, instead of silently
+  ending the optimization at its best point so far.
 * ``optimize``, ``optimize_in_run``, ``sample_suggestions``, and ``acquire_baseline`` take the acquisition plan's
   extra keyword arguments as a mapping in ``acquisition_plan_kwargs`` instead of as ``**kwargs``. ``Agent``'s
   ``acquire_baseline``, ``optimize``, and ``sample_suggestions`` and ``Scipy.optimize`` accept it too. Arguments that
@@ -122,6 +130,10 @@ Bug Fixes
 * ``LatentKernel`` indexes its diagonal matrix with a tuple of index tensors instead of a list. PyTorch deprecates
   indexing with a list and warns that it will read it as a single tensor index, which raises or returns a different
   result.
+* ``InteractiveOptimizer`` no longer loses or skips scipy's requested points when its optimizer thread is slow.
+  With ``threads`` set, each finite-difference batch is suggested at once, in chunks of at most ``threads`` points.
+  ``close()`` stops and joins the optimizer thread, ``session()`` closes the previous one, and ``Scipy.optimize``
+  closes the optimizer it replaces.
 
 v1.0.1 (2026-11-07)
 -------------------
