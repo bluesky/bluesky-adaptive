@@ -473,7 +473,7 @@ class QueueserverOptimizationRunner:
 
         # Evaluate the results; the evaluation function waits for its data.
         logger.info(f"Evaluating queue item {item_uid}")
-        outcomes = await asyncio.to_thread(self._problem.evaluation_function, uid=item_uid, suggestions=suggestions)
+        outcomes = await asyncio.to_thread(self._problem.evaluation_function, item_uid, suggestions)
         _validate_outcomes(outcomes, suggestions)
         logger.info(f"Evaluated {len(outcomes)} outcomes")
 

@@ -234,7 +234,7 @@ def test_queueserver_agent_submit_suggestions_async(mock_re_manager_api):
     result = asyncio.run(agent.submit_suggestions_async([{"test_motor1": 2.5}]))
 
     assert result == OptimizationResult(iterations_completed=1, num_points=1, uids=("item-0",))
-    assert [suggestion["test_motor1"] for suggestion in evaluation_function.call_args.kwargs["suggestions"]] == [2.5]
+    assert [suggestion["test_motor1"] for suggestion in evaluation_function.call_args.args[1]] == [2.5]
 
 
 def test_queueserver_agent_problems_share_its_generated_optimization_uid(mock_re_manager_api, mock_evaluation_function):

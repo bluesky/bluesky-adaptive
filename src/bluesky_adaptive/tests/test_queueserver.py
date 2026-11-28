@@ -178,7 +178,7 @@ def test_runner_run_twice_fails():
     """Test 2 calls to run() fails."""
     release = threading.Event()
 
-    def evaluate(**kwargs):
+    def evaluate(uid, suggestions):
         release.wait(timeout=5)
         return []
 
@@ -214,7 +214,7 @@ def test_runner_stop_waits_for_in_flight_evaluation(mock_optimization_problem):
     evaluating = threading.Event()
     release = threading.Event()
 
-    def evaluate(**kwargs):
+    def evaluate(uid, suggestions):
         evaluating.set()
         assert release.wait(timeout=5)
         return [{"_id": 0, "objective": 1.0}]
@@ -294,7 +294,7 @@ def test_runner_submit_suggestions_twice_fails():
     """Test 2 calls to submit_suggestions() fails."""
     release = threading.Event()
 
-    def evaluate(**kwargs):
+    def evaluate(uid, suggestions):
         release.wait(timeout=5)
         return []
 
@@ -332,7 +332,7 @@ def test_runner_cancelled_run_releases_runner(mock_optimization_problem):
     evaluating = threading.Event()
     release = threading.Event()
 
-    def evaluate(**kwargs):
+    def evaluate(uid, suggestions):
         evaluating.set()
         assert release.wait(timeout=5)
         return [{"_id": 0, "objective": 1.0}]
@@ -366,7 +366,7 @@ def test_runner_submit_suggestions_async_returns_result(mock_optimization_proble
     result = asyncio.run(runner.submit_suggestions_async(suggestions))
 
     assert result == OptimizationResult(iterations_completed=1, num_points=1, uids=("item-0",))
-    mock_optimization_problem.evaluation_function.assert_called_once_with(uid="item-0", suggestions=suggestions)
+    mock_optimization_problem.evaluation_function.assert_called_once_with("item-0", suggestions)
     mock_optimization_problem.optimizer.ingest.assert_called_once_with([{"_id": 0, "objective": 1.0}])
     mock_optimization_problem.optimizer.suggest.assert_not_called()
 
@@ -396,9 +396,24 @@ def test_runner_run_full_cycle(mock_optimization_problem):
     result = future.result(timeout=5)
 
     assert mock_client.submit_plan.call_count == 3
-    assert [c.kwargs["uid"] for c in problem.evaluation_function.call_args_list] == ["item-0", "item-1", "item-2"]
+    assert [c.args[0] for c in problem.evaluation_function.call_args_list] == ["item-0", "item-1", "item-2"]
     assert problem.optimizer.ingest.call_args_list == [call(outcomes)] * 3
     assert result == OptimizationResult(iterations_completed=3, num_points=2, uids=("item-0", "item-1", "item-2"))
+
+
+def test_runner_passes_evaluation_arguments_positionally(mock_optimization_problem):
+    """An evaluation function whose parameters are not named uid and suggestions works, as it does with optimize."""
+    evaluated = []
+
+    def evaluate(run_uid, points):
+        evaluated.append((run_uid, points))
+        return [{"_id": point["_id"], "objective": 1.0} for point in points]
+
+    problem = replace(mock_optimization_problem, evaluation_function=evaluate)
+    _, _, future = _start_runner(problem, iterations=1)
+
+    assert future.result(timeout=5) == OptimizationResult(iterations_completed=1, num_points=1, uids=("item-0",))
+    assert evaluated == [("item-0", [{"_id": 0, "motor1": 5.0, "motor2": 3.0}])]
 
 
 def test_runner_private_method_calls_before_run(mock_optimization_problem):
@@ -759,7 +774,7 @@ def test_runner_cancelled_run_aborts_optimization_run(mock_optimization_problem)
     evaluating = threading.Event()
     release = threading.Event()
 
-    def evaluate(**kwargs):
+    def evaluate(uid, suggestions):
         evaluating.set()
         assert release.wait(timeout=5)
         return [{"_id": 0, "objective": 1.0}]

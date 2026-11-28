@@ -215,7 +215,8 @@ class EvaluationFunction(Protocol[_TUid_contra]):
     Notes
     -----
     The evaluation function is called in a worker thread after data acquisition
-    to compute outcomes. Give blocking data access a timeout: a callback that
+    to compute outcomes, with the uid and suggestions passed positionally, so its
+    parameters may have any names. Give blocking data access a timeout: a callback that
     has already started can continue running after the RunEngine aborts a plan.
     It uses the uid returned by the acquisition plan to retrieve or identify
     the relevant data and associate each acquired row with a suggestion by its
@@ -228,7 +229,7 @@ class EvaluationFunction(Protocol[_TUid_contra]):
     :doc:`/tutorials/simple-experiment`
     """
 
-    def __call__(self, uid: _TUid_contra, suggestions: Sequence[Mapping]) -> Sequence[Mapping]:
+    def __call__(self, uid: _TUid_contra, suggestions: Sequence[Mapping], /) -> Sequence[Mapping]:
         """
         Evaluate the acquired data and produce outcomes.
 
