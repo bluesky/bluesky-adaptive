@@ -139,9 +139,9 @@ class TiledQueueItemRuns:
         run in each :meth:`resolve` call; its exceptions are raised from :meth:`resolve`.
     timeout : float, optional
         Seconds to wait, once the item has finished, for its selected run's stop document to reach Tiled. Default
-        is 120.
+        is 30.
     poll_interval : float, optional
-        Seconds between polls of Tiled and the RE Manager. Default is 2.
+        Seconds between polls of Tiled and the RE Manager. Default is 1.
 
     Raises
     ------
@@ -163,8 +163,8 @@ class TiledQueueItemRuns:
         client: Container,
         *,
         run_filter: Callable[[RunStart], bool] | None = None,
-        timeout: float = 120.0,
-        poll_interval: float = 2.0,
+        timeout: float = 30.0,
+        poll_interval: float = 1.0,
     ) -> None:
         if timeout < 0:
             raise ValueError(f"timeout must be non-negative, got {timeout!r}.")
