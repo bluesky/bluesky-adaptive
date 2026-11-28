@@ -1,7 +1,9 @@
 import time
 from typing import Any
+from unittest.mock import MagicMock
 
 from bluesky.protocols import HasHints, HasParent, Hints, NamedMovable, Readable, Status
+from bluesky_queueserver_api.zmq import REManagerAPI
 
 from bluesky_adaptive.protocols import Checkpointable, Optimizer
 
@@ -61,3 +63,16 @@ class MovableSignal(ReadableSignal, NamedMovable):
     def set(self, value: float) -> Status:
         self._value = value
         return AlwaysSuccessfulStatus()
+
+
+def re_manager(*, running=None, queued=(), history=()):
+    """Mimic an RE Manager's running item, queue, and history of (item UID, result) pairs."""
+    re_manager_api = MagicMock(spec=REManagerAPI)
+    re_manager_api.queue_get.return_value = {
+        "items": [{"item_uid": item_uid} for item_uid in queued],
+        "running_item": {"item_uid": running} if running else {},
+    }
+    re_manager_api.history_get.return_value = {
+        "items": [{"item_uid": item_uid, "result": result} for item_uid, result in history]
+    }
+    return re_manager_api

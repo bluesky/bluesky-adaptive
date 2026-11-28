@@ -66,8 +66,15 @@ def default_acquire(suggestions, actuators, sensors, *, md=None):
         plan_args.append(values)
 
     # This plan scans the input sequence in order. Plans that reorder points must
-    # construct this ID list after reordering.
-    _md = {"blop_suggestions": suggestions, "blop_acquisition_order": [s["_id"] for s in suggestions]}
+    # construct this ID list after reordering. TiledRunPoller reads it from
+    # start["bluesky-adaptive"]["acquisition_order"]; the "blop_" keys are kept for
+    # evaluators written for older versions of default_acquire.
+    acquisition_order = [s["_id"] for s in suggestions]
+    _md = {
+        "blop_suggestions": suggestions,
+        "blop_acquisition_order": acquisition_order,
+        "bluesky-adaptive": {"acquisition_order": acquisition_order},
+    }
     if md:
         _md.update(md)
 
