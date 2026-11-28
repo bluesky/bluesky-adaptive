@@ -223,12 +223,12 @@ def optimize(
     try:
         for iteration in count() if iterations is None else range(iterations):
             suggestions = []  # a failing suggest() must not report the previous iteration's IDs
-            suggestions = optimizer.suggest(n_points)
+            suggestions = yield from call_in_thread(optimizer.suggest, n_points)
             _validate_suggestions(suggestions)
             uid, outcomes = yield from _acquire_and_evaluate(
                 optimization_problem, suggestions, acquisition_plan_kwargs or {}
             )
-            optimizer.ingest(outcomes)
+            yield from call_in_thread(optimizer.ingest, outcomes)
             # Recorded after ingesting, so that a failing callback cannot cost the optimizer an evaluated step.
             recorder.record(iteration, uid, suggestions, outcomes)
 
@@ -312,7 +312,7 @@ def optimize_in_run(
     @bpp.run_decorator(md=_md)
     def _optimize_in_run() -> MsgGenerator[None]:
         for i in range(iterations):
-            suggestions = optimizer.suggest(n_points)
+            suggestions = yield from call_in_thread(optimizer.suggest, n_points)
             _validate_suggestions(suggestions)
             try:
                 uid = yield from _reject_child_run_messages(
@@ -327,7 +327,7 @@ def optimize_in_run(
                     optimizer.register_failures(suggestions)
                 raise
 
-            optimizer.ingest(outcomes)
+            yield from call_in_thread(optimizer.ingest, outcomes)
             yield from read_step(
                 uid,
                 suggestions,
@@ -426,7 +426,7 @@ def sample_suggestions(
     )
     try:
         uid, outcomes = yield from _acquire_and_evaluate(optimization_problem, suggestions, acquisition_plan_kwargs or {})
-        optimization_problem.optimizer.ingest(outcomes)
+        yield from call_in_thread(optimization_problem.optimizer.ingest, outcomes)
         # Recorded after ingesting, so that a failing callback cannot cost the optimizer the evaluated points.
         recorder.record(-1, uid, suggestions, outcomes)
     except BaseException as error:
@@ -495,7 +495,7 @@ def acquire_baseline(
         uid = yield from acquisition_plan(points, actuators, optimization_problem.sensors, **(acquisition_plan_kwargs or {}))
         outcomes = yield from call_in_thread(optimization_problem.evaluation_function, uid, points)
         _validate_outcomes(outcomes, points)
-        optimizer.ingest([{**outcomes[0], **parameterization_copy}])
+        yield from call_in_thread(optimizer.ingest, [{**outcomes[0], **parameterization_copy}])
         # Recorded after ingesting, so that a failing callback cannot cost the optimizer the baseline.
         recorder.record(-1, uid, points, outcomes)
     except BaseException as error:

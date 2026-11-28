@@ -140,6 +140,9 @@ class Optimizer(Protocol):
     the built-in :class:`bluesky_adaptive.ax.optimizer.AxOptimizer`, which provides Bayesian optimization
     via Ax. Custom implementations are only needed for specialized optimization algorithms.
 
+    The optimization plans and the Queue Server runner call ``suggest`` and ``ingest`` in a worker
+    thread, so they may block without stalling the RunEngine or the runner's event loop.
+
     See Also
     --------
     bluesky_adaptive.ax.optimizer.AxOptimizer : Built-in Ax-based optimizer implementation.
