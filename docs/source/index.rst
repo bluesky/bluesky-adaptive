@@ -58,7 +58,7 @@ Installation
 
     .. container:: install-label
 
-        Standard (GPU support):
+        All backends (PyPI ``torch``; CUDA on Linux):
 
     .. include:: _includes/installation-code-snippets.rst
        :start-after: .. snippet-pip-standard-start
@@ -66,7 +66,7 @@ Installation
 
     .. container:: install-label
 
-        CPU-only (containers, CI/CD, laptops):
+        All backends, CPU-only PyTorch (containers, CI/CD, laptops):
 
     .. include:: _includes/installation-code-snippets.rst
        :start-after: .. snippet-pip-cpu-start

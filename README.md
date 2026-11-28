@@ -13,15 +13,27 @@ The 0.x series of `bluesky-adaptive` is discontinued; to keep using its APIs, pi
 
 ## Installation
 
+`pip install bluesky-adaptive` installs only the core plans. Add the extras for the backends you use
+(`ax`, `xopt`, `scipy`, `queueserver`, `tiled`), or `all` for every backend:
+
 ```bash
-pip install bluesky-adaptive
+pip install "bluesky-adaptive[all]"
 ```
 
-or with conda:
+For CPU-only PyTorch, install `torch` from the PyTorch CPU index first:
+
+```bash
+pip install torch --index-url https://download.pytorch.org/whl/cpu
+pip install "bluesky-adaptive[all]"
+```
+
+or with conda (the conda-forge package includes the `ax`, `xopt`, `scipy`, and `queueserver` dependencies):
 
 ```bash
 conda install -c conda-forge bluesky-adaptive
 ```
+
+See the [installation guide](https://blueskyproject.io/bluesky-adaptive/main/installation.html) for details.
 
 ## Citation
 
