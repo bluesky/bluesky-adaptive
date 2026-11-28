@@ -120,7 +120,6 @@ ignore = [
   "sim/",
   "src/bluesky_adaptive/tests/",
   "src/bluesky_adaptive/bayesian/",           # TODO: Remove this and fix type errors
-  "src/bluesky_adaptive/ax/qserver_agent.py", # TODO: Remove this and fix type errors
 ]
 
 [tool.uv]
