@@ -8,7 +8,7 @@ type checking, and `pytest` for tests.
 
 - All commands run inside a pixi environment. Prefix commands with
   `pixi run -e <env>`. Common envs: `dev` (GPU torch), `dev-cpu` (CPU torch),
-  `docs`, and per-Python `py311-cpu`..`py313-cpu`. The `check` and `tests`
+  `docs`, and per-Python `py311-cpu`..`py314-cpu`. The `check` and `tests`
   tasks exist only in the environments built on `dev-cpu`, so the commands
   below use `dev-cpu`.
 - Editable installs are configured in `pixi.toml`; do not `pip install`
