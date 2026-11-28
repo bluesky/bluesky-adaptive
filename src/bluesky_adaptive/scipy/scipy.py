@@ -24,6 +24,28 @@ class Scipy(_BaseAgent, Generic[TUid]):
     (allowing drop in swapping as much as possible).
 
     Useful as a cover in for all the QOL provided by the Agent object.
+
+    Parameters
+    ----------
+    sensors : Sequence[Sensor]
+        The sensors to use for acquisition.
+    config : ScipyCFG
+        The optimization problem and SciPy options.
+    evaluation_function : EvaluationFunction
+        The function to evaluate acquired data and produce outcomes.
+    acquisition_plan : AcquisitionPlan | None, optional
+        The acquisition plan to use. If not provided, :func:`bluesky_adaptive.plans.default_acquire` is used.
+    optimization_uid : str | None, optional
+        The UID recorded in the documents of every optimization run. A random UUID is used if not provided.
+    metadata : Mapping[str, Any] | None, optional
+        Metadata added to the start document of every optimization run.
+    timeout : int | None, optional
+        Seconds SciPy waits for each requested point to be ingested. Default is 200.
+    resiliance : bool, optional
+        Keep suggesting SciPy's final point after it has finished and skip ingested points it did not request,
+        instead of raising. Default is True.
+    sessioning : bool, optional
+        Close the SciPy optimizer thread when :meth:`optimize` finishes. Default is True.
     """  # noqa: D205
 
     def __init__(
@@ -34,7 +56,10 @@ class Scipy(_BaseAgent, Generic[TUid]):
         acquisition_plan: AcquisitionPlan[TUid] | None = None,
         optimization_uid: str | None = None,
         metadata: Mapping[str, Any] | None = None,
-        **kwargs: Any,
+        *,
+        timeout: int | None = 200,
+        resiliance: bool = True,
+        sessioning: bool = True,
     ):
         if config.optimizer not in list(SCP):
             raise ValueError(f"optimizer {config.optimizer} not in supported optimizers:{list(SCP)}")
@@ -52,11 +77,11 @@ class Scipy(_BaseAgent, Generic[TUid]):
         self._actuators = [cast(Actuator, dof.actuator) for dof in config.dofs if dof.actuator is not None]
         self._evaluation_function = evaluation_function
         self._acquisition_plan = acquisition_plan
-        self.timeout = kwargs.pop("timeout", 200)
+        self.timeout = timeout
         self.optimizer = InteractiveOptimizer(self.inner, timeout=self.timeout)
-        self.optimizer.force_resiliance = self.resiliance = kwargs.pop("resiliance", True)
+        self.optimizer.force_resiliance = self.resiliance = resiliance
         super().__init__(optimization_uid=optimization_uid, metadata=metadata)
-        self.sessioning = kwargs.pop("sessioning", True)
+        self.sessioning = sessioning
 
     @classmethod
     def Agent(
@@ -69,6 +94,11 @@ class Scipy(_BaseAgent, Generic[TUid]):
         optimizer: SCP = SCP.Default,
         # dof_constraints: Sequence[DOFConstraint] | None = None,  #implemented in future iterations? make to match ax?
         # outcome_constraints: Sequence[OutcomeConstraint] | None = None,
+        *,
+        max_iter: int | None = None,
+        eps: float | None = None,
+        scale: Sequence[float] | float | None = None,
+        threads: int | None = None,
         **kwargs: Any,
     ):
         """
@@ -88,8 +118,19 @@ class Scipy(_BaseAgent, Generic[TUid]):
         acquisition_plan : AcquisitionPlan | None, optional
             The acquisition plan to use for acquiring data from the beamline. If not provided,
             :func:`bluesky_adaptive.plans.default_acquire` will be used.
+        optimizer : SCP, optional
+            The SciPy optimizer to run. Default is :attr:`SCP.Default`.
+        max_iter : int | None, optional
+            Passed to :class:`ScipyCFG` as ``max_iter``.
+        eps : float | None, optional
+            Passed to :class:`ScipyCFG` as ``eps``.
+        scale : Sequence[float] | float | None, optional
+            Passed to :class:`ScipyCFG` as ``rescale``.
+        threads : int | None, optional
+            Passed to :class:`ScipyCFG` as ``threads``.
         **kwargs : Any
-            Additional keyword arguments to configure the Ax experiment.
+            Passed to :class:`Scipy`: ``optimization_uid``, ``metadata``, ``timeout``, ``resiliance`` and
+            ``sessioning``. Any other keyword raises :class:`TypeError`.
 
         See Also
         --------
@@ -107,9 +148,10 @@ class Scipy(_BaseAgent, Generic[TUid]):
             dofs=dofs,
             objective=objectives[0],
             optimizer=optimizer,
-            max_iter=kwargs.get("max_iter", None),
-            eps=kwargs.get("eps", None),
-            rescale=kwargs.get("scale", None),
+            max_iter=max_iter,
+            eps=eps,
+            rescale=scale,
+            threads=threads,
         )
         return cls(sensors, config, evaluation_function, acquisition_plan, **kwargs)
 
@@ -164,21 +206,22 @@ class Scipy(_BaseAgent, Generic[TUid]):
         """
         Get the next point(s) to evaluate in the search space.
 
-        Uses the Bayesian optimization algorithm to suggest promising points based
-        on all previously acquired data. Each suggestion includes an "_id" key for
-        tracking.
+        Returns the points SciPy is currently waiting to have evaluated. Each suggestion
+        includes an "_id" key for tracking. Once SciPy has finished, the only suggestion
+        is its final point.
 
         Parameters
         ----------
         num_points : int, optional
-            The number of points to suggest. Default is 1. Higher values enable
-            batch optimization but may reduce optimization efficiency per iteration.
+            The maximum number of points to suggest. Default is 1. SciPy requests one
+            point at a time unless ``threads`` is set in the configuration, so fewer
+            points than requested may be returned.
 
         Returns
         -------
         Sequence[Mapping]
-            A sequence of mappings, each containing a parameterization of a point to
-            evaluate next. Each mapping includes an "_id" key for identification.
+            At most ``num_points`` mappings, each containing a parameterization of a point
+            to evaluate next. Each mapping includes an "_id" key for identification.
         """
         return self.optimizer.suggest(num_points)
 
@@ -186,22 +229,27 @@ class Scipy(_BaseAgent, Generic[TUid]):
         """
         Ingest evaluation results into the optimizer.
 
-        Updates the optimizer's model with new data. Can ingest both suggested points
-        (with "_id" key) and external data (without "_id" key).
+        Passes each outcome to the SciPy evaluation waiting on that point. Only points
+        returned by :meth:`suggest` can be ingested; external data is not supported.
 
         Parameters
         ----------
         points : Sequence[Mapping]
-            A sequence of mappings containing outcomes for a trial. For suggested points,
-            include the "_id" key. For external data, include DOF names and objective
-            values, and omit "_id".
+            A sequence of mappings containing outcomes for a trial. Each mapping must
+            contain the "_id" key of a suggested point and the objective value.
+
+        Raises
+        ------
+        KeyError
+            A point has no "_id" key or no objective value.
+        ValueError
+            A point's "_id" is not one SciPy is waiting on and ``resiliance`` is False.
+            With ``resiliance`` True such points are skipped.
 
         Notes
         -----
         This method is typically called automatically by :meth:`optimize`. Manual usage
-        is only needed for custom workflows or when ingesting external data.
-
-        For complete examples, see :doc:`/how-to-guides/attach-data-to-experiments`.
+        is only needed for custom workflows.
         """
         self.optimizer.ingest(points)
 
@@ -209,7 +257,9 @@ class Scipy(_BaseAgent, Generic[TUid]):
         """
         Optimization plan wrapper used by the agent interface.
 
-        ``acquisition_plan_kwargs`` are passed to the acquisition plan on every acquisition of this call.
+        Each iteration evaluates at most ``n_points`` points: the points SciPy has pending, which is one unless
+        ``threads`` is set in the configuration. ``acquisition_plan_kwargs`` are passed to the acquisition plan on
+        every acquisition of this call.
         """
         if self.optimizer.final is not None:
             self.config.initial = self.optimizer.final.x
@@ -231,18 +281,23 @@ class Scipy(_BaseAgent, Generic[TUid]):
 
     def get_best_points(self) -> list[tuple[Any, Mapping, Mapping]]:
         """
-        Get a list of the optimal points found during optimization.
+        Get the best point found during optimization.
 
-        For single-objective optimization, returns a single best point.
-        For multi-objective optimization, returns the Pareto-optimal set.
+        SciPy optimizes a single objective, so the list holds one point: SciPy's final
+        result if it has finished, otherwise its best intermediate result.
 
         Returns
         -------
         list[tuple[int, TParameterization, TOutcome]]
-            Each element in the list is a tuple of:
+            A one-element list holding a tuple of:
               - trial index (int)
               - parameter values (dict)
-              - metric values (dict, where values may be (value, sem) tuples)
+              - objective value (dict)
+
+        Raises
+        ------
+        ValueError
+            SciPy has not reported a result yet.
 
         See Also
         --------

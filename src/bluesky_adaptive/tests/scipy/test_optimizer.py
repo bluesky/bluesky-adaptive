@@ -190,12 +190,10 @@ def test_get_best_points_scaling(optimizer_prep):
         status=0,
     )
 
-    best = optimizer_prep.get_best_points()
-    assert isinstance(best, list)
-    assert len(best) == 3  # (trial_idx, params_dict, metrics_dict)
-    assert best[0] == 14  # nit - 1
-    assert "test_movable1" in best[1]
-    assert "test_movable2" in best[1]
+    [(trial_index, params, outcomes)] = optimizer_prep.get_best_points()
+    assert trial_index == 14  # nit - 1
+    assert params == {"test_movable1": 5.0, "test_movable2": 9.0}
+    assert outcomes == {"test_objective": 0.85}
     optimizer_prep.close()
 
 
@@ -354,9 +352,8 @@ def test_get_best_points_intermediate_only(optimizer_prep):
         status=0,
     )
 
-    best = optimizer_prep.get_best_points()
-    assert len(best) == 3
-    assert best[0] == 4  # nit - 1
+    [(trial_index, _, _)] = optimizer_prep.get_best_points()
+    assert trial_index == 4  # nit - 1
     optimizer_prep.close()
 
 
@@ -376,10 +373,8 @@ def test_get_best_points_final_preferred(optimizer_prep):
         status=0,
     )
 
-    best = optimizer_prep.get_best_points()
-    # best[2] is a dict with objective as key; get the first (only) value
-    objective_value = list(best[2].values())[0]
-    assert objective_value == 0.9  # Uses final result
+    [(_, _, outcomes)] = optimizer_prep.get_best_points()
+    assert outcomes == {"test_objective": 0.9}  # Uses final result
     optimizer_prep.close()
 
 

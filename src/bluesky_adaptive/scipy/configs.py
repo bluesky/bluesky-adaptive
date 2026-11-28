@@ -23,12 +23,16 @@ class RangeDOF:
     bounds : tuple[float, float]
         The search domain of the DOF as (lower_bound, upper_bound).
     parameter_type : Literal["float", "int"]
-        The data type of the DOF. Use "float" for continuous values or "int" for integer values.
+        The data type of the DOF. The SciPy backend supports only "float".
     step_size : float | None, optional
-        The step size of the DOF. If provided, the optimizer will only suggest values
-        at multiples of this step size.
+        Not supported by the SciPy backend yet; must be ``None``.
     scaling : Literal["linear", "log"] | None, optional
-        The scaling of the DOF. Use "log" for parameters that span orders of magnitude.
+        The SciPy backend supports only linear scaling (``None`` or "linear").
+
+    Raises
+    ------
+    ValueError
+        If ``parameter_type`` is "int", ``step_size`` is set, or ``scaling`` is "log".
 
     Examples
     --------
@@ -37,11 +41,7 @@ class RangeDOF:
     >>> from bluesky_adaptive.scipy.configs import RangeDOF
     >>> dof = RangeDOF(name="voltage", bounds=(-10.0, 10.0), parameter_type="float")
 
-    Define an integer DOF with a step size:
-
-    >>> dof = RangeDOF(name="num_exposures", bounds=(1, 100), parameter_type="int", step_size=1)
-
-    For examples with actuators, see :doc:`/tutorials/simple-experiment`.
+    For examples with actuators, see :doc:`/tutorials/gradient-optimization`.
     """
 
     name: str | None = None
@@ -50,6 +50,10 @@ class RangeDOF:
     parameter_type: Literal["float", "int"]
     step_size: float | None = None
     scaling: Literal["linear", "log"] | None = None
+
+    def __post_init__(self) -> None:
+        """Reject options the SciPy backend does not support yet."""
+        _check_supported_dof(self)
 
     @property
     def parameter_name(self) -> str:
@@ -65,6 +69,28 @@ class RangeDOF:
     def to_scipy_bounds(self) -> Bounds:
         """Convert DOF to the Scipy equivalent Bounds."""
         return Bounds(lb=self.bounds[0], ub=self.bounds[1])
+
+
+def _check_supported_dof(dof: object) -> None:
+    """Raise ``ValueError`` if ``dof`` uses a DOF option the SciPy backend ignores.
+
+    Takes any object so DOFs from other backends (such as :class:`bluesky_adaptive.ax.RangeDOF`) are checked too.
+    """
+    parameter_type = getattr(dof, "parameter_type", "float")
+    step_size = getattr(dof, "step_size", None)
+    scaling = getattr(dof, "scaling", None)
+    unsupported = []
+    if parameter_type != "float":
+        unsupported.append(f"parameter_type={parameter_type!r}")
+    if step_size is not None:
+        unsupported.append(f"step_size={step_size!r}")
+    if scaling not in (None, "linear"):
+        unsupported.append(f"scaling={scaling!r}")
+    if unsupported:
+        raise ValueError(
+            f"The SciPy backend does not support {', '.join(unsupported)} yet; "
+            'use parameter_type="float" with no step_size and linear scaling.'
+        )
 
 
 @dataclass(frozen=True, kw_only=True)
@@ -149,3 +175,18 @@ class ScipyCFG:
     max_iter: int | None = 100
     eps: float | None = None
     threads: int | None = None
+
+    def __post_init__(self) -> None:
+        """
+        Reject options the SciPy backend cannot honour.
+
+        Raises
+        ------
+        ValueError
+            If a DOF uses ``parameter_type="int"``, a ``step_size`` or log ``scaling`` (DOFs from other backends are
+            checked too), or if ``eps`` is set for ``SCP.TRUST_CONSTR``, which does not accept it.
+        """
+        for dof in self.dofs:
+            _check_supported_dof(dof)
+        if self.optimizer == SCP.TRUST_CONSTR and self.eps is not None:
+            raise ValueError(f"eps is not supported by {SCP.TRUST_CONSTR.value!r}; leave eps as None.")

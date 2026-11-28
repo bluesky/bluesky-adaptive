@@ -1,8 +1,11 @@
+import time
 from unittest.mock import MagicMock
 
 import pytest
+from bluesky.run_engine import RunEngine
 
 from bluesky_adaptive.ax import Objective, RangeDOF
+from bluesky_adaptive.plan_stubs import navigate_to_best
 from bluesky_adaptive.protocols import ID_KEY, AcquisitionPlan, EvaluationFunction
 from bluesky_adaptive.scipy.configs import ScipyCFG
 from bluesky_adaptive.scipy.inverter import InteractiveOptimizer
@@ -39,7 +42,6 @@ def agent_prep(mock_evaluation_function, mock_acquisition_plan):
         config=config,
         evaluation_function=mock_evaluation_function,
         acquisition_plan=mock_acquisition_plan,
-        name="test_experiment",
         timeout=5,
     )
     return agent
@@ -79,7 +81,6 @@ def test_general_init(mock_evaluation_function, mock_acquisition_plan):
         config=config,
         evaluation_function=mock_evaluation_function,
         acquisition_plan=mock_acquisition_plan,
-        name="test_experiment",
         timeout=5,
     )
     assert agent.sensors == [readable]
@@ -103,7 +104,6 @@ def test_agent_init(mock_evaluation_function, mock_acquisition_plan):
         objectives=[objective],
         evaluation_function=mock_evaluation_function,
         acquisition_plan=mock_acquisition_plan,
-        name="test_experiment",
         timeout=5,
     )
     assert agent.sensors == [readable]
@@ -426,3 +426,59 @@ def test_optimize_run_records_optimization_uid(secoundary_agent_prep):
 
     start = next(doc for name, doc in documents if name == "start")
     assert start["bluesky-adaptive"]["optimization_uid"] == secoundary_agent_prep.optimization_uid
+
+
+def test_navigate_to_best_with_scipy_optimizer(secoundary_agent_prep):
+    """navigate_to_best moves the actuator to the best point reported by a SciPy optimizer."""
+    secoundary_agent_prep.optimizer.final = ScipyResult(x=[7.0], fun=0.95, nit=20, status=0)
+    [movable] = secoundary_agent_prep.actuators
+
+    RunEngine({})(navigate_to_best(secoundary_agent_prep.actuators, optimizer=secoundary_agent_prep.optimizer))
+
+    assert movable.read()["test_movable"]["value"] == 7.0
+    secoundary_agent_prep.optimizer.close()
+
+
+def test_unexpected_keyword_raises(mock_evaluation_function):
+    """Keyword arguments the agent does not use are rejected instead of silently ignored."""
+    dof = RangeDOF(actuator=MovableSignal(name="test_movable"), bounds=(0, 10), parameter_type="float")
+    config = ScipyCFG(dofs=[dof], objective=Objective(name="test_objective", minimize=False))
+    with pytest.raises(TypeError, match="unexpected keyword argument 'description'"):
+        Scipy(sensors=[], config=config, evaluation_function=mock_evaluation_function, timeout=1, description="x")
+
+
+def test_agent_unexpected_keyword_raises(mock_evaluation_function):
+    """Scipy.Agent rejects keyword arguments that neither it nor Scipy uses."""
+    dof = RangeDOF(actuator=MovableSignal(name="test_movable"), bounds=(0, 10), parameter_type="float")
+    with pytest.raises(TypeError, match="unexpected keyword argument 'description'"):
+        Scipy.Agent(
+            sensors=[],
+            dofs=[dof],
+            objectives=[Objective(name="test_objective", minimize=False)],
+            evaluation_function=mock_evaluation_function,
+            timeout=1,
+            description="x",
+        )
+
+
+def test_agent_threads_batches_suggestions(mock_evaluation_function):
+    """Scipy.Agent(threads=...) lets SciPy request several points at once."""
+    dofs = [
+        RangeDOF(actuator=MovableSignal(name="test_movable1"), bounds=(0, 10), parameter_type="float"),
+        RangeDOF(actuator=MovableSignal(name="test_movable2"), bounds=(0, 10), parameter_type="float"),
+    ]
+    agent = Scipy.Agent(
+        sensors=[],
+        dofs=dofs,
+        objectives=[Objective(name="test_objective", minimize=False)],
+        evaluation_function=mock_evaluation_function,
+        threads=4,
+        timeout=5,
+    )
+    agent.ingest([agent.suggest()[0] | {"test_objective": 0.3}])
+    # SciPy publishes its next points from its own thread; give it a moment to request the batch.
+    deadline = time.monotonic() + 5
+    while len(agent.suggest(4)) < 2 and time.monotonic() < deadline:
+        time.sleep(0.01)
+    assert len(agent.suggest(4)) > 1
+    agent.optimizer.close()
