@@ -392,6 +392,40 @@ def test_xopt_optimizer_get_best_points_empty_without_data():
     assert optimizer.get_best_points() == []
 
 
+@pytest.mark.parametrize(
+    "objectives",
+    [{"y": "MINIMIZE"}, {"y1": "MINIMIZE", "y2": "MAXIMIZE"}],
+    ids=["single-objective", "multi-objective"],
+)
+def test_xopt_optimizer_get_best_points_empty_with_only_pending_and_failed(objectives):
+    vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives=objectives)
+    optimizer = _random_optimizer(vocs)
+    suggestions = optimizer.suggest(num_points=3)
+    optimizer.register_failures([suggestions[0]])
+
+    assert optimizer.get_best_points() == []
+
+
+def test_xopt_optimizer_get_best_points_single_objective_skips_pending_and_failed():
+    vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives={"y": "MINIMIZE"})
+    optimizer = _random_optimizer(vocs)
+    suggestions = optimizer.suggest(num_points=4)
+    optimizer.ingest([{"_id": suggestions[0]["_id"], "y": 3.0}, {"_id": suggestions[1]["_id"], "y": 2.0}])
+    optimizer.register_failures([suggestions[2]])
+
+    assert optimizer.get_best_points() == [(suggestions[1]["_id"], {"x": suggestions[1]["x"]}, {"y": 2.0})]
+
+
+def test_xopt_optimizer_get_best_points_multi_objective_skips_pending_and_failed():
+    vocs = VOCS(variables={"x": [0.0, 1.0]}, objectives={"y1": "MINIMIZE", "y2": "MAXIMIZE"})
+    optimizer = _random_optimizer(vocs)
+    suggestions = optimizer.suggest(num_points=3)
+    optimizer.ingest([{"_id": suggestions[0]["_id"], "y1": 1.0, "y2": 2.0}])
+    optimizer.register_failures([suggestions[1]])
+
+    assert optimizer.get_best_points() == [(suggestions[0]["_id"], {"x": suggestions[0]["x"]}, {"y1": 1.0, "y2": 2.0})]
+
+
 def test_xopt_optimizer_get_best_points_includes_observables():
     vocs = VOCS(
         variables={"x": [0.0, 1.0]},

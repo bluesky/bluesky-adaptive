@@ -271,8 +271,47 @@ class XoptOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaul
             if trial_id is not None:
                 self._params_by_id.pop(trial_id, None)
 
+    def _measured_rows(self, data: pd.DataFrame) -> pd.DataFrame:
+        """
+        Rows of the generator data that hold measured outcomes.
+
+        Pending suggestions (registered without outcomes) and failed trials (``register_failures`` keeps their rows
+        without outcomes) are excluded.
+
+        Parameters
+        ----------
+        data : pd.DataFrame
+            Generator data.
+
+        Returns
+        -------
+        pd.DataFrame
+            Rows where every objective has a value or, without objectives, at least one output has a value.
+        """
+        objective_names = list(self.vocs.objective_names)
+        if objective_names:
+            if not set(objective_names).issubset(data.columns):
+                return data.iloc[0:0]
+            measured = data[objective_names].notna().all(axis=1)
+        else:
+            output_names = [name for name in self.vocs.output_names if name in data.columns]
+            measured = data[output_names].notna().any(axis=1)
+        return data.loc[measured]
+
     def get_best_points(self) -> Sequence[tuple[int | str, Mapping, Mapping]]:
-        """Best points from the optimizer."""
+        """
+        Best measured points from the optimizer.
+
+        Only rows with measured outcomes are considered: pending suggestions (registered but without outcomes)
+        and failed trials are never returned.
+
+        Returns
+        -------
+        Sequence[tuple[int | str, Mapping, Mapping]]
+            ``(trial_id, parameterization, outcomes)`` tuples. With a single objective, the best feasible
+            measured point; with several objectives or none, every measured point. Empty when no point has
+            been measured or, with a single objective, when no measured point is feasible.
+        """
         # Return no points when no data has been ingested.
         if not self._generator_has_data():
             return []
@@ -281,9 +320,12 @@ class XoptOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaul
         if not isinstance(data, pd.DataFrame):
             return []
 
-        objective_names = list(self.vocs.objective_names)
+        data = self._measured_rows(data)
+        if data.empty:
+            return []
+
         # For single-objective problems, return the single extremum according to direction.
-        if len(objective_names) == 1 and objective_names[0] in data:
+        if len(self.vocs.objective_names) == 1:
             try:
                 best_indices, _, _ = select_best(self.vocs, data, n=1)
                 best_index = best_indices[0]
@@ -292,7 +334,7 @@ class XoptOptimizer(Optimizer, Checkpointable, CanRegisterSuggestions, TrialFaul
                 # If no feasible points exist, return an empty list.
                 return []
         else:
-            # For multi-objective and objective-less modes, return the available candidate set.
+            # For multi-objective and objective-less modes, return the measured candidate set.
             selected = data
 
         output_names = self.vocs.output_names
