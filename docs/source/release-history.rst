@@ -119,6 +119,9 @@ Bug Fixes
   ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
 * The Queue Server runner takes checkpoints at the same iterations as ``optimize``. With ``checkpoint_interval=n``
   it checkpointed one iteration early, after iterations n - 1, 2n - 1, and so on.
+* ``LatentKernel`` indexes its diagonal matrix with a tuple of index tensors instead of a list. PyTorch deprecates
+  indexing with a list and warns that it will read it as a single tensor index, which raises or returns a different
+  result.
 
 v1.0.1 (2026-11-07)
 -------------------
