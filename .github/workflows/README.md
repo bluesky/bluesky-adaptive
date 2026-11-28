@@ -14,9 +14,9 @@ This controls how the CI jobs are run and `ci.yml` is only run if one of the fol
 If one of these conditions are met, than the following occurs:
 
 - **`check`**: Always runs and determines if the branch is part of a PR.
-- **`lint`, `test`, `docs`**: Run only when the branch is **not** already in an open PR — to avoid duplicate checks.
+- **`lint`, `test`, `docs`**: Run only when the branch is **not** already in an open PR — to avoid duplicate checks. On the daily schedule they run once; `docs` builds but does not publish.
+- **`integration-tests`**: Runs `_integration.yml` on the daily schedule only.
 - **`pypi`**: Publishes to PyPI if all jobs are successful and if the event is "release"
-- **`scheduled-job`**: Runs `_testing.yml` on a specific schedule.
 
 This structure avoids duplicate CI jobs when both a PR and a branch push happen.
 

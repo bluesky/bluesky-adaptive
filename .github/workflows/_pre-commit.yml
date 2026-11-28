@@ -7,8 +7,8 @@ jobs:
   pre-commit:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
-      - uses: prefix-dev/setup-pixi@v0.8.14
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: prefix-dev/setup-pixi@9936258fee697aff89b3fed6ca1f80a382ef694e # v0.11.3
         with:
           pixi-version: v0.82.1
           environments: dev-cpu
@@ -24,7 +24,7 @@ jobs:
           print(f'CUDA available: {torch.cuda.is_available()}')
           
           if '+cpu' not in torch.__version__:
-              print(f'ERROR: Expected CPU-only PyTorch in {env_name}, got {torch.__version__}')
+              print(f'ERROR: Expected CPU-only PyTorch in dev-cpu, got {torch.__version__}')
               sys.exit(1)
           print('✓ Verified CPU-only PyTorch installation')
           "
