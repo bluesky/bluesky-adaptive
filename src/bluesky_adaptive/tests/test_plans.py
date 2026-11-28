@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from functools import partial
-from threading import Event
+from threading import Event, get_ident
 from typing import cast
 from unittest.mock import MagicMock, patch
 
@@ -1406,6 +1406,47 @@ def test_acquisition_plan_kwargs_reach_every_acquisition_of_the_call(RE, run_pla
     RE(run_plan(problem, {"resolution": 1e-5}))
 
     assert received == [1e-5] * acquisitions
+
+
+@pytest.mark.parametrize(
+    ("run_plan", "expected_calls"),
+    [
+        (optimize, ["suggest", "ingest"]),
+        (optimize_in_run, ["suggest", "ingest"]),
+        (partial(sample_suggestions, suggestions=[{"x1": 1.0, "_id": 0}]), ["ingest"]),
+        (partial(acquire_baseline, parameterization={"x1": 1.0}), ["ingest"]),
+    ],
+    ids=["optimize", "optimize_in_run", "sample_suggestions", "acquire_baseline"],
+)
+def test_optimizer_suggest_and_ingest_run_off_the_plan_thread(RE, run_plan, expected_calls):
+    plan_threads = []
+    optimizer_calls = []
+
+    @plan
+    def acquisition_plan(suggestions, actuators, sensors=None, *, md=None):
+        plan_threads.append(get_ident())
+        yield from bps.null()
+        return "uid"
+
+    def suggest(n_points):
+        optimizer_calls.append(("suggest", get_ident()))
+        return [{"x1": 0.0, "_id": 0}]
+
+    optimizer = MagicMock(spec=Optimizer)
+    optimizer.suggest.side_effect = suggest
+    optimizer.ingest.side_effect = lambda outcomes: optimizer_calls.append(("ingest", get_ident()))
+    problem = OptimizationProblem(
+        optimizer=optimizer,
+        actuators=[MovableSignal("x1")],
+        sensors=[ReadableSignal("objective")],
+        evaluation_function=lambda uid, suggestions: [{"objective": 0.0, "_id": s["_id"]} for s in suggestions],
+        acquisition_plan=acquisition_plan,
+    )
+
+    RE(run_plan(problem))
+
+    assert [name for name, _ in optimizer_calls] == expected_calls
+    assert plan_threads and all(thread not in plan_threads for _, thread in optimizer_calls)
 
 
 def test_optimization_runs_duplicate_released_metadata_at_top_level(RE):
