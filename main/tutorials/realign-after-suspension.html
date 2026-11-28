@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Realign before resuming a suspended run &#8212; Bluesky Adaptive 1.0.2.dev17 documentation</title>
+    <title>Realign before resuming a suspended run &#8212; Bluesky Adaptive 1.0.2.dev19 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=8395c26a"></script>
+    <script src="../_static/documentation_options.js?v=cff7e5b1"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -65,7 +65,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev17" />
+  <meta name="docsearch:version" content="1.0.2.dev19" />
   
     
     <script src="../_static/searchtools.js"></script>
@@ -646,10 +646,10 @@ The plan then trips the simulated monitor, and a separate thread restores it onc
 </div>
 <div class="cell_output docutils container">
 <div class="output stream highlight-myst-ansi notranslate"><div class="highlight"><pre><span></span>Suspending....To get prompt hit Ctrl-C twice to pause.
-Suspension occurred at 2026-11-28 14:06:59.
+Suspension occurred at 2026-11-28 15:18:47.
 Justification for this suspension:
 Signal beam_available = 0 fell below 0.5 and has not yet crossed above 0.5.
-Suspender SuspendFloor(Signal(name='beam_available', value=1, timestamp=1795874819.9365432), sleep=0, pre_plan=&lt;function acknowledge_suspension at 0x70593743dda0&gt;, post_plan=&lt;function realign at 0x70593743dd00&gt;, tripped_message=) reports a return to nominal conditions. Will sleep for 0 seconds and then release suspension at 2026-11-28 14:06:59.
+Suspender SuspendFloor(Signal(name='beam_available', value=1, timestamp=1795879127.743087), sleep=0, pre_plan=&lt;function acknowledge_suspension at 0x79634904d6c0&gt;, post_plan=&lt;function realign at 0x79634904db20&gt;, tripped_message=) reports a return to nominal conditions. Will sleep for 0 seconds and then release suspension at 2026-11-28 15:18:47.
 Alignment moved from 0.00 to 0.75 before the measurement resumed.
 </pre></div>
 </div>
@@ -658,7 +658,7 @@ Alignment moved from 0.00 to 0.75 before the measurement resumed.
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Actuators  </span>alignment                                                                                            <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Sensors    </span>alignment_error                                                                                      <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Iterations </span>20                                                                                                   <span style="color: #000080; text-decoration-color: #000080">│</span>
-<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>00d9ee9d-f0c3-40af-99f1-e1ad6471c98a                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
+<span style="color: #000080; text-decoration-color: #000080">│</span> <span style="color: #7f7f7f; text-decoration-color: #7f7f7f">Run UID    </span>b7815e47-d0f3-4fb1-be2c-0ff0ec427b70                                                                 <span style="color: #000080; text-decoration-color: #000080">│</span>
 <span style="color: #000080; text-decoration-color: #000080">╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯</span>
 </pre>
 </div><div class="output text_html"><pre style="white-space:pre;overflow-x:auto;line-height:normal;font-family:Menlo,'DejaVu Sans Mono',consolas,'Courier New',monospace">┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓

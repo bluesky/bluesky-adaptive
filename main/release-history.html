@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev17 documentation</title>
+    <title>Release History &#8212; Bluesky Adaptive 1.0.2.dev19 documentation</title>
   
   
   
@@ -42,7 +42,7 @@
   <link rel="preload" as="script" href="_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="_static/documentation_options.js?v=8395c26a"></script>
+    <script src="_static/documentation_options.js?v=cff7e5b1"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/clipboard.min.js?v=a7894cd8"></script>
@@ -64,7 +64,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <meta name="color-scheme" content="light dark"/>
   <meta name="docsearch:language" content="en"/>
-  <meta name="docsearch:version" content="1.0.2.dev17" />
+  <meta name="docsearch:version" content="1.0.2.dev19" />
   
     
     <script src="_static/searchtools.js"></script>
@@ -627,6 +627,9 @@ evaluation, or outcome validation fails, like <code class="docutils literal notr
 <code class="docutils literal notranslate"><span class="pre">sample_suggestions</span></code> runs, instead of showing “Until stopping criterion”.</p></li>
 <li><p>The Queue Server runner takes checkpoints at the same iterations as <code class="docutils literal notranslate"><span class="pre">optimize</span></code>. With <code class="docutils literal notranslate"><span class="pre">checkpoint_interval=n</span></code>
 it checkpointed one iteration early, after iterations n - 1, 2n - 1, and so on.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">LatentKernel</span></code> indexes its diagonal matrix with a tuple of index tensors instead of a list. PyTorch deprecates
+indexing with a list and warns that it will read it as a single tensor index, which raises or returns a different
+result.</p></li>
 </ul>
 </section>
 </section>
