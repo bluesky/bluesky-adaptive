@@ -119,6 +119,10 @@ Bug Fixes
   ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
 * The Queue Server runner takes checkpoints at the same iterations as ``optimize``. With ``checkpoint_interval=n``
   it checkpointed one iteration early, after iterations n - 1, 2n - 1, and so on.
+* ``max_iter`` in ``ScipyCFG`` and ``Scipy.Agent`` sets SciPy's ``maxiter`` option. Every method except trust-constr
+  received an unknown ``max_iter`` option instead, which SciPy ignored with an ``OptimizeWarning``.
+  ``ScipyCFG.max_iter`` defaults to ``None``, SciPy's own limit, instead of a ``100`` that was never applied
+  (`#113 <https://github.com/bluesky/bluesky-adaptive/issues/113>`_).
 
 v1.0.1 (2026-11-07)
 -------------------
