@@ -2,9 +2,10 @@ from unittest.mock import MagicMock
 
 import pytest
 from bluesky import SupplementalData
-from bluesky.plan_stubs import one_nd_step
+from bluesky.plan_stubs import one_nd_step, pause
 from bluesky.plans import count
 from bluesky.run_engine import RunEngine
+from bluesky.utils import RunEngineInterrupted
 
 from bluesky_adaptive.evaluation import per_suggestion
 from bluesky_adaptive.evaluation.documents import RunEventBuffer
@@ -88,3 +89,47 @@ def test_run_event_buffer_ignores_runs_without_an_acquisition_order(RE):
 
     with pytest.raises(KeyError):
         buffer.pop(uid)
+
+
+def test_run_event_buffer_rejects_a_run_that_failed_partway(RE):
+    buffer = RunEventBuffer()
+    RE.subscribe(buffer)
+    uids = []
+    RE.subscribe(lambda name, doc: uids.append(doc["uid"]), "start")
+    steps = []
+
+    def fail_after_first_event(detectors, step, pos_cache):
+        if steps:
+            raise OSError("detector timed out")
+        steps.append(step)
+        yield from one_nd_step(detectors, step, pos_cache)
+
+    suggestions = [{"x1": 1.0, "_id": 0}, {"x1": 2.0, "_id": 1}]
+    with pytest.raises(OSError):
+        RE(default_acquire(suggestions, [MovableSignal("x1")], [ReadableSignal("det")], per_step=fail_after_first_event))
+
+    with pytest.raises(RuntimeError, match="'fail'"):
+        buffer.pop(uids[0])
+
+
+def test_run_event_buffer_rejects_an_aborted_run(RE):
+    buffer = RunEventBuffer()
+    RE.subscribe(buffer)
+    uids = []
+    RE.subscribe(lambda name, doc: uids.append(doc["uid"]), "start")
+
+    def pause_after_reading(detectors, step, pos_cache):
+        yield from one_nd_step(detectors, step, pos_cache)
+        yield from pause()
+
+    # The run records an event for its only suggestion before it is paused and aborted, so the counts match.
+    with pytest.raises(RunEngineInterrupted):
+        RE(
+            default_acquire(
+                [{"x1": 1.0, "_id": 0}], [MovableSignal("x1")], [ReadableSignal("det")], per_step=pause_after_reading
+            )
+        )
+    RE.abort("operator stopped the run")
+
+    with pytest.raises(RuntimeError, match="'abort'"):
+        buffer.pop(uids[0])
