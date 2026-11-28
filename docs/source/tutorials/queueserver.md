@@ -155,11 +155,14 @@ def default_acquire(suggestions, actuators, sensors, *, md=None):
         plan_args.append(actuator)
         plan_args.append(values)
 
-    # This plan scans the input sequence in order. Plans that reorder points must
-    # construct this ID list after reordering.
-    _md = {"blop_suggestions": suggestions, "blop_acquisition_order": [s["_id"] for s in suggestions]}
-    if md:
-        _md.update(md)
+    # Record the suggestion IDs in scan order under the key that
+    # bluesky_adaptive.plans.default_acquire uses. This plan scans the input sequence in
+    # order; plans that reorder points must construct this ID list after reordering.
+    _md = dict(md or {})
+    _md["bluesky-adaptive"] = {
+        **_md.get("bluesky-adaptive", {}),
+        "acquisition_order": [s["_id"] for s in suggestions],
+    }
 
     yield from bp.list_scan(list(sensors), *plan_args, md=_md)
 ```
@@ -203,7 +206,7 @@ sensors = ["himmel_det"]
 
 ## Writing the Evaluation Function
 
-The runner calls the evaluation function in a background thread right after it submits each plan. It passes the plan's queue item UID, which the RE Manager returns when the plan is added to the queue, as `uid`, together with the submitted suggestions. The evaluation function returns a sequence of outcome mappings; each must contain the objective value(s) and an `_id`. This evaluator uses the run's `blop_acquisition_order` to align detector values with IDs.
+The runner calls the evaluation function in a background thread right after it submits each plan. It passes the plan's queue item UID, which the RE Manager returns when the plan is added to the queue, as `uid`, together with the submitted suggestions. The evaluation function returns a sequence of outcome mappings; each must contain the objective value(s) and an `_id`. This evaluator uses the run's `start["bluesky-adaptive"]["acquisition_order"]` to align detector values with IDs.
 
 Because the plan may still be queued or running when the evaluation function is called, the evaluator owns waiting for the data, selecting the run, and detecting failures. bluesky-queueserver 0.0.26 and newer record the queue item UID in the start document of every run the item opens, as `start["queue_server"]["queue_item_uid"]`, so this evaluator polls Tiled for such a run with a stop document and raises if the run did not succeed. With an older RE Manager, poll `RM.history_get()` until the item's entry appears instead, then look up the runs listed in its `result["run_uids"]`. Keep the wait bounded: `agent.stop()` takes effect only after the in-flight evaluation returns.
 
@@ -245,7 +248,7 @@ class HimmelblauEvaluation:
                 f"{stop['exit_status']!r}: {stop.get('reason') or '(no reason given)'}"
             )
         himmel_values = run["primary/himmel_det"].read()
-        acquisition_order = run.metadata["start"]["blop_acquisition_order"]
+        acquisition_order = run.metadata["start"]["bluesky-adaptive"]["acquisition_order"]
         return [
             {"_id": suggestion_id, "himmelblau": float(himmel_values[idx])}
             for idx, suggestion_id in enumerate(acquisition_order)

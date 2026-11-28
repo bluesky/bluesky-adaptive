@@ -4,7 +4,7 @@ Queueserver startup script for the Bluesky Adaptive tutorial.
 This script runs inside the RE Manager process. It sets up:
 - A RunEngine with ZMQ document publishing
 - Simulated motors and a Himmelblau detector
-- The default_acquire plan from Bluesky Adaptive
+- A default_acquire plan that records the same run metadata as Bluesky Adaptive's
 """
 
 from bluesky import RunEngine
@@ -56,7 +56,8 @@ def default_acquire(suggestions, actuators, sensors, *, md=None):
     Acquire data by moving actuators to suggested positions and reading sensors.
 
     This is a simplified version of bluesky_adaptive.plans.default_acquire without complex
-    type annotations that would cause pydantic validation issues in queueserver.
+    type annotations that would cause pydantic validation issues in queueserver. Like the
+    library plan, it records ``start["bluesky-adaptive"]["acquisition_order"]``.
     """
     # Build list_scan args: [motor1, [val1, ...], motor2, [val2, ...], ...]
     plan_args = []
@@ -65,10 +66,13 @@ def default_acquire(suggestions, actuators, sensors, *, md=None):
         plan_args.append(actuator)
         plan_args.append(values)
 
-    # This plan scans the input sequence in order. Plans that reorder points must
-    # construct this ID list after reordering.
-    _md = {"blop_suggestions": suggestions, "blop_acquisition_order": [s["_id"] for s in suggestions]}
-    if md:
-        _md.update(md)
+    # Record the suggestion IDs in scan order under the key that
+    # bluesky_adaptive.plans.default_acquire uses. This plan scans the input sequence in
+    # order; plans that reorder points must construct this ID list after reordering.
+    _md = dict(md or {})
+    _md["bluesky-adaptive"] = {
+        **_md.get("bluesky-adaptive", {}),
+        "acquisition_order": [s["_id"] for s in suggestions],
+    }
 
     yield from bp.list_scan(list(sensors), *plan_args, md=_md)
