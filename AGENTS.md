@@ -8,7 +8,9 @@ type checking, and `pytest` for tests.
 
 - All commands run inside a pixi environment. Prefix commands with
   `pixi run -e <env>`. Common envs: `dev` (GPU torch), `dev-cpu` (CPU torch),
-  `docs`, and per-Python `py311-cpu`..`py313-cpu`.
+  `docs`, and per-Python `py311-cpu`..`py313-cpu`. The `check` and `tests`
+  tasks exist only in the environments built on `dev-cpu`, so the commands
+  below use `dev-cpu`.
 - Editable installs are configured in `pixi.toml`; do not `pip install`
   manually. Re-sync with `pixi install -e dev-cpu` if dependencies change.
 - `pyproject.toml` is the single source of truth for runtime/dev
@@ -21,27 +23,27 @@ type checking, and `pytest` for tests.
 
 - Install / sync env: `pixi install -e dev-cpu`
 - Run all pre-commit hooks (ruff format + ruff lint + pyright + nbstripout +
-  mdformat): `pixi run -e dev check` (alias for `pre-commit run --all-files`).
-- Format only: `pixi run -e dev ruff format`
-- Lint only (with autofix): `pixi run -e dev ruff check --fix`
-- Type check: `pixi run -e dev pyright`
-- Run full test suite: `pixi run -e dev tests`
-  (alias for `pytest src/bluesky_adaptive/tests`).
-- Run a single test file: `pixi run -e dev pytest src/bluesky_adaptive/tests/test_utils.py`
+  mdformat): `pixi run -e dev-cpu check` (alias for `pre-commit run --all-files`).
+- Format only: `pixi run -e dev-cpu ruff format`
+- Lint only (with autofix): `pixi run -e dev-cpu ruff check --fix`
+- Type check: `pixi run -e dev-cpu pyright`
+- Run the unit test suite: `pixi run -e dev-cpu tests` (alias for
+  `pytest src/bluesky_adaptive/tests` excluding `tests/integration` and the `integration` marker).
+- Run a single test file: `pixi run -e dev-cpu pytest src/bluesky_adaptive/tests/test_utils.py`
 - Run a single test by node id:
-  `pixi run -e dev pytest src/bluesky_adaptive/tests/test_utils.py::test_name`
-- Run tests matching a keyword: `pixi run -e dev pytest -k "queueserver"`
-- Run tests by marker (defined in `pytest.ini`: `shadow`, `srw`, `test_func`):
-  `pixi run -e dev pytest -m test_func`
-- Coverage (config in `.coveragerc`): `pixi run -e dev pytest --cov=bluesky_adaptive`
+  `pixi run -e dev-cpu pytest src/bluesky_adaptive/tests/test_utils.py::test_name`
+- Run tests matching a keyword: `pixi run -e dev-cpu pytest -k "queueserver"`
+- Run the integration tests (marked `integration`, the only marker in `pytest.ini`):
+  `pixi run -e integration integration-tests`
+- Coverage (config in `.coveragerc`): `pixi run -e dev-cpu pytest --cov=bluesky_adaptive`
 - Build docs: `pixi run -e docs build-docs` (or `build-docs-no-exec` to skip
   notebook execution). Tutorials live under `docs/source/tutorials/`.
 
 ## Repository layout
 
 - `src/bluesky_adaptive/` — library code. Submodules: `ax/`, `bayesian/`, `callbacks/`,
-  plus `plans.py`, `plan_stubs.py`, `protocols.py`, `queueserver.py`,
-  `utils.py`.
+  `evaluation/`, `scipy/`, `xopt/`, plus `plans.py`, `plan_stubs.py`, `protocols.py`,
+  `queueserver.py`, `utils.py`.
 - `src/bluesky_adaptive/tests/` — pytest tests, mirrors package layout. `conftest.py`
   holds shared fixtures.
 - `sim/` — separate `bluesky-adaptive-sim` editable package used by tests/docs.
@@ -61,8 +63,8 @@ Enforced by `ruff` (config in `pyproject.toml [tool.ruff]`) and `pyright`.
   (`PLC2701` enabled in preview).
 - Active rule sets: `B`, `C4`, `E`, `F`, `W`, `I`, `UP`, `SLF`, `PLC2701`,
   `LOG015`, `S101`, `D` (numpy convention). Currently ignored repo-wide:
-  `D` (docstring rules — still write numpy-style docstrings on new public
-  APIs), `SLF001`, `B901`. In `src/bluesky_adaptive/tests/**` `S101`, `SLF001`, `D` are
+  `SLF001`, `B901`. `D` applies to library code; `sim/`, `docs/`, and
+  `examples/` ignore it. In `src/bluesky_adaptive/tests/**` `S101`, `SLF001`, `D` are
   ignored — `assert` is fine in tests but not in library code.
 - Logging: never call the root logger (`LOG015`). Use a module logger:
   `logger = logging.getLogger(__name__)`.
@@ -77,13 +79,12 @@ Enforced by `ruff` (config in `pyproject.toml [tool.ruff]`) and `pyright`.
 - Use `from __future__ import annotations` only when needed for forward
   references; existing code generally does not.
 - Excluded from pyright (do not introduce new code there without cleaning up
-  types if possible): `sim/`, `src/bluesky_adaptive/tests/`, `src/bluesky_adaptive/bayesian/`,
-  `src/bluesky_adaptive/ax/qserver_agent.py`.
+  types if possible): `sim/`, `src/bluesky_adaptive/tests/`, `src/bluesky_adaptive/bayesian/`.
 
 ## Naming
 
 - `snake_case` for functions, methods, variables, modules.
-- `PascalCase` for classes and `Enum` types (e.g. `Source(str, Enum)` in
+- `PascalCase` for classes and `Enum` types (e.g. `Source(StrEnum)` in
   `src/bluesky_adaptive/utils.py`).
 - `UPPER_SNAKE_CASE` for module-level constants (e.g. `ID_KEY`).
 - Leading underscore (`_name`) for module-private and internal attributes.
@@ -127,7 +128,7 @@ Enforced by `ruff` (config in `pyproject.toml [tool.ruff]`) and `pyright`.
 ## Git / PR workflow
 
 - `pre-commit` is mandatory; install once with
-  `pixi run -e dev pre-commit install`. CI runs the same hooks plus the
+  `pixi run -e dev-cpu pre-commit install`. CI runs the same hooks plus the
   pyright and pytest jobs defined in `.github/workflows/`.
 - Notebooks under `docs/` are stripped by `nbstripout`; do not commit
   notebook outputs. Markdown is reformatted by `mdformat`.

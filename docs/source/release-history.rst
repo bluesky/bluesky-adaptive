@@ -123,6 +123,9 @@ Bug Fixes
   ``sample_suggestions`` runs, instead of showing "Until stopping criterion".
 * The Queue Server runner takes checkpoints at the same iterations as ``optimize``. With ``checkpoint_interval=n``
   it checkpointed one iteration early, after iterations n - 1, 2n - 1, and so on.
+* ``LatentKernel`` indexes its diagonal matrix with a tuple of index tensors instead of a list. PyTorch deprecates
+  indexing with a list and warns that it will read it as a single tensor index, which raises or returns a different
+  result.
 * ``InteractiveOptimizer`` no longer loses or skips scipy's requested points when its optimizer thread is slow.
   With ``threads`` set, each finite-difference batch is suggested at once, in chunks of at most ``threads`` points.
   ``close()`` stops and joins the optimizer thread, ``session()`` closes the previous one, and ``Scipy.optimize``
