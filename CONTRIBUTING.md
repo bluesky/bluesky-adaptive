@@ -45,7 +45,7 @@ Good pull requests are:
 
 Tests are required for code changes. Bug fixes should include a regression test when practical.
 
-Unit tests should remain fast. The full unit test suite, run with `pixi run tests`, should stay under 10 seconds.
+Unit tests should remain fast. The full unit test suite, run with `pixi run -e dev-cpu tests`, should stay under 10 seconds.
 
 Integration tests, documentation tests, and tutorials may take longer, but should still run in a reasonable time.
 
