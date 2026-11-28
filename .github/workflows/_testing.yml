@@ -13,7 +13,7 @@ jobs:
     strategy:
       matrix:
         host-os: ["ubuntu-latest"]
-        python-version: ["py311-cpu", "py312-cpu", "py313-cpu"]
+        python-version: ["py311-cpu", "py312-cpu", "py313-cpu", "py314-cpu"]
       fail-fast: false
 
     defaults:

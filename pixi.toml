@@ -11,7 +11,7 @@ requires-pixi = ">=0.82.1"
 
 [dependencies]
 ca-certificates = ">=2026.10.19"
-python = ">=3.11.0,<3.14"
+python = ">=3.11.0,<3.15"
 
 [feature.dev.dependencies]
 
@@ -57,6 +57,9 @@ python = "3.12.*"
 [feature.py313.dependencies]
 python = "3.13.*"
 
+[feature.py314.dependencies]
+python = "3.14.*"
+
 [feature.integration.tasks]
 integration-tests = "pytest src/bluesky_adaptive/tests/integration -m integration"
 
@@ -80,3 +83,4 @@ docs = ["dev-cpu", "docs", "integration"]
 py311-cpu = ["dev-cpu", "py311"]
 py312-cpu = ["dev-cpu", "py312"]
 py313-cpu = ["dev-cpu", "py313"]
+py314-cpu = ["dev-cpu", "py314"]
