@@ -166,9 +166,9 @@ class InteractiveOptimizer(Optimizer):
 
     def ingest(self, points: Sequence[Mapping]) -> None:
         """
-        Ingest a set of points into the experiment. Either from previously suggested points or from an external source.
+        Ingest the outcomes of previously suggested points.
 
-        The "_id" key is optional.
+        Each point must carry the "_id" of a point SciPy is waiting on; external points cannot be ingested.
 
         Parameters
         ----------
@@ -185,15 +185,15 @@ class InteractiveOptimizer(Optimizer):
 
     def get_best_points(self) -> list[tuple[Any, Mapping, Mapping]]:
         """
-        Get a list of the optimal point found during optimization.
+        Get the optimal point found during optimization.
 
         Returns
         -------
         list[tuple[int, TParameterization, TOutcome]]
-            Each element in the list is a tuple of:
+            A one-element list holding a tuple of:
               - trial index (int)
               - parameter values (dict)
-              - metric values (dict, where values may be (value, sem) tuples)
+              - objective value (dict)
 
         See Also
         --------
@@ -207,9 +207,11 @@ class InteractiveOptimizer(Optimizer):
 
         vector = [x_n * s for s, x_n in zip(self._scale, result.x, strict=True)]
         cart = [
-            result.nit - 1,
-            cast(Mapping, dict(zip(self._params, vector, strict=True))),
-            cast(Mapping, {self._objective.name: result.fun}),
+            (
+                result.nit - 1,
+                cast(Mapping, dict(zip(self._params, vector, strict=True))),
+                cast(Mapping, {self._objective.name: result.fun}),
+            )
         ]
         return cart
 
