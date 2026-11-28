@@ -137,6 +137,9 @@ class ScipyCFG:
     Configuration dataclass that encompasses the core optimization problem and extra parameters within Scipy.
 
     Used as the optimizer/generation function is not injectable like in Ax
+
+    ``max_iter`` sets SciPy's ``maxiter`` option, which dual annealing and SHGO apply to their local minimizer.
+    ``None`` keeps SciPy's default.
     """
 
     dofs: Sequence[RangeDOF]
@@ -146,6 +149,6 @@ class ScipyCFG:
     optimizer: SCP = SCP.Default
     initial: Sequence[float] | None = None
     rescale: Sequence[float] | float | None = None
-    max_iter: int | None = 100
+    max_iter: int | None = None
     eps: float | None = None
     threads: int | None = None

@@ -11,7 +11,7 @@ import numpy as np
 from scipy.optimize import OptimizeResult
 
 from bluesky_adaptive.protocols import ID_KEY, Optimizer
-from bluesky_adaptive.scipy.configs import SCP, Objective, ScipyCFG
+from bluesky_adaptive.scipy.configs import Objective, ScipyCFG
 from bluesky_adaptive.scipy.normalizers import InnerOptimizer, ScipyResult
 
 
@@ -67,10 +67,7 @@ class InteractiveOptimizer(Optimizer):
         kw: dict = {}
         self._thread_pool = None
         if config.max_iter is not None:
-            if config.optimizer is not SCP.TRUST_CONSTR:
-                kw["max_iter"] = config.max_iter
-            else:
-                kw["maxiter"] = config.max_iter
+            kw["maxiter"] = config.max_iter
         if config.eps is not None:
             kw["eps"] = config.eps
 

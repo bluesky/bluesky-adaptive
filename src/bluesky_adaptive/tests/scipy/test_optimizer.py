@@ -1,7 +1,8 @@
 from unittest.mock import MagicMock
 
+import numpy as np
 import pytest
-from scipy.optimize import OptimizeResult
+from scipy.optimize import OptimizeResult, rosen
 
 from bluesky_adaptive.ax import Objective, RangeDOF
 from bluesky_adaptive.protocols import ID_KEY, AcquisitionPlan, EvaluationFunction
@@ -152,6 +153,33 @@ def test_scipy_optimizer_threads_multiple(mock_evaluation_function, mock_acquisi
     opt = InteractiveOptimizer(inner, timeout=1)
     # Configuration accepted
     opt.close()
+
+
+def _rosenbrock_optimizer(optimizer: SCP, max_iter: int) -> InteractiveOptimizer:
+    dofs = [RangeDOF(actuator=MovableSignal(name=name), bounds=(-5, 5), parameter_type="float") for name in ("x1", "x2")]
+    objective = Objective(name="rosenbrock", minimize=True)
+    config = ScipyCFG(dofs=dofs, objective=objective, optimizer=optimizer, initial=[-1.2, 1.0], max_iter=max_iter)
+    return InteractiveOptimizer(Minimize(config), timeout=5)
+
+
+def _measure_until_scipy_stops(opt: InteractiveOptimizer) -> None:
+    """Ingest the Rosenbrock value of every point scipy requests until it stops."""
+    try:
+        with pytest.raises(RuntimeError, match="reached convergence"):
+            for _ in range(2_000):
+                for point in opt.suggest(1):
+                    x = np.array([point["x1"], point["x2"]])
+                    opt.ingest([{ID_KEY: point[ID_KEY], "rosenbrock": rosen(x)}])
+    finally:
+        opt.close()
+
+
+@pytest.mark.parametrize("optimizer", [SCP.NELDER_MEAD, SCP.LBFGS, SCP.TRUST_CONSTR])
+def test_max_iter_stops_scipy_after_that_many_iterations(optimizer):
+    """Each method needs over 30 iterations to minimize Rosenbrock from (-1.2, 1), so max_iter stops it first."""
+    opt = _rosenbrock_optimizer(optimizer, max_iter=3)
+    _measure_until_scipy_stops(opt)
+    assert opt.final.nit == 3
 
 
 # ============================================================================
